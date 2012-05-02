@@ -237,6 +237,18 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 	return
 }
 
+// URL returns a URL for the given path. It is not signed,
+// so any operations accessed this way must be available
+// to anyone.
+func (b *Bucket) URL(path string) string {
+	if strings.HasPrefix(path, "/") {
+		path = "/" + b.Name + path
+	} else {
+		path = "/" + b.Name + "/" + path
+	}
+	return b.Region.S3Endpoint + path
+}
+
 // ----------------------------------------------------------------------------
 // Request dispatching logic.
 

@@ -3,6 +3,7 @@ package s3_test
 import (
 	"bytes"
 	"io/ioutil"
+	"net/http"
 
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
@@ -29,13 +30,20 @@ const testBucket = "goamz-test-bucket"
 
 func (s *SI) TestBasicFunctionality(c *C) {
 	b := s.Bucket(testBucket)
-	err := b.PutBucket(s3.Private)
+	err := b.PutBucket(s3.PublicRead)
 	c.Assert(err, IsNil)
 
 	err = b.Put("name", []byte("yo!"), "text/plain", s3.PublicRead)
 	c.Assert(err, IsNil)
 
 	data, err := b.Get("name")
+	c.Assert(err, IsNil)
+	c.Assert(string(data), Equals, "yo!")
+
+	resp, err := http.Get(b.URL("name"))
+	c.Assert(err, IsNil)
+	data, err = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	c.Assert(err, IsNil)
 	c.Assert(string(data), Equals, "yo!")
 
@@ -103,7 +111,7 @@ func (s *SI) TestRegions(c *C) {
 			errs <- err
 		}(region)
 	}
-	for i := 0; i != len(allRegions); i++ {
+	for _ = range allRegions {
 		err := <-errs
 		if err != nil {
 			s3_err, ok := err.(*s3.Error)
