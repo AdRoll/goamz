@@ -326,12 +326,12 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 		// check that Instances returns all instances.
 		{
 			resultIds:  ids(0, 1, 2),
-			allowExtra:  true,
+			allowExtra: true,
 		},
 		// check that specifying two instance ids returns them.
 		{
 			instanceIds: ids(0, 2),
-			resultIds:  ids(0, 2),
+			resultIds:   ids(0, 2),
 		},
 		// check that specifying a non-existent instance id gives an error
 		{
@@ -374,7 +374,7 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 			filters: []filterSpec{
 				{"image-id", []string{imageId}},
 			},
-			resultIds: ids(0, 1),
+			resultIds:  ids(0, 1),
 			allowExtra: true,
 		},
 		// combination filters.

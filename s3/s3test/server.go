@@ -43,7 +43,7 @@ type action struct {
 // Server is a fake S3 server for testing purposes.
 // All of the data for the server is kept in memory.
 type Server struct {
-	url     string
+	url      string
 	reqId    int
 	listener net.Listener
 	mu       sync.Mutex
@@ -82,7 +82,7 @@ func NewServer() (*Server, error) {
 	}
 	srv := &Server{
 		listener: l,
-		url:     "http://" + l.Addr().String(),
+		url:      "http://" + l.Addr().String(),
 		buckets:  make(map[string]*bucket),
 	}
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -320,7 +320,7 @@ func (r bucketResource) get(a *action) interface{} {
 		isPrefix := false
 		if delimiter != "" {
 			if i := strings.Index(obj.name[len(prefix):], delimiter); i >= 0 {
-				name = obj.name[: len(prefix) + len(delimiter) + i]
+				name = obj.name[:len(prefix)+len(delimiter)+i]
 				if prefixes != nil && prefixes[len(prefixes)-1] == name {
 					continue
 				}
@@ -330,7 +330,7 @@ func (r bucketResource) get(a *action) interface{} {
 		if name <= marker {
 			continue
 		}
-		if len(resp.Contents) + len(prefixes) >= maxKeys {
+		if len(resp.Contents)+len(prefixes) >= maxKeys {
 			resp.IsTruncated = true
 			break
 		}
@@ -361,10 +361,10 @@ func (s orderedObjects) Less(i, j int) bool {
 
 func (obj *object) s3Key() s3.Key {
 	return s3.Key{
-		Key: obj.name,
+		Key:          obj.name,
 		LastModified: obj.mtime.Format(timeFormat),
-		Size: int64(len(obj.data)),
-		ETag: fmt.Sprintf(`"%x"`, obj.checksum),
+		Size:         int64(len(obj.data)),
+		ETag:         fmt.Sprintf(`"%x"`, obj.checksum),
 		// TODO StorageClass
 		// TODO Owner
 	}

@@ -2,11 +2,11 @@ package s3_test
 
 import (
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"io/ioutil"
-	"crypto/md5"
-	"strings"
 	"net/http"
+	"strings"
 
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
@@ -183,11 +183,11 @@ var listTests = []s3.ListResp{
 		Contents: keys(objectNames...),
 	},
 	{
-		Marker: objectNames[0],
+		Marker:   objectNames[0],
 		Contents: keys(objectNames[1:]...),
 	},
 	{
-		Marker: objectNames[0]+"a",
+		Marker:   objectNames[0] + "a",
 		Contents: keys(objectNames[1:]...),
 	},
 	{
@@ -196,57 +196,57 @@ var listTests = []s3.ListResp{
 
 	// limited results.
 	{
-		MaxKeys: 2,
-		Contents: keys(objectNames[0:2]...),
+		MaxKeys:     2,
+		Contents:    keys(objectNames[0:2]...),
 		IsTruncated: true,
 	},
 	{
-		MaxKeys: 2,
-		Marker: objectNames[0],
-		Contents: keys(objectNames[1:3]...),
+		MaxKeys:     2,
+		Marker:      objectNames[0],
+		Contents:    keys(objectNames[1:3]...),
 		IsTruncated: true,
 	},
 	{
-		MaxKeys: 2,
-		Marker: objectNames[len(objectNames)-2],
+		MaxKeys:  2,
+		Marker:   objectNames[len(objectNames)-2],
 		Contents: keys(objectNames[len(objectNames)-1:]...),
 	},
 
 	// with delimiter
 	{
-		Delimiter: "/",
+		Delimiter:      "/",
 		CommonPrefixes: []string{"photos/", "test/"},
-		Contents: keys("index.html", "index2.html"),
+		Contents:       keys("index.html", "index2.html"),
 	},
 	{
-		Delimiter: "/",
-		Prefix: "photos/2006/",
+		Delimiter:      "/",
+		Prefix:         "photos/2006/",
 		CommonPrefixes: []string{"photos/2006/February/", "photos/2006/January/"},
 	},
 	{
-		Delimiter: "/",
-		MaxKeys: 1,
-		Contents: keys("index.html"),
+		Delimiter:   "/",
+		MaxKeys:     1,
+		Contents:    keys("index.html"),
 		IsTruncated: true,
 	},
 	{
-		Delimiter: "/",
-		MaxKeys: 1,
-		Marker: "index2.html",
+		Delimiter:      "/",
+		MaxKeys:        1,
+		Marker:         "index2.html",
 		CommonPrefixes: []string{"photos/"},
-		IsTruncated: true,
+		IsTruncated:    true,
 	},
 	{
-		Delimiter: "/",
-		MaxKeys: 1,
-		Marker: "photos/",
+		Delimiter:      "/",
+		MaxKeys:        1,
+		Marker:         "photos/",
 		CommonPrefixes: []string{"test/"},
-		IsTruncated: false,
+		IsTruncated:    false,
 	},
 	{
-		Delimiter: "Feb",
+		Delimiter:      "Feb",
 		CommonPrefixes: []string{"photos/2006/Feb"},
-		Contents: keys("index.html", "index2.html", "photos/2006/January/sample.jpg", "test/bar", "test/foo"),
+		Contents:       keys("index.html", "index2.html", "photos/2006/January/sample.jpg", "test/bar", "test/foo"),
 	},
 }
 

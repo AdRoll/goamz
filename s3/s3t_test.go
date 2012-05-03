@@ -28,7 +28,7 @@ func (s *LocalServer) SetUp(c *C) {
 // when the s3test functionality is sufficient, it should
 // include all of them, and ClientTests can be simply embedded.
 type LocalServerSuite struct {
-	srv LocalServer
+	srv         LocalServer
 	clientTests ClientTests
 }
 
