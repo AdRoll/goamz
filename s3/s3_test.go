@@ -3,6 +3,7 @@ package s3_test
 import (
 	"bytes"
 	"io/ioutil"
+	"net/http"
 
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
@@ -67,6 +68,23 @@ func (s *S) TestGet(c *C) {
 
 	c.Assert(err, IsNil)
 	c.Assert(string(data), Equals, "content")
+}
+
+func (s *S) TestURL(c *C) {
+	testServer.PrepareResponse(200, nil, "content")
+
+	b := s.s3.Bucket("bucket")
+	url := b.URL("name")
+	r, err := http.Get(url)
+	c.Assert(err, IsNil)
+	data, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	c.Assert(err, IsNil)
+	c.Assert(string(data), Equals, "content")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, Equals, "GET")
+	c.Assert(req.URL.Path, Equals, "/bucket/name")
 }
 
 func (s *S) TestGetReader(c *C) {

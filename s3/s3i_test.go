@@ -2,10 +2,11 @@ package s3_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"crypto/md5"
-	"encoding/hex"
 	"strings"
+	"net/http"
 
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
@@ -25,6 +26,9 @@ func (s *AmazonServer) SetUp(c *C) {
 	s.auth = auth
 }
 
+// Suite cost per run: ? USD
+var _ = Suite(&AmazonClientSuite{})
+
 // AmazonClientSuite tests the client against a live S3 server.
 type AmazonClientSuite struct {
 	srv AmazonServer
@@ -36,7 +40,7 @@ func (s *AmazonClientSuite) SetUpSuite(c *C) {
 		c.Skip("AmazonClientSuite tests not enabled")
 	}
 	s.srv.SetUp(c)
-	s.ec2 = s3.New(s.srv.auth, aws.USEast)
+	s.s3 = s3.New(s.srv.auth, aws.USEast)
 }
 
 // ClientTests defines integration tests designed to test the client.
@@ -54,13 +58,20 @@ const testBucket = "goamz-test-bucket"
 
 func (s *ClientTests) TestBasicFunctionality(c *C) {
 	b := s.Bucket(testBucket)
-	err := b.PutBucket(s3.Private)
+	err := b.PutBucket(s3.PublicRead)
 	c.Assert(err, IsNil)
 
 	err = b.Put("name", []byte("yo!"), "text/plain", s3.PublicRead)
 	c.Assert(err, IsNil)
 
 	data, err := b.Get("name")
+	c.Assert(err, IsNil)
+	c.Assert(string(data), Equals, "yo!")
+
+	resp, err := http.Get(b.URL("name"))
+	c.Assert(err, IsNil)
+	data, err = ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	c.Assert(err, IsNil)
 	c.Assert(string(data), Equals, "yo!")
 
@@ -106,7 +117,7 @@ func (s *ClientTests) TestGetNotFound(c *C) {
 }
 
 func (s *ClientTests) unique(name string) string {
-	return name + "-" + s.auth.AccessKey
+	return name + "-" + s.s3.AccessKey
 }
 
 var allRegions = []aws.Region{
@@ -123,12 +134,12 @@ func (s *ClientTests) TestRegions(c *C) {
 	errs := make(chan error, len(allRegions))
 	for _, region := range allRegions {
 		go func(r aws.Region) {
-			s := s3.New(s.auth, r)
+			s := s3.New(s.s3.Auth, r)
 			_, err := s.Bucket(name).Get("non-existent")
 			errs <- err
 		}(region)
 	}
-	for i := 0; i != len(allRegions); i++ {
+	for _ = range allRegions {
 		err := <-errs
 		if err != nil {
 			s3_err, ok := err.(*s3.Error)
@@ -240,7 +251,7 @@ var listTests = []s3.ListResp{
 }
 
 func (s *ClientTests) TestBucketList(c *C) {
-	b := s.i.Bucket(testBucket)
+	b := s.Bucket(testBucket)
 	err := b.PutBucket(s3.Private)
 	c.Assert(err, IsNil)
 
@@ -264,10 +275,10 @@ func (s *ClientTests) TestBucketList(c *C) {
 	}
 }
 
-func checksum(data []byte) string {
+func etag(data []byte) string {
 	sum := md5.New()
 	sum.Write(data)
-	return hex.EncodeToString(sum.Sum(nil))
+	return fmt.Sprintf(`"%x"`, sum.Sum(nil))
 }
 
 func checkContents(c *C, contents []s3.Key, data map[string][]byte, expected []s3.Key) {
@@ -276,6 +287,6 @@ func checkContents(c *C, contents []s3.Key, data map[string][]byte, expected []s
 		c.Check(k.Key, Equals, expected[i].Key)
 		// TODO mtime
 		c.Check(k.Size, Equals, int64(len(data[k.Key])))
-		c.Check(k.ETag, Equals, checksum(data[k.Key]))
+		c.Check(k.ETag, Equals, etag(data[k.Key]))
 	}
 }

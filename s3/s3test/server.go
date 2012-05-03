@@ -364,7 +364,7 @@ func (obj *object) s3Key() s3.Key {
 		Key: obj.name,
 		LastModified: obj.mtime.Format(timeFormat),
 		Size: int64(len(obj.data)),
-		ETag: hex.EncodeToString(obj.checksum),
+		ETag: fmt.Sprintf(`"%x"`, obj.checksum),
 		// TODO StorageClass
 		// TODO Owner
 	}

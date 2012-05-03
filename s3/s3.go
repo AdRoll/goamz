@@ -155,6 +155,10 @@ type ListResp struct {
 	Delimiter      string
 	Marker         string
 	MaxKeys        int
+	// IsTruncated is true if the results have been truncated because
+	// there are more keys and prefixes than can fit in MaxKeys.
+	// N.B. this is the opposite sense to that documented (incorrectly) in
+	// http://goo.gl/YjQTc
 	IsTruncated    bool
 	Contents       []Key
 	CommonPrefixes []string `xml:">Prefix"`
@@ -165,6 +169,8 @@ type Key struct {
 	Key          string
 	LastModified string
 	Size         int64
+	// ETag gives the hex-encoded MD5 sum of the contents,
+	// surrounded with double-quotes.
 	ETag         string
 	StorageClass string
 	Owner        Owner
@@ -237,6 +243,18 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 	result = &ListResp{}
 	_, err = b.S3.query("GET", b.Name, "", params, nil, nil, result)
 	return
+}
+
+// URL returns a URL for the given path. It is not signed,
+// so any operations accessed this way must be available
+// to anyone.
+func (b *Bucket) URL(path string) string {
+	if strings.HasPrefix(path, "/") {
+		path = "/" + b.Name + path
+	} else {
+		path = "/" + b.Name + "/" + path
+	}
+	return b.Region.S3Endpoint + path
 }
 
 // ----------------------------------------------------------------------------

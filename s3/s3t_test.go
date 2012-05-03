@@ -46,3 +46,7 @@ func (s *LocalServerSuite) TestBasicFunctionality(c *C) {
 func (s *LocalServerSuite) TestGetNotFound(c *C) {
 	s.clientTests.TestGetNotFound(c)
 }
+
+func (s *LocalServerSuite) TestBucketList(c *C) {
+	s.clientTests.TestBucketList(c)
+}
