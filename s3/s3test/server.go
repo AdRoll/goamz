@@ -299,6 +299,9 @@ func (r bucketResource) get(a *action) interface{} {
 		}
 	}
 
+	if maxKeys <= 0 {
+		maxKeys = 1000
+	}
 	resp := &s3.ListResp{
 		Name:      r.bucket.name,
 		Prefix:    prefix,
@@ -308,26 +311,34 @@ func (r bucketResource) get(a *action) interface{} {
 	}
 	var prefixes []string
 	sort.Sort(objs)
+
 	for _, obj := range objs {
-		if marker != "" && obj.name < marker {
+		if !strings.HasPrefix(obj.name, prefix) {
 			continue
 		}
-		foundDelim := false
+		name := obj.name
+		isPrefix := false
 		if delimiter != "" {
 			if i := strings.Index(obj.name[len(prefix):], delimiter); i >= 0 {
-				common := obj.name[len(prefix) : i+1]
-				if prefixes == nil || prefixes[len(prefixes)-1] != common {
-					prefixes = append(prefixes, common)
-					foundDelim = true
+				name = obj.name[: len(prefix) + len(delimiter) + i]
+				if prefixes != nil && prefixes[len(prefixes)-1] == name {
+					continue
 				}
+				isPrefix = true
 			}
 		}
-		if !foundDelim {
+		if name <= marker {
+			continue
+		}
+		if len(resp.Contents) + len(prefixes) >= maxKeys {
+			resp.IsTruncated = true
+			break
+		}
+		if isPrefix {
+			prefixes = append(prefixes, name)
+		} else {
 			// Content contains only keys not found in CommonPrefixes
 			resp.Contents = append(resp.Contents, obj.s3Key())
-		}
-		if maxKeys >= 0 && len(resp.Contents)+len(prefixes) > maxKeys {
-			break
 		}
 	}
 	resp.CommonPrefixes = prefixes

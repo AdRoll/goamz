@@ -181,14 +181,16 @@ type Key struct {
 // entry within the CommonPrefixes field.
 //
 // The marker parameter specifies the key to start with when listing objects
-// in a bucket. Amazon S3 lists objects in alphabetical order.
+// in a bucket. Amazon S3 lists objects in alphabetical order and
+// will return keys alphabetically greater than the marker.
 //
 // The max parameter specifies how many keys + common prefixes to return in
 // the response. The default is 1000.
 //
 // For example, given these keys in a bucket:
 //
-//     sample.jpg
+//     test.html
+//     test2.html
 //     photos/2006/January/sample.jpg
 //     photos/2006/February/sample2.jpg
 //     photos/2006/February/sample3.jpg
@@ -202,7 +204,7 @@ type Key struct {
 //         MaxKeys:   1000,
 //         Delimiter: "/",
 //         Contents:  []Key{
-//             {Key: "sample.html", ...},
+//             {Key: "test.html", "test2.html"},
 //         },
 //         CommonPrefixes: []string{
 //             "photos/",
@@ -218,8 +220,8 @@ type Key struct {
 //         Delimiter: "/",
 //         Prefix:    "photos/2006/",
 //         CommonPrefixes: []string{
-//             "photos/2006/feb/",
-//             "photos/2006/jan/",
+//             "photos/2006/February/",
+//             "photos/2006/January/",
 //         },
 //     }
 // 
