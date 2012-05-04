@@ -271,7 +271,7 @@ type bucketResource struct {
 // http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketGET.html
 func (r bucketResource) get(a *action) interface{} {
 	if r.bucket == nil {
-		fatalf(500, "TODO", "not found")
+		fatalf(404, "NoSuchBucket", "The specified bucket does not exist")
 	}
 	delimiter := a.req.Form.Get("delimiter")
 	marker := a.req.Form.Get("marker")
