@@ -224,6 +224,11 @@ var listTests = []s3.ListResp{
 		CommonPrefixes: []string{"photos/2006/February/", "photos/2006/January/"},
 	},
 	{
+		Delimiter:      "/",
+		Prefix:         "t",
+		CommonPrefixes: []string{"test/"},
+	},
+	{
 		Delimiter:   "/",
 		MaxKeys:     1,
 		Contents:    keys("index.html"),
@@ -254,12 +259,14 @@ func (s *ClientTests) TestBucketList(c *C) {
 	b := s.Bucket(testBucket)
 	err := b.PutBucket(s3.Private)
 	c.Assert(err, IsNil)
+	defer b.DelBucket()
 
 	objData := make(map[string][]byte)
 	for i, path := range objectNames {
 		data := []byte(strings.Repeat("a", i))
 		err := b.Put(path, data, "test/plain", s3.Private)
 		c.Assert(err, IsNil)
+		defer b.Del(path)
 		objData[path] = data
 	}
 
