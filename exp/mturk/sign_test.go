@@ -1,9 +1,9 @@
 package mturk_test
 
 import (
-	. "launchpad.net/gocheck"
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/exp/mturk"
+	. "launchpad.net/gocheck"
 )
 
 // Mechanical Turk REST authentication docs: http://goo.gl/wrzfn
@@ -17,4 +17,3 @@ func (s *S) TestBasicSignature(c *C) {
 	expected := "b/TnvzrdeD/L/EyzdFrznPXhido="
 	c.Assert(params["Signature"], Equals, expected)
 }
-

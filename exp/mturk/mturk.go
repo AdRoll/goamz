@@ -143,7 +143,7 @@ type SearchHITsResponse struct {
 // The wrapper data structure returned by CreateHIT
 // http://goo.gl/PskcX
 type CreateHITResponse struct {
-	RequestId string   `xml:"OperationRequest>RequestId"`
+	RequestId string `xml:"OperationRequest>RequestId"`
 	HIT       HIT
 }
 

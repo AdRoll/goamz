@@ -150,11 +150,15 @@ func (b *Bucket) Del(path string) error {
 
 // The ListResp type holds the results of a List bucket operation.
 type ListResp struct {
-	Name           string
-	Prefix         string
-	Delimiter      string
-	Marker         string
-	MaxKeys        int
+	Name      string
+	Prefix    string
+	Delimiter string
+	Marker    string
+	MaxKeys   int
+	// IsTruncated is true if the results have been truncated because
+	// there are more keys and prefixes than can fit in MaxKeys.
+	// N.B. this is the opposite sense to that documented (incorrectly) in
+	// http://goo.gl/YjQTc
 	IsTruncated    bool
 	Contents       []Key
 	CommonPrefixes []string `xml:">Prefix"`
@@ -165,6 +169,8 @@ type Key struct {
 	Key          string
 	LastModified string
 	Size         int64
+	// ETag gives the hex-encoded MD5 sum of the contents,
+	// surrounded with double-quotes.
 	ETag         string
 	StorageClass string
 	Owner        Owner
@@ -181,14 +187,16 @@ type Key struct {
 // entry within the CommonPrefixes field.
 //
 // The marker parameter specifies the key to start with when listing objects
-// in a bucket. Amazon S3 lists objects in alphabetical order.
+// in a bucket. Amazon S3 lists objects in alphabetical order and
+// will return keys alphabetically greater than the marker.
 //
 // The max parameter specifies how many keys + common prefixes to return in
 // the response. The default is 1000.
 //
 // For example, given these keys in a bucket:
 //
-//     sample.jpg
+//     index.html
+//     index2.html
 //     photos/2006/January/sample.jpg
 //     photos/2006/February/sample2.jpg
 //     photos/2006/February/sample3.jpg
@@ -202,7 +210,7 @@ type Key struct {
 //         MaxKeys:   1000,
 //         Delimiter: "/",
 //         Contents:  []Key{
-//             {Key: "sample.html", ...},
+//             {Key: "index.html", "index2.html"},
 //         },
 //         CommonPrefixes: []string{
 //             "photos/",
@@ -218,8 +226,8 @@ type Key struct {
 //         Delimiter: "/",
 //         Prefix:    "photos/2006/",
 //         CommonPrefixes: []string{
-//             "photos/2006/feb/",
-//             "photos/2006/jan/",
+//             "photos/2006/February/",
+//             "photos/2006/January/",
 //         },
 //     }
 // 

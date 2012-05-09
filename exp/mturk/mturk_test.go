@@ -1,10 +1,10 @@
 package mturk_test
 
 import (
-	"net/url"
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/exp/mturk"
 	. "launchpad.net/gocheck"
+	"net/url"
 )
 
 var _ = Suite(&S{})
@@ -23,8 +23,8 @@ func (s *S) SetUpSuite(c *C) {
 	}
 
 	s.mturk = &mturk.MTurk{
-	  Auth:auth,
-	  URL: u,
+		Auth: auth,
+		URL:  u,
 	}
 }
 
@@ -32,12 +32,12 @@ func (s *S) TestCreateHIT(c *C) {
 	testServer.PrepareResponse(200, nil, BasicHitResponse)
 
 	question := mturk.ExternalQuestion{
-	  ExternalURL: "http://www.amazon.com",
-	  FrameHeight: 200,
+		ExternalURL: "http://www.amazon.com",
+		FrameHeight: 200,
 	}
 	reward := mturk.Price{
-	  Amount: "0.01",
-	  CurrencyCode: "USD",
+		Amount:       "0.01",
+		CurrencyCode: "USD",
 	}
 	hit, err := s.mturk.CreateHIT("title", "description", question, reward, 1, 2, "key1,key2", 3, nil, "annotation")
 
@@ -49,7 +49,6 @@ func (s *S) TestCreateHIT(c *C) {
 	c.Assert(hit.HITId, Equals, "28J4IXKO2L927XKJTHO34OCDNASCDW")
 	c.Assert(hit.HITTypeId, Equals, "2XZ7D1X3V0FKQVW7LU51S7PKKGFKDF")
 }
-
 
 func (s *S) TestSearchHITs(c *C) {
 	testServer.PrepareResponse(200, nil, SearchHITResponse)

@@ -14,6 +14,8 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -41,7 +43,7 @@ type action struct {
 // Server is a fake S3 server for testing purposes.
 // All of the data for the server is kept in memory.
 type Server struct {
-	url     string
+	url      string
 	reqId    int
 	listener net.Listener
 	mu       sync.Mutex
@@ -80,7 +82,7 @@ func NewServer() (*Server, error) {
 	}
 	srv := &Server{
 		listener: l,
-		url:     "http://" + l.Addr().String(),
+		url:      "http://" + l.Addr().String(),
 		buckets:  make(map[string]*bucket),
 	}
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -265,9 +267,107 @@ type bucketResource struct {
 	bucket *bucket // non-nil if the bucket already exists.
 }
 
+// GET on a bucket lists the objects in the bucket.
+// http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketGET.html
 func (r bucketResource) get(a *action) interface{} {
-	fatalf(400, "NotImplemented", "GET not yet implemented on buckets")
-	return nil
+	if r.bucket == nil {
+		fatalf(404, "NoSuchBucket", "The specified bucket does not exist")
+	}
+	delimiter := a.req.Form.Get("delimiter")
+	marker := a.req.Form.Get("marker")
+	maxKeys := -1
+	if s := a.req.Form.Get("max-keys"); s != "" {
+		i, err := strconv.Atoi(s)
+		if err != nil || i < 0 {
+			fatalf(400, "invalid value for max-keys: %q", s)
+		}
+		maxKeys = i
+	}
+	prefix := a.req.Form.Get("prefix")
+	a.w.Header().Set("Content-Type", "application/xml")
+
+	if a.req.Method == "HEAD" {
+		return nil
+	}
+
+	var objs orderedObjects
+
+	// first get all matching objects and arrange them in alphabetical order.
+	for name, obj := range r.bucket.objects {
+		if strings.HasPrefix(name, prefix) {
+			objs = append(objs, obj)
+		}
+	}
+	sort.Sort(objs)
+
+	if maxKeys <= 0 {
+		maxKeys = 1000
+	}
+	resp := &s3.ListResp{
+		Name:      r.bucket.name,
+		Prefix:    prefix,
+		Delimiter: delimiter,
+		Marker:    marker,
+		MaxKeys:   maxKeys,
+	}
+
+	var prefixes []string
+	for _, obj := range objs {
+		if !strings.HasPrefix(obj.name, prefix) {
+			continue
+		}
+		name := obj.name
+		isPrefix := false
+		if delimiter != "" {
+			if i := strings.Index(obj.name[len(prefix):], delimiter); i >= 0 {
+				name = obj.name[:len(prefix)+i+len(delimiter)]
+				if prefixes != nil && prefixes[len(prefixes)-1] == name {
+					continue
+				}
+				isPrefix = true
+			}
+		}
+		if name <= marker {
+			continue
+		}
+		if len(resp.Contents)+len(prefixes) >= maxKeys {
+			resp.IsTruncated = true
+			break
+		}
+		if isPrefix {
+			prefixes = append(prefixes, name)
+		} else {
+			// Contents contains only keys not found in CommonPrefixes
+			resp.Contents = append(resp.Contents, obj.s3Key())
+		}
+	}
+	resp.CommonPrefixes = prefixes
+	return resp
+}
+
+// orderedObjects holds a slice of objects that can be sorted
+// by name.
+type orderedObjects []*object
+
+func (s orderedObjects) Len() int {
+	return len(s)
+}
+func (s orderedObjects) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s orderedObjects) Less(i, j int) bool {
+	return s[i].name < s[j].name
+}
+
+func (obj *object) s3Key() s3.Key {
+	return s3.Key{
+		Key:          obj.name,
+		LastModified: obj.mtime.Format(timeFormat),
+		Size:         int64(len(obj.data)),
+		ETag:         fmt.Sprintf(`"%x"`, obj.checksum),
+		// TODO StorageClass
+		// TODO Owner
+	}
 }
 
 // DELETE on a bucket deletes the bucket if it's not empty.
@@ -277,7 +377,7 @@ func (r bucketResource) delete(a *action) interface{} {
 		fatalf(404, "NoSuchBucket", "The specified bucket does not exist")
 	}
 	if len(b.objects) > 0 {
-		fatalf(400, "BucketNotEmpty", "The bucket you tried to delete is not empty")
+		fatalf(400, "BucketNotEmpty", "The bucket you tried to delete is not empty (contents: %v)", b.objects)
 	}
 	delete(a.srv.buckets, b.name)
 	return nil

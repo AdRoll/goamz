@@ -7,26 +7,46 @@ import (
 	. "launchpad.net/gocheck"
 )
 
-// SuiteT defines tests to run against the s3test server
-type SuiteT struct {
-	i SI
+type LocalServer struct {
+	auth   aws.Auth
+	region aws.Region
+	srv    *s3test.Server
 }
 
-var _ = Suite(&SuiteT{})
-
-func (s *SuiteT) SetUpSuite(c *C) {
+func (s *LocalServer) SetUp(c *C) {
 	srv, err := s3test.NewServer()
 	c.Assert(err, IsNil)
 	c.Assert(srv, NotNil)
 
-	s.i.s3 = s3.New(
-		aws.Auth{},
-		aws.Region{S3Endpoint: srv.URL()},
-	)
+	s.srv = srv
+	s.region = aws.Region{S3Endpoint: srv.URL()}
 }
-func (s *SuiteT) TestBasicFunctionality(c *C) {
-	s.i.TestBasicFunctionality(c)
+
+// LocalServerSuite defines tests that will run
+// against the local s3test server. It includes
+// selected tests from ClientTests;
+// when the s3test functionality is sufficient, it should
+// include all of them, and ClientTests can be simply embedded.
+type LocalServerSuite struct {
+	srv         LocalServer
+	clientTests ClientTests
 }
-func (s *SuiteT) TestGetNotFound(c *C) {
-	s.i.TestGetNotFound(c)
+
+var _ = Suite(&LocalServerSuite{})
+
+func (s *LocalServerSuite) SetUpSuite(c *C) {
+	s.srv.SetUp(c)
+	s.clientTests.s3 = s3.New(s.srv.auth, s.srv.region)
+}
+
+func (s *LocalServerSuite) TestBasicFunctionality(c *C) {
+	s.clientTests.TestBasicFunctionality(c)
+}
+
+func (s *LocalServerSuite) TestGetNotFound(c *C) {
+	s.clientTests.TestGetNotFound(c)
+}
+
+func (s *LocalServerSuite) TestBucketList(c *C) {
+	s.clientTests.TestBucketList(c)
 }
