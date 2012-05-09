@@ -298,6 +298,7 @@ func (r bucketResource) get(a *action) interface{} {
 			objs = append(objs, obj)
 		}
 	}
+	sort.Sort(objs)
 
 	if maxKeys <= 0 {
 		maxKeys = 1000
@@ -309,9 +310,8 @@ func (r bucketResource) get(a *action) interface{} {
 		Marker:    marker,
 		MaxKeys:   maxKeys,
 	}
-	var prefixes []string
-	sort.Sort(objs)
 
+	var prefixes []string
 	for _, obj := range objs {
 		if !strings.HasPrefix(obj.name, prefix) {
 			continue
@@ -320,7 +320,7 @@ func (r bucketResource) get(a *action) interface{} {
 		isPrefix := false
 		if delimiter != "" {
 			if i := strings.Index(obj.name[len(prefix):], delimiter); i >= 0 {
-				name = obj.name[:len(prefix)+len(delimiter)+i]
+				name = obj.name[:len(prefix)+i+len(delimiter)]
 				if prefixes != nil && prefixes[len(prefixes)-1] == name {
 					continue
 				}
@@ -337,7 +337,7 @@ func (r bucketResource) get(a *action) interface{} {
 		if isPrefix {
 			prefixes = append(prefixes, name)
 		} else {
-			// Content contains only keys not found in CommonPrefixes
+			// Contents contains only keys not found in CommonPrefixes
 			resp.Contents = append(resp.Contents, obj.s3Key())
 		}
 	}
@@ -377,7 +377,7 @@ func (r bucketResource) delete(a *action) interface{} {
 		fatalf(404, "NoSuchBucket", "The specified bucket does not exist")
 	}
 	if len(b.objects) > 0 {
-		fatalf(400, "BucketNotEmpty", "The bucket you tried to delete is not empty")
+		fatalf(400, "BucketNotEmpty", "The bucket you tried to delete is not empty (contents: %v)", b.objects)
 	}
 	delete(a.srv.buckets, b.name)
 	return nil

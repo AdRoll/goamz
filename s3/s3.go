@@ -195,8 +195,8 @@ type Key struct {
 //
 // For example, given these keys in a bucket:
 //
-//     test.html
-//     test2.html
+//     index.html
+//     index2.html
 //     photos/2006/January/sample.jpg
 //     photos/2006/February/sample2.jpg
 //     photos/2006/February/sample3.jpg
@@ -210,7 +210,7 @@ type Key struct {
 //         MaxKeys:   1000,
 //         Delimiter: "/",
 //         Contents:  []Key{
-//             {Key: "test.html", "test2.html"},
+//             {Key: "index.html", "index2.html"},
 //         },
 //         CommonPrefixes: []string{
 //             "photos/",
