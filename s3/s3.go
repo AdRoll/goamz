@@ -53,6 +53,10 @@ func New(auth aws.Auth, region aws.Region) *S3 {
 
 // Bucket returns a Bucket with the given name.
 func (s3 *S3) Bucket(name string) *Bucket {
+	if s3.Region.S3BucketEndpoint != "" {
+		// If passing bucket name via hostname, it is necessarily lowercased.
+		name = strings.ToLower(name)
+	}
 	return &Bucket{s3, name}
 }
 
@@ -264,18 +268,32 @@ func (s3 *S3) query(method, bucket, path string, params url.Values, headers http
 	if debug {
 		log.Printf("s3 request: method=%q; bucket=%q; path=%q resp=%T{", method, bucket, path, resp)
 	}
-	endpoint, err := url.Parse(s3.Region.S3Endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("bad S3 endpoint URL %q: %v", s3.Region.S3Endpoint, err)
+	var endpointLocation string
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
 	}
 	if bucket != "" {
-		// Use the path method to address the bucket for
-		// now.  It's easier to test.
-		if strings.HasPrefix(path, "/") {
+		endpointLocation = s3.Region.S3BucketEndpoint
+		if endpointLocation == "" {
+			// Use the path method to address the bucket.
+			endpointLocation = s3.Region.S3Endpoint
 			path = "/" + bucket + path
 		} else {
-			path = "/" + bucket + "/" + path
+			for _, c := range bucket {
+				if c == '/' || c == ':' || c == '@' {
+					// Just in case.
+					return nil, fmt.Errorf("bad S3 bucket: %q", bucket)
+				}
+			}
+			endpointLocation = fmt.Sprintf(endpointLocation, bucket)
 		}
+	}
+	if debug {
+		log.Printf("s3 endpoint: %q", endpointLocation)
+	}
+	endpoint, err := url.Parse(endpointLocation)
+	if err != nil {
+		return nil, fmt.Errorf("bad S3 endpoint URL %q: %v", endpointLocation, err)
 	}
 	if headers == nil {
 		headers = map[string][]string{}

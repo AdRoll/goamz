@@ -377,7 +377,7 @@ func (r bucketResource) delete(a *action) interface{} {
 		fatalf(404, "NoSuchBucket", "The specified bucket does not exist")
 	}
 	if len(b.objects) > 0 {
-		fatalf(400, "BucketNotEmpty", "The bucket you tried to delete is not empty (contents: %v)", b.objects)
+		fatalf(400, "BucketNotEmpty", "The bucket you tried to delete is not empty")
 	}
 	delete(a.srv.buckets, b.name)
 	return nil
