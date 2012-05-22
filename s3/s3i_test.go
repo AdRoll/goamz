@@ -57,7 +57,7 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 	}
 	s.srv.SetUp(c)
 	region := aws.USEast
-	region.S3BucketEndpoint = "https://%s.s3.amazonaws.com"
+	region.S3BucketEndpoint = "https://${bucket}.s3.amazonaws.com"
 	s.s3 = s3.New(s.srv.auth, region)
 }
 

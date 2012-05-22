@@ -285,7 +285,7 @@ func (s3 *S3) query(method, bucket, path string, params url.Values, headers http
 					return nil, fmt.Errorf("bad S3 bucket: %q", bucket)
 				}
 			}
-			endpointLocation = fmt.Sprintf(endpointLocation, bucket)
+			endpointLocation = strings.Replace(endpointLocation, "${bucket}", bucket, -1)
 		}
 	}
 	if debug {
