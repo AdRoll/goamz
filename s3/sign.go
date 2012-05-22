@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"launchpad.net/goamz/aws"
+	"log"
 	"sort"
 	"strings"
 )
@@ -81,6 +82,13 @@ func sign(auth aws.Auth, method, path string, params, headers map[string][]strin
 		if bucket != "" {
 			path = "/" + bucket + path
 		}
+	} else if strings.HasSuffix(host, ".dreamhost.com") {
+		parts := strings.Split(host, ".")
+		// -3 also strips out .objects.
+		bucket := strings.Join(parts[:len(parts)-3], ".")
+		if bucket != "" {
+			path = "/" + bucket + path
+		}
 	} else {
 		path = "/" + host + path
 	}
@@ -104,11 +112,16 @@ func sign(auth aws.Auth, method, path string, params, headers map[string][]strin
 	}
 
 	payload := method + "\n" + md5 + "\n" + ctype + "\n" + date + "\n" + xamz + path
-	//fmt.Printf("payload: %q\n", payload)
+	if debug {
+		log.Printf("Signature payload: %q\n", payload)
+	}
 	hash := hmac.New(sha1.New, []byte(auth.SecretKey))
 	hash.Write([]byte(payload))
 	signature := make([]byte, b64.EncodedLen(hash.Size()))
 	b64.Encode(signature, hash.Sum(nil))
 
 	headers["Authorization"] = []string{"AWS " + auth.AccessKey + ":" + string(signature)}
+	if debug {
+		log.Printf("Authorization header: %q", headers["Authorization"][0])
+	}
 }

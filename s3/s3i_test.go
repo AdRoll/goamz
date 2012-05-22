@@ -26,8 +26,8 @@ func (s *AmazonServer) SetUp(c *C) {
 	s.auth = auth
 }
 
-// Suite cost per run: ? USD
 var _ = Suite(&AmazonClientSuite{})
+var _ = Suite(&AmazonDomainClientSuite{})
 
 // AmazonClientSuite tests the client against a live S3 server.
 type AmazonClientSuite struct {
@@ -37,10 +37,28 @@ type AmazonClientSuite struct {
 
 func (s *AmazonClientSuite) SetUpSuite(c *C) {
 	if !*amazon {
-		c.Skip("AmazonClientSuite tests not enabled")
+		c.Skip("live tests against AWS disabled (no -amazon)")
 	}
 	s.srv.SetUp(c)
 	s.s3 = s3.New(s.srv.auth, aws.USEast)
+}
+
+// AmazonDomainClientSuite tests the client against a live S3
+// server using bucket names in the endpoint domain name rather
+// than the request path.
+type AmazonDomainClientSuite struct {
+	srv AmazonServer
+	ClientTests
+}
+
+func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
+	if !*amazon {
+		c.Skip("live tests against AWS disabled (no -amazon)")
+	}
+	s.srv.SetUp(c)
+	region := aws.USEast
+	region.S3BucketEndpoint = "https://${bucket}.s3.amazonaws.com"
+	s.s3 = s3.New(s.srv.auth, region)
 }
 
 // ClientTests defines integration tests designed to test the client.
