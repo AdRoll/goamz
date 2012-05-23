@@ -7,6 +7,7 @@
 //
 // Written by Gustavo Niemeyer <gustavo.niemeyer@canonical.com>
 //
+
 package s3
 
 import (
@@ -124,7 +125,6 @@ func (b *Bucket) Get(path string) (data []byte, err error) {
 // finished reading.
 func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
 	req := &request{
-		method: "GET",
 		bucket: b.Name,
 		path:   path,
 	}
@@ -271,7 +271,6 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 		params["max-keys"] = []string{strconv.FormatInt(int64(max), 10)}
 	}
 	req := &request{
-		method: "GET",
 		bucket: b.Name,
 		params: params,
 	}
@@ -283,16 +282,41 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 	return result, nil
 }
 
-// URL returns a URL for the given path. It is not signed,
-// so any operations accessed this way must be available
-// to anyone.
+// URL returns a non-signed URL that allows retriving path.
+// It only works if path is publicly readable.
 func (b *Bucket) URL(path string) string {
-	if strings.HasPrefix(path, "/") {
-		path = "/" + b.Name + path
-	} else {
-		path = "/" + b.Name + "/" + path
+	req := &request{
+		bucket:	b.Name,
+		path: path,
 	}
-	return b.Region.S3Endpoint + path
+	err := b.S3.prepare(req)
+	if err != nil {
+		panic(err)
+	}
+	u, err := req.url()
+	if err != nil {
+		panic(err)
+	}
+	u.RawQuery = ""
+	return u.String()
+}
+
+// SignedURL returns a signed URL that allows retriving path until expires.
+func (b *Bucket) SignedURL(path string, expires time.Time) string {
+	req := &request{
+		bucket:	b.Name,
+		path: path,
+		params: url.Values{"Expires": {strconv.FormatInt(expires.Unix(), 10)}},
+	}
+	err := b.S3.prepare(req)
+	if err != nil {
+		panic(err)
+	}
+	u, err := req.url()
+	if err != nil {
+		panic(err)
+	}
+	return u.String()
 }
 
 // ----------------------------------------------------------------------------
@@ -308,6 +332,16 @@ type request struct {
 	payload io.Reader
 }
 
+func (req *request) url() (*url.URL, error) {
+	u, err := url.Parse(req.baseurl)
+	if err != nil {
+		return nil, fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
+	}
+	u.RawQuery = req.params.Encode()
+	u.Path = req.path
+	return u, nil
+}
+
 // query prepares and runs the req request.
 // If resp is not nil, the XML data contained in the response
 // body will be unmarshalled on it.
@@ -321,6 +355,9 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
+	if req.method == "" {
+		req.method = "GET"
+	}
 	if req.params == nil {
 		req.params = make(url.Values)
 	}
@@ -364,14 +401,10 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		log.Printf("Running S3 request: %#v", req)
 	}
 
-	u, err := url.Parse(req.baseurl)
+	u, err := req.url()
 	if err != nil {
-		return nil, fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
+		return nil, err
 	}
-	if len(req.params) > 0 {
-		u.RawQuery = req.params.Encode()
-	}
-	u.Path = req.path
 
 	// Copy since headers may be mutated and we should be able to
 	// call this function twice with the same request.
