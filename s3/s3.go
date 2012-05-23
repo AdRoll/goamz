@@ -61,9 +61,6 @@ func (s3 *S3) Bucket(name string) *Bucket {
 	return &Bucket{s3, name}
 }
 
-// ----------------------------------------------------------------------------
-// Bucket-level operations.
-
 type ACL string
 
 const (
@@ -103,9 +100,6 @@ func (b *Bucket) DelBucket() error {
 	}
 	return b.S3.query(req, nil)
 }
-
-// ----------------------------------------------------------------------------
-// Operations for bucket objects.
 
 // Get retrieves an object from an S3 bucket.
 //
@@ -282,12 +276,13 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 	return result, nil
 }
 
-// URL returns a non-signed URL that allows retriving path.
-// It only works if path is publicly readable.
+// URL returns a non-signed URL that allows retriving the
+// object at path. It only works if the object is publicly
+// readable (see SignedURL).
 func (b *Bucket) URL(path string) string {
 	req := &request{
-		bucket:	b.Name,
-		path: path,
+		bucket: b.Name,
+		path:   path,
 	}
 	err := b.S3.prepare(req)
 	if err != nil {
@@ -301,11 +296,12 @@ func (b *Bucket) URL(path string) string {
 	return u.String()
 }
 
-// SignedURL returns a signed URL that allows retriving path until expires.
+// SignedURL returns a signed URL that allows anyone holding the URL
+// to retrieve the object at path. The signature is valid until expires.
 func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	req := &request{
-		bucket:	b.Name,
-		path: path,
+		bucket: b.Name,
+		path:   path,
 		params: url.Values{"Expires": {strconv.FormatInt(expires.Unix(), 10)}},
 	}
 	err := b.S3.prepare(req)
@@ -318,9 +314,6 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	}
 	return u.String()
 }
-
-// ----------------------------------------------------------------------------
-// Request dispatching logic.
 
 type request struct {
 	method  string
@@ -374,11 +367,9 @@ func (s3 *S3) prepare(req *request) error {
 			req.baseurl = s3.Region.S3Endpoint
 			req.path = "/" + req.bucket + req.path
 		} else {
-			for _, c := range req.bucket {
-				// Just in case, prevent injection.
-				if c == '/' || c == ':' || c == '@' {
-					return fmt.Errorf("bad S3 bucket: %q", req.bucket)
-				}
+			// Just in case, prevent injection.
+			if strings.IndexAny(req.bucket, "/:@") >= 0 {
+				return fmt.Errorf("bad S3 bucket: %q", req.bucket)
 			}
 			req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
 		}
@@ -413,7 +404,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		headers[k] = v
 	}
 
-	httpreq := http.Request{
+	hreq := http.Request{
 		URL:        u,
 		Method:     req.method,
 		ProtoMajor: 1,
@@ -423,29 +414,29 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 	}
 
 	if v, ok := headers["Content-Length"]; ok {
-		httpreq.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
+		hreq.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
 		delete(headers, "Content-Length")
 	}
 	if req.payload != nil {
-		httpreq.Body = ioutil.NopCloser(req.payload)
+		hreq.Body = ioutil.NopCloser(req.payload)
 	}
 
-	httpresp, err := http.DefaultClient.Do(&httpreq)
+	hresp, err := http.DefaultClient.Do(&hreq)
 	if err != nil {
 		return nil, err
 	}
 	if debug {
-		dump, _ := httputil.DumpResponse(httpresp, true)
+		dump, _ := httputil.DumpResponse(hresp, true)
 		log.Printf("} -> %s\n", dump)
 	}
-	if httpresp.StatusCode != 200 && httpresp.StatusCode != 204 {
-		return nil, buildError(httpresp)
+	if hresp.StatusCode != 200 && hresp.StatusCode != 204 {
+		return nil, buildError(hresp)
 	}
 	if resp != nil {
-		err = xml.NewDecoder(httpresp.Body).Decode(resp)
-		httpresp.Body.Close()
+		err = xml.NewDecoder(hresp.Body).Decode(resp)
+		hresp.Body.Close()
 	}
-	return httpresp, err
+	return hresp, err
 }
 
 // Error represents an error in an operation with S3.
