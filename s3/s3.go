@@ -81,8 +81,13 @@ func (b *Bucket) PutBucket(perm ACL) error {
 	headers := map[string][]string{
 		"x-amz-acl": {string(perm)},
 	}
-	_, err := b.S3.query("PUT", b.Name, "/", nil, headers, nil, nil)
-	return err
+	req := &request{
+		method:  "PUT",
+		bucket:  b.Name,
+		path:    "/",
+		headers: headers,
+	}
+	return b.S3.query(req, nil)
 }
 
 // DelBucket removes an existing S3 bucket. All objects in the bucket must
@@ -90,8 +95,12 @@ func (b *Bucket) PutBucket(perm ACL) error {
 //
 // See http://goo.gl/GoBrY for more details.
 func (b *Bucket) DelBucket() error {
-	_, err := b.S3.query("DELETE", b.Name, "/", nil, nil, nil, nil)
-	return err
+	req := &request{
+		method: "DELETE",
+		bucket: b.Name,
+		path:   "/",
+	}
+	return b.S3.query(req, nil)
 }
 
 // ----------------------------------------------------------------------------
@@ -114,10 +123,16 @@ func (b *Bucket) Get(path string) (data []byte, err error) {
 // It is the caller's responsibility to call Close on rc when
 // finished reading.
 func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
-	params := map[string][]string{}
-	headers := map[string][]string{}
-
-	resp, err := b.S3.query("GET", b.Name, path, params, headers, nil, nil)
+	req := &request{
+		method: "GET",
+		bucket: b.Name,
+		path:   path,
+	}
+	err = b.S3.prepare(req)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := b.S3.run(req, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -140,16 +155,26 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 		"Content-Type":   {contType},
 		"x-amz-acl":      {string(perm)},
 	}
-	_, err := b.S3.query("PUT", b.Name, path, nil, headers, r, nil)
-	return err
+	req := &request{
+		method:  "PUT",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+		payload: r,
+	}
+	return b.S3.query(req, nil)
 }
 
 // Del removes an object from the S3 bucket.
 //
 // See http://goo.gl/APeTt for more details.
 func (b *Bucket) Del(path string) error {
-	_, err := b.S3.query("DELETE", b.Name, path, nil, nil, nil, nil)
-	return err
+	req := &request{
+		method: "DELETE",
+		bucket: b.Name,
+		path:   path,
+	}
+	return b.S3.query(req, nil)
 }
 
 // The ListResp type holds the results of a List bucket operation.
@@ -237,16 +262,25 @@ type Key struct {
 // 
 // See http://goo.gl/YjQTc for more details.
 func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, err error) {
-	params := map[string][]string{}
-	params["prefix"] = []string{prefix}
-	params["delimiter"] = []string{delim}
-	params["marker"] = []string{marker}
+	params := map[string][]string{
+		"prefix":    {prefix},
+		"delimiter": {delim},
+		"marker":    {marker},
+	}
 	if max != 0 {
 		params["max-keys"] = []string{strconv.FormatInt(int64(max), 10)}
 	}
+	req := &request{
+		method: "GET",
+		bucket: b.Name,
+		params: params,
+	}
 	result = &ListResp{}
-	_, err = b.S3.query("GET", b.Name, "", params, nil, nil, result)
-	return
+	err = b.S3.query(req, result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // URL returns a URL for the given path. It is not signed,
@@ -264,83 +298,121 @@ func (b *Bucket) URL(path string) string {
 // ----------------------------------------------------------------------------
 // Request dispatching logic.
 
-func (s3 *S3) query(method, bucket, path string, params url.Values, headers http.Header, body io.Reader, resp interface{}) (hresp *http.Response, err error) {
-	if debug {
-		log.Printf("s3 request: method=%q; bucket=%q; path=%q resp=%T{", method, bucket, path, resp)
+type request struct {
+	method  string
+	bucket  string
+	path    string
+	params  url.Values
+	headers http.Header
+	baseurl string
+	payload io.Reader
+}
+
+// query prepares and runs the req request.
+// If resp is not nil, the XML data contained in the response
+// body will be unmarshalled on it.
+func (s3 *S3) query(req *request, resp interface{}) error {
+	err := s3.prepare(req)
+	if err == nil {
+		_, err = s3.run(req, resp)
 	}
-	var endpointLocation string
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
+	return err
+}
+
+// prepare sets up req to be delivered to S3.
+func (s3 *S3) prepare(req *request) error {
+	if req.params == nil {
+		req.params = make(url.Values)
 	}
-	if bucket != "" {
-		endpointLocation = s3.Region.S3BucketEndpoint
-		if endpointLocation == "" {
+	if req.headers == nil {
+		req.headers = make(http.Header)
+	}
+	if !strings.HasPrefix(req.path, "/") {
+		req.path = "/" + req.path
+	}
+	if req.bucket != "" {
+		req.baseurl = s3.Region.S3BucketEndpoint
+		if req.baseurl == "" {
 			// Use the path method to address the bucket.
-			endpointLocation = s3.Region.S3Endpoint
-			path = "/" + bucket + path
+			req.baseurl = s3.Region.S3Endpoint
+			req.path = "/" + req.bucket + req.path
 		} else {
-			for _, c := range bucket {
+			for _, c := range req.bucket {
+				// Just in case, prevent injection.
 				if c == '/' || c == ':' || c == '@' {
-					// Just in case.
-					return nil, fmt.Errorf("bad S3 bucket: %q", bucket)
+					return fmt.Errorf("bad S3 bucket: %q", req.bucket)
 				}
 			}
-			endpointLocation = strings.Replace(endpointLocation, "${bucket}", bucket, -1)
+			req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
 		}
 	}
-	if debug {
-		log.Printf("s3 endpoint: %q", endpointLocation)
-	}
-	endpoint, err := url.Parse(endpointLocation)
+	u, err := url.Parse(req.baseurl)
 	if err != nil {
-		return nil, fmt.Errorf("bad S3 endpoint URL %q: %v", endpointLocation, err)
+		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
-	if headers == nil {
-		headers = map[string][]string{}
-	}
-	headers["Host"] = []string{endpoint.Host}
-	headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-	sign(s3.Auth, method, path, params, headers)
+	req.headers["Host"] = []string{u.Host}
+	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
+	sign(s3.Auth, req.method, req.path, req.params, req.headers)
+	return nil
+}
 
-	endpoint.Path = path
-	if len(params) > 0 {
-		endpoint.RawQuery = params.Encode()
+// run sends req and returns the http response from the server.
+// If resp is not nil, the XML data contained in the response
+// body will be unmarshalled on it.
+func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
+	if debug {
+		log.Printf("Running S3 request: %#v", req)
 	}
 
-	req := http.Request{
-		URL:        endpoint,
-		Method:     method,
+	u, err := url.Parse(req.baseurl)
+	if err != nil {
+		return nil, fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
+	}
+	if len(req.params) > 0 {
+		u.RawQuery = req.params.Encode()
+	}
+	u.Path = req.path
+
+	// Copy since headers may be mutated and we should be able to
+	// call this function twice with the same request.
+	headers := make(http.Header, len(req.headers))
+	for k, v := range req.headers {
+		headers[k] = v
+	}
+
+	httpreq := http.Request{
+		URL:        u,
+		Method:     req.method,
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		Close:      true,
 		Header:     headers,
 	}
 
-	if body != nil {
-		req.Body = ioutil.NopCloser(body)
-	}
-
 	if v, ok := headers["Content-Length"]; ok {
-		req.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
+		httpreq.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
 		delete(headers, "Content-Length")
 	}
+	if req.payload != nil {
+		httpreq.Body = ioutil.NopCloser(req.payload)
+	}
 
-	r, err := http.DefaultClient.Do(&req)
+	httpresp, err := http.DefaultClient.Do(&httpreq)
 	if err != nil {
 		return nil, err
 	}
 	if debug {
-		dump, _ := httputil.DumpResponse(r, true)
+		dump, _ := httputil.DumpResponse(httpresp, true)
 		log.Printf("} -> %s\n", dump)
 	}
-	if r.StatusCode != 200 && r.StatusCode != 204 {
-		return nil, buildError(r)
+	if httpresp.StatusCode != 200 && httpresp.StatusCode != 204 {
+		return nil, buildError(httpresp)
 	}
 	if resp != nil {
-		err = xml.NewDecoder(r.Body).Decode(resp)
-		r.Body.Close()
+		err = xml.NewDecoder(httpresp.Body).Decode(resp)
+		httpresp.Body.Close()
 	}
-	return r, err
+	return httpresp, err
 }
 
 // Error represents an error in an operation with S3.
