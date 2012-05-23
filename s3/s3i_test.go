@@ -11,6 +11,7 @@ import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
 	. "launchpad.net/gocheck"
+	"time"
 )
 
 // AmazonServer represents an Amazon S3 server.
@@ -66,6 +67,7 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 // another type.
 type ClientTests struct {
 	s3 *s3.S3
+	authIsBroken bool
 }
 
 func (s *ClientTests) Bucket(name string) *s3.Bucket {
@@ -73,6 +75,19 @@ func (s *ClientTests) Bucket(name string) *s3.Bucket {
 }
 
 const testBucket = "goamz-test-bucket"
+
+func get(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return data, err
+}
 
 func (s *ClientTests) TestBasicFunctionality(c *C) {
 	b := s.Bucket(testBucket)
@@ -86,15 +101,12 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(string(data), Equals, "yo!")
 
-	resp, err := http.Get(b.URL("name"))
-	c.Assert(err, IsNil)
-	data, err = ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
+	data, err = get(b.URL("name"))
 	c.Assert(err, IsNil)
 	c.Assert(string(data), Equals, "yo!")
 
 	buf := bytes.NewBufferString("hey!")
-	err = b.PutReader("name2", buf, int64(buf.Len()), "text/plain", s3.PublicRead)
+	err = b.PutReader("name2", buf, int64(buf.Len()), "text/plain", s3.Private)
 	c.Assert(err, IsNil)
 
 	rc, err := b.GetReader("name2")
@@ -103,6 +115,16 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 	c.Check(err, IsNil)
 	c.Check(string(data), Equals, "hey!")
 	rc.Close()
+
+	data, err = get(b.SignedURL("name2", time.Now().Add(time.Hour)))
+	c.Assert(err, IsNil)
+	c.Assert(string(data), Equals, "hey!")
+
+	if !s.authIsBroken{
+		data, err = get(b.SignedURL("name2", time.Now().Add(-time.Hour)))
+		c.Assert(err, IsNil)
+		c.Assert(string(data), Matches, "(?s).*AccessDenied.*")
+	}
 
 	err = b.DelBucket()
 	c.Assert(err, NotNil)

@@ -37,6 +37,9 @@ var _ = Suite(&LocalServerSuite{})
 func (s *LocalServerSuite) SetUpSuite(c *C) {
 	s.srv.SetUp(c)
 	s.clientTests.s3 = s3.New(s.srv.auth, s.srv.region)
+
+	// TODO Sadly the fake server ignores auth completely right now. :-(
+	s.clientTests.authIsBroken = true
 }
 
 func (s *LocalServerSuite) TestBasicFunctionality(c *C) {

@@ -93,6 +93,14 @@ func sign(auth aws.Auth, method, path string, params, headers map[string][]strin
 		path = "/" + host + path
 	}
 
+	expires := false
+	if v, ok := params["Expires"]; ok {
+		// Query string request authentication alternative.
+		expires = true
+		date = v[0]
+		params["AWSAccessKeyId"] = []string{auth.AccessKey}
+	}
+
 	sarray = sarray[0:0]
 	for k, v := range params {
 		if s3ParamsToSign[k] {
@@ -112,16 +120,18 @@ func sign(auth aws.Auth, method, path string, params, headers map[string][]strin
 	}
 
 	payload := method + "\n" + md5 + "\n" + ctype + "\n" + date + "\n" + xamz + path
-	if debug {
-		log.Printf("Signature payload: %q\n", payload)
-	}
 	hash := hmac.New(sha1.New, []byte(auth.SecretKey))
 	hash.Write([]byte(payload))
 	signature := make([]byte, b64.EncodedLen(hash.Size()))
 	b64.Encode(signature, hash.Sum(nil))
 
-	headers["Authorization"] = []string{"AWS " + auth.AccessKey + ":" + string(signature)}
+	if expires {
+		params["Signature"] = []string{string(signature)}
+	} else {
+		headers["Authorization"] = []string{"AWS " + auth.AccessKey + ":" + string(signature)}
+	}
 	if debug {
-		log.Printf("Authorization header: %q", headers["Authorization"][0])
+		log.Printf("Signature payload: %q", payload)
+		log.Printf("Signature: %q", signature)
 	}
 }
