@@ -66,7 +66,7 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 // It is not used as a test suite in itself, but embedded within
 // another type.
 type ClientTests struct {
-	s3 *s3.S3
+	s3           *s3.S3
 	authIsBroken bool
 }
 
@@ -120,7 +120,7 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(string(data), Equals, "hey!")
 
-	if !s.authIsBroken{
+	if !s.authIsBroken {
 		data, err = get(b.SignedURL("name2", time.Now().Add(-time.Hour)))
 		c.Assert(err, IsNil)
 		c.Assert(string(data), Matches, "(?s).*AccessDenied.*")

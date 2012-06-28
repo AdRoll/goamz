@@ -61,6 +61,22 @@ func (s3 *S3) Bucket(name string) *Bucket {
 	return &Bucket{s3, name}
 }
 
+var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> 
+  <LocationConstraint>%s</LocationConstraint> 
+</CreateBucketConfiguration>`
+
+// locationConstraint returns an io.Reader specifying a LocationConstraint if 
+// required for the region.
+//
+// See http://goo.gl/bh9Kq for more details.
+func (s3 *S3) locationConstraint() io.Reader {
+	var constraint string
+	if s3.S3BucketRegion != "" {
+		constraint = fmt.Sprintf(createBucketConfiguration, s3.S3BucketRegion)
+	}
+	return strings.NewReader(constraint)
+}
+
 type ACL string
 
 const (
@@ -84,6 +100,7 @@ func (b *Bucket) PutBucket(perm ACL) error {
 		bucket:  b.Name,
 		path:    "/",
 		headers: headers,
+		payload: b.locationConstraint(),
 	}
 	return b.S3.query(req, nil)
 }
