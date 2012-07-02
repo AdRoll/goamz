@@ -18,7 +18,7 @@ import (
 //
 // See http://goo.gl/d8BP1 for more details.
 type Region struct {
-	Name             string // the canonical name of this region
+	Name             string // the canonical name of this region.
 	EC2Endpoint      string
 	S3Endpoint       string
 	S3BucketEndpoint string // Not needed by AWS S3. Use ${bucket} for bucket name.
