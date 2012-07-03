@@ -51,3 +51,9 @@ func (s *S) TestEncode(c *C) {
 	c.Assert(aws.Encode("foo"), Equals, "foo")
 	c.Assert(aws.Encode("/"), Equals, "%2F")
 }
+
+func (s *S) TestRegionsAreNamed(c *C) {
+	for n, r := range aws.Regions {
+		c.Assert(n, Equals, r.Name)
+	}
+}
