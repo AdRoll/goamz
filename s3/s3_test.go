@@ -20,7 +20,7 @@ type S struct {
 func (s *S) SetUpSuite(c *C) {
 	s.HTTPSuite.SetUpSuite(c)
 	auth := aws.Auth{"abc", "123"}
-	s.s3 = s3.New(auth, aws.Region{S3Endpoint: testServer.URL})
+	s.s3 = s3.New(auth, aws.Region{Name: aws.USEast.Name, S3Endpoint: testServer.URL})
 }
 
 // PutBucket docs: http://goo.gl/kBTCu

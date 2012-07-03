@@ -14,12 +14,12 @@ type LocalServer struct {
 }
 
 func (s *LocalServer) SetUp(c *C) {
-	srv, err := s3test.NewServer()
+	srv, err := s3test.NewServer(true)
 	c.Assert(err, IsNil)
 	c.Assert(srv, NotNil)
 
 	s.srv = srv
-	s.region = aws.Region{S3Endpoint: srv.URL()}
+	s.region = aws.Region{Name: "faux-region-1", S3Endpoint: srv.URL()}
 }
 
 // LocalServerSuite defines tests that will run

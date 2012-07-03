@@ -48,6 +48,9 @@ type Server struct {
 	listener net.Listener
 	mu       sync.Mutex
 	buckets  map[string]*bucket
+	// true if a LocationConstraint must be specified.
+	// false is LocationConstraint must not be specified.
+	needsLocation bool
 }
 
 type bucket struct {
@@ -75,15 +78,16 @@ type resource interface {
 	delete(a *action) interface{}
 }
 
-func NewServer() (*Server, error) {
+func NewServer(needsLocation bool) (*Server, error) {
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen on localhost: %v", err)
 	}
 	srv := &Server{
-		listener: l,
-		url:      "http://" + l.Addr().String(),
-		buckets:  make(map[string]*bucket),
+		listener:      l,
+		url:           "http://" + l.Addr().String(),
+		buckets:       make(map[string]*bucket),
+		needsLocation: needsLocation, // everyone except us-east-1
 	}
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		srv.serveHTTP(w, req)
@@ -390,7 +394,13 @@ func (r bucketResource) put(a *action) interface{} {
 		if !validBucketName(r.name) {
 			fatalf(400, "InvalidBucketName", "The specified bucket is not valid")
 		}
-		// TODO parse location constraint
+		loc := locationConstraint(a)
+		if loc == "" && a.srv.needsLocation {
+			fatalf(400, "InvalidRequets", "The unspecified location constraint is incompatible for the region specific endpoint this request was sent to.")
+		}
+		if loc != "" && !a.srv.needsLocation {
+			fatalf(400, "InvalidRequets", "The unspecified location constraint is incompatible for the region specific endpoint this request was sent to.")
+		}
 		// TODO validate acl
 		r.bucket = &bucket{
 			name: r.name,
@@ -575,4 +585,25 @@ func (objr objectResource) delete(a *action) interface{} {
 func (objr objectResource) post(a *action) interface{} {
 	fatalf(400, "MethodNotAllowed", "The specified method is not allowed against this resource")
 	return nil
+}
+
+type CreateBucketConfiguration struct {
+	LocationConstraint string
+}
+
+// locationConstraint parses the <CreateBucketConfiguration /> request body (if present).
+// If there is no body, an empty string will be returned.
+func locationConstraint(a *action) string {
+	var body bytes.Buffer
+	if _, err := io.Copy(&body, a.req.Body); err != nil {
+		fatalf(400, "InvalidRequest", err.Error())
+	}
+	if body.Len() == 0 {
+		return ""
+	}
+	var loc CreateBucketConfiguration
+	if err := xml.NewDecoder(&body).Decode(&loc); err != nil {
+		fatalf(400, "InvalidRequest", err.Error())
+	}
+	return loc.LocationConstraint
 }
