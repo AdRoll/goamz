@@ -72,7 +72,7 @@ var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.ama
 func (s3 *S3) locationConstraint() io.Reader {
 	constraint := ""
 	if s3.Region.Name != aws.USEast.Name {
-		// LocationConstraint is manditory for non us-east-1, but
+		// CreateBucketConfiguration is manditory for non us-east-1, but
 		// forbidden for us-east-1.
 		constraint = fmt.Sprintf(createBucketConfiguration, s3.Region.Name)
 	}
