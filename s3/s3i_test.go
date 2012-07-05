@@ -33,7 +33,6 @@ var _ = Suite(&AmazonDomainClientSuite{Region: aws.USEast})
 
 // eu-west-1 tests
 var _ = Suite(&AmazonClientSuite{Region: aws.EUWest})
-var _ = Suite(&AmazonDomainClientSuite{Region: aws.EUWest})
 
 // AmazonClientSuite tests the client against a live S3 server.
 type AmazonClientSuite struct {
@@ -78,7 +77,9 @@ type ClientTests struct {
 }
 
 func (s *ClientTests) Bucket(name string) *s3.Bucket {
-	return s.s3.Bucket(fmt.Sprintf("%s-%s-%s", name, s.s3.Region.Name, s.s3.Auth.AccessKey))
+	// bucket name must not container upper case leters
+	// us-east-1 doesn't care, but other regions like eu-west-1 do.
+	return s.s3.Bucket(fmt.Sprintf("%s-%s-%s", name, s.s3.Region.Name, strings.ToLower(s.s3.Auth.AccessKey)))
 }
 
 const testBucket = "goamz"

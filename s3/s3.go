@@ -394,7 +394,6 @@ func (s3 *S3) prepare(req *request) error {
 		}
 	}
 	u, err := url.Parse(req.baseurl)
-	fmt.Println(u)
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
