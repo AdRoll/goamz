@@ -14,7 +14,7 @@ type LocalServer struct {
 }
 
 func (s *LocalServer) SetUp(c *C) {
-	srv, err := s3test.NewServer(true)
+	srv, err := s3test.NewServer()
 	c.Assert(err, IsNil)
 	c.Assert(srv, NotNil)
 

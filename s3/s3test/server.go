@@ -48,9 +48,6 @@ type Server struct {
 	listener net.Listener
 	mu       sync.Mutex
 	buckets  map[string]*bucket
-	// true if a LocationConstraint must be specified.
-	// false is LocationConstraint must not be specified.
-	needsLocation bool
 }
 
 type bucket struct {
@@ -78,16 +75,15 @@ type resource interface {
 	delete(a *action) interface{}
 }
 
-func NewServer(needsLocation bool) (*Server, error) {
+func NewServer() (*Server, error) {
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen on localhost: %v", err)
 	}
 	srv := &Server{
-		listener:      l,
-		url:           "http://" + l.Addr().String(),
-		buckets:       make(map[string]*bucket),
-		needsLocation: needsLocation, // everyone except us-east-1
+		listener: l,
+		url:      "http://" + l.Addr().String(),
+		buckets:  make(map[string]*bucket),
 	}
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		srv.serveHTTP(w, req)
@@ -394,11 +390,7 @@ func (r bucketResource) put(a *action) interface{} {
 		if !validBucketName(r.name) {
 			fatalf(400, "InvalidBucketName", "The specified bucket is not valid")
 		}
-		loc := locationConstraint(a)
-		if loc == "" && a.srv.needsLocation {
-			fatalf(400, "InvalidRequets", "The unspecified location constraint is incompatible for the region specific endpoint this request was sent to.")
-		}
-		if loc != "" && !a.srv.needsLocation {
+		if loc := locationConstraint(a); loc == "" {
 			fatalf(400, "InvalidRequets", "The unspecified location constraint is incompatible for the region specific endpoint this request was sent to.")
 		}
 		// TODO validate acl
