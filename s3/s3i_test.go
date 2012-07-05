@@ -64,6 +64,7 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 	}
 	s.srv.SetUp(c)
 	region := s.Region
+	// TODO(dfc) this subsitution only works for us-east-1
 	region.S3BucketEndpoint = "https://${bucket}.s3.amazonaws.com"
 	s.s3 = s3.New(s.srv.auth, region)
 }
@@ -77,7 +78,7 @@ type ClientTests struct {
 }
 
 func (s *ClientTests) Bucket(name string) *s3.Bucket {
-	// bucket name must not container upper case leters
+	// bucket name must not contain upper case leters,
 	// us-east-1 doesn't care, but other regions like eu-west-1 do.
 	return s.s3.Bucket(fmt.Sprintf("%s-%s-%s", name, s.s3.Region.Name, strings.ToLower(s.s3.Auth.AccessKey)))
 }
