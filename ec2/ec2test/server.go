@@ -520,7 +520,7 @@ func (inst *Instance) ec2instance() ec2.Instance {
 		InstanceId:   inst.id,
 		InstanceType: inst.instType,
 		ImageId:      inst.imageId,
-		DNSName:      `localhost`,
+		DNSName:      fmt.Sprintf("%s.example.com", inst.id),
 		// TODO the rest
 	}
 }
