@@ -54,11 +54,9 @@ func New(auth aws.Auth, region aws.Region) *S3 {
 
 // Bucket returns a Bucket with the given name.
 func (s3 *S3) Bucket(name string) *Bucket {
-	if s3.Region.S3BucketEndpoint != "" {
-		// If passing bucket name via hostname, it is necessarily lowercased.
-		name = strings.ToLower(name)
-	}
-	return &Bucket{s3, name}
+	// Some regions outside the US do not permit upper case bucket names, as
+	// they cannot be legal domain name components.
+	return &Bucket{s3, strings.ToLower(name)}
 }
 
 var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> 

@@ -31,9 +31,8 @@ func (s *AmazonServer) SetUp(c *C) {
 var _ = Suite(&AmazonClientSuite{Region: aws.USEast})
 var _ = Suite(&AmazonDomainClientSuite{Region: aws.USEast})
 
-// eu-west-1 tests (disabled)
-// https://bugs.launchpad.net/goamz/+bug/1021515
-// var _ = Suite(&AmazonClientSuite{Region: aws.EUWest})
+// eu-west-1 tests
+var _ = Suite(&AmazonClientSuite{Region: aws.EUWest})
 
 // AmazonClientSuite tests the client against a live S3 server.
 type AmazonClientSuite struct {
