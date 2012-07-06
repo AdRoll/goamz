@@ -55,7 +55,7 @@ func New(auth aws.Auth, region aws.Region) *S3 {
 // Bucket returns a Bucket with the given name.
 func (s3 *S3) Bucket(name string) *Bucket {
 	if s3.Region.S3BucketEndpoint != "" || s3.Region.S3LowercaseBucket {
-    		name = strings.ToLower(name)
+		name = strings.ToLower(name)
 	}
 	return &Bucket{s3, strings.ToLower(name)}
 }
