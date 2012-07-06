@@ -27,11 +27,17 @@ func (s *AmazonServer) SetUp(c *C) {
 	s.auth = auth
 }
 
-var _ = Suite(&AmazonClientSuite{})
-var _ = Suite(&AmazonDomainClientSuite{})
+// us-east-1 classic tests
+var _ = Suite(&AmazonClientSuite{Region: aws.USEast})
+var _ = Suite(&AmazonDomainClientSuite{Region: aws.USEast})
+
+// eu-west-1 tests (disabled)
+// https://bugs.launchpad.net/goamz/+bug/1021515
+// var _ = Suite(&AmazonClientSuite{Region: aws.EUWest})
 
 // AmazonClientSuite tests the client against a live S3 server.
 type AmazonClientSuite struct {
+	aws.Region
 	srv AmazonServer
 	ClientTests
 }
@@ -41,13 +47,14 @@ func (s *AmazonClientSuite) SetUpSuite(c *C) {
 		c.Skip("live tests against AWS disabled (no -amazon)")
 	}
 	s.srv.SetUp(c)
-	s.s3 = s3.New(s.srv.auth, aws.USEast)
+	s.s3 = s3.New(s.srv.auth, s.Region)
 }
 
 // AmazonDomainClientSuite tests the client against a live S3
 // server using bucket names in the endpoint domain name rather
 // than the request path.
 type AmazonDomainClientSuite struct {
+	aws.Region
 	srv AmazonServer
 	ClientTests
 }
@@ -57,7 +64,8 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 		c.Skip("live tests against AWS disabled (no -amazon)")
 	}
 	s.srv.SetUp(c)
-	region := aws.USEast
+	region := s.Region
+	// TODO(dfc) this subsitution only works for us-east-1
 	region.S3BucketEndpoint = "https://${bucket}.s3.amazonaws.com"
 	s.s3 = s3.New(s.srv.auth, region)
 }
@@ -66,12 +74,14 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 // It is not used as a test suite in itself, but embedded within
 // another type.
 type ClientTests struct {
-	s3 *s3.S3
+	s3           *s3.S3
 	authIsBroken bool
 }
 
 func (s *ClientTests) Bucket(name string) *s3.Bucket {
-	return s.s3.Bucket(name + "-" + s.s3.Auth.AccessKey)
+	// Creating and deleting buckets across regions can fail due to namespace collision.
+	// Use the region name to ensure the final bucket name does not clash.
+	return s.s3.Bucket(fmt.Sprintf("%s-%s-%s", name, s.s3.Region.Name, s.s3.Auth.AccessKey))
 }
 
 const testBucket = "goamz-test-bucket"
@@ -120,7 +130,7 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(string(data), Equals, "hey!")
 
-	if !s.authIsBroken{
+	if !s.authIsBroken {
 		data, err = get(b.SignedURL("name2", time.Now().Add(-time.Hour)))
 		c.Assert(err, IsNil)
 		c.Assert(string(data), Matches, "(?s).*AccessDenied.*")
@@ -160,26 +170,18 @@ func (s *ClientTests) unique(name string) string {
 	return name + "-" + s.s3.AccessKey
 }
 
-var allRegions = []aws.Region{
-	aws.USEast,
-	aws.USWest,
-	aws.EUWest,
-	aws.APSoutheast,
-	aws.APNortheast,
-}
-
 // Communicate with all endpoints to see if they are alive.
 func (s *ClientTests) TestRegions(c *C) {
 	name := s.unique("goamz-region-test")
-	errs := make(chan error, len(allRegions))
-	for _, region := range allRegions {
+	errs := make(chan error, len(aws.Regions))
+	for _, region := range aws.Regions {
 		go func(r aws.Region) {
 			s := s3.New(s.s3.Auth, r)
 			_, err := s.Bucket(name).Get("non-existent")
 			errs <- err
 		}(region)
 	}
-	for _ = range allRegions {
+	for _ = range aws.Regions {
 		err := <-errs
 		if err != nil {
 			s3_err, ok := err.(*s3.Error)

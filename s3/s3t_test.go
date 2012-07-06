@@ -19,7 +19,11 @@ func (s *LocalServer) SetUp(c *C) {
 	c.Assert(srv, NotNil)
 
 	s.srv = srv
-	s.region = aws.Region{S3Endpoint: srv.URL()}
+	s.region = aws.Region{
+		Name:                 "faux-region-1",
+		S3Endpoint:           srv.URL(),
+		S3LocationConstraint: true, // s3test server requires a LocationConstraint
+	}
 }
 
 // LocalServerSuite defines tests that will run
