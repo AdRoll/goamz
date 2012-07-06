@@ -23,7 +23,7 @@ type Region struct {
 	S3Endpoint           string
 	S3BucketEndpoint     string // Not needed by AWS S3. Use ${bucket} for bucket name.
 	S3LocationConstraint bool   // true if this region requires a LocationConstraint declaration.
-	S3LowercaseBucket	bool	// true if the region requires bucket names to be lower case.
+	S3LowercaseBucket    bool   // true if the region requires bucket names to be lower case.
 	SDBEndpoint          string
 	SNSEndpoint          string
 	SQSEndpoint          string
