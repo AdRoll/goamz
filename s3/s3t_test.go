@@ -20,8 +20,8 @@ func (s *LocalServer) SetUp(c *C) {
 
 	s.srv = srv
 	s.region = aws.Region{
-		Name: "faux-region-1", 
-		S3Endpoint: srv.URL(),
+		Name:                 "faux-region-1",
+		S3Endpoint:           srv.URL(),
 		S3LocationConstraint: true, // s3test server requires a LocationConstraint
 	}
 }
