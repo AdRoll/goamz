@@ -57,7 +57,7 @@ func (s3 *S3) Bucket(name string) *Bucket {
 	if s3.Region.S3BucketEndpoint != "" || s3.Region.S3LowercaseBucket {
 		name = strings.ToLower(name)
 	}
-	return &Bucket{s3, strings.ToLower(name)}
+	return &Bucket{s3, name}
 }
 
 var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> 
