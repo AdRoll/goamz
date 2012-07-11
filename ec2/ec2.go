@@ -123,7 +123,7 @@ func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 	if err != nil {
 		return err
 	}
-	sign(ec2.Auth, "GET", "/", params, endpoint.Host)
+	sign(ec2.Auth, "GET", endpoint.Path, params, endpoint.Host)
 	endpoint.RawQuery = multimap(params).Encode()
 	if debug {
 		log.Printf("get { %v } -> {\n", endpoint.String())
