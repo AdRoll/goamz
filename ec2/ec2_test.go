@@ -536,17 +536,3 @@ func (s *S) TestRebootInstances(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(resp.RequestId, Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
-
-
-func (s *S) TestSignatureWithEndpointPath(c *C) {
-	testServer.PrepareResponse(200, nil, RebootInstancesExample)
-
-	// https://bugs.launchpad.net/goamz/+bug/1022749
-	ec2 := ec2.New(s.ec2.Auth, aws.Region{EC2Endpoint: testServer.URL + "/services/Cloud"})
-
-	_, err := ec2.RebootInstances("i-10a64379")
-	c.Assert(err, IsNil)
-
-	req := testServer.WaitRequest()
-	c.Assert(req.Form["Signature"], DeepEquals, []string{"gBcpUN4e7gLMhEvaECmaOyjqbvvAUweCTObYU2b/HtU="})
-}
