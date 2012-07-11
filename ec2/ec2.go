@@ -116,14 +116,16 @@ type xmlErrors struct {
 	Errors    []Error `xml:"Errors>Error"`
 }
 
+var timeNow = time.Now
+
 func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 	params["Version"] = "2011-12-15"
-	params["Timestamp"] = time.Now().In(time.UTC).Format(time.RFC3339)
+	params["Timestamp"] = timeNow().In(time.UTC).Format(time.RFC3339)
 	endpoint, err := url.Parse(ec2.Region.EC2Endpoint)
 	if err != nil {
 		return err
 	}
-	sign(ec2.Auth, "GET", "/", params, endpoint.Host)
+	sign(ec2.Auth, "GET", endpoint.Path, params, endpoint.Host)
 	endpoint.RawQuery = multimap(params).Encode()
 	if debug {
 		log.Printf("get { %v } -> {\n", endpoint.String())
