@@ -31,6 +31,9 @@ func (s *AmazonServer) SetUp(c *C) {
 var _ = Suite(&AmazonClientSuite{Region: aws.USEast})
 var _ = Suite(&AmazonDomainClientSuite{Region: aws.USEast})
 
+// us-west-1 tests
+var _ = Suite(&AmazonClientSuite{Region: aws.USWest})
+
 // eu-west-1 tests
 var _ = Suite(&AmazonClientSuite{Region: aws.EUWest})
 
