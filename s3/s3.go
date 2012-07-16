@@ -376,6 +376,7 @@ func (s3 *S3) prepare(req *request) error {
 	if !strings.HasPrefix(req.path, "/") {
 		req.path = "/" + req.path
 	}
+	canonical_path := req.path
 	if req.bucket != "" {
 		req.baseurl = s3.Region.S3BucketEndpoint
 		if req.baseurl == "" {
@@ -389,6 +390,7 @@ func (s3 *S3) prepare(req *request) error {
 			}
 			req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
 		}
+		canonical_path = "/" + req.bucket + canonical_path
 	}
 	u, err := url.Parse(req.baseurl)
 	if err != nil {
@@ -396,7 +398,7 @@ func (s3 *S3) prepare(req *request) error {
 	}
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-	sign(s3.Auth, req.method, req.path, req.params, req.headers)
+	sign(s3.Auth, req.method, canonical_path, req.params, req.headers)
 	return nil
 }
 
