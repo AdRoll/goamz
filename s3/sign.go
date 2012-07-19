@@ -37,7 +37,7 @@ var s3ParamsToSign = map[string]bool{
 	"response-content-encoding":    true,
 }
 
-func sign(auth aws.Auth, method, canonical_path string, params, headers map[string][]string) {
+func sign(auth aws.Auth, method, canonicalPath string, params, headers map[string][]string) {
 	var md5, ctype, date, xamz string
 	var xamzDate bool
 	var sarray []string
@@ -91,10 +91,10 @@ func sign(auth aws.Auth, method, canonical_path string, params, headers map[stri
 	}
 	if len(sarray) > 0 {
 		sort.StringSlice(sarray).Sort()
-		canonical_path = canonical_path + "?" + strings.Join(sarray, "&")
+		canonicalPath = canonicalPath + "?" + strings.Join(sarray, "&")
 	}
 
-	payload := method + "\n" + md5 + "\n" + ctype + "\n" + date + "\n" + xamz + canonical_path
+	payload := method + "\n" + md5 + "\n" + ctype + "\n" + date + "\n" + xamz + canonicalPath
 	hash := hmac.New(sha1.New, []byte(auth.SecretKey))
 	hash.Write([]byte(payload))
 	signature := make([]byte, b64.EncodedLen(hash.Size()))
