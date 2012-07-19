@@ -37,15 +37,13 @@ var s3ParamsToSign = map[string]bool{
 	"response-content-encoding":    true,
 }
 
-func sign(auth aws.Auth, method, path string, params, headers map[string][]string) {
-	var host, md5, ctype, date, xamz string
+func sign(auth aws.Auth, method, canonicalPath string, params, headers map[string][]string) {
+	var md5, ctype, date, xamz string
 	var xamzDate bool
 	var sarray []string
 	for k, v := range headers {
 		k = strings.ToLower(k)
 		switch k {
-		case "host":
-			host = v[0]
 		case "content-md5":
 			md5 = v[0]
 		case "content-type":
@@ -68,29 +66,6 @@ func sign(auth aws.Auth, method, path string, params, headers map[string][]strin
 	if len(sarray) > 0 {
 		sort.StringSlice(sarray).Sort()
 		xamz = strings.Join(sarray, "\n") + "\n"
-	}
-
-	colon := strings.Index(host, ":")
-	if colon != -1 {
-		host = host[:colon]
-	}
-
-	if strings.HasSuffix(host, ".amazonaws.com") {
-		parts := strings.Split(host, ".")
-		// -3 also strips out .s3. (or .s3-us-west-1., etc)
-		bucket := strings.Join(parts[:len(parts)-3], ".")
-		if bucket != "" {
-			path = "/" + bucket + path
-		}
-	} else if strings.HasSuffix(host, ".dreamhost.com") {
-		parts := strings.Split(host, ".")
-		// -3 also strips out .objects.
-		bucket := strings.Join(parts[:len(parts)-3], ".")
-		if bucket != "" {
-			path = "/" + bucket + path
-		}
-	} else {
-		path = "/" + host + path
 	}
 
 	expires := false
@@ -116,10 +91,10 @@ func sign(auth aws.Auth, method, path string, params, headers map[string][]strin
 	}
 	if len(sarray) > 0 {
 		sort.StringSlice(sarray).Sort()
-		path = path + "?" + strings.Join(sarray, "&")
+		canonicalPath = canonicalPath + "?" + strings.Join(sarray, "&")
 	}
 
-	payload := method + "\n" + md5 + "\n" + ctype + "\n" + date + "\n" + xamz + path
+	payload := method + "\n" + md5 + "\n" + ctype + "\n" + date + "\n" + xamz + canonicalPath
 	hash := hmac.New(sha1.New, []byte(auth.SecretKey))
 	hash.Write([]byte(payload))
 	signature := make([]byte, b64.EncodedLen(hash.Size()))

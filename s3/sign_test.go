@@ -12,7 +12,7 @@ var testAuth = aws.Auth{"0PN5J17HBGZHT7JJ3X82", "uV3F3YluFJax1cknvbcGwgjvx4QpvB+
 
 func (s *S) TestSignExampleObjectGet(c *C) {
 	method := "GET"
-	path := "/photos/puppy.jpg"
+	path := "/johnsmith/photos/puppy.jpg"
 	headers := map[string][]string{
 		"Host": {"johnsmith.s3.amazonaws.com"},
 		"Date": {"Tue, 27 Mar 2007 19:36:42 +0000"},
@@ -24,7 +24,7 @@ func (s *S) TestSignExampleObjectGet(c *C) {
 
 func (s *S) TestSignExampleObjectPut(c *C) {
 	method := "PUT"
-	path := "/photos/puppy.jpg"
+	path := "/johnsmith/photos/puppy.jpg"
 	headers := map[string][]string{
 		"Host":           {"johnsmith.s3.amazonaws.com"},
 		"Date":           {"Tue, 27 Mar 2007 21:15:45 +0000"},
@@ -38,7 +38,7 @@ func (s *S) TestSignExampleObjectPut(c *C) {
 
 func (s *S) TestSignExampleList(c *C) {
 	method := "GET"
-	path := "/"
+	path := "/johnsmith/"
 	params := map[string][]string{
 		"prefix":   {"photos"},
 		"max-keys": {"50"},
@@ -56,7 +56,7 @@ func (s *S) TestSignExampleList(c *C) {
 
 func (s *S) TestSignExampleFetch(c *C) {
 	method := "GET"
-	path := "/"
+	path := "/johnsmith/"
 	params := map[string][]string{
 		"acl": {""},
 	}
@@ -86,7 +86,7 @@ func (s *S) TestSignExampleDelete(c *C) {
 
 func (s *S) TestSignExampleUpload(c *C) {
 	method := "PUT"
-	path := "/db-backup.dat.gz"
+	path := "/static.johnsmith.net/db-backup.dat.gz"
 	params := map[string][]string{}
 	headers := map[string][]string{
 		"Host":                         {"static.johnsmith.net:8080"},
