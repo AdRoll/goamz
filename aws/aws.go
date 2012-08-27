@@ -53,6 +53,18 @@ var USWest = Region{
 	"https://sqs.us-west-1.amazonaws.com",
 }
 
+var USWest2 = Region{
+	"us-west-2",
+	"https://ec2.us-west-2.amazonaws.com",
+	"https://s3-us-west-2.amazonaws.com",
+	"",
+	true,
+	true,
+	"https://sdb.us-west-2.amazonaws.com",
+	"https://sns.us-west-2.amazonaws.com",
+	"https://sqs.us-west-2.amazonaws.com",
+}
+
 var EUWest = Region{
 	"eu-west-1",
 	"https://ec2.eu-west-1.amazonaws.com",
@@ -95,6 +107,7 @@ var Regions = map[string]Region{
 	EUWest.Name:      EUWest,
 	USEast.Name:      USEast,
 	USWest.Name:      USWest,
+	USWest2.Name:     USWest2,
 }
 
 type Auth struct {
