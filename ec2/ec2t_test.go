@@ -335,7 +335,7 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 		},
 		// check that specifying a non-existent instance id gives an error
 		{
-			instanceIds: append(ids(0), "i-deadbeef12345"),
+			instanceIds: append(ids(0), "i-deadbeef"),
 			err:         `.*\(InvalidInstanceID\.NotFound\)`,
 		},
 		// check that a filter allowed both instances returns both of them.
@@ -444,6 +444,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		resp, err := s.ec2.CreateSecurityGroup(uniqueName(s.ec2, fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
 		c.Assert(err, IsNil)
 		g[i] = resp.SecurityGroup
+		c.Logf("group %d: %v", i, g[i])
 		defer s.ec2.DeleteSecurityGroup(g[i])
 	}
 	perms := [][]ec2.IPPerm{
