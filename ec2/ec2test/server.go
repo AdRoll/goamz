@@ -233,20 +233,20 @@ func NewServer() (*Server, error) {
 		permKey{
 			protocol: "icmp",
 			fromPort: -1,
-			toPort: -1,
-			group: g,
+			toPort:   -1,
+			group:    g,
 		}: true,
 		permKey{
 			protocol: "tcp",
 			fromPort: 0,
-			toPort: 65535,
-			group: g,
+			toPort:   65535,
+			group:    g,
 		}: true,
 		permKey{
 			protocol: "udp",
 			fromPort: 0,
-			toPort: 65535,
-			group: g,
+			toPort:   65535,
+			group:    g,
 		}: true,
 	}
 	srv.groups[g.id] = g

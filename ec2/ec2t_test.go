@@ -444,7 +444,7 @@ func namesOnly(gs []ec2.SecurityGroup) []ec2.SecurityGroup {
 
 func (s *ServerTests) TestGroupFiltering(c *C) {
 	g := make([]ec2.SecurityGroup, 4)
-	for i := range g[0:3]{
+	for i := range g[0:3] {
 		resp, err := s.ec2.CreateSecurityGroup(uniqueName(s.ec2, fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
 		c.Assert(err, IsNil)
 		g[i] = resp.SecurityGroup
