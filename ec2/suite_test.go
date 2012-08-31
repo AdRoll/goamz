@@ -65,10 +65,8 @@ func (s *TestHTTPServer) Start() {
 		if err == nil && resp.StatusCode == 202 {
 			break
 		}
-		fmt.Fprintf(os.Stderr, "\nWaiting for fake server to be up... ")
 		time.Sleep(1e8)
 	}
-	fmt.Fprintf(os.Stderr, "done\n\n")
 	s.WaitRequest() // Consume dummy request.
 }
 

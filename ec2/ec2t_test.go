@@ -317,75 +317,70 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 	}
 
 	tests := []struct {
+		about       string
 		instanceIds []string     // instanceIds argument to Instances method.
 		filters     []filterSpec // filters argument to Instances method.
 		resultIds   []string     // set of instance ids of expected results.
 		allowExtra  bool         // resultIds may be incomplete.
 		err         string       // expected error.
 	}{
-		// check that Instances returns all instances.
 		{
+			about:      "check that Instances returns all instances",
 			resultIds:  ids(0, 1, 2),
 			allowExtra: true,
-		},
-		// check that specifying two instance ids returns them.
-		{
+		}, {
+			about:       "check that specifying two instance ids returns them",
 			instanceIds: ids(0, 2),
 			resultIds:   ids(0, 2),
-		},
-		// check that specifying a non-existent instance id gives an error
-		{
-			instanceIds: append(ids(0), "i-deadbeef12345"),
+		}, {
+			about:       "check that specifying a non-existent instance id gives an error",
+			instanceIds: append(ids(0), "i-deadbeef"),
 			err:         `.*\(InvalidInstanceID\.NotFound\)`,
-		},
-		// check that a filter allowed both instances returns both of them.
-		{
+		}, {
+			about: "check that a filter allowed both instances returns both of them",
 			filters: []filterSpec{
 				{"instance-id", ids(0, 2)},
 			},
 			resultIds: ids(0, 2),
-		},
-		// check that a filter allowing only one instance returns it.
-		{
+		}, {
+			about: "check that a filter allowing only one instance returns it",
 			filters: []filterSpec{
 				{"instance-id", ids(1)},
 			},
 			resultIds: ids(1),
-		},
-		// check that a filter allowing no instances returns none
-		{
+		}, {
+			about: "check that a filter allowing no instances returns none",
 			filters: []filterSpec{
 				{"instance-id", []string{"i-deadbeef12345"}},
 			},
-		},
-		{
+		}, {
+			about: "check that filtering on group id works",
 			filters: []filterSpec{
 				{"group-id", []string{group1.Id}},
 			},
 			resultIds: ids(0, 1),
-		},
-		{
+		}, {
+			about: "check that filtering on group name works",
 			filters: []filterSpec{
 				{"group-name", []string{group1.Name}},
 			},
 			resultIds: ids(0, 1),
-		},
-		{
+		}, {
+			about: "check that filtering on image id works",
 			filters: []filterSpec{
 				{"image-id", []string{imageId}},
 			},
 			resultIds:  ids(0, 1),
 			allowExtra: true,
-		},
-		// combination filters.
-		{
+		}, {
+			about: "combination filters 1",
 			filters: []filterSpec{
 				{"image-id", []string{imageId, imageId2}},
 				{"group-name", []string{group1.Name}},
 			},
 			resultIds: ids(0, 1),
-		},
-		{
+		}, {
+			about: "combination filters 2",
 			filters: []filterSpec{
 				{"image-id", []string{imageId2}},
 				{"group-name", []string{group1.Name}},
@@ -393,7 +388,7 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 		},
 	}
 	for i, t := range tests {
-		c.Logf("test %d", i)
+		c.Logf("%d. %s", i, t.about)
 		var f *ec2.Filter
 		if t.filters != nil {
 			f = ec2.NewFilter()
@@ -439,13 +434,19 @@ func namesOnly(gs []ec2.SecurityGroup) []ec2.SecurityGroup {
 }
 
 func (s *ServerTests) TestGroupFiltering(c *C) {
-	g := make([]ec2.SecurityGroup, 3)
-	for i := range g {
+	g := make([]ec2.SecurityGroup, 4)
+	for i := range g[0:3] {
 		resp, err := s.ec2.CreateSecurityGroup(uniqueName(s.ec2, fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
 		c.Assert(err, IsNil)
 		g[i] = resp.SecurityGroup
+		c.Logf("group %d: %v", i, g[i])
 		defer s.ec2.DeleteSecurityGroup(g[i])
 	}
+	// Get the default group.
+	resp, err := s.ec2.SecurityGroups([]ec2.SecurityGroup{{Name: "default"}}, nil)
+	c.Assert(err, IsNil)
+	g[3] = resp.Groups[0].SecurityGroup
+
 	perms := [][]ec2.IPPerm{
 		{{
 			Protocol:  "tcp",
@@ -479,6 +480,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 	}
 
 	type groupTest struct {
+		about      string
 		groups     []ec2.SecurityGroup // groupIds argument to SecurityGroups method.
 		filters    []filterSpec        // filters argument to SecurityGroups method.
 		results    []ec2.SecurityGroup // set of expected result groups.
@@ -487,89 +489,59 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 	}
 	filterCheck := func(name, val string, gs []ec2.SecurityGroup) groupTest {
 		return groupTest{
-			nil,
-			[]filterSpec{{name, []string{val}}},
-			gs,
-			false,
-			"",
+			about:   "filter check " + name,
+			filters: []filterSpec{{name, []string{val}}},
+			results: gs,
 		}
 	}
 	tests := []groupTest{
-		// check that SecurityGroups returns all groups.
 		{
-			nil,
-			nil,
-			groups(0, 1, 2),
-			true,
-			"",
-		},
-		// check that specifying two group ids returns them.
-		{
-			idsOnly(groups(0, 2)),
-			nil,
-			groups(0, 2),
-			false,
-			"",
-		},
-		// check that specifying names only works
-		{
-			namesOnly(groups(0, 2)),
-			nil,
-			groups(0, 2),
-			false,
-			"",
-		},
-		// check that specifying a non-existent group id gives an error
-		{
-			append(groups(0), ec2.SecurityGroup{Id: "sg-eeeeeeeee"}),
-			nil,
-			nil,
-			false,
-			`.*\(InvalidGroup\.NotFound\)`,
-		},
-		// check that a filter allowed two groups returns both of them.
-		{
-			nil,
-			[]filterSpec{
+			about:      "check that SecurityGroups returns all groups",
+			groups:     groups(0, 1, 2),
+			allowExtra: true,
+		}, {
+			about:   "check that specifying two group ids returns them",
+			groups:  idsOnly(groups(0, 2)),
+			results: groups(0, 2),
+		}, {
+			about:   "check that specifying names only works",
+			groups:  namesOnly(groups(0, 2)),
+			results: groups(0, 2),
+		}, {
+			about:  "check that specifying a non-existent group id gives an error",
+			groups: append(groups(0), ec2.SecurityGroup{Id: "sg-eeeeeeeee"}),
+			err:    `.*\(InvalidGroup\.NotFound\)`,
+		}, {
+			about: "check that a filter allowed two groups returns both of them",
+			filters: []filterSpec{
 				{"group-id", []string{g[0].Id, g[2].Id}},
 			},
-			groups(0, 2),
-			false,
-			"",
+			results: groups(0, 2),
 		},
-		// check that the previous filter works when specifying a list
-		// of ids.
 		{
-			groups(1, 2),
-			[]filterSpec{
+			about:  "check that the previous filter works when specifying a list of ids",
+			groups: groups(1, 2),
+			filters: []filterSpec{
 				{"group-id", []string{g[0].Id, g[2].Id}},
 			},
-			groups(2),
-			false,
-			"",
-		},
-		// check that a filter allowing no groups returns none
-		{
-			nil,
-			[]filterSpec{
+			results: groups(2),
+		}, {
+			about: "check that a filter allowing no groups returns none",
+			filters: []filterSpec{
 				{"group-id", []string{"sg-eeeeeeeee"}},
 			},
-			nil,
-			false,
-			"",
 		},
-		// test the various other group filters
 		filterCheck("description", "testdescription1", groups(1)),
 		filterCheck("group-name", g[2].Name, groups(2)),
 		filterCheck("ip-permission.cidr", "1.2.3.4/32", groups(0)),
 		filterCheck("ip-permission.group-name", g[1].Name, groups(1, 2)),
+		filterCheck("ip-permission.protocol", "udp", groups(2, 3)),
 		filterCheck("ip-permission.from-port", "200", groups(1, 2)),
 		filterCheck("ip-permission.to-port", "200", groups(0)),
-		filterCheck("ip-permission.protocol", "udp", groups(2)),
 		// TODO owner-id
 	}
 	for i, t := range tests {
-		c.Logf("test %d", i)
+		c.Logf("%d. %s", i, t.about)
 		var f *ec2.Filter
 		if t.filters != nil {
 			f = ec2.NewFilter()
@@ -587,6 +559,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		for j := range resp.Groups {
 			group := &resp.Groups[j].SecurityGroup
 			c.Check(groups[group.Id], IsNil, Commentf("duplicate group id: %q", group.Id))
+
 			groups[group.Id] = group
 		}
 		if !t.allowExtra {

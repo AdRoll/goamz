@@ -223,6 +223,34 @@ func NewServer() (*Server, error) {
 		initialInstanceState: Pending,
 	}
 
+	// Add default security group.
+	g := &securityGroup{
+		name:        "default",
+		description: "default group",
+		id:          fmt.Sprintf("sg-%d", srv.groupId.next()),
+	}
+	g.perms = map[permKey]bool{
+		permKey{
+			protocol: "icmp",
+			fromPort: -1,
+			toPort:   -1,
+			group:    g,
+		}: true,
+		permKey{
+			protocol: "tcp",
+			fromPort: 0,
+			toPort:   65535,
+			group:    g,
+		}: true,
+		permKey{
+			protocol: "udp",
+			fromPort: 0,
+			toPort:   65535,
+			group:    g,
+		}: true,
+	}
+	srv.groups[g.id] = g
+
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen on localhost: %v", err)
