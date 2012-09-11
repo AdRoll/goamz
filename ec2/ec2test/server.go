@@ -820,6 +820,7 @@ func (srv *Server) parsePerms(req *http.Request) []permKey {
 			ec2p.ToPort = atoi(val)
 		case rest == "IpProtocol":
 			switch val {
+			case "":
 			case "tcp", "udp", "icmp":
 				ec2p.Protocol = val
 			default:
@@ -904,9 +905,6 @@ func (srv *Server) parsePerms(req *http.Request) []permKey {
 			case g.Id != "":
 				ec2g.Id = g.Id
 			case g.Name != "":
-				if g.OwnerId == "" {
-					fatalf(400, "InvalidGroup.NotFound", "group name %q not found", g.Name)
-				}
 				ec2g.Name = g.Name
 			}
 			k.group = srv.group(ec2g)
