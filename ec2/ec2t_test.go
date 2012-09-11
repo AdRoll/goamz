@@ -159,7 +159,6 @@ func (s *ServerTests) TestIPPerms(c *C) {
 		ToPort:    2001,
 		SourceIPs: []string{"127.0.0.0/24"},
 		SourceGroups: []ec2.UserSecurityGroup{{
-			OwnerId: ownerId,
 			Name:    g1.Name,
 		}, {
 			Id: g0.Id,
