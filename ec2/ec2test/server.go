@@ -820,7 +820,6 @@ func (srv *Server) parsePerms(req *http.Request) []permKey {
 			ec2p.ToPort = atoi(val)
 		case rest == "IpProtocol":
 			switch val {
-			case "":
 			case "tcp", "udp", "icmp":
 				ec2p.Protocol = val
 			default:
