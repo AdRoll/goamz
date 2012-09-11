@@ -6,6 +6,7 @@ import (
 	"launchpad.net/goamz/ec2"
 	"launchpad.net/goamz/ec2/ec2test"
 	. "launchpad.net/gocheck"
+	"regexp"
 	"sort"
 )
 
@@ -159,7 +160,6 @@ func (s *ServerTests) TestIPPerms(c *C) {
 		ToPort:    2001,
 		SourceIPs: []string{"127.0.0.0/24"},
 		SourceGroups: []ec2.UserSecurityGroup{{
-			OwnerId: ownerId,
 			Name:    g1.Name,
 		}, {
 			Id: g0.Id,
@@ -278,12 +278,12 @@ type filterSpec struct {
 }
 
 func (s *ServerTests) TestInstanceFiltering(c *C) {
-	groupResp, err := s.ec2.CreateSecurityGroup(uniqueName(s.ec2, "testgroup1"), "testgroup one description")
+	groupResp, err := s.ec2.CreateSecurityGroup(sessionName("testgroup1"), "testgroup one description")
 	c.Assert(err, IsNil)
 	group1 := groupResp.SecurityGroup
 	defer s.ec2.DeleteSecurityGroup(group1)
 
-	groupResp, err = s.ec2.CreateSecurityGroup(uniqueName(s.ec2, "testgroup2"), "testgroup two description")
+	groupResp, err = s.ec2.CreateSecurityGroup(sessionName("testgroup2"), "testgroup two description")
 	c.Assert(err, IsNil)
 	group2 := groupResp.SecurityGroup
 	defer s.ec2.DeleteSecurityGroup(group2)
@@ -436,7 +436,7 @@ func namesOnly(gs []ec2.SecurityGroup) []ec2.SecurityGroup {
 func (s *ServerTests) TestGroupFiltering(c *C) {
 	g := make([]ec2.SecurityGroup, 4)
 	for i := range g[0:3] {
-		resp, err := s.ec2.CreateSecurityGroup(uniqueName(s.ec2, fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
+		resp, err := s.ec2.CreateSecurityGroup(sessionName(fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
 		c.Assert(err, IsNil)
 		g[i] = resp.SecurityGroup
 		c.Logf("group %d: %v", i, g[i])
@@ -484,7 +484,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		groups     []ec2.SecurityGroup // groupIds argument to SecurityGroups method.
 		filters    []filterSpec        // filters argument to SecurityGroups method.
 		results    []ec2.SecurityGroup // set of expected result groups.
-		allowExtra bool                // results may be incomplete.
+		allowExtra bool                // specified results may be incomplete.
 		err        string              // expected error.
 	}
 	filterCheck := func(name, val string, gs []ec2.SecurityGroup) groupTest {
@@ -492,12 +492,13 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 			about:   "filter check " + name,
 			filters: []filterSpec{{name, []string{val}}},
 			results: gs,
+			allowExtra: true,
 		}
 	}
 	tests := []groupTest{
 		{
 			about:      "check that SecurityGroups returns all groups",
-			groups:     groups(0, 1, 2),
+			results:     groups(0, 1, 2, 3),
 			allowExtra: true,
 		}, {
 			about:   "check that specifying two group ids returns them",
@@ -562,9 +563,17 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 
 			groups[group.Id] = group
 		}
-		if !t.allowExtra {
-			c.Check(groups, HasLen, len(t.results))
+		// If extra groups may be returned, eliminate all groups that
+		// we did not create in this session apart from the default group.
+		if t.allowExtra {
+			namePat := regexp.MustCompile(sessionName("testgroup[0-9]"))
+			for id, g := range groups {
+				if g.Name != "default" && !namePat.MatchString(g.Name) {
+					delete(groups, id)
+				}
+			}
 		}
+		c.Check(groups, HasLen, len(t.results))
 		for j, g := range t.results {
 			rg := groups[g.Id]
 			c.Assert(rg, NotNil, Commentf("group %d (%v) not found; got %#v", j, g, groups))

@@ -151,11 +151,17 @@ func (s *ClientTests) TestSecurityGroups(c *C) {
 	c.Assert(resp2.RequestId, Matches, ".+")
 }
 
-func uniqueName(e *ec2.EC2, prefix string) string {
+var sessionId = func() string{
 	buf := make([]byte, 8)
 	// if we have no randomness, we'll just make do, so ignore the error.
-	n, _ := rand.Read(buf)
-	return fmt.Sprintf("%s-%s-%x", prefix, e.AccessKey, buf[0:n])
+	rand.Read(buf)
+	return fmt.Sprintf("%x", buf)
+}()
+
+// sessionName reutrns a name that is probably
+// unique to this test session.
+func sessionName(prefix string) string {
+	return prefix + "-" + sessionId
 }
 
 var allRegions = []aws.Region{
@@ -168,7 +174,7 @@ var allRegions = []aws.Region{
 
 // Communicate with all EC2 endpoints to see if they are alive.
 func (s *ClientTests) TestRegions(c *C) {
-	name := uniqueName(s.ec2, "goamz-region-test")
+	name := sessionName("goamz-region-test")
 	perms := []ec2.IPPerm{{
 		Protocol:  "tcp",
 		FromPort:  80,
