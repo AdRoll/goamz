@@ -498,7 +498,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 	tests := []groupTest{
 		{
 			about:      "check that SecurityGroups returns all groups",
-			results:     groups(0, 1, 2),
+			results:     groups(0, 1, 2, 3),
 			allowExtra: true,
 		}, {
 			about:   "check that specifying two group ids returns them",
@@ -536,7 +536,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		filterCheck("group-name", g[2].Name, groups(2)),
 		filterCheck("ip-permission.cidr", "1.2.3.4/32", groups(0)),
 		filterCheck("ip-permission.group-name", g[1].Name, groups(1, 2)),
-		filterCheck("ip-permission.protocol", "udp", groups(2)),
+		filterCheck("ip-permission.protocol", "udp", groups(2, 3)),
 		filterCheck("ip-permission.from-port", "200", groups(1, 2)),
 		filterCheck("ip-permission.to-port", "200", groups(0)),
 		// TODO owner-id
@@ -564,11 +564,11 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 			groups[group.Id] = group
 		}
 		// If extra groups may be returned, eliminate all groups that
-		// we did not create in this session.
+		// we did not create in this session apart from the default group.
 		if t.allowExtra {
 			namePat := regexp.MustCompile(sessionName("testgroup[0-9]"))
 			for id, g := range groups {
-				if !namePat.MatchString(g.Name) {
+				if g.Name != "default" && !namePat.MatchString(g.Name) {
 					delete(groups, id)
 				}
 			}
