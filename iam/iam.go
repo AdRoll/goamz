@@ -1,0 +1,131 @@
+//
+// goamz - Go packages to interact with the Amazon Web Services.
+//
+//   https://wiki.ubuntu.com/goamz
+//
+// Copyright (c) 2011 Canonical Ltd.
+//
+// Written by Gustavo Niemeyer <gustavo.niemeyer@canonical.com>
+//
+
+// The iam package provides types and functions for interaction with the AWS
+// Identity and Access Management (IAM) service.
+package iam
+
+import (
+	"encoding/xml"
+	"fmt"
+	"launchpad.net/goamz/aws"
+	"net/http"
+	"net/url"
+	"time"
+)
+
+// The IAM type encapsulates operations operations with the IAM endpoint.
+type IAM struct {
+	aws.Auth
+	endpoint string
+}
+
+// New creates a new IAM instance.
+func New(auth aws.Auth, endpoint string) *IAM {
+	return &IAM{auth, endpoint}
+}
+
+func (iam *IAM) query(params map[string]string, resp interface{}) error {
+	params["Version"] = "2010-05-08"
+	params["Timestamp"] = time.Now().In(time.UTC).Format(time.RFC3339)
+	endpoint, err := url.Parse(iam.endpoint)
+	if err != nil {
+		return err
+	}
+	sign(iam.Auth, "GET", "/", params, endpoint.Host)
+	endpoint.RawQuery = multimap(params).Encode()
+	r, err := http.Get(endpoint.String())
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	if r.StatusCode > 200 {
+		return buildError(r)
+	}
+	return xml.NewDecoder(r.Body).Decode(resp)
+}
+
+func buildError(r *http.Response) error {
+	var (
+		err    Error
+		errors xmlErrors
+	)
+	xml.NewDecoder(r.Body).Decode(&errors)
+	if len(errors.Errors) > 0 {
+		err = errors.Errors[0]
+	}
+	err.StatusCode = r.StatusCode
+	if err.Message == "" {
+		err.Message = r.Status
+	}
+	return &err
+}
+
+func multimap(p map[string]string) url.Values {
+	q := make(url.Values, len(p))
+	for k, v := range p {
+		q[k] = []string{v}
+	}
+	return q
+}
+
+// Response to a CreateUser request.
+//
+// See http://goo.gl/JS9Gz for more details.
+type CreateUserResp struct {
+	User      User   `xml:"CreateUserResult>User"`
+	RequestId string `xml:"ResponseMetadata>RequestId"`
+}
+
+// User encapsulates a user managed by IAM.
+//
+// See http://goo.gl/BwIQ3 for more details.
+type User struct {
+	Arn  string
+	Path string
+	Id   string `xml:"UserId"`
+	Name string `xml:"UserName"`
+}
+
+// CreateUser creates a new user in IAM.
+//
+// See http://goo.gl/JS9Gz for more details.
+func (iam *IAM) CreateUser(name, path string) (*CreateUserResp, error) {
+	params := map[string]string{
+		"Action":   "CreateUser",
+		"Path":     path,
+		"UserName": name,
+	}
+	resp := new(CreateUserResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type xmlErrors struct {
+	Errors []Error `xml:"Errors>Error"`
+}
+
+// Error encapsulates an IAM error.
+type Error struct {
+	// HTTP status code of the error.
+	StatusCode int
+
+	// AWS code of the error.
+	Code string
+
+	// Message explaining the error.
+	Message string
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("%d - %s (%s)", e.StatusCode, e.Message, e.Code)
+}
