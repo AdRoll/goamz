@@ -20,7 +20,6 @@ import (
 type Region struct {
 	Name                 string // the canonical name of this region.
 	EC2Endpoint          string
-	IAMEndpoint          string
 	S3Endpoint           string
 	S3BucketEndpoint     string // Not needed by AWS S3. Use ${bucket} for bucket name.
 	S3LocationConstraint bool   // true if this region requires a LocationConstraint declaration.
@@ -28,12 +27,12 @@ type Region struct {
 	SDBEndpoint          string
 	SNSEndpoint          string
 	SQSEndpoint          string
+	IAMEndpoint          string
 }
 
 var USEast = Region{
 	"us-east-1",
 	"https://ec2.us-east-1.amazonaws.com",
-	"https://iam.amazonaws.com",
 	"https://s3.amazonaws.com",
 	"",
 	false,
@@ -41,12 +40,12 @@ var USEast = Region{
 	"https://sdb.amazonaws.com",
 	"https://sns.us-east-1.amazonaws.com",
 	"https://sqs.us-east-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var USWest = Region{
 	"us-west-1",
 	"https://ec2.us-west-1.amazonaws.com",
-	"https://iam.amazonaws.com",
 	"https://s3-us-west-1.amazonaws.com",
 	"",
 	true,
@@ -54,12 +53,12 @@ var USWest = Region{
 	"https://sdb.us-west-1.amazonaws.com",
 	"https://sns.us-west-1.amazonaws.com",
 	"https://sqs.us-west-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var EUWest = Region{
 	"eu-west-1",
 	"https://ec2.eu-west-1.amazonaws.com",
-	"https://iam.amazonaws.com",
 	"https://s3-eu-west-1.amazonaws.com",
 	"",
 	true,
@@ -67,12 +66,12 @@ var EUWest = Region{
 	"https://sdb.eu-west-1.amazonaws.com",
 	"https://sns.eu-west-1.amazonaws.com",
 	"https://sqs.eu-west-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var APSoutheast = Region{
 	"ap-southeast-1",
 	"https://ec2.ap-southeast-1.amazonaws.com",
-	"https://iam.amazonaws.com",
 	"https://s3-ap-southeast-1.amazonaws.com",
 	"",
 	true,
@@ -80,12 +79,12 @@ var APSoutheast = Region{
 	"https://sdb.ap-southeast-1.amazonaws.com",
 	"https://sns.ap-southeast-1.amazonaws.com",
 	"https://sqs.ap-southeast-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var APNortheast = Region{
 	"ap-northeast-1",
 	"https://ec2.ap-northeast-1.amazonaws.com",
-	"https://iam.amazonaws.com",
 	"https://s3-ap-northeast-1.amazonaws.com",
 	"",
 	true,
@@ -93,6 +92,20 @@ var APNortheast = Region{
 	"https://sdb.ap-northeast-1.amazonaws.com",
 	"https://sns.ap-northeast-1.amazonaws.com",
 	"https://sqs.ap-northeast-1.amazonaws.com",
+	"https://iam.amazonaws.com",
+}
+
+var SAEast = Region{
+	"sa-east-1",
+	"https://ec2.sa-east-1.amazonaws.com",
+	"https://s3-sa-east-1.amazonaws.com",
+	"",
+	true,
+	true,
+	"https://sdb.sa-east-1.amazonaws.com",
+	"https://sns.sa-east-1.amazonaws.com",
+	"https://sqs.sa-east-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var Regions = map[string]Region{
@@ -101,6 +114,7 @@ var Regions = map[string]Region{
 	EUWest.Name:      EUWest,
 	USEast.Name:      USEast,
 	USWest.Name:      USWest,
+	SAEast.Name:      SAEast,
 }
 
 type Auth struct {
