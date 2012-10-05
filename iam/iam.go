@@ -1,41 +1,31 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
-// Copyright (c) 2011 Canonical Ltd.
-//
-// Written by Gustavo Niemeyer <gustavo.niemeyer@canonical.com>
-//
-
 // The iam package provides types and functions for interaction with the AWS
 // Identity and Access Management (IAM) service.
 package iam
 
 import (
 	"encoding/xml"
-	"fmt"
 	"launchpad.net/goamz/aws"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
 // The IAM type encapsulates operations operations with the IAM endpoint.
 type IAM struct {
 	aws.Auth
-	endpoint string
+	aws.Region
 }
 
 // New creates a new IAM instance.
-func New(auth aws.Auth, endpoint string) *IAM {
-	return &IAM{auth, endpoint}
+func New(auth aws.Auth, region aws.Region) *IAM {
+	return &IAM{auth, region}
 }
 
 func (iam *IAM) query(params map[string]string, resp interface{}) error {
 	params["Version"] = "2010-05-08"
 	params["Timestamp"] = time.Now().In(time.UTC).Format(time.RFC3339)
-	endpoint, err := url.Parse(iam.endpoint)
+	endpoint, err := url.Parse(iam.IAMEndpoint)
 	if err != nil {
 		return err
 	}
@@ -127,5 +117,12 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("%d - %s (%s)", e.StatusCode, e.Message, e.Code)
+	var prefix string
+	if e.Code != "" {
+		prefix = e.Code + ": "
+	}
+	if prefix == "" && e.StatusCode > 0 {
+		prefix = strconv.Itoa(e.StatusCode) + ": "
+	}
+	return prefix + e.Message
 }

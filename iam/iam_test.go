@@ -1,13 +1,3 @@
-//
-// goamz - Go packages to interact with the Amazon Web Services.
-//
-//   https://wiki.ubuntu.com/goamz
-//
-// Copyright (c) 2011 Canonical Ltd.
-//
-// Written by Gustavo Niemeyer <gustavo.niemeyer@canonical.com>
-//
-
 package iam_test
 
 import (
@@ -26,7 +16,7 @@ var _ = Suite(&S{})
 func (s *S) SetUpSuite(c *C) {
 	s.HTTPSuite.SetUpSuite(c)
 	auth := aws.Auth{"abc", "123"}
-	s.iam = iam.New(auth, testServer.URL)
+	s.iam = iam.New(auth, aws.Region{IAMEndpoint: testServer.URL})
 }
 
 func (s *S) TestCreateUser(c *C) {
