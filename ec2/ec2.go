@@ -467,7 +467,12 @@ type Image struct {
 
 // Images returns details about images in EC2.  The parameters 
 // are optional, and if provided will limit the images returned to those
-// matching the given image id or filtering rules.
+// matching the given image id or filtering rules. For example, to get all the 
+// private images associated with this account set the boolean filter "is-private"
+// to true.
+//
+// Note: calling this function with nil id and filter parameters will result in 
+// more than ten thousand images being returned.
 //
 // See http://goo.gl/SRBhW for more details.
 func (ec2 *EC2) Images(imgId []string, filter *Filter) (resp *ImagesResp, err error) {
