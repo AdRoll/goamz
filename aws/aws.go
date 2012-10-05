@@ -20,6 +20,7 @@ import (
 type Region struct {
 	Name                 string // the canonical name of this region.
 	EC2Endpoint          string
+	IAMEndpoint          string
 	S3Endpoint           string
 	S3BucketEndpoint     string // Not needed by AWS S3. Use ${bucket} for bucket name.
 	S3LocationConstraint bool   // true if this region requires a LocationConstraint declaration.
@@ -32,6 +33,7 @@ type Region struct {
 var USEast = Region{
 	"us-east-1",
 	"https://ec2.us-east-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 	"https://s3.amazonaws.com",
 	"",
 	false,
@@ -44,6 +46,7 @@ var USEast = Region{
 var USWest = Region{
 	"us-west-1",
 	"https://ec2.us-west-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 	"https://s3-us-west-1.amazonaws.com",
 	"",
 	true,
@@ -56,6 +59,7 @@ var USWest = Region{
 var EUWest = Region{
 	"eu-west-1",
 	"https://ec2.eu-west-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 	"https://s3-eu-west-1.amazonaws.com",
 	"",
 	true,
@@ -68,6 +72,7 @@ var EUWest = Region{
 var APSoutheast = Region{
 	"ap-southeast-1",
 	"https://ec2.ap-southeast-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 	"https://s3-ap-southeast-1.amazonaws.com",
 	"",
 	true,
@@ -80,6 +85,7 @@ var APSoutheast = Region{
 var APNortheast = Region{
 	"ap-northeast-1",
 	"https://ec2.ap-northeast-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 	"https://s3-ap-northeast-1.amazonaws.com",
 	"",
 	true,
