@@ -45,7 +45,7 @@ func New(auth aws.Auth, region aws.Region) *EC2 {
 // Filter builds filtering parameters to be used in an EC2 query which supports
 // filtering.  For example:
 //
-//     filter := &Filter{}
+//     filter := NewFilter()
 //     filter.Add("architecture", "i386")
 //     filter.Add("launch-index", "0")
 //     resp, err := ec2.Instances(nil, filter)
@@ -391,7 +391,7 @@ type Reservation struct {
 }
 
 // Instances returns details about instances in EC2.  Both parameters
-// are optional, and if provied will limit the instances returned to those
+// are optional, and if provided will limit the instances returned to those
 // matching the given instance ids or filtering rules.
 //
 // See http://goo.gl/4No7c for more details.
@@ -403,6 +403,81 @@ func (ec2 *EC2) Instances(instIds []string, filter *Filter) (resp *InstancesResp
 	filter.addParams(params)
 
 	resp = &InstancesResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// Response to a DescribeImages request.
+//
+// See http://goo.gl/hLnyg for more details.
+type ImagesResp struct {
+	RequestId string  `xml:"requestId"`
+	Images    []Image `xml:"imagesSet>item"`
+}
+
+// EbsBlockDevice represents parameters used to automatically set up 
+// Amazon EBS volumes when an instance is launched.
+//
+// See http://goo.gl/ynXDE for more details.
+type EbsBlockDevice struct {
+	SnapshotId          string `xml:"snapshotId"`
+	VolumeSize          int64  `xml:"volumeSize"`
+	DeleteOnTermination bool   `xml:"deleteOnTermination"`
+	VolumeType          string `xml:"volumeType"`
+	Iops                int64  `xml:"iops"` // The number of I/O operations per second (IOPS) that the volume supports.
+}
+
+// BlockDeviceMapping represents details about the block devices of an image
+//
+// See http://goo.gl/wnDBf for more details.
+type BlockDeviceMapping struct {
+	DeviceName  string         `xml:"deviceName"`
+	VirtualName string         `xml:"virtualName"`
+	Ebs         EbsBlockDevice `xml:"ebs"`
+}
+
+// Image represents details about an image in EC2.
+//
+// See http://goo.gl/iSqJG for more details.
+type Image struct {
+	ImageId            string               `xml:"imageId"`
+	Location           string               `xml:"imageLocation"`
+	State              string               `xml:"imageState"`
+	Owner              string               `xml:"imageOwnerId"`
+	Public             bool                 `xml:"isPublic"`
+	Architecture       string               `xml:"architecture"`
+	ImageType          string               `xml:"imageType"`
+	ProductCodes       []string             `xml:"productCode>item>productCode"`
+	KernelId           string               `xml:"kernelId"`
+	RamdiskId          string               `xml:"ramdiskId"`
+	Platform           string               `xml:"platform"`
+	StateReason        string               `xml:"stateReason"`
+	OwnerAlias         string               `xml:"imageOwnerAlias"`
+	Name               string               `xml:"name"`
+	Description        string               `xml:"description"`
+	RootDeviceType     string               `xml:"rootDeviceType"`
+	RootDeviceName     string               `xml:"rootDeviceName"`
+	VirtualizationType string               `xml:"virtualizationType"`
+	Hypervisor         string               `xml:"hypervisor"`
+	BlockDevices       []BlockDeviceMapping `xml:"blockDeviceMapping>item"`
+}
+
+// Images returns details about images in EC2.  The parameters 
+// are optional, and if provided will limit the images returned to those
+// matching the given image id or filtering rules.
+//
+// See http://goo.gl/SRBhW for more details.
+func (ec2 *EC2) Images(imgId []string, filter *Filter) (resp *ImagesResp, err error) {
+	params := makeParams("DescribeImages")
+	for i, id := range imgId {
+		params["ImageId."+strconv.Itoa(i+1)] = id
+	}
+	filter.addParams(params)
+
+	resp = &ImagesResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
@@ -511,7 +586,7 @@ func SecurityGroupIds(ids ...string) []SecurityGroup {
 }
 
 // SecurityGroups returns details about security groups in EC2.  Both parameters
-// are optional, and if provied will limit the security groups returned to those
+// are optional, and if provided will limit the security groups returned to those
 // matching the given groups or filtering rules.
 //
 // See http://goo.gl/k12Uy for more details.
