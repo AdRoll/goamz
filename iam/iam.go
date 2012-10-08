@@ -100,6 +100,26 @@ func (iam *IAM) CreateUser(name, path string) (*CreateUserResp, error) {
 	return resp, nil
 }
 
+// DeleteUser deletes a user from IAM. It returns the RequestId or an error in
+// case of failure.
+//
+// See http://goo.gl/jBuCG for more details.
+func (iam *IAM) DeleteUser(name string) (string, error) {
+	params := map[string]string{
+		"Action":   "DeleteUser",
+		"UserName": name,
+	}
+	resp := new(RequestIdResp)
+	if err := iam.query(params, resp); err != nil {
+		return "", err
+	}
+	return resp.RequestId, nil
+}
+
+type RequestIdResp struct {
+	RequestId string `xml:"ResponseMetadata>RequestId"`
+}
+
 type xmlErrors struct {
 	Errors []Error `xml:"Errors>Error"`
 }
