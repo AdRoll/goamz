@@ -100,6 +100,39 @@ func (iam *IAM) CreateUser(name, path string) (*CreateUserResp, error) {
 	return resp, nil
 }
 
+// Response to a CreateAccessKey request.
+//
+// See http://goo.gl/L46Py for more details.
+type CreateAccessKeyResp struct {
+	AccessKey AccessKey `xml:"CreateAccessKeyResult>AccessKey"`
+	RequestId string    `xml:"ResponseMetadata>RequestId"`
+}
+
+// AccessKey encapsulates an access key generated for a user.
+//
+// See http://goo.gl/LHgZR for more details.
+type AccessKey struct {
+	User   string `xml:"UserName"`
+	Id     string `xml:"AccessKeyId"`
+	Secret string `xml:"SecretAccessKey"`
+	Status string
+}
+
+// CreateAccessKey creates a new access key in IAM.
+//
+// See http://goo.gl/L46Py for more details.
+func (iam *IAM) CreateAccessKey(userName string) (*CreateAccessKeyResp, error) {
+	params := map[string]string{
+		"Action":   "CreateAccessKey",
+		"UserName": userName,
+	}
+	resp := new(CreateAccessKeyResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 type xmlErrors struct {
 	Errors []Error `xml:"Errors>Error"`
 }

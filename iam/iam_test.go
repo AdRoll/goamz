@@ -48,3 +48,16 @@ func (s *S) TestCreateUserConflict(c *C) {
 	c.Assert(e.Message, Equals, "User already exists.")
 	c.Assert(e.Code, Equals, "EntityAlreadyExists")
 }
+
+func (s *S) TestCreateAccessKey(c *C) {
+	testServer.PrepareResponse(200, nil, CreateAccessKeyExample)
+	resp, err := s.iam.CreateAccessKey("Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "CreateAccessKey")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.AccessKey.User, Equals, "Bob")
+	c.Assert(resp.AccessKey.Id, Equals, "AKIAIOSFODNN7EXAMPLE")
+	c.Assert(resp.AccessKey.Secret, Equals, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
+	c.Assert(resp.AccessKey.Status, Equals, "Active")
+}

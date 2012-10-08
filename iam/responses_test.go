@@ -31,3 +31,19 @@ var DuplicateUserExample = `
   </RequestID>
 </Response>
 `
+
+var CreateAccessKeyExample = `
+<CreateAccessKeyResponse>
+   <CreateAccessKeyResult>
+     <AccessKey>
+         <UserName>Bob</UserName>
+         <AccessKeyId>AKIAIOSFODNN7EXAMPLE</AccessKeyId>
+         <Status>Active</Status>
+         <SecretAccessKey>wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY</SecretAccessKey>
+      </AccessKey>
+   </CreateAccessKeyResult>
+   <ResponseMetadata>
+      <RequestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</RequestId>
+   </ResponseMetadata>
+</CreateAccessKeyResponse>
+`
