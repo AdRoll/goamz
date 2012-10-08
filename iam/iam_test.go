@@ -51,10 +51,10 @@ func (s *S) TestCreateUserConflict(c *C) {
 
 func (s *S) TestDeleteUser(c *C) {
 	testServer.PrepareResponse(200, nil, RequestIdExample)
-	requestId, err := s.iam.DeleteUser("Bob")
+	resp, err := s.iam.DeleteUser("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "DeleteUser")
 	c.Assert(values.Get("UserName"), Equals, "Bob")
 	c.Assert(err, IsNil)
-	c.Assert(requestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }
