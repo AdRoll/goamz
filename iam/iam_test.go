@@ -56,7 +56,7 @@ func (s *S) TestCreateAccessKey(c *C) {
 	c.Assert(values.Get("Action"), Equals, "CreateAccessKey")
 	c.Assert(values.Get("UserName"), Equals, "Bob")
 	c.Assert(err, IsNil)
-	c.Assert(resp.AccessKey.User, Equals, "Bob")
+	c.Assert(resp.AccessKey.UserName, Equals, "Bob")
 	c.Assert(resp.AccessKey.Id, Equals, "AKIAIOSFODNN7EXAMPLE")
 	c.Assert(resp.AccessKey.Secret, Equals, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
 	c.Assert(resp.AccessKey.Status, Equals, "Active")

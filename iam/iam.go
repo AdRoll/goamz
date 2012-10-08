@@ -70,8 +70,8 @@ func multimap(p map[string]string) url.Values {
 //
 // See http://goo.gl/JS9Gz for more details.
 type CreateUserResp struct {
-	User      User   `xml:"CreateUserResult>User"`
 	RequestId string `xml:"ResponseMetadata>RequestId"`
+	User      User   `xml:"CreateUserResult>User"`
 }
 
 // User encapsulates a user managed by IAM.
@@ -104,18 +104,18 @@ func (iam *IAM) CreateUser(name, path string) (*CreateUserResp, error) {
 //
 // See http://goo.gl/L46Py for more details.
 type CreateAccessKeyResp struct {
-	AccessKey AccessKey `xml:"CreateAccessKeyResult>AccessKey"`
 	RequestId string    `xml:"ResponseMetadata>RequestId"`
+	AccessKey AccessKey `xml:"CreateAccessKeyResult>AccessKey"`
 }
 
 // AccessKey encapsulates an access key generated for a user.
 //
 // See http://goo.gl/LHgZR for more details.
 type AccessKey struct {
-	User   string `xml:"UserName"`
-	Id     string `xml:"AccessKeyId"`
-	Secret string `xml:"SecretAccessKey"`
-	Status string
+	UserName string `xml:"UserName"`
+	Id       string `xml:"AccessKeyId"`
+	Secret   string `xml:"SecretAccessKey"`
+	Status   string
 }
 
 // CreateAccessKey creates a new access key in IAM.
