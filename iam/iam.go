@@ -112,7 +112,7 @@ type CreateAccessKeyResp struct {
 //
 // See http://goo.gl/LHgZR for more details.
 type AccessKey struct {
-	UserName string `xml:"UserName"`
+	UserName string
 	Id       string `xml:"AccessKeyId"`
 	Secret   string `xml:"SecretAccessKey"`
 	Status   string
