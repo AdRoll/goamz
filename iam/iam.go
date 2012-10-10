@@ -100,6 +100,29 @@ func (iam *IAM) CreateUser(name, path string) (*CreateUserResp, error) {
 	return resp, nil
 }
 
+// Response for GetUser requests.
+//
+// See http://goo.gl/ZnzRN for more details.
+type GetUserResp struct {
+	RequestId string `xml:"ResponseMetadata>RequestId"`
+	User      User   `xml:"GetUserResult>User"`
+}
+
+// GetUser gets a user from IAM.
+//
+// See http://goo.gl/ZnzRN for more details.
+func (iam *IAM) GetUser(name string) (*GetUserResp, error) {
+	params := map[string]string{
+		"Action":   "GetUser",
+		"UserName": name,
+	}
+	resp := new(GetUserResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 // DeleteUser deletes a user from IAM.
 //
 // See http://goo.gl/jBuCG for more details.
@@ -114,7 +137,6 @@ func (iam *IAM) DeleteUser(name string) (*SimpleResp, error) {
 	}
 	return resp, nil
 }
-
 
 // Response to a CreateAccessKey request.
 //
@@ -154,7 +176,7 @@ type SimpleResp struct {
 }
 
 type xmlErrors struct {
-	Errors []Error `xml:"Errors>Error"`
+	Errors []Error `xml:"Error"`
 }
 
 // Error encapsulates an IAM error.

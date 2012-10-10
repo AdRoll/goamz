@@ -45,8 +45,25 @@ func (s *S) TestCreateUserConflict(c *C) {
 	c.Assert(err, NotNil)
 	e, ok := err.(*iam.Error)
 	c.Assert(ok, Equals, true)
-	c.Assert(e.Message, Equals, "User already exists.")
+	c.Assert(e.Message, Equals, "User with name Bob already exists.")
 	c.Assert(e.Code, Equals, "EntityAlreadyExists")
+}
+
+func (s *S) TestGetUser(c *C) {
+	testServer.PrepareResponse(200, nil, GetUserExample)
+	resp, err := s.iam.GetUser("Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "GetUser")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	expected := iam.User{
+		Path: "/division_abc/subdivision_xyz/",
+		Name: "Bob",
+		Id:   "AIDACKCEVSQ6C2EXAMPLE",
+		Arn:  "arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/Bob",
+	}
+	c.Assert(resp.User, DeepEquals, expected)
 }
 
 func (s *S) TestDeleteUser(c *C) {
