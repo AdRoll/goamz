@@ -182,7 +182,7 @@ type xmlErrors struct {
 // Error encapsulates an IAM error.
 type Error struct {
 	// HTTP status code of the error.
-	StatusCode int `xml:"-"`
+	StatusCode int
 
 	// AWS code of the error.
 	Code string
