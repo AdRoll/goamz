@@ -176,7 +176,7 @@ type SimpleResp struct {
 }
 
 type xmlErrors struct {
-	Errors []Error `xml:"Errors>Error"`
+	Errors []Error `xml:"Error"`
 }
 
 // Error encapsulates an IAM error.
