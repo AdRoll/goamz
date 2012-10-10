@@ -108,7 +108,7 @@ type GetUserResp struct {
 	User      User   `xml:"GetUserResult>User"`
 }
 
-// GetUser gets a new user in IAM.
+// GetUser gets a user from IAM.
 //
 // See http://goo.gl/ZnzRN for more details.
 func (iam *IAM) GetUser(name string) (*GetUserResp, error) {
