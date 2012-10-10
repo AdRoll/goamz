@@ -21,11 +21,11 @@ type action struct {
 
 // Server implements an IAM simulator for use in tests.
 type Server struct {
-	reqId      int
-	url        string
-	listener   net.Listener
-	users      []iam.User
-	mutex      sync.Mutex
+	reqId    int
+	url      string
+	listener net.Listener
+	users    []iam.User
+	mutex    sync.Mutex
 }
 
 func NewServer() (*Server, error) {
@@ -127,6 +127,28 @@ func (srv *Server) createUser(w http.ResponseWriter, req *http.Request, reqId st
 	}, nil
 }
 
+func (srv *Server) getUser(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"UserName"}); err != nil {
+		return nil, err
+	}
+	name := req.FormValue("UserName")
+	index := -1
+	for i, user := range srv.users {
+		if user.Name == name {
+			index = i
+			break
+		}
+	}
+	if index < 0 {
+		return nil, &iam.Error{
+			StatusCode: 404,
+			Code:       "NoSuchEntity",
+			Message:    fmt.Sprintf("The user with name %s cannot be found.", name),
+		}
+	}
+	return iam.GetUserResp{RequestId: reqId, User: srv.users[index]}, nil
+}
+
 func (srv *Server) deleteUser(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
 	if err := srv.validate(req, []string{"UserName"}); err != nil {
 		return nil, err
@@ -143,7 +165,7 @@ func (srv *Server) deleteUser(w http.ResponseWriter, req *http.Request, reqId st
 		return nil, &iam.Error{
 			StatusCode: 404,
 			Code:       "NoSuchEntity",
-			Message:    "No such entity",
+			Message:    fmt.Sprintf("The user with name %s cannot be found.", name),
 		}
 	}
 	copy(srv.users[index:], srv.users[index+1:])
@@ -166,6 +188,7 @@ func (srv *Server) validate(req *http.Request, required []string) error {
 }
 
 var actions = map[string]func(*Server, http.ResponseWriter, *http.Request, string) (interface{}, error){
-	"CreateUser":          (*Server).createUser,
-	"DeleteUser":          (*Server).deleteUser,
+	"CreateUser": (*Server).createUser,
+	"DeleteUser": (*Server).deleteUser,
+	"GetUser":    (*Server).getUser,
 }
