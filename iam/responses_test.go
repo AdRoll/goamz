@@ -32,6 +32,22 @@ var DuplicateUserExample = `
 </Response>
 `
 
+var GetUserExample = `
+<GetUserResponse>
+   <GetUserResult>
+      <User>
+         <Path>/division_abc/subdivision_xyz/</Path>
+         <UserName>Bob</UserName>
+         <UserId>AIDACKCEVSQ6C2EXAMPLE</UserId>
+         <Arn>arn:aws:iam::123456789012:user/division_abc/subdivision_xyz/Bob</Arn>
+      </User>
+   </GetUserResult>
+   <ResponseMetadata>
+      <RequestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</RequestId>
+   </ResponseMetadata>
+</GetUserResponse>
+`
+
 var RequestIdExample = `
 <AddUserToGroupResponse>
    <ResponseMetadata>
