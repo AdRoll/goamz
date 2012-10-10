@@ -27,6 +27,7 @@ type Region struct {
 	SDBEndpoint          string
 	SNSEndpoint          string
 	SQSEndpoint          string
+	IAMEndpoint          string
 }
 
 var USEast = Region{
@@ -39,6 +40,7 @@ var USEast = Region{
 	"https://sdb.amazonaws.com",
 	"https://sns.us-east-1.amazonaws.com",
 	"https://sqs.us-east-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var USWest = Region{
@@ -51,6 +53,7 @@ var USWest = Region{
 	"https://sdb.us-west-1.amazonaws.com",
 	"https://sns.us-west-1.amazonaws.com",
 	"https://sqs.us-west-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var USWest2 = Region{
@@ -63,6 +66,7 @@ var USWest2 = Region{
 	"https://sdb.us-west-2.amazonaws.com",
 	"https://sns.us-west-2.amazonaws.com",
 	"https://sqs.us-west-2.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var EUWest = Region{
@@ -75,6 +79,7 @@ var EUWest = Region{
 	"https://sdb.eu-west-1.amazonaws.com",
 	"https://sns.eu-west-1.amazonaws.com",
 	"https://sqs.eu-west-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var APSoutheast = Region{
@@ -87,6 +92,7 @@ var APSoutheast = Region{
 	"https://sdb.ap-southeast-1.amazonaws.com",
 	"https://sns.ap-southeast-1.amazonaws.com",
 	"https://sqs.ap-southeast-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var APNortheast = Region{
@@ -99,6 +105,20 @@ var APNortheast = Region{
 	"https://sdb.ap-northeast-1.amazonaws.com",
 	"https://sns.ap-northeast-1.amazonaws.com",
 	"https://sqs.ap-northeast-1.amazonaws.com",
+	"https://iam.amazonaws.com",
+}
+
+var SAEast = Region{
+	"sa-east-1",
+	"https://ec2.sa-east-1.amazonaws.com",
+	"https://s3-sa-east-1.amazonaws.com",
+	"",
+	true,
+	true,
+	"https://sdb.sa-east-1.amazonaws.com",
+	"https://sns.sa-east-1.amazonaws.com",
+	"https://sqs.sa-east-1.amazonaws.com",
+	"https://iam.amazonaws.com",
 }
 
 var Regions = map[string]Region{
@@ -108,6 +128,7 @@ var Regions = map[string]Region{
 	USEast.Name:      USEast,
 	USWest.Name:      USWest,
 	USWest2.Name:     USWest2,
+	SAEast.Name:      SAEast,
 }
 
 type Auth struct {

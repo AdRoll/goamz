@@ -1,7 +1,9 @@
-package ec2_test
+package iam_test
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	. "launchpad.net/gocheck"
 	"net/http"
 	"net/url"
@@ -30,6 +32,7 @@ type TestHTTPServer struct {
 	URL      string
 	Timeout  time.Duration
 	started  bool
+	body     chan []byte
 	request  chan *http.Request
 	response chan *testResponse
 	pending  chan bool
@@ -51,6 +54,7 @@ func (s *TestHTTPServer) Start() {
 	}
 	s.started = true
 
+	s.body = make(chan []byte, 64)
 	s.request = make(chan *http.Request, 64)
 	s.response = make(chan *testResponse, 64)
 	s.pending = make(chan bool, 64)
@@ -65,8 +69,10 @@ func (s *TestHTTPServer) Start() {
 		if err == nil && resp.StatusCode == 202 {
 			break
 		}
+		fmt.Fprintf(os.Stderr, "\nWaiting for fake server to be up... ")
 		time.Sleep(1e8)
 	}
+	fmt.Fprintf(os.Stderr, "done\n\n")
 	s.WaitRequest() // Consume dummy request.
 }
 
@@ -82,6 +88,8 @@ func (s *TestHTTPServer) FlushRequests() {
 }
 
 func (s *TestHTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	b, _ := ioutil.ReadAll(req.Body)
+	s.body <- b
 	s.request <- req
 	var resp *testResponse
 	select {
@@ -105,6 +113,8 @@ func (s *TestHTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (s *TestHTTPServer) WaitRequest() *http.Request {
 	select {
 	case req := <-s.request:
+		body := <-s.body
+		req.Body = ioutil.NopCloser(bytes.NewReader(body))
 		req.ParseForm()
 		return req
 	case <-time.After(s.Timeout):
