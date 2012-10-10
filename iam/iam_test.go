@@ -45,7 +45,7 @@ func (s *S) TestCreateUserConflict(c *C) {
 	c.Assert(err, NotNil)
 	e, ok := err.(*iam.Error)
 	c.Assert(ok, Equals, true)
-	c.Assert(e.Message, Equals, "User already exists.")
+	c.Assert(e.Message, Equals, "User with name Bob already exists.")
 	c.Assert(e.Code, Equals, "EntityAlreadyExists")
 }
 
