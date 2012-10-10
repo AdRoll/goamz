@@ -53,9 +53,15 @@ func (srv *Server) URL() string {
 	return srv.url
 }
 
+type xmlErrors struct {
+	XMLName string `xml:"ErrorResponse"`
+	Error   iam.Error
+}
+
 func (srv *Server) error(w http.ResponseWriter, err *iam.Error) {
 	w.WriteHeader(err.StatusCode)
-	if e := xml.NewEncoder(w).Encode(err); e != nil {
+	xmlErr := xmlErrors{Error: *err}
+	if e := xml.NewEncoder(w).Encode(xmlErr); e != nil {
 		panic(e)
 	}
 }
@@ -110,7 +116,7 @@ func (srv *Server) createUser(w http.ResponseWriter, req *http.Request, reqId st
 			return nil, &iam.Error{
 				StatusCode: 409,
 				Code:       "EntityAlreadyExists",
-				Message:    "User already exists",
+				Message:    fmt.Sprintf("User with name %s already exists.", name),
 			}
 		}
 	}

@@ -25,21 +25,15 @@ func (s *LocalServer) SetUp(c *C) {
 
 // LocalServerSuite defines tests that will run
 // against the local iamtest server. It includes
-// selected tests from ClientTests;
-// when the ec2test functionality is sufficient, it should
-// include all of them, and ClientTests can be simply embedded.
+// tests from ClientTests.
 type LocalServerSuite struct {
 	srv LocalServer
-	clientTests ClientTests
+	ClientTests
 }
 
 var _ = Suite(&LocalServerSuite{})
 
 func (s *LocalServerSuite) SetUpSuite(c *C) {
 	s.srv.SetUp(c)
-	s.clientTests.iam = iam.New(s.srv.auth, s.srv.region)
-}
-
-func (s *LocalServerSuite) TestCreateAndDeleteUser(c *C) {
-	s.clientTests.TestCreateAndDeleteUser(c)
+	s.ClientTests.iam = iam.New(s.srv.auth, s.srv.region)
 }
