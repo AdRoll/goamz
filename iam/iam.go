@@ -70,8 +70,8 @@ func multimap(p map[string]string) url.Values {
 //
 // See http://goo.gl/JS9Gz for more details.
 type CreateUserResp struct {
-	User      User   `xml:"CreateUserResult>User"`
 	RequestId string `xml:"ResponseMetadata>RequestId"`
+	User      User   `xml:"CreateUserResult>User"`
 }
 
 // User encapsulates a user managed by IAM.
@@ -109,6 +109,40 @@ func (iam *IAM) DeleteUser(name string) (*SimpleResp, error) {
 		"UserName": name,
 	}
 	resp := new(SimpleResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+
+// Response to a CreateAccessKey request.
+//
+// See http://goo.gl/L46Py for more details.
+type CreateAccessKeyResp struct {
+	RequestId string    `xml:"ResponseMetadata>RequestId"`
+	AccessKey AccessKey `xml:"CreateAccessKeyResult>AccessKey"`
+}
+
+// AccessKey encapsulates an access key generated for a user.
+//
+// See http://goo.gl/LHgZR for more details.
+type AccessKey struct {
+	UserName string
+	Id       string `xml:"AccessKeyId"`
+	Secret   string `xml:"SecretAccessKey"`
+	Status   string
+}
+
+// CreateAccessKey creates a new access key in IAM.
+//
+// See http://goo.gl/L46Py for more details.
+func (iam *IAM) CreateAccessKey(userName string) (*CreateAccessKeyResp, error) {
+	params := map[string]string{
+		"Action":   "CreateAccessKey",
+		"UserName": userName,
+	}
+	resp := new(CreateAccessKeyResp)
 	if err := iam.query(params, resp); err != nil {
 		return nil, err
 	}
