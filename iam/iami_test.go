@@ -24,7 +24,7 @@ func (s *AmazonServer) SetUp(c *C) {
 
 var _ = Suite(&AmazonClientSuite{})
 
-// AmazonClientSuite tests the client against a live EC2 server.
+// AmazonClientSuite tests the client against a live AWS server.
 type AmazonClientSuite struct {
 	srv AmazonServer
 	ClientTests
