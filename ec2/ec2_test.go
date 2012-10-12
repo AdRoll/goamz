@@ -243,6 +243,54 @@ func (s *S) TestDescribeInstancesExample2(c *C) {
 	c.Assert(r0t1.Value, Equals, "Production")
 }
 
+func (s *S) TestDescribeImagesExample(c *C) {
+	testServer.PrepareResponse(200, nil, DescribeImagesExample)
+
+	filter := ec2.NewFilter()
+	filter.Add("key1", "value1")
+	filter.Add("key2", "value2", "value3")
+
+	resp, err := s.ec2.Images([]string{"ami-1", "ami-2"}, filter)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], DeepEquals, []string{"DescribeImages"})
+	c.Assert(req.Form["ImageId.1"], DeepEquals, []string{"ami-1"})
+	c.Assert(req.Form["ImageId.2"], DeepEquals, []string{"ami-2"})
+	c.Assert(req.Form["Filter.1.Name"], DeepEquals, []string{"key1"})
+	c.Assert(req.Form["Filter.1.Value.1"], DeepEquals, []string{"value1"})
+	c.Assert(req.Form["Filter.1.Value.2"], IsNil)
+	c.Assert(req.Form["Filter.2.Name"], DeepEquals, []string{"key2"})
+	c.Assert(req.Form["Filter.2.Value.1"], DeepEquals, []string{"value2"})
+	c.Assert(req.Form["Filter.2.Value.2"], DeepEquals, []string{"value3"})
+
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "4a4a27a2-2e7c-475d-b35b-ca822EXAMPLE")
+	c.Assert(resp.Images, HasLen, 1)
+
+	i0 := resp.Images[0]
+	c.Assert(i0.ImageId, Equals, "ami-a2469acf")
+	c.Assert(i0.Location, Equals, "aws-marketplace/example-marketplace-amzn-ami.1")
+	c.Assert(i0.State, Equals, "available")
+	c.Assert(i0.Owner, Equals, "123456789999")
+	c.Assert(i0.Public, Equals, true)
+	c.Assert(i0.Architecture, Equals, "i386")
+	c.Assert(i0.ImageType, Equals, "machine")
+	c.Assert(i0.KernelId, Equals, "aki-805ea7e9")
+	c.Assert(i0.OwnerAlias, Equals, "aws-marketplace")
+	c.Assert(i0.Name, Equals, "example-marketplace-amzn-ami.1")
+	c.Assert(i0.Description, Equals, "Amazon Linux AMI i386 EBS")
+	c.Assert(i0.RootDeviceType, Equals, "ebs")
+	c.Assert(i0.RootDeviceName, Equals, "/dev/sda1")
+	c.Assert(i0.VirtualizationType, Equals, "paravirtual")
+	c.Assert(i0.Hypervisor, Equals, "xen")
+	
+	c.Assert(i0.BlockDevices, HasLen, 1)
+	c.Assert(i0.BlockDevices[0].DeviceName, Equals, "/dev/sda1")
+	c.Assert(i0.BlockDevices[0].Ebs.SnapshotId, Equals, "snap-787e9403")
+	c.Assert(i0.BlockDevices[0].Ebs.VolumeSize, Equals, int64(8))
+	c.Assert(i0.BlockDevices[0].Ebs.DeleteOnTermination, Equals, true)
+}
+
 func (s *S) TestCreateSecurityGroupExample(c *C) {
 	testServer.PrepareResponse(200, nil, CreateSecurityGroupExample)
 

@@ -318,6 +318,48 @@ var DescribeInstancesExample2 = `
 </DescribeInstancesResponse>
 `
 
+// http://goo.gl/V0U25
+var DescribeImagesExample = `
+<DescribeImagesResponse xmlns="http://ec2.amazonaws.com/doc/2012-08-15/">
+         <requestId>4a4a27a2-2e7c-475d-b35b-ca822EXAMPLE</requestId>
+    <imagesSet>
+        <item>
+            <imageId>ami-a2469acf</imageId>
+            <imageLocation>aws-marketplace/example-marketplace-amzn-ami.1</imageLocation>
+            <imageState>available</imageState>
+            <imageOwnerId>123456789999</imageOwnerId>
+            <isPublic>true</isPublic>
+            <productCodes>
+                <item>
+                    <productCode>a1b2c3d4e5f6g7h8i9j10k11</productCode>
+                    <type>marketplace</type>
+                </item>
+            </productCodes>
+            <architecture>i386</architecture>
+            <imageType>machine</imageType>
+            <kernelId>aki-805ea7e9</kernelId>
+            <imageOwnerAlias>aws-marketplace</imageOwnerAlias>
+            <name>example-marketplace-amzn-ami.1</name>
+            <description>Amazon Linux AMI i386 EBS</description>
+            <rootDeviceType>ebs</rootDeviceType>
+            <rootDeviceName>/dev/sda1</rootDeviceName>
+            <blockDeviceMapping>
+                <item>
+                    <deviceName>/dev/sda1</deviceName>
+                    <ebs>
+                        <snapshotId>snap-787e9403</snapshotId>
+                        <volumeSize>8</volumeSize>
+                        <deleteOnTermination>true</deleteOnTermination>
+                    </ebs>
+                </item>
+            </blockDeviceMapping>
+            <virtualizationType>paravirtual</virtualizationType>
+            <hypervisor>xen</hypervisor>
+        </item>
+    </imagesSet>
+</DescribeImagesResponse>
+`
+
 // http://goo.gl/Eo7Yl
 var CreateSecurityGroupExample = `
 <CreateSecurityGroupResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
