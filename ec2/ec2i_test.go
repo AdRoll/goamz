@@ -151,7 +151,7 @@ func (s *ClientTests) TestSecurityGroups(c *C) {
 	c.Assert(resp2.RequestId, Matches, ".+")
 }
 
-var sessionId = func() string{
+var sessionId = func() string {
 	buf := make([]byte, 8)
 	// if we have no randomness, we'll just make do, so ignore the error.
 	rand.Read(buf)

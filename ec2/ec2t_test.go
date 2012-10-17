@@ -160,7 +160,7 @@ func (s *ServerTests) TestIPPerms(c *C) {
 		ToPort:    2001,
 		SourceIPs: []string{"127.0.0.0/24"},
 		SourceGroups: []ec2.UserSecurityGroup{{
-			Name:    g1.Name,
+			Name: g1.Name,
 		}, {
 			Id: g0.Id,
 		}},
@@ -489,16 +489,16 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 	}
 	filterCheck := func(name, val string, gs []ec2.SecurityGroup) groupTest {
 		return groupTest{
-			about:   "filter check " + name,
-			filters: []filterSpec{{name, []string{val}}},
-			results: gs,
+			about:      "filter check " + name,
+			filters:    []filterSpec{{name, []string{val}}},
+			results:    gs,
 			allowExtra: true,
 		}
 	}
 	tests := []groupTest{
 		{
 			about:      "check that SecurityGroups returns all groups",
-			results:     groups(0, 1, 2, 3),
+			results:    groups(0, 1, 2, 3),
 			allowExtra: true,
 		}, {
 			about:   "check that specifying two group ids returns them",

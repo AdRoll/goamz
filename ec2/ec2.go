@@ -410,6 +410,9 @@ func (ec2 *EC2) Instances(instIds []string, filter *Filter) (resp *InstancesResp
 	return
 }
 
+// ----------------------------------------------------------------------------
+// Image and snapshot management functions and types.
+
 // Response to a DescribeImages request.
 //
 // See http://goo.gl/hLnyg for more details.
@@ -483,6 +486,104 @@ func (ec2 *EC2) Images(imgId []string, filter *Filter) (resp *ImagesResp, err er
 	filter.addParams(params)
 
 	resp = &ImagesResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// Response to a CreateSnapshot request.
+//
+// See http://goo.gl/ttcda for more details.
+type CreateSnapshotResp struct {
+	RequestId string `xml:"requestId"`
+	Snapshot
+}
+
+// CreateSnapshot Creates a snapshot of an Amazon EBS volume and stores it in Amazon S3. 
+//
+// See http://goo.gl/ttcda for more details.
+func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapshotResp, err error) {
+	params := makeParams("CreateSnapshot")
+	params["VolumeId"] = volumeId
+	params["Description"] = description
+
+	resp = &CreateSnapshotResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// Response to a DeleteSnapshot request.
+//
+// See http://goo.gl/vwU1y for more details.
+type DeleteSnapshotResp struct {
+	RequestId string `xml:"requestId"`
+	Return    bool   `xml:"return"`
+}
+
+// DeleteSnapshot requests the deletion of instances when the given ids.
+//
+// Note: If you make periodic snapshots of a volume, the snapshots are 
+// incremental so that only the blocks on the device that have changed 
+// since your last snapshot are incrementally saved in the new snapshot. 
+// Even though snapshots are saved incrementally, the snapshot deletion 
+// process is designed so that you need to retain only the most recent 
+// snapshot in order to restore the volume.
+//
+// See http://goo.gl/vwU1y for more details.
+func (ec2 *EC2) DeleteSnapshot(snapId string) (resp *DeleteSnapshotResp, err error) {
+	params := makeParams("DeleteSnapshot")
+	params["SnapshotId.1"] = snapId
+
+	resp = &DeleteSnapshotResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// Response to a DescribeSnapshots request.
+//
+// See http://goo.gl/nClDT for more details.
+type SnapshotsResp struct {
+	RequestId string     `xml:"requestId"`
+	Snapshots []Snapshot `xml:"snapshotSet>item"`
+}
+
+// Snapshot represents details about a snapshot image in EC2.
+//
+// See http://goo.gl/nkovs for more details.
+type Snapshot struct {
+	SnapshotId  string `xml:"snapshotId"`
+	VolumeId    string `xml:"volumeId"`
+	Status      string `xml:"status"`
+	StartTime   string `xml:"startTime"`
+	Progress    string `xml:"progress"`
+	OwnerId     string `xml:"ownerId"`
+	VolumeSize  string `xml:"volumeSize"`
+	Description string `xml:"description"`
+	OwnerAlias  string `xml:"ownerAlias"`
+	Tags        []Tag  `xml:"tagSet>item"`
+}
+
+// Snapshots returns details about snapshots in S3 available to the user.  
+// The parameters are optional, and if provided will limit the snapshots returned to those
+// matching the given snapshot id or filtering rules. 
+//
+// See http://goo.gl/ogJL4 for more details.
+func (ec2 *EC2) Snapshots(snapshotIds []string, filter *Filter) (resp *SnapshotsResp, err error) {
+	params := makeParams("DescribeSnapshots")
+	for i, id := range snapshotIds {
+		params["SnapshotId."+strconv.Itoa(i+1)] = id
+	}
+	filter.addParams(params)
+
+	resp = &SnapshotsResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err

@@ -283,12 +283,87 @@ func (s *S) TestDescribeImagesExample(c *C) {
 	c.Assert(i0.RootDeviceName, Equals, "/dev/sda1")
 	c.Assert(i0.VirtualizationType, Equals, "paravirtual")
 	c.Assert(i0.Hypervisor, Equals, "xen")
-	
+
 	c.Assert(i0.BlockDevices, HasLen, 1)
 	c.Assert(i0.BlockDevices[0].DeviceName, Equals, "/dev/sda1")
 	c.Assert(i0.BlockDevices[0].Ebs.SnapshotId, Equals, "snap-787e9403")
 	c.Assert(i0.BlockDevices[0].Ebs.VolumeSize, Equals, int64(8))
 	c.Assert(i0.BlockDevices[0].Ebs.DeleteOnTermination, Equals, true)
+}
+
+func (s *S) TestCreateSnapshotExample(c *C) {
+	testServer.PrepareResponse(200, nil, CreateSnapshotExample)
+
+	resp, err := s.ec2.CreateSnapshot("vol-4d826724", "Daily Backup")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], DeepEquals, []string{"CreateSnapshot"})
+	c.Assert(req.Form["VolumeId"], DeepEquals, []string{"vol-4d826724"})
+	c.Assert(req.Form["Description"], DeepEquals, []string{"Daily Backup"})
+
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.SnapshotId, Equals, "snap-78a54011")
+	c.Assert(resp.VolumeId, Equals, "vol-4d826724")
+	c.Assert(resp.Status, Equals, "pending")
+	c.Assert(resp.StartTime, Equals, "2008-05-07T12:51:50.000Z")
+	c.Assert(resp.Progress, Equals, "60%")
+	c.Assert(resp.OwnerId, Equals, "111122223333")
+	c.Assert(resp.VolumeSize, Equals, "10")
+	c.Assert(resp.Description, Equals, "Daily Backup")
+}
+
+func (s *S) TestDeleteSnapshotExample(c *C) {
+	testServer.PrepareResponse(200, nil, DeleteSnapshotExample)
+
+	resp, err := s.ec2.DeleteSnapshot("snap-78a54011")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], DeepEquals, []string{"DeleteSnapshot"})
+	c.Assert(req.Form["SnapshotId.1"], DeepEquals, []string{"snap-78a54011"})
+
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Return, Equals, true)
+}
+
+func (s *S) TestDescribeSnapshotsExample(c *C) {
+	testServer.PrepareResponse(200, nil, DescribeSnapshotsExample)
+
+	filter := ec2.NewFilter()
+	filter.Add("key1", "value1")
+	filter.Add("key2", "value2", "value3")
+
+	resp, err := s.ec2.Snapshots([]string{"snap-1", "snap-2"}, filter)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], DeepEquals, []string{"DescribeSnapshots"})
+	c.Assert(req.Form["SnapshotId.1"], DeepEquals, []string{"snap-1"})
+	c.Assert(req.Form["SnapshotId.2"], DeepEquals, []string{"snap-2"})
+	c.Assert(req.Form["Filter.1.Name"], DeepEquals, []string{"key1"})
+	c.Assert(req.Form["Filter.1.Value.1"], DeepEquals, []string{"value1"})
+	c.Assert(req.Form["Filter.1.Value.2"], IsNil)
+	c.Assert(req.Form["Filter.2.Name"], DeepEquals, []string{"key2"})
+	c.Assert(req.Form["Filter.2.Value.1"], DeepEquals, []string{"value2"})
+	c.Assert(req.Form["Filter.2.Value.2"], DeepEquals, []string{"value3"})
+
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Snapshots, HasLen, 1)
+
+	s0 := resp.Snapshots[0]
+	c.Assert(s0.SnapshotId, Equals, "snap-1a2b3c4d")
+	c.Assert(s0.VolumeId, Equals, "vol-8875daef")
+	c.Assert(s0.Status, Equals, "pending")
+	c.Assert(s0.StartTime, Equals, "2010-07-29T04:12:01.000Z")
+	c.Assert(s0.Progress, Equals, "30%")
+	c.Assert(s0.OwnerId, Equals, "111122223333")
+	c.Assert(s0.VolumeSize, Equals, "15")
+	c.Assert(s0.Description, Equals, "Daily Backup")
+
+	c.Assert(s0.Tags, HasLen, 1)
+	c.Assert(s0.Tags[0].Key, Equals, "Purpose")
+	c.Assert(s0.Tags[0].Value, Equals, "demo_db_14_backup")
 }
 
 func (s *S) TestCreateSecurityGroupExample(c *C) {
