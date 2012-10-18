@@ -45,7 +45,7 @@ func New(auth aws.Auth, region aws.Region) *EC2 {
 // Filter builds filtering parameters to be used in an EC2 query which supports
 // filtering.  For example:
 //
-//     filter := &Filter{}
+//     filter := NewFilter()
 //     filter.Add("architecture", "i386")
 //     filter.Add("launch-index", "0")
 //     resp, err := ec2.Instances(nil, filter)
@@ -237,9 +237,8 @@ type Instance struct {
 }
 
 // RunInstances starts new instances in EC2.
-// If options.MinCount and options.MaxCount are
-// both zero, a single instance will be started;
-// otherwise if options.MaxCount is zero, options.MinCount
+// If options.MinCount and options.MaxCount are both zero, a single instance
+// will be started; otherwise if options.MaxCount is zero, options.MinCount
 // will be used insteead.
 //
 // See http://goo.gl/Mcm3b for more details.
@@ -391,7 +390,7 @@ type Reservation struct {
 }
 
 // Instances returns details about instances in EC2.  Both parameters
-// are optional, and if provied will limit the instances returned to those
+// are optional, and if provided will limit the instances returned to those
 // matching the given instance ids or filtering rules.
 //
 // See http://goo.gl/4No7c for more details.
@@ -403,6 +402,173 @@ func (ec2 *EC2) Instances(instIds []string, filter *Filter) (resp *InstancesResp
 	filter.addParams(params)
 
 	resp = &InstancesResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// ----------------------------------------------------------------------------
+// Image and snapshot management functions and types.
+
+// Response to a DescribeImages request.
+//
+// See http://goo.gl/hLnyg for more details.
+type ImagesResp struct {
+	RequestId string  `xml:"requestId"`
+	Images    []Image `xml:"imagesSet>item"`
+}
+
+// BlockDeviceMapping represents the association of a block device with an image.
+//
+// See http://goo.gl/wnDBf for more details.
+type BlockDeviceMapping struct {
+	DeviceName          string      `xml:"deviceName"`
+	VirtualName         string      `xml:"virtualName"`
+	SnapshotId          string      `xml:"ebs>snapshotId"`
+	VolumeType          string      `xml:"ebs>volumeType"`
+	VolumeSize          int64       `xml:"ebs>volumeSize"`
+	DeleteOnTermination bool        `xml:"ebs>deleteOnTermination"`
+
+	// The number of I/O operations per second (IOPS) that the volume supports.
+	IOPS                int64       `xml:"ebs>iops"`
+}
+
+// Image represents details about an image.
+//
+// See http://goo.gl/iSqJG for more details.
+type Image struct {
+	Id                 string               `xml:"imageId"`
+	Name               string               `xml:"name"`
+	Description        string               `xml:"description"`
+	Type               string               `xml:"imageType"`
+	State              string               `xml:"imageState"`
+	Location           string               `xml:"imageLocation"`
+	Public             bool                 `xml:"isPublic"`
+	Architecture       string               `xml:"architecture"`
+	Platform           string               `xml:"platform"`
+	ProductCodes       []string             `xml:"productCode>item>productCode"`
+	KernelId           string               `xml:"kernelId"`
+	RamdiskId          string               `xml:"ramdiskId"`
+	StateReason        string               `xml:"stateReason"`
+	OwnerId            string               `xml:"imageOwnerId"`
+	OwnerAlias         string               `xml:"imageOwnerAlias"`
+	RootDeviceType     string               `xml:"rootDeviceType"`
+	RootDeviceName     string               `xml:"rootDeviceName"`
+	VirtualizationType string               `xml:"virtualizationType"`
+	Hypervisor         string               `xml:"hypervisor"`
+	BlockDevices       []BlockDeviceMapping `xml:"blockDeviceMapping>item"`
+}
+
+// Images returns details about available images.
+// The ids and filter parameters, if provided, will limit the images returned.
+// For example, to get all the private images associated with this account set
+// the boolean filter "is-private" to true.
+//
+// Note: calling this function with nil ids and filter parameters will result in 
+// a very large number of images being returned.
+//
+// See http://goo.gl/SRBhW for more details.
+func (ec2 *EC2) Images(ids []string, filter *Filter) (resp *ImagesResp, err error) {
+	params := makeParams("DescribeImages")
+	for i, id := range ids {
+		params["ImageId."+strconv.Itoa(i+1)] = id
+	}
+	filter.addParams(params)
+
+	resp = &ImagesResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// Response to a CreateSnapshot request.
+//
+// See http://goo.gl/ttcda for more details.
+type CreateSnapshotResp struct {
+	RequestId string `xml:"requestId"`
+	Snapshot
+}
+
+// CreateSnapshot creates a volume snapshot and stores it in S3.
+//
+// See http://goo.gl/ttcda for more details.
+func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapshotResp, err error) {
+	params := makeParams("CreateSnapshot")
+	params["VolumeId"] = volumeId
+	params["Description"] = description
+
+	resp = &CreateSnapshotResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// DeleteSnapshots deletes the volume snapshots with the given ids.
+//
+// Note: If you make periodic snapshots of a volume, the snapshots are 
+// incremental so that only the blocks on the device that have changed 
+// since your last snapshot are incrementally saved in the new snapshot. 
+// Even though snapshots are saved incrementally, the snapshot deletion 
+// process is designed so that you need to retain only the most recent 
+// snapshot in order to restore the volume.
+//
+// See http://goo.gl/vwU1y for more details.
+func (ec2 *EC2) DeleteSnapshots(ids []string) (resp *SimpleResp, err error) {
+	params := makeParams("DeleteSnapshot")
+	for i, id := range ids {
+		params["SnapshotId."+strconv.Itoa(i+1)] = id
+	}
+
+	resp = &SimpleResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
+// Response to a DescribeSnapshots request.
+//
+// See http://goo.gl/nClDT for more details.
+type SnapshotsResp struct {
+	RequestId string     `xml:"requestId"`
+	Snapshots []Snapshot `xml:"snapshotSet>item"`
+}
+
+// Snapshot represents details about a volume snapshot.
+//
+// See http://goo.gl/nkovs for more details.
+type Snapshot struct {
+	Id          string `xml:"snapshotId"`
+	VolumeId    string `xml:"volumeId"`
+	VolumeSize  string `xml:"volumeSize"`
+	Status      string `xml:"status"`
+	StartTime   string `xml:"startTime"`
+	Description string `xml:"description"`
+	Progress    string `xml:"progress"`
+	OwnerId     string `xml:"ownerId"`
+	OwnerAlias  string `xml:"ownerAlias"`
+	Tags        []Tag  `xml:"tagSet>item"`
+}
+
+// Snapshots returns details about volume snapshots available to the user.  
+// The ids and filter parameters, if provided, limit the snapshots returned.
+//
+// See http://goo.gl/ogJL4 for more details.
+func (ec2 *EC2) Snapshots(ids []string, filter *Filter) (resp *SnapshotsResp, err error) {
+	params := makeParams("DescribeSnapshots")
+	for i, id := range ids {
+		params["SnapshotId."+strconv.Itoa(i+1)] = id
+	}
+	filter.addParams(params)
+
+	resp = &SnapshotsResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
@@ -511,7 +677,7 @@ func SecurityGroupIds(ids ...string) []SecurityGroup {
 }
 
 // SecurityGroups returns details about security groups in EC2.  Both parameters
-// are optional, and if provied will limit the security groups returned to those
+// are optional, and if provided will limit the security groups returned to those
 // matching the given groups or filtering rules.
 //
 // See http://goo.gl/k12Uy for more details.

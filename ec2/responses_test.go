@@ -318,6 +318,96 @@ var DescribeInstancesExample2 = `
 </DescribeInstancesResponse>
 `
 
+// http://goo.gl/V0U25
+var DescribeImagesExample = `
+<DescribeImagesResponse xmlns="http://ec2.amazonaws.com/doc/2012-08-15/">
+         <requestId>4a4a27a2-2e7c-475d-b35b-ca822EXAMPLE</requestId>
+    <imagesSet>
+        <item>
+            <imageId>ami-a2469acf</imageId>
+            <imageLocation>aws-marketplace/example-marketplace-amzn-ami.1</imageLocation>
+            <imageState>available</imageState>
+            <imageOwnerId>123456789999</imageOwnerId>
+            <isPublic>true</isPublic>
+            <productCodes>
+                <item>
+                    <productCode>a1b2c3d4e5f6g7h8i9j10k11</productCode>
+                    <type>marketplace</type>
+                </item>
+            </productCodes>
+            <architecture>i386</architecture>
+            <imageType>machine</imageType>
+            <kernelId>aki-805ea7e9</kernelId>
+            <imageOwnerAlias>aws-marketplace</imageOwnerAlias>
+            <name>example-marketplace-amzn-ami.1</name>
+            <description>Amazon Linux AMI i386 EBS</description>
+            <rootDeviceType>ebs</rootDeviceType>
+            <rootDeviceName>/dev/sda1</rootDeviceName>
+            <blockDeviceMapping>
+                <item>
+                    <deviceName>/dev/sda1</deviceName>
+                    <ebs>
+                        <snapshotId>snap-787e9403</snapshotId>
+                        <volumeSize>8</volumeSize>
+                        <deleteOnTermination>true</deleteOnTermination>
+                    </ebs>
+                </item>
+            </blockDeviceMapping>
+            <virtualizationType>paravirtual</virtualizationType>
+            <hypervisor>xen</hypervisor>
+        </item>
+    </imagesSet>
+</DescribeImagesResponse>
+`
+
+// http://goo.gl/ttcda
+var CreateSnapshotExample = `
+<CreateSnapshotResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+  <snapshotId>snap-78a54011</snapshotId>
+  <volumeId>vol-4d826724</volumeId>
+  <status>pending</status>
+  <startTime>2008-05-07T12:51:50.000Z</startTime>
+  <progress>60%</progress>
+  <ownerId>111122223333</ownerId>
+  <volumeSize>10</volumeSize>
+  <description>Daily Backup</description>
+</CreateSnapshotResponse>
+`
+
+// http://goo.gl/vwU1y
+var DeleteSnapshotExample = `
+<DeleteSnapshotResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <return>true</return>
+</DeleteSnapshotResponse>
+`
+
+// http://goo.gl/nkovs
+var DescribeSnapshotsExample = `
+<DescribeSnapshotsResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <snapshotSet>
+      <item>
+         <snapshotId>snap-1a2b3c4d</snapshotId>
+         <volumeId>vol-8875daef</volumeId>
+         <status>pending</status>
+         <startTime>2010-07-29T04:12:01.000Z</startTime>
+         <progress>30%</progress>
+         <ownerId>111122223333</ownerId>
+         <volumeSize>15</volumeSize>
+         <description>Daily Backup</description>
+         <tagSet>
+            <item>
+               <key>Purpose</key>
+               <value>demo_db_14_backup</value>
+            </item>
+         </tagSet>
+      </item>
+   </snapshotSet>
+</DescribeSnapshotsResponse>
+`
+
 // http://goo.gl/Eo7Yl
 var CreateSecurityGroupExample = `
 <CreateSecurityGroupResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
