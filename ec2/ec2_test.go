@@ -268,17 +268,17 @@ func (s *S) TestDescribeImagesExample(c *C) {
 	c.Assert(resp.Images, HasLen, 1)
 
 	i0 := resp.Images[0]
-	c.Assert(i0.ImageId, Equals, "ami-a2469acf")
-	c.Assert(i0.Location, Equals, "aws-marketplace/example-marketplace-amzn-ami.1")
-	c.Assert(i0.State, Equals, "available")
-	c.Assert(i0.Owner, Equals, "123456789999")
-	c.Assert(i0.Public, Equals, true)
-	c.Assert(i0.Architecture, Equals, "i386")
-	c.Assert(i0.ImageType, Equals, "machine")
-	c.Assert(i0.KernelId, Equals, "aki-805ea7e9")
-	c.Assert(i0.OwnerAlias, Equals, "aws-marketplace")
+	c.Assert(i0.Id, Equals, "ami-a2469acf")
+	c.Assert(i0.Type, Equals, "machine")
 	c.Assert(i0.Name, Equals, "example-marketplace-amzn-ami.1")
 	c.Assert(i0.Description, Equals, "Amazon Linux AMI i386 EBS")
+	c.Assert(i0.Location, Equals, "aws-marketplace/example-marketplace-amzn-ami.1")
+	c.Assert(i0.State, Equals, "available")
+	c.Assert(i0.Public, Equals, true)
+	c.Assert(i0.OwnerId, Equals, "123456789999")
+	c.Assert(i0.OwnerAlias, Equals, "aws-marketplace")
+	c.Assert(i0.Architecture, Equals, "i386")
+	c.Assert(i0.KernelId, Equals, "aki-805ea7e9")
 	c.Assert(i0.RootDeviceType, Equals, "ebs")
 	c.Assert(i0.RootDeviceName, Equals, "/dev/sda1")
 	c.Assert(i0.VirtualizationType, Equals, "paravirtual")
@@ -286,9 +286,9 @@ func (s *S) TestDescribeImagesExample(c *C) {
 
 	c.Assert(i0.BlockDevices, HasLen, 1)
 	c.Assert(i0.BlockDevices[0].DeviceName, Equals, "/dev/sda1")
-	c.Assert(i0.BlockDevices[0].Ebs.SnapshotId, Equals, "snap-787e9403")
-	c.Assert(i0.BlockDevices[0].Ebs.VolumeSize, Equals, int64(8))
-	c.Assert(i0.BlockDevices[0].Ebs.DeleteOnTermination, Equals, true)
+	c.Assert(i0.BlockDevices[0].SnapshotId, Equals, "snap-787e9403")
+	c.Assert(i0.BlockDevices[0].VolumeSize, Equals, int64(8))
+	c.Assert(i0.BlockDevices[0].DeleteOnTermination, Equals, true)
 }
 
 func (s *S) TestCreateSnapshotExample(c *C) {
@@ -303,20 +303,20 @@ func (s *S) TestCreateSnapshotExample(c *C) {
 
 	c.Assert(err, IsNil)
 	c.Assert(resp.RequestId, Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
-	c.Assert(resp.SnapshotId, Equals, "snap-78a54011")
-	c.Assert(resp.VolumeId, Equals, "vol-4d826724")
-	c.Assert(resp.Status, Equals, "pending")
-	c.Assert(resp.StartTime, Equals, "2008-05-07T12:51:50.000Z")
-	c.Assert(resp.Progress, Equals, "60%")
-	c.Assert(resp.OwnerId, Equals, "111122223333")
-	c.Assert(resp.VolumeSize, Equals, "10")
-	c.Assert(resp.Description, Equals, "Daily Backup")
+	c.Assert(resp.Snapshot.Id, Equals, "snap-78a54011")
+	c.Assert(resp.Snapshot.VolumeId, Equals, "vol-4d826724")
+	c.Assert(resp.Snapshot.Status, Equals, "pending")
+	c.Assert(resp.Snapshot.StartTime, Equals, "2008-05-07T12:51:50.000Z")
+	c.Assert(resp.Snapshot.Progress, Equals, "60%")
+	c.Assert(resp.Snapshot.OwnerId, Equals, "111122223333")
+	c.Assert(resp.Snapshot.VolumeSize, Equals, "10")
+	c.Assert(resp.Snapshot.Description, Equals, "Daily Backup")
 }
 
-func (s *S) TestDeleteSnapshotExample(c *C) {
+func (s *S) TestDeleteSnapshotsExample(c *C) {
 	testServer.PrepareResponse(200, nil, DeleteSnapshotExample)
 
-	resp, err := s.ec2.DeleteSnapshot("snap-78a54011")
+	resp, err := s.ec2.DeleteSnapshots([]string{"snap-78a54011"})
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], DeepEquals, []string{"DeleteSnapshot"})
@@ -324,7 +324,6 @@ func (s *S) TestDeleteSnapshotExample(c *C) {
 
 	c.Assert(err, IsNil)
 	c.Assert(resp.RequestId, Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
-	c.Assert(resp.Return, Equals, true)
 }
 
 func (s *S) TestDescribeSnapshotsExample(c *C) {
@@ -352,13 +351,13 @@ func (s *S) TestDescribeSnapshotsExample(c *C) {
 	c.Assert(resp.Snapshots, HasLen, 1)
 
 	s0 := resp.Snapshots[0]
-	c.Assert(s0.SnapshotId, Equals, "snap-1a2b3c4d")
+	c.Assert(s0.Id, Equals, "snap-1a2b3c4d")
 	c.Assert(s0.VolumeId, Equals, "vol-8875daef")
+	c.Assert(s0.VolumeSize, Equals, "15")
 	c.Assert(s0.Status, Equals, "pending")
 	c.Assert(s0.StartTime, Equals, "2010-07-29T04:12:01.000Z")
 	c.Assert(s0.Progress, Equals, "30%")
 	c.Assert(s0.OwnerId, Equals, "111122223333")
-	c.Assert(s0.VolumeSize, Equals, "15")
 	c.Assert(s0.Description, Equals, "Daily Backup")
 
 	c.Assert(s0.Tags, HasLen, 1)

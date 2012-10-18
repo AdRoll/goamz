@@ -237,9 +237,8 @@ type Instance struct {
 }
 
 // RunInstances starts new instances in EC2.
-// If options.MinCount and options.MaxCount are
-// both zero, a single instance will be started;
-// otherwise if options.MaxCount is zero, options.MinCount
+// If options.MinCount and options.MaxCount are both zero, a single instance
+// will be started; otherwise if options.MaxCount is zero, options.MinCount
 // will be used insteead.
 //
 // See http://goo.gl/Mcm3b for more details.
@@ -421,46 +420,40 @@ type ImagesResp struct {
 	Images    []Image `xml:"imagesSet>item"`
 }
 
-// EbsBlockDevice represents parameters used to automatically set up 
-// Amazon EBS volumes when an instance is launched.
-//
-// See http://goo.gl/ynXDE for more details.
-type EbsBlockDevice struct {
-	SnapshotId          string `xml:"snapshotId"`
-	VolumeSize          int64  `xml:"volumeSize"`
-	DeleteOnTermination bool   `xml:"deleteOnTermination"`
-	VolumeType          string `xml:"volumeType"`
-	Iops                int64  `xml:"iops"` // The number of I/O operations per second (IOPS) that the volume supports.
-}
-
-// BlockDeviceMapping represents details about the block devices of an image
+// BlockDeviceMapping represents the association of a block device with an image.
 //
 // See http://goo.gl/wnDBf for more details.
 type BlockDeviceMapping struct {
-	DeviceName  string         `xml:"deviceName"`
-	VirtualName string         `xml:"virtualName"`
-	Ebs         EbsBlockDevice `xml:"ebs"`
+	DeviceName          string      `xml:"deviceName"`
+	VirtualName         string      `xml:"virtualName"`
+	SnapshotId          string      `xml:"ebs>snapshotId"`
+	VolumeType          string      `xml:"ebs>volumeType"`
+	VolumeSize          int64       `xml:"ebs>volumeSize"`
+	DeleteOnTermination bool        `xml:"ebs>deleteOnTermination"`
+
+	// The number of I/O operations per second (IOPS) that the volume supports.
+	IOPS                int64       `xml:"ebs>iops"`
 }
 
-// Image represents details about an image in EC2.
+// Image represents details about an image.
 //
 // See http://goo.gl/iSqJG for more details.
 type Image struct {
-	ImageId            string               `xml:"imageId"`
-	Location           string               `xml:"imageLocation"`
+	Id                 string               `xml:"imageId"`
+	Name               string               `xml:"name"`
+	Description        string               `xml:"description"`
+	Type               string               `xml:"imageType"`
 	State              string               `xml:"imageState"`
-	Owner              string               `xml:"imageOwnerId"`
+	Location           string               `xml:"imageLocation"`
 	Public             bool                 `xml:"isPublic"`
 	Architecture       string               `xml:"architecture"`
-	ImageType          string               `xml:"imageType"`
+	Platform           string               `xml:"platform"`
 	ProductCodes       []string             `xml:"productCode>item>productCode"`
 	KernelId           string               `xml:"kernelId"`
 	RamdiskId          string               `xml:"ramdiskId"`
-	Platform           string               `xml:"platform"`
 	StateReason        string               `xml:"stateReason"`
+	OwnerId            string               `xml:"imageOwnerId"`
 	OwnerAlias         string               `xml:"imageOwnerAlias"`
-	Name               string               `xml:"name"`
-	Description        string               `xml:"description"`
 	RootDeviceType     string               `xml:"rootDeviceType"`
 	RootDeviceName     string               `xml:"rootDeviceName"`
 	VirtualizationType string               `xml:"virtualizationType"`
@@ -468,19 +461,18 @@ type Image struct {
 	BlockDevices       []BlockDeviceMapping `xml:"blockDeviceMapping>item"`
 }
 
-// Images returns details about images in EC2.  The parameters 
-// are optional, and if provided will limit the images returned to those
-// matching the given image id or filtering rules. For example, to get all the 
-// private images associated with this account set the boolean filter "is-private"
-// to true.
+// Images returns details about available images.
+// The ids and filter parameters, if provided, will limit the images returned.
+// For example, to get all the private images associated with this account set
+// the boolean filter "is-private" to true.
 //
-// Note: calling this function with nil id and filter parameters will result in 
-// more than ten thousand images being returned.
+// Note: calling this function with nil ids and filter parameters will result in 
+// a very large number of images being returned.
 //
 // See http://goo.gl/SRBhW for more details.
-func (ec2 *EC2) Images(imgId []string, filter *Filter) (resp *ImagesResp, err error) {
+func (ec2 *EC2) Images(ids []string, filter *Filter) (resp *ImagesResp, err error) {
 	params := makeParams("DescribeImages")
-	for i, id := range imgId {
+	for i, id := range ids {
 		params["ImageId."+strconv.Itoa(i+1)] = id
 	}
 	filter.addParams(params)
@@ -501,7 +493,7 @@ type CreateSnapshotResp struct {
 	Snapshot
 }
 
-// CreateSnapshot Creates a snapshot of an Amazon EBS volume and stores it in Amazon S3. 
+// CreateSnapshot creates a volume snapshot and stores it in S3.
 //
 // See http://goo.gl/ttcda for more details.
 func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapshotResp, err error) {
@@ -517,15 +509,7 @@ func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapsh
 	return
 }
 
-// Response to a DeleteSnapshot request.
-//
-// See http://goo.gl/vwU1y for more details.
-type DeleteSnapshotResp struct {
-	RequestId string `xml:"requestId"`
-	Return    bool   `xml:"return"`
-}
-
-// DeleteSnapshot requests the deletion of instances when the given ids.
+// DeleteSnapshots deletes the volume snapshots with the given ids.
 //
 // Note: If you make periodic snapshots of a volume, the snapshots are 
 // incremental so that only the blocks on the device that have changed 
@@ -535,11 +519,13 @@ type DeleteSnapshotResp struct {
 // snapshot in order to restore the volume.
 //
 // See http://goo.gl/vwU1y for more details.
-func (ec2 *EC2) DeleteSnapshot(snapId string) (resp *DeleteSnapshotResp, err error) {
+func (ec2 *EC2) DeleteSnapshots(ids []string) (resp *SimpleResp, err error) {
 	params := makeParams("DeleteSnapshot")
-	params["SnapshotId.1"] = snapId
+	for i, id := range ids {
+		params["SnapshotId."+strconv.Itoa(i+1)] = id
+	}
 
-	resp = &DeleteSnapshotResp{}
+	resp = &SimpleResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
@@ -555,30 +541,29 @@ type SnapshotsResp struct {
 	Snapshots []Snapshot `xml:"snapshotSet>item"`
 }
 
-// Snapshot represents details about a snapshot image in EC2.
+// Snapshot represents details about a volume snapshot.
 //
 // See http://goo.gl/nkovs for more details.
 type Snapshot struct {
-	SnapshotId  string `xml:"snapshotId"`
+	Id          string `xml:"snapshotId"`
 	VolumeId    string `xml:"volumeId"`
+	VolumeSize  string `xml:"volumeSize"`
 	Status      string `xml:"status"`
 	StartTime   string `xml:"startTime"`
+	Description string `xml:"description"`
 	Progress    string `xml:"progress"`
 	OwnerId     string `xml:"ownerId"`
-	VolumeSize  string `xml:"volumeSize"`
-	Description string `xml:"description"`
 	OwnerAlias  string `xml:"ownerAlias"`
 	Tags        []Tag  `xml:"tagSet>item"`
 }
 
-// Snapshots returns details about snapshots in S3 available to the user.  
-// The parameters are optional, and if provided will limit the snapshots returned to those
-// matching the given snapshot id or filtering rules. 
+// Snapshots returns details about volume snapshots available to the user.  
+// The ids and filter parameters, if provided, limit the snapshots returned.
 //
 // See http://goo.gl/ogJL4 for more details.
-func (ec2 *EC2) Snapshots(snapshotIds []string, filter *Filter) (resp *SnapshotsResp, err error) {
+func (ec2 *EC2) Snapshots(ids []string, filter *Filter) (resp *SnapshotsResp, err error) {
 	params := makeParams("DescribeSnapshots")
-	for i, id := range snapshotIds {
+	for i, id := range ids {
 		params["SnapshotId."+strconv.Itoa(i+1)] = id
 	}
 	filter.addParams(params)
