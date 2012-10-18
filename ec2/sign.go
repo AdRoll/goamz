@@ -19,11 +19,18 @@ func sign(auth aws.Auth, method, path string, params map[string]string, host str
 	params["SignatureVersion"] = "2"
 	params["SignatureMethod"] = "HmacSHA256"
 
-	var sarray []string
-	for k, v := range params {
-		sarray = append(sarray, aws.Encode(k)+"="+aws.Encode(v))
+	// aws specifies that the parameters in a signed request must 
+	// be in natural order of the keys. This is distinct from the 
+	// natural order of the encoded value of key=value. Basically
+	// period and equals affect the sorting order.
+	var keys, sarray []string
+	for k, _ := range params {
+		keys = append(keys, k)
 	}
-	sort.StringSlice(sarray).Sort()
+	sort.Strings(keys)
+	for _, k := range keys {
+		sarray = append(sarray, aws.Encode(k)+"="+aws.Encode(params[k]))
+	}
 	joined := strings.Join(sarray, "&")
 	payload := method + "\n" + host + "\n" + path + "\n" + joined
 	hash := hmac.New(sha256.New, []byte(auth.SecretKey))
