@@ -180,6 +180,12 @@ func makeParams(action string) map[string]string {
 	return params
 }
 
+func addParamsList(params map[string]string, label string, ids []string) {
+	for i, id := range ids {
+		params[label+"."+strconv.Itoa(i+1)] = id
+	}
+}
+
 // ----------------------------------------------------------------------------
 // Instance management functions and types.
 
@@ -359,9 +365,7 @@ type InstanceStateChange struct {
 // See http://goo.gl/3BKHj for more details.
 func (ec2 *EC2) TerminateInstances(instIds []string) (resp *TerminateInstancesResp, err error) {
 	params := makeParams("TerminateInstances")
-	for i, id := range instIds {
-		params["InstanceId."+strconv.Itoa(i+1)] = id
-	}
+	addParamsList(params, "InstanceId", instIds)
 	resp = &TerminateInstancesResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
@@ -396,11 +400,8 @@ type Reservation struct {
 // See http://goo.gl/4No7c for more details.
 func (ec2 *EC2) Instances(instIds []string, filter *Filter) (resp *InstancesResp, err error) {
 	params := makeParams("DescribeInstances")
-	for i, id := range instIds {
-		params["InstanceId."+strconv.Itoa(i+1)] = id
-	}
+	addParamsList(params, "InstanceId", instIds)
 	filter.addParams(params)
-
 	resp = &InstancesResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
@@ -787,12 +788,8 @@ type Tag struct {
 // 
 // See http://goo.gl/Vmkqc for more details
 func (ec2 *EC2) CreateTags(instIds []string, tags []Tag) (resp *SimpleResp, err error) {
-
 	params := makeParams("CreateTags")
-
-	for i, id := range instIds {
-		params["ResourceId."+strconv.Itoa(i+1)] = id
-	}
+	addParamsList(params, "ResourceId", instIds)
 
 	for j, tag := range tags {
 		params["Tag."+strconv.Itoa(j+1)+".Key"] = tag.Key
@@ -828,11 +825,7 @@ type StopInstanceResp struct {
 // See http://goo.gl/awKeF for more details.
 func (ec2 *EC2) StartInstances(ids ...string) (resp *StartInstanceResp, err error) {
 	params := makeParams("StartInstances")
-
-	for i, id := range ids {
-		params["InstanceId."+strconv.Itoa(i+1)] = id
-	}
-
+	addParamsList(params, "InstanceId", ids)
 	resp = &StartInstanceResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
@@ -846,11 +839,7 @@ func (ec2 *EC2) StartInstances(ids ...string) (resp *StartInstanceResp, err erro
 // See http://goo.gl/436dJ for more details.
 func (ec2 *EC2) StopInstances(ids ...string) (resp *StopInstanceResp, err error) {
 	params := makeParams("StopInstances")
-
-	for i, id := range ids {
-		params["InstanceId."+strconv.Itoa(i+1)] = id
-	}
-
+	addParamsList(params, "InstanceId", ids)
 	resp = &StopInstanceResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
@@ -868,11 +857,7 @@ func (ec2 *EC2) StopInstances(ids ...string) (resp *StopInstanceResp, err error)
 // See http://goo.gl/baoUf for more details.
 func (ec2 *EC2) RebootInstances(ids ...string) (resp *SimpleResp, err error) {
 	params := makeParams("RebootInstances")
-
-	for i, id := range ids {
-		params["InstanceId."+strconv.Itoa(i+1)] = id
-	}
-
+	addParamsList(params, "InstanceId", ids)
 	resp = &SimpleResp{}
 	err = ec2.query(params, resp)
 	if err != nil {

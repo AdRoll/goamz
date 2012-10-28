@@ -30,9 +30,28 @@ func (s *S) TestParamSignature(c *C) {
 	c.Assert(params["Signature"], Equals, expected)
 }
 
+func (s *S) TestManyParams(c *C) {
+	params := map[string]string{
+		"param1":  "value10",
+		"param2":  "value2",
+		"param3":  "value3",
+		"param4":  "value4",
+		"param5":  "value5",
+		"param6":  "value6",
+		"param7":  "value7",
+		"param8":  "value8",
+		"param9":  "value9",
+		"param10": "value1",
+	}
+	ec2.Sign(testAuth, "GET", "/path", params, "localhost")
+	expected := "di0sjxIvezUgQ1SIL6i+C/H8lL+U0CQ9frLIak8jkVg="
+	c.Assert(params["Signature"], Equals, expected)
+}
+
 func (s *S) TestEscaping(c *C) {
 	params := map[string]string{"Nonce": "+ +"}
 	ec2.Sign(testAuth, "GET", "/path", params, "localhost")
+	c.Assert(params["Nonce"], Equals, "+ +")
 	expected := "bqffDELReIqwjg/W0DnsnVUmfLK4wXVLO4/LuG+1VFA="
 	c.Assert(params["Signature"], Equals, expected)
 }
