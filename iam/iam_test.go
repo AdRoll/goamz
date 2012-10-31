@@ -88,3 +88,31 @@ func (s *S) TestCreateAccessKey(c *C) {
 	c.Assert(resp.AccessKey.Secret, Equals, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
 	c.Assert(resp.AccessKey.Status, Equals, "Active")
 }
+
+func (s *S) TestDeleteAccessKey(c *C) {
+	testServer.PrepareResponse(200, nil, RequestIdExample)
+	resp, err := s.iam.DeleteAccessKey("ysa8hasdhasdsi", "Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "DeleteAccessKey")
+	c.Assert(values.Get("AccessKeyId"), Equals, "ysa8hasdhasdsi")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestListAccessKey(c *C) {
+	testServer.PrepareResponse(200, nil, ListAccessKeyExample)
+	resp, err := s.iam.ListAccessKeys("Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "ListAccessKeys")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.AccessKeys, HasLen, 2)
+	c.Assert(resp.AccessKeys[0].Id, Equals, "AKIAIOSFODNN7EXAMPLE")
+	c.Assert(resp.AccessKeys[0].UserName, Equals, "Bob")
+	c.Assert(resp.AccessKeys[0].Status, Equals, "Active")
+	c.Assert(resp.AccessKeys[1].Id, Equals, "AKIAI44QH8DHBEXAMPLE")
+	c.Assert(resp.AccessKeys[1].UserName, Equals, "Bob")
+	c.Assert(resp.AccessKeys[1].Status, Equals, "Inactive")
+}

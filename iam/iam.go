@@ -152,7 +152,7 @@ type CreateAccessKeyResp struct {
 type AccessKey struct {
 	UserName string
 	Id       string `xml:"AccessKeyId"`
-	Secret   string `xml:"SecretAccessKey"`
+	Secret   string `xml:"SecretAccessKey,omitempty"`
 	Status   string
 }
 
@@ -165,6 +165,42 @@ func (iam *IAM) CreateAccessKey(userName string) (*CreateAccessKeyResp, error) {
 		"UserName": userName,
 	}
 	resp := new(CreateAccessKeyResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Response to ListAccessKey request.
+//
+// See http://goo.gl/Vjozx for more details.
+type ListAccessKeyResp struct {
+	RequestId  string      `xml:"ResponseMetadata>RequestId"`
+	AccessKeys []AccessKey `xml:"ListAccessKeysResult>AccessKeyMetadata>member"`
+}
+
+func (iam *IAM) ListAccessKeys(userName string) (*ListAccessKeyResp, error) {
+	params := map[string]string{
+		"Action":   "ListAccessKeys",
+		"UserName": userName,
+	}
+	resp := new(ListAccessKeyResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// DeleteAccessKey deletes an access key from IAM.
+//
+// See http://goo.gl/hPGhw for more details.
+func (iam *IAM) DeleteAccessKey(id, userName string) (*SimpleResp, error) {
+	params := map[string]string{
+		"Action":      "DeleteAccessKey",
+		"AccessKeyId": id,
+		"UserName":    userName,
+	}
+	resp := new(SimpleResp)
 	if err := iam.query(params, resp); err != nil {
 		return nil, err
 	}
