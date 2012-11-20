@@ -91,7 +91,7 @@ func (s *ClientTests) TestCreateListAndDeleteAccessKey(c *C) {
 	defer s.iam.DeleteUser(createUserResp.User.Name)
 	createKeyResp, err := s.iam.CreateAccessKey(createUserResp.User.Name)
 	c.Assert(err, IsNil)
-	listKeyResp, err := s.iam.ListAccessKeys(createUserResp.User.Name)
+	listKeyResp, err := s.iam.AccessKeys(createUserResp.User.Name)
 	c.Assert(err, IsNil)
 	c.Assert(listKeyResp.AccessKeys, HasLen, 1)
 	createKeyResp.AccessKey.Secret = ""
@@ -111,7 +111,7 @@ func (s *ClientTests) TestCreateAccessKeyError(c *C) {
 }
 
 func (s *ClientTests) TestListAccessKeysUserNotFound(c *C) {
-	_, err := s.iam.ListAccessKeys("unknowngopher")
+	_, err := s.iam.AccessKeys("unknowngopher")
 	c.Assert(err, NotNil)
 	iamErr, ok := err.(*iam.Error)
 	c.Assert(ok, Equals, true)
@@ -124,7 +124,7 @@ func (s *ClientTests) TestListAccessKeysUserWithoutKeys(c *C) {
 	createUserResp, err := s.iam.CreateUser("gopher", "/")
 	c.Assert(err, IsNil)
 	defer s.iam.DeleteUser(createUserResp.User.Name)
-	resp, err := s.iam.ListAccessKeys(createUserResp.User.Name)
+	resp, err := s.iam.AccessKeys(createUserResp.User.Name)
 	c.Assert(err, IsNil)
 	c.Assert(resp.AccessKeys, HasLen, 0)
 }

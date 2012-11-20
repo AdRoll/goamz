@@ -236,7 +236,7 @@ func (srv *Server) listAccessKeys(w http.ResponseWriter, req *http.Request, reqI
 			keys = append(keys, k)
 		}
 	}
-	return iam.ListAccessKeyResp{
+	return iam.AccessKeysResp{
 		RequestId:  reqId,
 		AccessKeys: keys,
 	}, nil

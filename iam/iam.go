@@ -171,20 +171,28 @@ func (iam *IAM) CreateAccessKey(userName string) (*CreateAccessKeyResp, error) {
 	return resp, nil
 }
 
-// Response to ListAccessKey request.
+// Response to AccessKeys request.
 //
 // See http://goo.gl/Vjozx for more details.
-type ListAccessKeyResp struct {
+type AccessKeysResp struct {
 	RequestId  string      `xml:"ResponseMetadata>RequestId"`
 	AccessKeys []AccessKey `xml:"ListAccessKeysResult>AccessKeyMetadata>member"`
 }
 
-func (iam *IAM) ListAccessKeys(userName string) (*ListAccessKeyResp, error) {
+// AccessKeys lists all acccess keys associated with a user.
+//
+// The userName parameter is optional. If set to "", the userName is determined
+// implicitly based on the AWS Access Key ID used to sign the request.
+//
+// See http://goo.gl/Vjozx for more details.
+func (iam *IAM) AccessKeys(userName string) (*AccessKeysResp, error) {
 	params := map[string]string{
-		"Action":   "ListAccessKeys",
-		"UserName": userName,
+		"Action": "ListAccessKeys",
 	}
-	resp := new(ListAccessKeyResp)
+	if userName != "" {
+		params["UserName"] = userName
+	}
+	resp := new(AccessKeysResp)
 	if err := iam.query(params, resp); err != nil {
 		return nil, err
 	}
@@ -193,12 +201,17 @@ func (iam *IAM) ListAccessKeys(userName string) (*ListAccessKeyResp, error) {
 
 // DeleteAccessKey deletes an access key from IAM.
 //
+// The userName parameter is optional. If set to "", the userName is determined
+// implicitly based on the AWS Access Key ID used to sign the request.
+//
 // See http://goo.gl/hPGhw for more details.
 func (iam *IAM) DeleteAccessKey(id, userName string) (*SimpleResp, error) {
 	params := map[string]string{
 		"Action":      "DeleteAccessKey",
 		"AccessKeyId": id,
-		"UserName":    userName,
+	}
+	if userName != "" {
+		params["UserName"] = userName
 	}
 	resp := new(SimpleResp)
 	if err := iam.query(params, resp); err != nil {
