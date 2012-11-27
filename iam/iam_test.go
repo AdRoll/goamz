@@ -4,6 +4,7 @@ import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/iam"
 	. "launchpad.net/gocheck"
+	"strings"
 )
 
 type S struct {
@@ -87,4 +88,61 @@ func (s *S) TestCreateAccessKey(c *C) {
 	c.Assert(resp.AccessKey.Id, Equals, "AKIAIOSFODNN7EXAMPLE")
 	c.Assert(resp.AccessKey.Secret, Equals, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
 	c.Assert(resp.AccessKey.Status, Equals, "Active")
+}
+
+func (s *S) TestGetUserPolicy(c *C) {
+	testServer.PrepareResponse(200, nil, GetUserPolicyExample)
+	resp, err := s.iam.GetUserPolicy("AllAccessPolicy", "Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "GetUserPolicy")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(values.Get("PolicyName"), Equals, "AllAccessPolicy")
+	c.Assert(err, IsNil)
+	c.Assert(resp.Policy.User, Equals, "Bob")
+	c.Assert(resp.Policy.Name, Equals, "AllAccessPolicy")
+	c.Assert(strings.TrimSpace(resp.Policy.Document), Equals, `{"Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]}`)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestPutUserPolicy(c *C) {
+	policy := iam.UserPolicy{
+		Name: "AllAccessPolicy",
+		User: "Bob",
+		Document: `{
+  "Statement": [
+    {
+      "Action": [
+        "s3:*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:s3:::8shsns19s90ajahadsj/*",
+        "arn:aws:s3:::8shsns19s90ajahadsj"
+      ]
+    }
+  ]
+}`,
+	}
+	testServer.PrepareResponse(200, nil, RequestIdExample)
+	resp, err := s.iam.PutUserPolicy(policy)
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, Equals, "POST")
+	c.Assert(req.FormValue("Action"), Equals, "PutUserPolicy")
+	c.Assert(req.FormValue("PolicyName"), Equals, policy.Name)
+	c.Assert(req.FormValue("UserName"), Equals, policy.User)
+	c.Assert(req.FormValue("PolicyDocument"), Equals, policy.Document)
+	c.Assert(req.FormValue("Version"), Equals, "2010-05-08")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestDeleteUserPolicy(c *C) {
+	testServer.PrepareResponse(200, nil, RequestIdExample)
+	resp, err := s.iam.DeleteUserPolicy("AllAccessPolicy", "Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "DeleteUserPolicy")
+	c.Assert(values.Get("PolicyName"), Equals, "AllAccessPolicy")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -32,6 +33,34 @@ func (iam *IAM) query(params map[string]string, resp interface{}) error {
 	sign(iam.Auth, "GET", "/", params, endpoint.Host)
 	endpoint.RawQuery = multimap(params).Encode()
 	r, err := http.Get(endpoint.String())
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	if r.StatusCode > 200 {
+		return buildError(r)
+	}
+	return xml.NewDecoder(r.Body).Decode(resp)
+}
+
+func (iam *IAM) postQuery(params map[string]string, resp interface{}) error {
+	endpoint, err := url.Parse(iam.IAMEndpoint)
+	if err != nil {
+		return err
+	}
+	params["Version"] = "2010-05-08"
+	params["Timestamp"] = time.Now().In(time.UTC).Format(time.RFC3339)
+	sign(iam.Auth, "POST", "/", params, endpoint.Host)
+	encoded := multimap(params).Encode()
+	body := strings.NewReader(encoded)
+	req, err := http.NewRequest("POST", endpoint.String(), body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Host", endpoint.Host)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(encoded)))
+	r, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -165,6 +194,73 @@ func (iam *IAM) CreateAccessKey(userName string) (*CreateAccessKeyResp, error) {
 		"UserName": userName,
 	}
 	resp := new(CreateAccessKeyResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Response to a GetUserPolicy request.
+//
+// See http://goo.gl/BH04O for more details.
+type GetUserPolicyResp struct {
+	Policy    UserPolicy `xml:"GetUserPolicyResult"`
+	RequestId string     `xml:"ResponseMetadata>RequestId"`
+}
+
+// UserPolicy encapsulates an IAM group policy.
+//
+// See http://goo.gl/C7hgS for more details.
+type UserPolicy struct {
+	Name     string `xml:"PolicyName"`
+	User     string `xml:"UserName"`
+	Document string `xml:"PolicyDocument"`
+}
+
+// GetUserPolicy gets a user policy in IAM.
+//
+// See http://goo.gl/BH04O for more details.
+func (iam *IAM) GetUserPolicy(policyName, userName string) (*GetUserPolicyResp, error) {
+	params := map[string]string{
+		"Action":     "GetUserPolicy",
+		"UserName":   userName,
+		"PolicyName": policyName,
+	}
+	resp := new(GetUserPolicyResp)
+	if err := iam.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+	return nil, nil
+}
+
+// PutUserPolicy creates a user policy in IAM.
+//
+// See http://goo.gl/ldCO8 for more details.
+func (iam *IAM) PutUserPolicy(policy UserPolicy) (*SimpleResp, error) {
+	params := map[string]string{
+		"Action":         "PutUserPolicy",
+		"UserName":       policy.User,
+		"PolicyName":     policy.Name,
+		"PolicyDocument": policy.Document,
+	}
+	resp := new(SimpleResp)
+	if err := iam.postQuery(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// DeleteUserPolicy deletes a user policy from IAM.
+//
+// See http://goo.gl/7Jncn for more details.
+func (iam *IAM) DeleteUserPolicy(policyName, userName string) (*SimpleResp, error) {
+	params := map[string]string{
+		"Action":     "DeleteUserPolicy",
+		"PolicyName": policyName,
+		"UserName":   userName,
+	}
+	resp := new(SimpleResp)
 	if err := iam.query(params, resp); err != nil {
 		return nil, err
 	}
