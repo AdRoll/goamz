@@ -213,7 +213,7 @@ type GetUserPolicyResp struct {
 // See http://goo.gl/C7hgS for more details.
 type UserPolicy struct {
 	Name     string `xml:"PolicyName"`
-	User     string `xml:"UserName"`
+	UserName string `xml:"UserName"`
 	Document string `xml:"PolicyDocument"`
 }
 
@@ -237,12 +237,12 @@ func (iam *IAM) GetUserPolicy(policyName, userName string) (*GetUserPolicyResp, 
 // PutUserPolicy creates a user policy in IAM.
 //
 // See http://goo.gl/ldCO8 for more details.
-func (iam *IAM) PutUserPolicy(policy UserPolicy) (*SimpleResp, error) {
+func (iam *IAM) PutUserPolicy(userName, policyName, policyDocument string) (*SimpleResp, error) {
 	params := map[string]string{
 		"Action":         "PutUserPolicy",
-		"UserName":       policy.User,
-		"PolicyName":     policy.Name,
-		"PolicyDocument": policy.Document,
+		"UserName":       userName,
+		"PolicyName":     policyName,
+		"PolicyDocument": policyDocument,
 	}
 	resp := new(SimpleResp)
 	if err := iam.postQuery(params, resp); err != nil {
