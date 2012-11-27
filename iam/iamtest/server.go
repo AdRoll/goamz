@@ -97,7 +97,7 @@ func (srv *Server) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		srv.error(w, &iam.Error{
 			StatusCode: 400,
 			Code:       "InvalidAction",
-			Message:    "Invalid action",
+			Message:    "Invalid action: " + action,
 		})
 	}
 }
