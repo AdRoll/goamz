@@ -134,7 +134,7 @@ func (s *S) TestPutUserPolicy(c *C) {
 
 func (s *S) TestDeleteUserPolicy(c *C) {
 	testServer.PrepareResponse(200, nil, RequestIdExample)
-	resp, err := s.iam.DeleteUserPolicy("AllAccessPolicy", "Bob")
+	resp, err := s.iam.DeleteUserPolicy("Bob", "AllAccessPolicy")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "DeleteUserPolicy")
 	c.Assert(values.Get("PolicyName"), Equals, "AllAccessPolicy")

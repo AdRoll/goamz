@@ -254,7 +254,7 @@ func (iam *IAM) PutUserPolicy(userName, policyName, policyDocument string) (*Sim
 // DeleteUserPolicy deletes a user policy from IAM.
 //
 // See http://goo.gl/7Jncn for more details.
-func (iam *IAM) DeleteUserPolicy(policyName, userName string) (*SimpleResp, error) {
+func (iam *IAM) DeleteUserPolicy(userName, policyName string) (*SimpleResp, error) {
 	params := map[string]string{
 		"Action":     "DeleteUserPolicy",
 		"PolicyName": policyName,
