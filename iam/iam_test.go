@@ -76,6 +76,81 @@ func (s *S) TestDeleteUser(c *C) {
 	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }
 
+func (s *S) TestCreateGroup(c *C) {
+	testServer.PrepareResponse(200, nil, CreateGroupExample)
+	resp, err := s.iam.CreateGroup("Admins", "/admins/")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "CreateGroup")
+	c.Assert(values.Get("GroupName"), Equals, "Admins")
+	c.Assert(values.Get("Path"), Equals, "/admins/")
+	c.Assert(err, IsNil)
+	c.Assert(resp.Group.Path, Equals, "/admins/")
+	c.Assert(resp.Group.Name, Equals, "Admins")
+	c.Assert(resp.Group.Id, Equals, "AGPACKCEVSQ6C2EXAMPLE")
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestCreateGroupWithoutPath(c *C) {
+	testServer.PrepareResponse(200, nil, CreateGroupExample)
+	_, err := s.iam.CreateGroup("Managers", "")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "CreateGroup")
+	c.Assert(err, IsNil)
+	_, ok := map[string][]string(values)["Path"]
+	c.Assert(ok, Equals, false)
+}
+
+func (s *S) TestDeleteGroup(c *C) {
+	testServer.PrepareResponse(200, nil, RequestIdExample)
+	resp, err := s.iam.DeleteGroup("Admins")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "DeleteGroup")
+	c.Assert(values.Get("GroupName"), Equals, "Admins")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestListGroups(c *C) {
+	testServer.PrepareResponse(200, nil, ListGroupsExample)
+	resp, err := s.iam.Groups("/division_abc/")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "ListGroups")
+	c.Assert(values.Get("PathPrefix"), Equals, "/division_abc/")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	expected := []iam.Group{
+		{
+			Path: "/division_abc/subdivision_xyz/",
+			Name: "Admins",
+			Id:   "AGPACKCEVSQ6C2EXAMPLE",
+			Arn:  "arn:aws:iam::123456789012:group/Admins",
+		},
+		{
+			Path: "/division_abc/subdivision_xyz/product_1234/engineering/",
+			Name: "Test",
+			Id:   "AGP2MAB8DPLSRHEXAMPLE",
+			Arn:  "arn:aws:iam::123456789012:group/division_abc/subdivision_xyz/product_1234/engineering/Test",
+		},
+		{
+			Path: "/division_abc/subdivision_xyz/product_1234/",
+			Name: "Managers",
+			Id: "AGPIODR4TAW7CSEXAMPLE",
+			Arn: "arn:aws:iam::123456789012:group/division_abc/subdivision_xyz/product_1234/Managers",
+		},
+	}
+	c.Assert(resp.Groups, DeepEquals, expected)
+}
+
+func (s *S) TestListGroupsWithoutPathPrefix(c *C) {
+	testServer.PrepareResponse(200, nil, ListGroupsExample)
+	_, err := s.iam.Groups("")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "ListGroups")
+	c.Assert(err, IsNil)
+	_, ok := map[string][]string(values)["PathPrefix"]
+	c.Assert(ok, Equals, false)
+}
+
 func (s *S) TestCreateAccessKey(c *C) {
 	testServer.PrepareResponse(200, nil, CreateAccessKeyExample)
 	resp, err := s.iam.CreateAccessKey("Bob")
