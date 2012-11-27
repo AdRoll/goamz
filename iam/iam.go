@@ -220,7 +220,7 @@ type UserPolicy struct {
 // GetUserPolicy gets a user policy in IAM.
 //
 // See http://goo.gl/BH04O for more details.
-func (iam *IAM) GetUserPolicy(policyName, userName string) (*GetUserPolicyResp, error) {
+func (iam *IAM) GetUserPolicy(userName, policyName string) (*GetUserPolicyResp, error) {
 	params := map[string]string{
 		"Action":     "GetUserPolicy",
 		"UserName":   userName,

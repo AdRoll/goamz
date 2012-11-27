@@ -92,7 +92,7 @@ func (s *S) TestCreateAccessKey(c *C) {
 
 func (s *S) TestGetUserPolicy(c *C) {
 	testServer.PrepareResponse(200, nil, GetUserPolicyExample)
-	resp, err := s.iam.GetUserPolicy("AllAccessPolicy", "Bob")
+	resp, err := s.iam.GetUserPolicy("Bob", "AllAccessPolicy")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "GetUserPolicy")
 	c.Assert(values.Get("UserName"), Equals, "Bob")
