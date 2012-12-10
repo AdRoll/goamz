@@ -48,6 +48,10 @@ type Server struct {
 	listener net.Listener
 	mu       sync.Mutex
 	buckets  map[string]*bucket
+	// should this server emulate the permissive behavior
+	// of us-east-1, or default to the strict behavior of
+	// the other regions.
+	emulateUSEast1	bool
 }
 
 type bucket struct {
@@ -386,6 +390,7 @@ func (r bucketResource) delete(a *action) interface{} {
 // PUT on a bucket creates the bucket.
 // http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketPUT.html
 func (r bucketResource) put(a *action) interface{} {
+	var created bool
 	if r.bucket == nil {
 		if !validBucketName(r.name) {
 			fatalf(400, "InvalidBucketName", "The specified bucket is not valid")
@@ -400,6 +405,10 @@ func (r bucketResource) put(a *action) interface{} {
 			objects: make(map[string]*object),
 		}
 		a.srv.buckets[r.name] = r.bucket
+		created = true
+	}
+	if !created && !a.srv.emulateUSEast1 {
+		fatalf(409, 
 	}
 	r.bucket.acl = s3.ACL(a.req.Header.Get("x-amz-acl"))
 	return nil
