@@ -40,6 +40,25 @@ type action struct {
 	reqId string
 }
 
+// Config controls the internal behaviour of the Server. A nil config is the default
+// and behaves as if all configurations assume their default behaviour. Once passed
+// to NewServer, the configuration must not be modified.
+type Config struct {
+	// Send409Conflict controls how the Server will respond to calls to PUT on a
+	// previously existing bucket. The default is false, and corresponds to the
+	// us-east-1 s3 enpoint. Setting this value to true emulates the behaviour of
+	// all other regions.
+	// http://docs.amazonwebservices.com/AmazonS3/latest/API/ErrorResponses.html
+	Send409Conflict bool
+}
+
+func (c *Config) send409Conflict() bool {
+	if c != nil {
+		return c.Send409Conflict
+	}
+	return false
+}
+
 // Server is a fake S3 server for testing purposes.
 // All of the data for the server is kept in memory.
 type Server struct {
@@ -48,10 +67,7 @@ type Server struct {
 	listener net.Listener
 	mu       sync.Mutex
 	buckets  map[string]*bucket
-	// should this server emulate the permissive behavior
-	// of us-east-1, or default to the strict behavior of
-	// the other regions.
-	emulateUSEast1 bool
+	config   *Config
 }
 
 type bucket struct {
@@ -79,16 +95,16 @@ type resource interface {
 	delete(a *action) interface{}
 }
 
-func NewServer(emulateUSEast1 bool) (*Server, error) {
+func NewServer(config *Config) (*Server, error) {
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen on localhost: %v", err)
 	}
 	srv := &Server{
-		listener:       l,
-		url:            "http://" + l.Addr().String(),
-		buckets:        make(map[string]*bucket),
-		emulateUSEast1: emulateUSEast1,
+		listener: l,
+		url:      "http://" + l.Addr().String(),
+		buckets:  make(map[string]*bucket),
+		config:   config,
 	}
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		srv.serveHTTP(w, req)
@@ -408,9 +424,7 @@ func (r bucketResource) put(a *action) interface{} {
 		a.srv.buckets[r.name] = r.bucket
 		created = true
 	}
-	if !created && !a.srv.emulateUSEast1 {
-		// calling PUT bucket on an existing bucket outside us-east-1 is an error
-		// http://docs.amazonwebservices.com/AmazonS3/latest/API/ErrorResponses.html
+	if !created && a.srv.config.send409Conflict() {
 		fatalf(409, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it.")
 	}
 	r.bucket.acl = s3.ACL(a.req.Header.Get("x-amz-acl"))
