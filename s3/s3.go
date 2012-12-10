@@ -64,7 +64,7 @@ var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.ama
   <LocationConstraint>%s</LocationConstraint> 
 </CreateBucketConfiguration>`
 
-// locationConstraint returns an io.Reader specifying a LocationConstraint if 
+// locationConstraint returns an io.Reader specifying a LocationConstraint if
 // required for the region.
 //
 // See http://goo.gl/bh9Kq for more details.
@@ -269,7 +269,7 @@ type Key struct {
 //             "photos/2006/January/",
 //         },
 //     }
-// 
+//
 // See http://goo.gl/YjQTc for more details.
 func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, err error) {
 	params := map[string][]string{

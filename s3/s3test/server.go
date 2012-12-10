@@ -51,7 +51,7 @@ type Server struct {
 	// should this server emulate the permissive behavior
 	// of us-east-1, or default to the strict behavior of
 	// the other regions.
-	emulateUSEast1	bool
+	emulateUSEast1 bool
 }
 
 type bucket struct {
@@ -79,15 +79,16 @@ type resource interface {
 	delete(a *action) interface{}
 }
 
-func NewServer() (*Server, error) {
+func NewServer(emulateUSEast1 bool) (*Server, error) {
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen on localhost: %v", err)
 	}
 	srv := &Server{
-		listener: l,
-		url:      "http://" + l.Addr().String(),
-		buckets:  make(map[string]*bucket),
+		listener:       l,
+		url:            "http://" + l.Addr().String(),
+		buckets:        make(map[string]*bucket),
+		emulateUSEast1: emulateUSEast1,
 	}
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		srv.serveHTTP(w, req)
@@ -408,7 +409,9 @@ func (r bucketResource) put(a *action) interface{} {
 		created = true
 	}
 	if !created && !a.srv.emulateUSEast1 {
-		fatalf(409, 
+		// calling PUT bucket on an existing bucket outside us-east-1 is an error
+		// http://docs.amazonwebservices.com/AmazonS3/latest/API/ErrorResponses.html
+		fatalf(409, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it.")
 	}
 	r.bucket.acl = s3.ACL(a.req.Header.Get("x-amz-acl"))
 	return nil
@@ -422,15 +425,15 @@ func (bucketResource) post(a *action) interface{} {
 // validBucketName returns whether name is a valid bucket name.
 // Here are the rules, from:
 // http://docs.amazonwebservices.com/AmazonS3/2006-03-01/dev/BucketRestrictions.html
-// 
-// Can contain lowercase letters, numbers, periods (.), underscores (_), 
+//
+// Can contain lowercase letters, numbers, periods (.), underscores (_),
 // and dashes (-). You can use uppercase letters for buckets only in the
 // US Standard region.
-// 
+//
 // Must start with a number or letter
-// 
+//
 // Must be between 3 and 255 characters long
-// 
+//
 // There's one extra rule (Must not be formatted as an IP address (e.g., 192.168.5.4)
 // but the real S3 server does not seem to check that rule, so we will not
 // check it either.

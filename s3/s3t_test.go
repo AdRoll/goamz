@@ -8,13 +8,14 @@ import (
 )
 
 type LocalServer struct {
-	auth   aws.Auth
-	region aws.Region
-	srv    *s3test.Server
+	auth           aws.Auth
+	region         aws.Region
+	srv            *s3test.Server
+	emulateUSEast1 bool
 }
 
 func (s *LocalServer) SetUp(c *C) {
-	srv, err := s3test.NewServer()
+	srv, err := s3test.NewServer(s.emulateUSEast1)
 	c.Assert(err, IsNil)
 	c.Assert(srv, NotNil)
 
@@ -36,7 +37,11 @@ type LocalServerSuite struct {
 	clientTests ClientTests
 }
 
-var _ = Suite(&LocalServerSuite{})
+var (
+	// run tests twice, once in us-east-1 mode, once not.
+	_ = Suite(&LocalServerSuite{srv: LocalServer{emulateUSEast1: true}})
+	_ = Suite(&LocalServerSuite{srv: LocalServer{emulateUSEast1: false}})
+)
 
 func (s *LocalServerSuite) SetUpSuite(c *C) {
 	s.srv.SetUp(c)
@@ -56,4 +61,8 @@ func (s *LocalServerSuite) TestGetNotFound(c *C) {
 
 func (s *LocalServerSuite) TestBucketList(c *C) {
 	s.clientTests.TestBucketList(c)
+}
+
+func (s *LocalServerSuite) TestDoublePutBucket(c *C) {
+	s.clientTests.TestDoublePutBucket(c)
 }
