@@ -299,6 +299,18 @@ var listTests = []s3.ListResp{
 	},
 }
 
+func (s *ClientTests) TestDoublePutBucket(c *C) {
+	b := s.Bucket(testBucket)
+	err := b.PutBucket(s3.PublicRead)
+	c.Assert(err, IsNil)
+
+	err = b.PutBucket(s3.PublicRead)
+	if err != nil {
+		c.Assert(err, FitsTypeOf, new(s3.Error))
+		c.Assert(err.(*s3.Error).Code, Equals, "BucketAlreadyOwnedByYou")
+	}
+}
+
 func (s *ClientTests) TestBucketList(c *C) {
 	b := s.Bucket(testBucket)
 	err := b.PutBucket(s3.Private)
