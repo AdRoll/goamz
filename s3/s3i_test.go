@@ -67,7 +67,6 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 	}
 	s.srv.SetUp(c)
 	region := s.Region
-	// TODO(dfc) this subsitution only works for us-east-1
 	region.S3BucketEndpoint = "https://${bucket}.s3.amazonaws.com"
 	s.s3 = s3.New(s.srv.auth, region)
 }
@@ -105,6 +104,7 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 	b := s.Bucket(testBucket)
 	err := b.PutBucket(s3.PublicRead)
 	c.Assert(err, IsNil)
+	defer b.DelBucket()
 
 	err = b.Put("name", []byte("yo!"), "text/plain", s3.PublicRead)
 	c.Assert(err, IsNil)
