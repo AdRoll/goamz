@@ -5,7 +5,12 @@ import (
 	. "launchpad.net/gocheck"
 	"os"
 	"strings"
+	"testing"
 )
+
+func Test(t *testing.T) {
+	TestingT(t)
+}
 
 var _ = Suite(&S{})
 

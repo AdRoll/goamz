@@ -86,7 +86,7 @@ func (f *Filter) addParams(params map[string]string) {
 // ----------------------------------------------------------------------------
 // Request dispatching logic.
 
-// Error encapsulates an error returned by EC2. 
+// Error encapsulates an error returned by EC2.
 //
 // See http://goo.gl/VZGuC for more details.
 type Error struct {
@@ -425,15 +425,15 @@ type ImagesResp struct {
 //
 // See http://goo.gl/wnDBf for more details.
 type BlockDeviceMapping struct {
-	DeviceName          string      `xml:"deviceName"`
-	VirtualName         string      `xml:"virtualName"`
-	SnapshotId          string      `xml:"ebs>snapshotId"`
-	VolumeType          string      `xml:"ebs>volumeType"`
-	VolumeSize          int64       `xml:"ebs>volumeSize"`
-	DeleteOnTermination bool        `xml:"ebs>deleteOnTermination"`
+	DeviceName          string `xml:"deviceName"`
+	VirtualName         string `xml:"virtualName"`
+	SnapshotId          string `xml:"ebs>snapshotId"`
+	VolumeType          string `xml:"ebs>volumeType"`
+	VolumeSize          int64  `xml:"ebs>volumeSize"`
+	DeleteOnTermination bool   `xml:"ebs>deleteOnTermination"`
 
 	// The number of I/O operations per second (IOPS) that the volume supports.
-	IOPS                int64       `xml:"ebs>iops"`
+	IOPS int64 `xml:"ebs>iops"`
 }
 
 // Image represents details about an image.
@@ -467,7 +467,7 @@ type Image struct {
 // For example, to get all the private images associated with this account set
 // the boolean filter "is-private" to true.
 //
-// Note: calling this function with nil ids and filter parameters will result in 
+// Note: calling this function with nil ids and filter parameters will result in
 // a very large number of images being returned.
 //
 // See http://goo.gl/SRBhW for more details.
@@ -512,11 +512,11 @@ func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapsh
 
 // DeleteSnapshots deletes the volume snapshots with the given ids.
 //
-// Note: If you make periodic snapshots of a volume, the snapshots are 
-// incremental so that only the blocks on the device that have changed 
-// since your last snapshot are incrementally saved in the new snapshot. 
-// Even though snapshots are saved incrementally, the snapshot deletion 
-// process is designed so that you need to retain only the most recent 
+// Note: If you make periodic snapshots of a volume, the snapshots are
+// incremental so that only the blocks on the device that have changed
+// since your last snapshot are incrementally saved in the new snapshot.
+// Even though snapshots are saved incrementally, the snapshot deletion
+// process is designed so that you need to retain only the most recent
 // snapshot in order to restore the volume.
 //
 // See http://goo.gl/vwU1y for more details.
@@ -558,7 +558,7 @@ type Snapshot struct {
 	Tags        []Tag  `xml:"tagSet>item"`
 }
 
-// Snapshots returns details about volume snapshots available to the user.  
+// Snapshots returns details about volume snapshots available to the user.
 // The ids and filter parameters, if provided, limit the snapshots returned.
 //
 // See http://goo.gl/ogJL4 for more details.
@@ -620,7 +620,7 @@ type SecurityGroupsResp struct {
 	Groups    []SecurityGroupInfo `xml:"securityGroupInfo>item"`
 }
 
-// SecurityGroup encapsulates details for a security group in EC2. 
+// SecurityGroup encapsulates details for a security group in EC2.
 //
 // See http://goo.gl/CIdyP for more details.
 type SecurityGroupInfo struct {
@@ -785,7 +785,7 @@ type Tag struct {
 }
 
 // CreateTags adds or overwrites one or more tags for the specified instance ids.
-// 
+//
 // See http://goo.gl/Vmkqc for more details
 func (ec2 *EC2) CreateTags(instIds []string, tags []Tag) (resp *SimpleResp, err error) {
 	params := makeParams("CreateTags")

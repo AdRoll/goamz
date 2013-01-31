@@ -425,7 +425,7 @@ func (srv *Server) runInstances(w http.ResponseWriter, req *http.Request, reqId 
 	//	AvailZone             	?
 	//	GroupName             	tag
 	//	Monitoring            	ignore?
-	//	SubnetId           		?   	
+	//	SubnetId           		?
 	//	DisableAPITermination bool
 	//	ShutdownBehavior      string
 	//	PrivateIPAddress      string

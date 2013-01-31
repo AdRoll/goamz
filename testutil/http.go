@@ -1,55 +1,22 @@
-package sns_test
+package testutil
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io/ioutil"
-	. "launchpad.net/gocheck"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"testing"
 	"time"
 )
 
-func Test(t *testing.T) {
-	TestingT(t)
-}
-
-var integration = flag.Bool("i", false, "Enable integration tests")
-
-type SuiteI struct{}
-
-func (s *SuiteI) SetUpSuite(c *C) {
-	if !*integration {
-		c.Skip("Integration tests not enabled (-i flag)")
-	}
-}
-
-type HTTPSuite struct{}
-
-var testServer = NewTestHTTPServer("http://localhost:4444", 5*time.Second)
-
-func (s *HTTPSuite) SetUpSuite(c *C) {
-	testServer.Start()
-}
-
-func (s *HTTPSuite) TearDownTest(c *C) {
-	testServer.Flush()
-}
-
-type TestHTTPServer struct {
+type HTTPServer struct {
 	URL      string
 	Timeout  time.Duration
 	started  bool
 	request  chan *http.Request
 	response chan ResponseFunc
-	pending  chan bool
-}
-
-func NewTestHTTPServer(url_ string, timeout time.Duration) *TestHTTPServer {
-	return &TestHTTPServer{URL: url_, Timeout: timeout}
 }
 
 type Response struct {
@@ -58,20 +25,28 @@ type Response struct {
 	Body    string
 }
 
+func NewHTTPServer() *HTTPServer {
+	return &HTTPServer{URL: "http://localhost:4444", Timeout: 5 * time.Second}
+}
+
 type ResponseFunc func(path string) Response
 
-func (s *TestHTTPServer) Start() {
+func (s *HTTPServer) Start() {
 	if s.started {
 		return
 	}
 	s.started = true
-
 	s.request = make(chan *http.Request, 64)
 	s.response = make(chan ResponseFunc, 64)
-	s.pending = make(chan bool, 64)
-
-	url_, _ := url.Parse(s.URL)
-	go http.ListenAndServe(url_.Host, s)
+	u, err := url.Parse(s.URL)
+	if err != nil {
+		panic(err)
+	}
+	l, err := net.Listen("tcp", u.Host)
+	if err != nil {
+		panic(err)
+	}
+	go http.Serve(l, s)
 
 	s.Response(203, nil, "")
 	for {
@@ -80,15 +55,13 @@ func (s *TestHTTPServer) Start() {
 		if err == nil && resp.StatusCode == 203 {
 			break
 		}
-		fmt.Fprintf(os.Stderr, "\nWaiting for fake server to be up... ")
 		time.Sleep(1e8)
 	}
-	fmt.Fprintf(os.Stderr, "done\n\n")
 	s.WaitRequest() // Consume dummy request.
 }
 
-// FlushRequests discards requests which were not yet consumed by WaitRequest.
-func (s *TestHTTPServer) Flush() {
+// Flush discards all pending requests and responses.
+func (s *HTTPServer) Flush() {
 	for {
 		select {
 		case <-s.request:
@@ -107,7 +80,7 @@ func body(req *http.Request) string {
 	return string(data)
 }
 
-func (s *TestHTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	req.ParseMultipartForm(1e6)
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -139,7 +112,7 @@ func (s *TestHTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // WaitRequests returns the next n requests made to the http server from
 // the queue. If not enough requests were previously made, it waits until
 // the timeout value for them to be made.
-func (s *TestHTTPServer) WaitRequests(n int) []*http.Request {
+func (s *HTTPServer) WaitRequests(n int) []*http.Request {
 	reqs := make([]*http.Request, 0, n)
 	for i := 0; i < n; i++ {
 		select {
@@ -155,13 +128,13 @@ func (s *TestHTTPServer) WaitRequests(n int) []*http.Request {
 // WaitRequest returns the next request made to the http server from
 // the queue. If no requests were previously made, it waits until the
 // timeout value for one to be made.
-func (s *TestHTTPServer) WaitRequest() *http.Request {
+func (s *HTTPServer) WaitRequest() *http.Request {
 	return s.WaitRequests(1)[0]
 }
 
 // ResponseFunc prepares the test server to respond the following n
 // requests using f to build each response.
-func (s *TestHTTPServer) ResponseFunc(n int, f ResponseFunc) {
+func (s *HTTPServer) ResponseFunc(n int, f ResponseFunc) {
 	for i := 0; i < n; i++ {
 		s.response <- f
 	}
@@ -172,21 +145,22 @@ type ResponseMap map[string]Response
 
 // ResponseMap prepares the test server to respond the following n
 // requests using the m to obtain the responses.
-func (s *TestHTTPServer) ResponseMap(n int, m ResponseMap) {
+func (s *HTTPServer) ResponseMap(n int, m ResponseMap) {
 	f := func(path string) Response {
 		for rpath, resp := range m {
 			if rpath == path {
 				return resp
 			}
 		}
-		return Response{Status: 500, Body: "Path not found in response map: " + path}
+		body := "Path not found in response map: " + path
+		return Response{Status: 500, Body: body}
 	}
 	s.ResponseFunc(n, f)
 }
 
 // Responses prepares the test server to respond the following n requests
 // using the provided response parameters.
-func (s *TestHTTPServer) Responses(n int, status int, headers map[string]string, body string) {
+func (s *HTTPServer) Responses(n int, status int, headers map[string]string, body string) {
 	f := func(path string) Response {
 		return Response{status, headers, body}
 	}
@@ -195,6 +169,6 @@ func (s *TestHTTPServer) Responses(n int, status int, headers map[string]string,
 
 // Response prepares the test server to respond the following request
 // using the provided response parameters.
-func (s *TestHTTPServer) Response(status int, headers map[string]string, body string) {
+func (s *HTTPServer) Response(status int, headers map[string]string, body string) {
 	s.Responses(1, status, headers, body)
 }

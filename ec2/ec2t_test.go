@@ -5,6 +5,7 @@ import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/ec2"
 	"launchpad.net/goamz/ec2/ec2test"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"regexp"
 	"sort"
@@ -88,7 +89,7 @@ type AmazonServerSuite struct {
 var _ = Suite(&AmazonServerSuite{})
 
 func (s *AmazonServerSuite) SetUpSuite(c *C) {
-	if !*amazon {
+	if !testutil.Amazon {
 		c.Skip("AmazonServerSuite tests not enabled")
 	}
 	s.srv.SetUp(c)
@@ -435,7 +436,7 @@ func namesOnly(gs []ec2.SecurityGroup) []ec2.SecurityGroup {
 
 func (s *ServerTests) TestGroupFiltering(c *C) {
 	g := make([]ec2.SecurityGroup, 4)
-	for i := range g[0:3] {
+	for i := range g {
 		resp, err := s.ec2.CreateSecurityGroup(sessionName(fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
 		c.Assert(err, IsNil)
 		g[i] = resp.SecurityGroup
@@ -443,9 +444,9 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		defer s.ec2.DeleteSecurityGroup(g[i])
 	}
 	// Get the default group.
-	resp, err := s.ec2.SecurityGroups([]ec2.SecurityGroup{{Name: "default"}}, nil)
-	c.Assert(err, IsNil)
-	g[3] = resp.Groups[0].SecurityGroup
+	//resp, err := s.ec2.SecurityGroups([]ec2.SecurityGroup{{Name: "default"}}, nil)
+	//c.Assert(err, IsNil)
+	//g[3] = resp.Groups[0].SecurityGroup
 
 	perms := [][]ec2.IPPerm{
 		{{
@@ -536,7 +537,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		filterCheck("group-name", g[2].Name, groups(2)),
 		filterCheck("ip-permission.cidr", "1.2.3.4/32", groups(0)),
 		filterCheck("ip-permission.group-name", g[1].Name, groups(1, 2)),
-		filterCheck("ip-permission.protocol", "udp", groups(2, 3)),
+		filterCheck("ip-permission.protocol", "udp", groups(2)),
 		filterCheck("ip-permission.from-port", "200", groups(1, 2)),
 		filterCheck("ip-permission.to-port", "200", groups(0)),
 		// TODO owner-id
@@ -568,7 +569,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		if t.allowExtra {
 			namePat := regexp.MustCompile(sessionName("testgroup[0-9]"))
 			for id, g := range groups {
-				if g.Name != "default" && !namePat.MatchString(g.Name) {
+				if !namePat.MatchString(g.Name) {
 					delete(groups, id)
 				}
 			}

@@ -3,19 +3,26 @@ package mturk_test
 import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/exp/mturk"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"net/url"
+	"testing"
 )
+
+func Test(t *testing.T) {
+	TestingT(t)
+}
 
 var _ = Suite(&S{})
 
 type S struct {
-	HTTPSuite
 	mturk *mturk.MTurk
 }
 
+var testServer = testutil.NewHTTPServer()
+
 func (s *S) SetUpSuite(c *C) {
-	s.HTTPSuite.SetUpSuite(c)
+	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	u, err := url.Parse(testServer.URL)
 	if err != nil {
@@ -28,8 +35,12 @@ func (s *S) SetUpSuite(c *C) {
 	}
 }
 
+func (s *S) TearDownTest(c *C) {
+	testServer.Flush()
+}
+
 func (s *S) TestCreateHIT(c *C) {
-	testServer.PrepareResponse(200, nil, BasicHitResponse)
+	testServer.Response(200, nil, BasicHitResponse)
 
 	question := mturk.ExternalQuestion{
 		ExternalURL: "http://www.amazon.com",
@@ -51,7 +62,7 @@ func (s *S) TestCreateHIT(c *C) {
 }
 
 func (s *S) TestSearchHITs(c *C) {
-	testServer.PrepareResponse(200, nil, SearchHITResponse)
+	testServer.Response(200, nil, SearchHITResponse)
 
 	hitResult, err := s.mturk.SearchHITs()
 

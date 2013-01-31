@@ -19,8 +19,8 @@ func sign(auth aws.Auth, method, path string, params map[string]string, host str
 	params["SignatureVersion"] = "2"
 	params["SignatureMethod"] = "HmacSHA256"
 
-	// AWS specifies that the parameters in a signed request must 
-	// be in natural order of the keys. This is distinct from the 
+	// AWS specifies that the parameters in a signed request must
+	// be in natural order of the keys. This is distinct from the
 	// natural order of the encoded value of key=value. Basically
 	// percent and equals affect the sorting order.
 	var keys, sarray []string

@@ -67,7 +67,7 @@ var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.ama
 // locationConstraint returns an io.Reader specifying a LocationConstraint if
 // required for the region.
 //
-// See http://goo.gl/bh9Kq for more details.
+// See http://goo.gl/bh9Kq for details.
 func (s3 *S3) locationConstraint() io.Reader {
 	constraint := ""
 	if s3.Region.S3LocationConstraint {
@@ -89,7 +89,7 @@ const (
 
 // PutBucket creates a new bucket.
 //
-// See http://goo.gl/ndjnR for more details.
+// See http://goo.gl/ndjnR for details.
 func (b *Bucket) PutBucket(perm ACL) error {
 	headers := map[string][]string{
 		"x-amz-acl": {string(perm)},
@@ -107,7 +107,7 @@ func (b *Bucket) PutBucket(perm ACL) error {
 // DelBucket removes an existing S3 bucket. All objects in the bucket must
 // be removed before the bucket itself can be removed.
 //
-// See http://goo.gl/GoBrY for more details.
+// See http://goo.gl/GoBrY for details.
 func (b *Bucket) DelBucket() error {
 	req := &request{
 		method: "DELETE",
@@ -117,9 +117,14 @@ func (b *Bucket) DelBucket() error {
 	return b.S3.query(req, nil)
 }
 
+func hasCode(err error, code string) bool {
+	s3err, ok := err.(*Error)
+	return ok && s3err.Code == code
+}
+
 // Get retrieves an object from an S3 bucket.
 //
-// See http://goo.gl/isCO7 for more details.
+// See http://goo.gl/isCO7 for details.
 func (b *Bucket) Get(path string) (data []byte, err error) {
 	body, err := b.GetReader(path)
 	if err != nil {
@@ -151,7 +156,7 @@ func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
 
 // Put inserts an object into the S3 bucket.
 //
-// See http://goo.gl/FEBPD for more details.
+// See http://goo.gl/FEBPD for details.
 func (b *Bucket) Put(path string, data []byte, contType string, perm ACL) error {
 	body := bytes.NewBuffer(data)
 	return b.PutReader(path, body, int64(len(data)), contType, perm)
@@ -177,7 +182,7 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 
 // Del removes an object from the S3 bucket.
 //
-// See http://goo.gl/APeTt for more details.
+// See http://goo.gl/APeTt for details.
 func (b *Bucket) Del(path string) error {
 	req := &request{
 		method: "DELETE",
@@ -215,15 +220,15 @@ type Key struct {
 	Owner        Owner
 }
 
-// List returns a information about objects in an S3 bucket.
+// List returns information about objects in an S3 bucket.
 //
 // The prefix parameter limits the response to keys that begin with the
-// specified prefix. You can use prefixes to separate a bucket into different
-// groupings of keys (e.g. to get a feeling of folders).
+// specified prefix.
 //
-// The delimited parameter causes the response to group all of the keys that
-// share a common prefix up to the next delimiter to be grouped in a single
-// entry within the CommonPrefixes field.
+// The delim parameter causes the response to group all of the keys that
+// share a common prefix up to the next delimiter in a single entry within
+// the CommonPrefixes field. You can use delimiters to separate a bucket
+// into different groupings of keys, similar to how folders would work.
 //
 // The marker parameter specifies the key to start with when listing objects
 // in a bucket. Amazon S3 lists objects in alphabetical order and
@@ -270,7 +275,7 @@ type Key struct {
 //         },
 //     }
 //
-// See http://goo.gl/YjQTc for more details.
+// See http://goo.gl/YjQTc for details.
 func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, err error) {
 	params := map[string][]string{
 		"prefix":    {prefix},
