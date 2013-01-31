@@ -443,10 +443,6 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		c.Logf("group %d: %v", i, g[i])
 		defer s.ec2.DeleteSecurityGroup(g[i])
 	}
-	// Get the default group.
-	//resp, err := s.ec2.SecurityGroups([]ec2.SecurityGroup{{Name: "default"}}, nil)
-	//c.Assert(err, IsNil)
-	//g[3] = resp.Groups[0].SecurityGroup
 
 	perms := [][]ec2.IPPerm{
 		{{
