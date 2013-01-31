@@ -417,18 +417,18 @@ func (srv *Server) runInstances(w http.ResponseWriter, req *http.Request, reqId 
 	}
 
 	// TODO attributes still to consider:
-	//	ImageId: 			accept anything, we can verify later
-	//	KeyName          		?
-	//	InstanceType    	?
-	//	KernelId              	?
-	//	RamdiskId             	?
-	//	AvailZone             	?
-	//	GroupName             	tag
-	//	Monitoring            	ignore?
-	//	SubnetId           		?   	
-	//	DisableAPITermination bool
-	//	ShutdownBehavior      string
-	//	PrivateIPAddress      string
+	//    ImageId:                  accept anything, we can verify later
+	//    KeyName                   ?
+	//    InstanceType              ?
+	//    KernelId                  ?
+	//    RamdiskId                 ?
+	//    AvailZone                 ?
+	//    GroupName                 tag
+	//    Monitoring                ignore?
+	//    SubnetId                  ?
+	//    DisableAPITermination     bool
+	//    ShutdownBehavior          string
+	//    PrivateIPAddress          string
 
 	srv.mu.Lock()
 	defer srv.mu.Unlock()

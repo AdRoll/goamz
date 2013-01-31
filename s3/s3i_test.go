@@ -10,6 +10,7 @@ import (
 
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"time"
 )
@@ -45,7 +46,7 @@ type AmazonClientSuite struct {
 }
 
 func (s *AmazonClientSuite) SetUpSuite(c *C) {
-	if !*amazon {
+	if !testutil.Amazon {
 		c.Skip("live tests against AWS disabled (no -amazon)")
 	}
 	s.srv.SetUp(c)
@@ -62,7 +63,7 @@ type AmazonDomainClientSuite struct {
 }
 
 func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
-	if !*amazon {
+	if !testutil.Amazon {
 		c.Skip("live tests against AWS disabled (no -amazon)")
 	}
 	s.srv.SetUp(c)
@@ -102,12 +103,15 @@ func get(url string) ([]byte, error) {
 
 func (s *ClientTests) TestBasicFunctionality(c *C) {
 	b := s.Bucket(testBucket)
+	b.DelBucket()
+
 	err := b.PutBucket(s3.PublicRead)
 	c.Assert(err, IsNil)
 	defer b.DelBucket()
 
 	err = b.Put("name", []byte("yo!"), "text/plain", s3.PublicRead)
 	c.Assert(err, IsNil)
+	defer b.Del("name")
 
 	data, err := b.Get("name")
 	c.Assert(err, IsNil)
@@ -120,6 +124,7 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 	buf := bytes.NewBufferString("hey!")
 	err = b.PutReader("name2", buf, int64(buf.Len()), "text/plain", s3.Private)
 	c.Assert(err, IsNil)
+	defer b.Del("name2")
 
 	rc, err := b.GetReader("name2")
 	c.Assert(err, IsNil)
@@ -225,16 +230,13 @@ var listTests = []s3.ListResp{
 	// normal list.
 	{
 		Contents: keys(objectNames...),
-	},
-	{
+	}, {
 		Marker:   objectNames[0],
 		Contents: keys(objectNames[1:]...),
-	},
-	{
+	}, {
 		Marker:   objectNames[0] + "a",
 		Contents: keys(objectNames[1:]...),
-	},
-	{
+	}, {
 		Marker: "z",
 	},
 
@@ -243,14 +245,12 @@ var listTests = []s3.ListResp{
 		MaxKeys:     2,
 		Contents:    keys(objectNames[0:2]...),
 		IsTruncated: true,
-	},
-	{
+	}, {
 		MaxKeys:     2,
 		Marker:      objectNames[0],
 		Contents:    keys(objectNames[1:3]...),
 		IsTruncated: true,
-	},
-	{
+	}, {
 		MaxKeys:  2,
 		Marker:   objectNames[len(objectNames)-2],
 		Contents: keys(objectNames[len(objectNames)-1:]...),
@@ -261,38 +261,32 @@ var listTests = []s3.ListResp{
 		Delimiter:      "/",
 		CommonPrefixes: []string{"photos/", "test/"},
 		Contents:       keys("index.html", "index2.html"),
-	},
-	{
+	}, {
 		Delimiter:      "/",
 		Prefix:         "photos/2006/",
 		CommonPrefixes: []string{"photos/2006/February/", "photos/2006/January/"},
-	},
-	{
+	}, {
 		Delimiter:      "/",
 		Prefix:         "t",
 		CommonPrefixes: []string{"test/"},
-	},
-	{
+	}, {
 		Delimiter:   "/",
 		MaxKeys:     1,
 		Contents:    keys("index.html"),
 		IsTruncated: true,
-	},
-	{
+	}, {
 		Delimiter:      "/",
 		MaxKeys:        1,
 		Marker:         "index2.html",
 		CommonPrefixes: []string{"photos/"},
 		IsTruncated:    true,
-	},
-	{
+	}, {
 		Delimiter:      "/",
 		MaxKeys:        1,
 		Marker:         "photos/",
 		CommonPrefixes: []string{"test/"},
 		IsTruncated:    false,
-	},
-	{
+	}, {
 		Delimiter:      "Feb",
 		CommonPrefixes: []string{"photos/2006/Feb"},
 		Contents:       keys("index.html", "index2.html", "photos/2006/January/sample.jpg", "test/bar", "test/foo"),

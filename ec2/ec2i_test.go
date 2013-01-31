@@ -2,14 +2,12 @@ package ec2_test
 
 import (
 	"crypto/rand"
-	"flag"
 	"fmt"
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/ec2"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 )
-
-var amazon = flag.Bool("amazon", false, "Enable tests against amazon server")
 
 // AmazonServer represents an Amazon EC2 server.
 type AmazonServer struct {
@@ -34,7 +32,7 @@ type AmazonClientSuite struct {
 }
 
 func (s *AmazonClientSuite) SetUpSuite(c *C) {
-	if !*amazon {
+	if !testutil.Amazon {
 		c.Skip("AmazonClientSuite tests not enabled")
 	}
 	s.srv.SetUp(c)

@@ -3,24 +3,35 @@ package iam_test
 import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/iam"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"testing"
 )
 
+func Test(t *testing.T) {
+	TestingT(t)
+}
+
 type S struct {
-	HTTPSuite
 	iam *iam.IAM
 }
 
 var _ = Suite(&S{})
 
+var testServer = testutil.NewHTTPServer()
+
 func (s *S) SetUpSuite(c *C) {
-	s.HTTPSuite.SetUpSuite(c)
+	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.iam = iam.New(auth, aws.Region{IAMEndpoint: testServer.URL})
 }
 
+func (s *S) TearDownTest(c *C) {
+	testServer.Flush()
+}
+
 func (s *S) TestCreateUser(c *C) {
-	testServer.PrepareResponse(200, nil, CreateUserExample)
+	testServer.Response(200, nil, CreateUserExample)
 	resp, err := s.iam.CreateUser("Bob", "/division_abc/subdivision_xyz/")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "CreateUser")
@@ -38,7 +49,7 @@ func (s *S) TestCreateUser(c *C) {
 }
 
 func (s *S) TestCreateUserConflict(c *C) {
-	testServer.PrepareResponse(409, nil, DuplicateUserExample)
+	testServer.Response(409, nil, DuplicateUserExample)
 	resp, err := s.iam.CreateUser("Bob", "/division_abc/subdivision_xyz/")
 	testServer.WaitRequest()
 	c.Assert(resp, IsNil)
@@ -50,7 +61,7 @@ func (s *S) TestCreateUserConflict(c *C) {
 }
 
 func (s *S) TestGetUser(c *C) {
-	testServer.PrepareResponse(200, nil, GetUserExample)
+	testServer.Response(200, nil, GetUserExample)
 	resp, err := s.iam.GetUser("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "GetUser")
@@ -67,7 +78,7 @@ func (s *S) TestGetUser(c *C) {
 }
 
 func (s *S) TestDeleteUser(c *C) {
-	testServer.PrepareResponse(200, nil, RequestIdExample)
+	testServer.Response(200, nil, RequestIdExample)
 	resp, err := s.iam.DeleteUser("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "DeleteUser")
@@ -77,7 +88,7 @@ func (s *S) TestDeleteUser(c *C) {
 }
 
 func (s *S) TestCreateAccessKey(c *C) {
-	testServer.PrepareResponse(200, nil, CreateAccessKeyExample)
+	testServer.Response(200, nil, CreateAccessKeyExample)
 	resp, err := s.iam.CreateAccessKey("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "CreateAccessKey")

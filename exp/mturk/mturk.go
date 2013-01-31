@@ -43,7 +43,7 @@ func New(auth aws.Auth) *MTurk {
 // ----------------------------------------------------------------------------
 // Request dispatching logic.
 
-// Error encapsulates an error returned by MTurk. 
+// Error encapsulates an error returned by MTurk.
 type Error struct {
 	StatusCode int    // HTTP status code (200, 403, ...)
 	Code       string // EC2 error code ("UnsupportedOperation", ...)
@@ -150,7 +150,7 @@ type CreateHITResponse struct {
 // Corresponds to the "CreateHIT" operation of the Mechanical Turk
 // API.  http://goo.gl/cDBRc Currently only supports "external"
 // questions (see "HIT" struct above).  If "keywords", "maxAssignments",
-// "qualificationRequirement" or "requesterAnnotation" are the zero 
+// "qualificationRequirement" or "requesterAnnotation" are the zero
 // value for their types, they will not be included in the request.
 func (mt *MTurk) CreateHIT(title, description string, question ExternalQuestion, reward Price, assignmentDurationInSeconds, lifetimeInSeconds uint, keywords string, maxAssignments uint, qualificationRequirement *QualificationRequirement, requesterAnnotation string) (h *HIT, err error) {
 	params := make(map[string]string)
@@ -191,8 +191,8 @@ func (mt *MTurk) CreateHIT(title, description string, question ExternalQuestion,
 
 // Corresponds to the "CreateHIT" operation of the Mechanical Turk
 // API, using an existing "hit type".  http://goo.gl/cDBRc Currently only
-// supports "external" questions (see "HIT" struct above).  If 
-// "maxAssignments" or "requesterAnnotation" are the zero value for 
+// supports "external" questions (see "HIT" struct above).  If
+// "maxAssignments" or "requesterAnnotation" are the zero value for
 // their types, they will not be included in the request.
 func (mt *MTurk) CreateHITOfType(hitTypeId string, q ExternalQuestion, lifetimeInSeconds uint, maxAssignments uint, requesterAnnotation string) (h *HIT, err error) {
 	params := make(map[string]string)
@@ -217,7 +217,7 @@ func (mt *MTurk) CreateHITOfType(hitTypeId string, q ExternalQuestion, lifetimeI
 	return
 }
 
-// Corresponds to "SearchHITs" operation of Mechanical Turk. http://goo.gl/PskcX 
+// Corresponds to "SearchHITs" operation of Mechanical Turk. http://goo.gl/PskcX
 // Currenlty supports none of the optional parameters.
 func (mt *MTurk) SearchHITs() (s *SearchHITsResult, err error) {
 	params := make(map[string]string)
