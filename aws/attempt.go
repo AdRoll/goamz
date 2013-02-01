@@ -23,7 +23,11 @@ type Attempt struct {
 
 // Start begins a new sequence of attempts for the given strategy.
 func (s AttemptStrategy) Start() *Attempt {
-	return &Attempt{strategy: s, end: time.Now().Add(s.Total), force: true}
+	return &Attempt{
+		strategy: s,
+		end:      time.Now().Add(s.Total),
+		force:    true,
+	}
 }
 
 // Next waits until it is time to perform the next attempt or returns
@@ -45,7 +49,7 @@ func (a *Attempt) Next() bool {
 }
 
 func (a *Attempt) nextSleep(now time.Time) time.Duration {
-	sleep := a.strategy.Delay - now.Sub(a.last);
+	sleep := a.strategy.Delay - now.Sub(a.last)
 	if sleep < 0 {
 		return 0
 	}
