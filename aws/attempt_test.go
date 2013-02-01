@@ -11,7 +11,7 @@ func (S) TestAttemptTiming(c *C) {
 		Total: 0.25e9,
 		Delay: 0.1e9,
 	}
-	want := []time.Duration{0, 0.1e9, 0.2e9, 0.3e9, 0.3e9}
+	want := []time.Duration{0, 0.1e9, 0.2e9, 0.2e9}
 	got := make([]time.Duration, 0, len(want)) // avoid allocation when testing timing
 	t0 := time.Now()
 	for a := testAttempt.Start(); a.Next(); {
@@ -43,6 +43,7 @@ func (S) TestAttemptNextHasNext(c *C) {
 	c.Assert(a.Next(), Equals, true)
 	c.Assert(a.HasNext(), Equals, true)
 	time.Sleep(2e8)
+	c.Assert(a.HasNext(), Equals, true)
 	c.Assert(a.Next(), Equals, true)
 	c.Assert(a.Next(), Equals, false)
 }
