@@ -55,3 +55,144 @@ var GetListResultDump2 = `
   </CommonPrefixes>
 </ListBucketResult>
 `
+
+var InitMultiResultDump = `
+<?xml version="1.0" encoding="UTF-8"?>
+<InitiateMultipartUploadResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Bucket>sample</Bucket>
+  <Key>multi</Key>
+  <UploadId>JNbR_cMdwnGiD12jKAd6WK2PUkfj2VxA7i4nCwjE6t71nI9Tl3eVDPFlU0nOixhftH7I17ZPGkV3QA.l7ZD.QQ--</UploadId>
+</InitiateMultipartUploadResult>
+`
+
+var ListPartsResultDump1 = `
+<?xml version="1.0" encoding="UTF-8"?>
+<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Bucket>sample</Bucket>
+  <Key>multi</Key>
+  <UploadId>JNbR_cMdwnGiD12jKAd6WK2PUkfj2VxA7i4nCwjE6t71nI9Tl3eVDPFlU0nOixhftH7I17ZPGkV3QA.l7ZD.QQ--</UploadId>
+  <Initiator>
+    <ID>bb5c0f63b0b25f2d099c</ID>
+    <DisplayName>joe</DisplayName>
+  </Initiator>
+  <Owner>
+    <ID>bb5c0f63b0b25f2d099c</ID>
+    <DisplayName>joe</DisplayName>
+  </Owner>
+  <StorageClass>STANDARD</StorageClass>
+  <PartNumberMarker>0</PartNumberMarker>
+  <NextPartNumberMarker>2</NextPartNumberMarker>
+  <MaxParts>2</MaxParts>
+  <IsTruncated>true</IsTruncated>
+  <Part>
+    <PartNumber>1</PartNumber>
+    <LastModified>2013-01-30T13:45:51.000Z</LastModified>
+    <ETag>&quot;26f90efd10d614f100252ff56d88dad8&quot;</ETag>
+    <Size>8</Size>
+  </Part>
+  <Part>
+    <PartNumber>2</PartNumber>
+    <LastModified>2013-01-30T13:45:52.000Z</LastModified>
+    <ETag>&quot;b572ef59bfa4a719fdf2b3c13c583af8&quot;</ETag>
+    <Size>8</Size>
+  </Part>
+</ListPartsResult>
+`
+
+var ListPartsResultDump2 = `
+<?xml version="1.0" encoding="UTF-8"?>
+<ListPartsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Bucket>sample</Bucket>
+  <Key>multi</Key>
+  <UploadId>JNbR_cMdwnGiD12jKAd6WK2PUkfj2VxA7i4nCwjE6t71nI9Tl3eVDPFlU0nOixhftH7I17ZPGkV3QA.l7ZD.QQ--</UploadId>
+  <Initiator>
+    <ID>bb5c0f63b0b25f2d099c</ID>
+    <DisplayName>joe</DisplayName>
+  </Initiator>
+  <Owner>
+    <ID>bb5c0f63b0b25f2d099c</ID>
+    <DisplayName>joe</DisplayName>
+  </Owner>
+  <StorageClass>STANDARD</StorageClass>
+  <PartNumberMarker>2</PartNumberMarker>
+  <NextPartNumberMarker>3</NextPartNumberMarker>
+  <MaxParts>2</MaxParts>
+  <IsTruncated>false</IsTruncated>
+  <Part>
+    <PartNumber>3</PartNumber>
+    <LastModified>2013-01-30T13:46:50.000Z</LastModified>
+    <ETag>&quot;50dbe110509c7952ba70a96587bd7c40&quot;</ETag>
+    <Size>4</Size>
+  </Part>
+</ListPartsResult>
+`
+
+var ListMultiResultDump = `
+<?xml version="1.0"?>
+<ListMultipartUploadsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Bucket>goamz-test-bucket-us-east-1-akiajk3wyewhctyqbf7a</Bucket>
+  <KeyMarker/>
+  <UploadIdMarker/>
+  <NextKeyMarker>multi1</NextKeyMarker>
+  <NextUploadIdMarker>iUVug89pPvSswrikD72p8uO62EzhNtpDxRmwC5WSiWDdK9SfzmDqe3xpP1kMWimyimSnz4uzFc3waVM5ufrKYQ--</NextUploadIdMarker>
+  <Delimiter>/</Delimiter>
+  <MaxUploads>1000</MaxUploads>
+  <IsTruncated>false</IsTruncated>
+  <Upload>
+    <Key>multi1</Key>
+    <UploadId>iUVug89pPvSswrikD</UploadId>
+    <Initiator>
+      <ID>bb5c0f63b0b25f2d0</ID>
+      <DisplayName>gustavoniemeyer</DisplayName>
+    </Initiator>
+    <Owner>
+      <ID>bb5c0f63b0b25f2d0</ID>
+      <DisplayName>gustavoniemeyer</DisplayName>
+    </Owner>
+    <StorageClass>STANDARD</StorageClass>
+    <Initiated>2013-01-30T18:15:47.000Z</Initiated>
+  </Upload>
+  <Upload>
+    <Key>multi2</Key>
+    <UploadId>DkirwsSvPp98guVUi</UploadId>
+    <Initiator>
+      <ID>bb5c0f63b0b25f2d0</ID>
+      <DisplayName>joe</DisplayName>
+    </Initiator>
+    <Owner>
+      <ID>bb5c0f63b0b25f2d0</ID>
+      <DisplayName>joe</DisplayName>
+    </Owner>
+    <StorageClass>STANDARD</StorageClass>
+    <Initiated>2013-01-30T18:15:47.000Z</Initiated>
+  </Upload>
+  <CommonPrefixes>
+    <Prefix>a/</Prefix>
+  </CommonPrefixes>
+  <CommonPrefixes>
+    <Prefix>b/</Prefix>
+  </CommonPrefixes>
+</ListMultipartUploadsResult>
+`
+
+var NoSuchUploadErrorDump = `
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>NoSuchUpload</Code>
+  <Message>Not relevant</Message>
+  <BucketName>sample</BucketName>
+  <RequestId>3F1B667FAD71C3D8</RequestId>
+  <HostId>kjhwqk</HostId>
+</Error>
+`
+
+var InternalErrorDump = `
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>InternalError</Code>
+  <Message>Not relevant</Message>
+  <BucketName>sample</BucketName>
+  <RequestId>3F1B667FAD71C3D8</RequestId>
+  <HostId>kjhwqk</HostId>
+</Error>
+`
