@@ -36,8 +36,8 @@ func (s *HTTPServer) Start() {
 		return
 	}
 	s.started = true
-	s.request = make(chan *http.Request, 64)
-	s.response = make(chan ResponseFunc, 64)
+	s.request = make(chan *http.Request, 1024)
+	s.response = make(chan ResponseFunc, 1024)
 	u, err := url.Parse(s.URL)
 	if err != nil {
 		panic(err)

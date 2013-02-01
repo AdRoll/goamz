@@ -55,6 +55,11 @@ func (s *LocalServerSuite) SetUpSuite(c *C) {
 
 	// TODO Sadly the fake server ignores auth completely right now. :-(
 	s.clientTests.authIsBroken = true
+	s.clientTests.Cleanup()
+}
+
+func (s *LocalServerSuite) TearDownTest(c *C) {
+	s.clientTests.Cleanup()
 }
 
 func (s *LocalServerSuite) TestBasicFunctionality(c *C) {

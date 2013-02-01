@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"launchpad.net/goamz/aws"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -45,6 +46,11 @@ type Bucket struct {
 type Owner struct {
 	ID          string
 	DisplayName string
+}
+
+var attempts = aws.AttemptStrategy{
+	Total: 5 * time.Second,
+	Delay: 200 * time.Millisecond,
 }
 
 // New creates a new S3.
@@ -108,18 +114,19 @@ func (b *Bucket) PutBucket(perm ACL) error {
 // be removed before the bucket itself can be removed.
 //
 // See http://goo.gl/GoBrY for details.
-func (b *Bucket) DelBucket() error {
+func (b *Bucket) DelBucket() (err error) {
 	req := &request{
 		method: "DELETE",
 		bucket: b.Name,
 		path:   "/",
 	}
-	return b.S3.query(req, nil)
-}
-
-func hasCode(err error, code string) bool {
-	s3err, ok := err.(*Error)
-	return ok && s3err.Code == code
+	for attempt := attempts.Start(); attempt.Next(); {
+		err = b.S3.query(req, nil)
+		if !shouldRetry(err) || hasCode(err, "NoSuchBucket") {
+			break
+		}
+	}
+	return err
 }
 
 // Get retrieves an object from an S3 bucket.
@@ -147,11 +154,17 @@ func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := b.S3.run(req, nil)
-	if err != nil {
-		return nil, err
+	for attempt := attempts.Start(); attempt.Next(); {
+		resp, err := b.S3.run(req, nil)
+		if shouldRetry(err) && attempt.HasNext() {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return resp.Body, nil
 	}
-	return resp.Body, nil
+	panic("unreachable")
 }
 
 // Put inserts an object into the S3 bucket.
@@ -290,7 +303,13 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 		params: params,
 	}
 	result = &ListResp{}
-	err = b.S3.query(req, result)
+	for attempt := attempts.Start(); attempt.Next(); {
+		err = b.S3.query(req, result)
+		if !shouldRetry(err) {
+			break
+		}
+		println("Retrying List.")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -501,3 +520,27 @@ func buildError(r *http.Response) error {
 	}
 	return &err
 }
+
+func shouldRetry(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch e := err.(type) {
+	case *net.DNSError:
+		return true
+	case *net.OpError:
+		return true
+	case *Error:
+		switch e.Code {
+		case "InternalError", "NoSuchUpload", "NoSuchBucket":
+			return true
+		}
+	}
+	return false
+}
+
+func hasCode(err error, code string) bool {
+	s3err, ok := err.(*Error)
+	return ok && s3err.Code == code
+}
+

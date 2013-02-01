@@ -12,6 +12,7 @@ import (
 	"launchpad.net/goamz/s3"
 	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"net"
 	"time"
 )
 
@@ -28,15 +29,9 @@ func (s *AmazonServer) SetUp(c *C) {
 	s.auth = auth
 }
 
-// us-east-1 classic tests
 var _ = Suite(&AmazonClientSuite{Region: aws.USEast})
-var _ = Suite(&AmazonDomainClientSuite{Region: aws.USEast})
-
-// us-west-1 tests
-var _ = Suite(&AmazonClientSuite{Region: aws.USWest})
-
-// eu-west-1 tests
 var _ = Suite(&AmazonClientSuite{Region: aws.EUWest})
+var _ = Suite(&AmazonDomainClientSuite{Region: aws.USEast})
 
 // AmazonClientSuite tests the client against a live S3 server.
 type AmazonClientSuite struct {
@@ -51,6 +46,12 @@ func (s *AmazonClientSuite) SetUpSuite(c *C) {
 	}
 	s.srv.SetUp(c)
 	s.s3 = s3.New(s.srv.auth, s.Region)
+	// In case tests were interrupted in the middle before.
+	s.ClientTests.Cleanup()
+}
+
+func (s *AmazonClientSuite) TearDownTest(c *C) {
+	s.ClientTests.Cleanup()
 }
 
 // AmazonDomainClientSuite tests the client against a live S3
@@ -70,7 +71,13 @@ func (s *AmazonDomainClientSuite) SetUpSuite(c *C) {
 	region := s.Region
 	region.S3BucketEndpoint = "https://${bucket}.s3.amazonaws.com"
 	s.s3 = s3.New(s.srv.auth, region)
+	s.ClientTests.Cleanup()
 }
+
+func (s *AmazonDomainClientSuite) TearDownTest(c *C) {
+	s.ClientTests.Cleanup()
+}
+
 
 // ClientTests defines integration tests designed to test the client.
 // It is not used as a test suite in itself, but embedded within
@@ -80,34 +87,79 @@ type ClientTests struct {
 	authIsBroken bool
 }
 
-func (s *ClientTests) Bucket(name string) *s3.Bucket {
-	// Creating and deleting buckets across regions can fail due to namespace collision.
-	// Use the region name to ensure the final bucket name does not clash.
-	return s.s3.Bucket(fmt.Sprintf("%s-%s-%s", name, s.s3.Region.Name, s.s3.Auth.AccessKey))
+func (s *ClientTests) Cleanup() {
+	killBucket(testBucket(s.s3))
 }
 
-const testBucket = "goamz-test-bucket"
+func testBucket(s *s3.S3) *s3.Bucket {
+	// Watch out! If this function is corrupted and made to match with something
+	// people own, killBucket will happily remove *everything* inside the bucket.
+	key := s.Auth.AccessKey
+	if len(key) >= 8 {
+		key = s.Auth.AccessKey[:8]
+	}
+	return s.Bucket(fmt.Sprintf("goamz-%s-%s", s.Region.Name, key))
+}
+
+var attempts = aws.AttemptStrategy{Total: 10 * time.Second}
+
+func killBucket(b *s3.Bucket) {
+	var err error
+	for attempt := attempts.Start(); attempt.Next(); {
+		err = b.DelBucket()
+		if err == nil {
+			return
+		}
+		if _, ok := err.(*net.DNSError); ok {
+			return
+		}
+		e, ok := err.(*s3.Error)
+		if ok && e.Code == "NoSuchBucket" {
+			return
+		}
+		if ok && e.Code == "BucketNotEmpty" {
+			// Errors are ignored here. Just retry.
+			resp, err := b.List("", "", "", 1000)
+			if err == nil {
+				for _, key := range resp.Contents {
+					_ = b.Del(key.Key)
+				}
+			}
+		}
+	}
+	message := "cannot delete test bucket"
+	if err != nil {
+		message += ": " + err.Error()
+	}
+	panic(message)
+}
 
 func get(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
+	for attempt := attempts.Start(); attempt.Next(); {
+		resp, err := http.Get(url)
+		if err != nil {
+			if attempt.HasNext() {
+				continue
+			}
+			return nil, err
+		}
+		data, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			if attempt.HasNext() {
+				continue
+			}
+			return nil, err
+		}
+		return data, err
 	}
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return data, err
+	panic("unreachable")
 }
 
 func (s *ClientTests) TestBasicFunctionality(c *C) {
-	b := s.Bucket(testBucket)
-	b.DelBucket()
-
+	b := testBucket(s.s3)
 	err := b.PutBucket(s3.PublicRead)
 	c.Assert(err, IsNil)
-	defer b.DelBucket()
 
 	err = b.Put("name", []byte("yo!"), "text/plain", s3.PublicRead)
 	c.Assert(err, IsNil)
@@ -162,7 +214,7 @@ func (s *ClientTests) TestBasicFunctionality(c *C) {
 }
 
 func (s *ClientTests) TestGetNotFound(c *C) {
-	b := s.Bucket("goamz-non-existent-bucket")
+	b := s.s3.Bucket("goamz-" + s.s3.Auth.AccessKey)
 	data, err := b.Get("non-existent")
 
 	s3err, _ := err.(*s3.Error)
@@ -173,18 +225,14 @@ func (s *ClientTests) TestGetNotFound(c *C) {
 	c.Assert(data, IsNil)
 }
 
-func (s *ClientTests) unique(name string) string {
-	return name + "-" + s.s3.AccessKey
-}
-
 // Communicate with all endpoints to see if they are alive.
 func (s *ClientTests) TestRegions(c *C) {
-	name := s.unique("goamz-region-test")
 	errs := make(chan error, len(aws.Regions))
 	for _, region := range aws.Regions {
 		go func(r aws.Region) {
 			s := s3.New(s.s3.Auth, r)
-			_, err := s.Bucket(name).Get("non-existent")
+			b := s.Bucket("goamz-" + s.Auth.AccessKey)
+			_, err := b.Get("non-existent")
 			errs <- err
 		}(region)
 	}
@@ -294,7 +342,7 @@ var listTests = []s3.ListResp{
 }
 
 func (s *ClientTests) TestDoublePutBucket(c *C) {
-	b := s.Bucket(testBucket)
+	b := testBucket(s.s3)
 	err := b.PutBucket(s3.PublicRead)
 	c.Assert(err, IsNil)
 
@@ -306,15 +354,14 @@ func (s *ClientTests) TestDoublePutBucket(c *C) {
 }
 
 func (s *ClientTests) TestBucketList(c *C) {
-	b := s.Bucket(testBucket)
+	b := testBucket(s.s3)
 	err := b.PutBucket(s3.Private)
 	c.Assert(err, IsNil)
-	defer b.DelBucket()
 
 	objData := make(map[string][]byte)
 	for i, path := range objectNames {
 		data := []byte(strings.Repeat("a", i))
-		err := b.Put(path, data, "test/plain", s3.Private)
+		err := b.Put(path, data, "text/plain", s3.Private)
 		c.Assert(err, IsNil)
 		defer b.Del(path)
 		objData[path] = data
