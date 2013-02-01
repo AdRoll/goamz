@@ -46,4 +46,12 @@ func (S) TestAttemptNextHasNext(c *C) {
 	c.Assert(a.HasNext(), Equals, true)
 	c.Assert(a.Next(), Equals, true)
 	c.Assert(a.Next(), Equals, false)
+
+	a = aws.AttemptStrategy{Total: 1e8, Min: 2}.Start()
+	time.Sleep(1e8)
+	c.Assert(a.Next(), Equals, true)
+	c.Assert(a.HasNext(), Equals, true)
+	c.Assert(a.Next(), Equals, true)
+	c.Assert(a.HasNext(), Equals, false)
+	c.Assert(a.Next(), Equals, false)
 }

@@ -10,6 +10,7 @@ import (
 type AttemptStrategy struct {
 	Total time.Duration // total duration of attempt.
 	Delay time.Duration // interval between each try in the burst.
+	Min   int           // minimum number of retries; overrides Total
 }
 
 type Attempt struct {
@@ -17,33 +18,28 @@ type Attempt struct {
 	last     time.Time
 	end      time.Time
 	force    bool
+	count    int
 }
 
 // Start begins a new sequence of attempts for the given strategy.
 func (s AttemptStrategy) Start() *Attempt {
-	return &Attempt{strategy: s}
+	return &Attempt{strategy: s, end: time.Now().Add(s.Total), force: true}
 }
 
 // Next waits until it is time to perform the next attempt or returns
 // false if it is time to stop trying.
 func (a *Attempt) Next() bool {
 	now := time.Now()
-	if a.end.IsZero() {
-		// First attempt.
-		a.last = now
-		a.end = now.Add(a.strategy.Total)
-		a.force = false
-		return true
-	}
 	sleep := a.nextSleep(now)
-	if !a.force && !now.Add(sleep).Before(a.end) {
+	if !a.force && !now.Add(sleep).Before(a.end) && a.strategy.Min <= a.count {
 		return false
 	}
 	a.force = false
-	if sleep > 0 {
+	if sleep > 0 && a.count > 0 {
 		time.Sleep(sleep)
 		now = time.Now()
 	}
+	a.count++
 	a.last = now
 	return true
 }
@@ -60,7 +56,7 @@ func (a *Attempt) nextSleep(now time.Time) time.Duration {
 // one fails. If it returns true, the following call to Next is
 // guaranteed to return true.
 func (a *Attempt) HasNext() bool {
-	if a.force {
+	if a.force || a.strategy.Min > a.count {
 		return true
 	}
 	now := time.Now()
