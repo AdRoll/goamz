@@ -29,7 +29,11 @@ func (s *S) SetUpSuite(c *C) {
 	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.s3 = s3.New(auth, aws.Region{Name: "faux-region-1", S3Endpoint: testServer.URL})
-	s3.SetAttemptStrategy(&aws.AttemptStrategy{Total: 500 * time.Millisecond, Delay: 100 * time.Millisecond})
+	attempts := aws.AttemptStrategy{
+		Total: 300 * time.Millisecond,
+		Delay: 100 * time.Millisecond,
+	}
+	s3.SetAttemptStrategy(&attempts)
 }
 
 func (s *S) TearDownSuite(c *C) {

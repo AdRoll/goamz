@@ -49,7 +49,8 @@ type Owner struct {
 }
 
 var attempts = aws.AttemptStrategy{
-	Total: 5 * time.Second,
+	Min:   3,
+	Total: 3 * time.Second,
 	Delay: 200 * time.Millisecond,
 }
 
@@ -122,7 +123,7 @@ func (b *Bucket) DelBucket() (err error) {
 	}
 	for attempt := attempts.Start(); attempt.Next(); {
 		err = b.S3.query(req, nil)
-		if !shouldRetry(err) || hasCode(err, "NoSuchBucket") {
+		if !shouldRetry(err) {
 			break
 		}
 	}
@@ -308,7 +309,6 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 		if !shouldRetry(err) {
 			break
 		}
-		println("Retrying List.")
 	}
 	if err != nil {
 		return nil, err
@@ -525,11 +525,18 @@ func shouldRetry(err error) bool {
 	if err == nil {
 		return false
 	}
+	switch err {
+	case io.ErrUnexpectedEOF, io.EOF:
+		return true
+	}
 	switch e := err.(type) {
 	case *net.DNSError:
 		return true
 	case *net.OpError:
-		return true
+		switch e.Op {
+		case "read", "write":
+			return true
+		}
 	case *Error:
 		switch e.Code {
 		case "InternalError", "NoSuchUpload", "NoSuchBucket":
@@ -543,4 +550,3 @@ func hasCode(err error, code string) bool {
 	s3err, ok := err.(*Error)
 	return ok && s3err.Code == code
 }
-

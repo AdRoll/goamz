@@ -110,13 +110,7 @@ func killBucket(b *s3.Bucket) {
 		if err == nil {
 			return
 		}
-		if _, ok := err.(*net.DNSError); ok {
-			return
-		}
 		e, ok := err.(*s3.Error)
-		if ok && e.Code == "NoSuchBucket" {
-			return
-		}
 		if ok && e.Code == "BucketNotEmpty" {
 			// Errors are ignored here. Just retry.
 			resp, err := b.List("", "", "", 1000)
