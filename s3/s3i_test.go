@@ -78,7 +78,6 @@ func (s *AmazonDomainClientSuite) TearDownTest(c *C) {
 	s.ClientTests.Cleanup()
 }
 
-
 // ClientTests defines integration tests designed to test the client.
 // It is not used as a test suite in itself, but embedded within
 // another type.
