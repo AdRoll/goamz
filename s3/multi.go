@@ -136,20 +136,20 @@ func (m *Multi) PutPart(n int, r io.ReadSeeker) (Part, error) {
 		"uploadId":   {m.UploadId},
 		"partNumber": {strconv.FormatInt(int64(n), 10)},
 	}
-	req := &request{
-		method:  "PUT",
-		bucket:  m.Bucket.Name,
-		path:    m.Key,
-		headers: headers,
-		params:  params,
-		payload: r,
-	}
-	err = m.Bucket.S3.prepare(req)
-	if err != nil {
-		return Part{}, err
-	}
 	for attempt := attempts.Start(); attempt.Next(); {
 		_, err := r.Seek(0, 0)
+		if err != nil {
+			return Part{}, err
+		}
+		req := &request{
+			method:  "PUT",
+			bucket:  m.Bucket.Name,
+			path:    m.Key,
+			headers: headers,
+			params:  params,
+			payload: r,
+		}
+		err = m.Bucket.S3.prepare(req)
 		if err != nil {
 			return Part{}, err
 		}
