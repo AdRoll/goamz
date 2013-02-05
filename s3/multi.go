@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/xml"
+	"errors"
 	"io"
 	"sort"
 	"strconv"
@@ -16,7 +17,7 @@ import (
 // After all parts have been sent, the upload must be explicitly
 // completed by calling Complete with the list of parts.
 //
-// See http://goo.gl/vJfTG for an overview on multipart uploads.
+// See http://goo.gl/vJfTG for an overview of multipart uploads.
 type Multi struct {
 	Bucket   *Bucket
 	Key      string
@@ -159,7 +160,11 @@ func (m *Multi) PutPart(n int, r io.ReadSeeker) (Part, error) {
 		if err != nil {
 			return Part{}, err
 		}
-		return Part{n, resp.Header.Get("ETag"), length}, nil
+		etag := resp.Header.Get("ETag")
+		if etag == "" {
+			return Part{}, errors.New("part upload succeeded with no ETag")
+		}
+		return Part{n, etag, length}, nil
 	}
 	panic("unreachable")
 }
