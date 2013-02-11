@@ -250,7 +250,7 @@ func (s *ClientTests) TestRegions(c *C) {
 			s3_err, ok := err.(*s3.Error)
 			if ok {
 				c.Check(s3_err.Code, Matches, "NoSuchBucket")
-			if _, ok = err.(*net.DNSError); ok {
+			} else if _, ok = err.(*net.DNSError); ok {
 				// Okay as well.
 			} else {
 				c.Errorf("Non-S3 error: %s", err)
@@ -541,7 +541,7 @@ func (s *ClientTests) TestListMulti(c *C) {
 	}
 
 	multis, prefixes, err = b.ListMulti("", "/")
-	for attempt := attempts.Start(); attempt.Next() && len(prefixes) < 2 {
+	for attempt := attempts.Start(); attempt.Next() && len(prefixes) < 2; {
 		multis, prefixes, err = b.ListMulti("", "")
 		c.Assert(err, IsNil)
 	}
@@ -552,7 +552,7 @@ func (s *ClientTests) TestListMulti(c *C) {
 	c.Assert(multis[0].Key, Equals, "multi1")
 	c.Assert(multis[0].UploadId, Matches, ".+")
 
-	for attempt := attempts.Start(); attempt.Next() && len(multis) < 2 {
+	for attempt := attempts.Start(); attempt.Next() && len(multis) < 2; {
 		multis, prefixes, err = b.ListMulti("", "")
 		c.Assert(err, IsNil)
 	}
