@@ -13,6 +13,7 @@ import (
 	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"net"
+	"sort"
 	"time"
 )
 
@@ -100,7 +101,11 @@ func testBucket(s *s3.S3) *s3.Bucket {
 	return s.Bucket(fmt.Sprintf("goamz-%s-%s", s.Region.Name, key))
 }
 
-var attempts = aws.AttemptStrategy{Total: 10 * time.Second}
+var attempts = aws.AttemptStrategy{
+	Min: 5,
+	Total: 20 * time.Second,
+	Delay: 100 * time.Millisecond,
+}
 
 func killBucket(b *s3.Bucket) {
 	var err error
@@ -245,6 +250,8 @@ func (s *ClientTests) TestRegions(c *C) {
 			s3_err, ok := err.(*s3.Error)
 			if ok {
 				c.Check(s3_err.Code, Matches, "NoSuchBucket")
+			if _, ok = err.(*net.DNSError); ok {
+				// Okay as well.
 			} else {
 				c.Errorf("Non-S3 error: %s", err)
 			}
@@ -456,7 +463,7 @@ func (s *ClientTests) TestMultiComplete(c *C) {
 	defer multi.Abort()
 
 	// Minimum size S3 accepts for all but the last part is 5MB.
-	data1 := make([]byte, 5 * 1024 * 1024)
+	data1 := make([]byte, 5*1024*1024)
 	data2 := []byte("<part 2>")
 
 	part1, err := multi.PutPart(1, bytes.NewReader(data1))
@@ -471,7 +478,7 @@ func (s *ClientTests) TestMultiComplete(c *C) {
 	data, err := b.Get("multi")
 	c.Assert(err, IsNil)
 
-	c.Assert(len(data), Equals, len(data1) + len(data2))
+	c.Assert(len(data), Equals, len(data1)+len(data2))
 	for i := range data1 {
 		if data[i] != data1[i] {
 			c.Fatalf("uploaded object at byte %d: want %d, got %d", data1[i], data[i])
@@ -479,6 +486,12 @@ func (s *ClientTests) TestMultiComplete(c *C) {
 	}
 	c.Assert(string(data[len(data1):]), Equals, string(data2))
 }
+
+type multiList []*s3.Multi
+
+func (l multiList) Len() int           { return len(l) }
+func (l multiList) Less(i, j int) bool { return l[i].Key < l[j].Key }
+func (l multiList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
 
 func (s *ClientTests) TestListMulti(c *C) {
 	b := testBucket(s.s3)
@@ -511,19 +524,27 @@ func (s *ClientTests) TestListMulti(c *C) {
 
 	multis, prefixes, err := b.ListMulti("", "")
 	c.Assert(err, IsNil)
-	for attempt := attempts.Start(); attempt.Next() && len(multis) < 4; {
+	for attempt := attempts.Start(); attempt.Next() && len(multis) < len(keys); {
 		multis, prefixes, err = b.ListMulti("", "")
 		c.Assert(err, IsNil)
 	}
+	sort.Sort(multiList(multis))
 	c.Assert(prefixes, IsNil)
-	c.Assert(multis, HasLen, 4)
-	for i, m := range multis {
+	var gotKeys []string
+	for _, m := range multis {
+		gotKeys = append(gotKeys, m.Key)
+	}
+	c.Assert(gotKeys, DeepEquals, keys)
+	for _, m := range multis {
 		c.Assert(m.Bucket, Equals, b)
-		c.Assert(m.Key, Equals, keys[i])
 		c.Assert(m.UploadId, Matches, ".+")
 	}
 
 	multis, prefixes, err = b.ListMulti("", "/")
+	for attempt := attempts.Start(); attempt.Next() && len(prefixes) < 2 {
+		multis, prefixes, err = b.ListMulti("", "")
+		c.Assert(err, IsNil)
+	}
 	c.Assert(err, IsNil)
 	c.Assert(prefixes, DeepEquals, []string{"a/", "b/"})
 	c.Assert(multis, HasLen, 1)
@@ -531,6 +552,10 @@ func (s *ClientTests) TestListMulti(c *C) {
 	c.Assert(multis[0].Key, Equals, "multi1")
 	c.Assert(multis[0].UploadId, Matches, ".+")
 
+	for attempt := attempts.Start(); attempt.Next() && len(multis) < 2 {
+		multis, prefixes, err = b.ListMulti("", "")
+		c.Assert(err, IsNil)
+	}
 	multis, prefixes, err = b.ListMulti("a/", "/")
 	c.Assert(err, IsNil)
 	c.Assert(prefixes, IsNil)

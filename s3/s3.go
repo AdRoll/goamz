@@ -49,8 +49,8 @@ type Owner struct {
 }
 
 var attempts = aws.AttemptStrategy{
-	Min:   3,
-	Total: 3 * time.Second,
+	Min:   5,
+	Total: 5 * time.Second,
 	Delay: 200 * time.Millisecond,
 }
 
@@ -356,13 +356,15 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 }
 
 type request struct {
-	method  string
-	bucket  string
-	path    string
-	params  url.Values
-	headers http.Header
-	baseurl string
-	payload io.Reader
+	method   string
+	bucket   string
+	path     string
+	signpath string
+	params   url.Values
+	headers  http.Header
+	baseurl  string
+	payload  io.Reader
+	prepared bool
 }
 
 func (req *request) url() (*url.URL, error) {
@@ -388,41 +390,52 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
-	if req.method == "" {
-		req.method = "GET"
-	}
-	if req.params == nil {
-		req.params = make(url.Values)
-	}
-	if req.headers == nil {
-		req.headers = make(http.Header)
-	}
-	if !strings.HasPrefix(req.path, "/") {
-		req.path = "/" + req.path
-	}
-	canonicalPath := req.path
-	if req.bucket != "" {
-		req.baseurl = s3.Region.S3BucketEndpoint
-		if req.baseurl == "" {
-			// Use the path method to address the bucket.
-			req.baseurl = s3.Region.S3Endpoint
-			req.path = "/" + req.bucket + req.path
-		} else {
-			// Just in case, prevent injection.
-			if strings.IndexAny(req.bucket, "/:@") >= 0 {
-				return fmt.Errorf("bad S3 bucket: %q", req.bucket)
-			}
-			req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
+	if !req.prepared {
+		req.prepared = true
+		if req.method == "" {
+			req.method = "GET"
 		}
-		canonicalPath = "/" + req.bucket + canonicalPath
+		// Copy so they can be mutated without affecting on retries.
+		params := make(url.Values)
+		headers := make(http.Header)
+		for k, v := range req.params {
+			params[k] = v
+		}
+		for k, v := range req.headers {
+			headers[k] = v
+		}
+		req.params = params
+		req.headers = headers
+		if !strings.HasPrefix(req.path, "/") {
+			req.path = "/" + req.path
+		}
+		req.signpath = req.path
+		if req.bucket != "" {
+			req.baseurl = s3.Region.S3BucketEndpoint
+			if req.baseurl == "" {
+				// Use the path method to address the bucket.
+				req.baseurl = s3.Region.S3Endpoint
+				req.path = "/" + req.bucket + req.path
+			} else {
+				// Just in case, prevent injection.
+				if strings.IndexAny(req.bucket, "/:@") >= 0 {
+					return fmt.Errorf("bad S3 bucket: %q", req.bucket)
+				}
+				req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
+			}
+			req.signpath = "/" + req.bucket + req.signpath
+		}
 	}
+
+	// Always sign again as it's not clear how far the
+	// server has handled a previous attempt.
 	u, err := url.Parse(req.baseurl)
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-	sign(s3.Auth, req.method, canonicalPath, req.params, req.headers)
+	sign(s3.Auth, req.method, req.signpath, req.params, req.headers)
 	return nil
 }
 
@@ -439,25 +452,18 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		return nil, err
 	}
 
-	// Copy since headers may be mutated and we should be able to
-	// call this function twice with the same request.
-	headers := make(http.Header, len(req.headers))
-	for k, v := range req.headers {
-		headers[k] = v
-	}
-
 	hreq := http.Request{
 		URL:        u,
 		Method:     req.method,
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		Close:      true,
-		Header:     headers,
+		Header:     req.headers,
 	}
 
-	if v, ok := headers["Content-Length"]; ok {
+	if v, ok := req.headers["Content-Length"]; ok {
 		hreq.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
-		delete(headers, "Content-Length")
+		delete(req.headers, "Content-Length")
 	}
 	if req.payload != nil {
 		hreq.Body = ioutil.NopCloser(req.payload)
