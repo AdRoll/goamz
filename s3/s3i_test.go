@@ -13,6 +13,7 @@ import (
 	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"net"
+	"sort"
 	"time"
 )
 
@@ -100,7 +101,11 @@ func testBucket(s *s3.S3) *s3.Bucket {
 	return s.Bucket(fmt.Sprintf("goamz-%s-%s", s.Region.Name, key))
 }
 
-var attempts = aws.AttemptStrategy{Total: 10 * time.Second}
+var attempts = aws.AttemptStrategy{
+	Min: 5,
+	Total: 20 * time.Second,
+	Delay: 100 * time.Millisecond,
+}
 
 func killBucket(b *s3.Bucket) {
 	var err error
@@ -123,6 +128,10 @@ func killBucket(b *s3.Bucket) {
 				for _, key := range resp.Contents {
 					_ = b.Del(key.Key)
 				}
+			}
+			multis, _, _ := b.ListMulti("", "")
+			for _, m := range multis {
+				_ = m.Abort()
 			}
 		}
 	}
@@ -241,6 +250,8 @@ func (s *ClientTests) TestRegions(c *C) {
 			s3_err, ok := err.(*s3.Error)
 			if ok {
 				c.Check(s3_err.Code, Matches, "NoSuchBucket")
+			if _, ok = err.(*net.DNSError); ok {
+				// Okay as well.
 			} else {
 				c.Errorf("Non-S3 error: %s", err)
 			}
@@ -392,4 +403,167 @@ func checkContents(c *C, contents []s3.Key, data map[string][]byte, expected []s
 		c.Check(k.Size, Equals, int64(len(data[k.Key])))
 		c.Check(k.ETag, Equals, etag(data[k.Key]))
 	}
+}
+
+func (s *ClientTests) TestMultiInitPutList(c *C) {
+	b := testBucket(s.s3)
+	err := b.PutBucket(s3.Private)
+	c.Assert(err, IsNil)
+
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	c.Assert(err, IsNil)
+	c.Assert(multi.UploadId, Matches, ".+")
+	defer multi.Abort()
+
+	var sent []s3.Part
+
+	for i := 0; i < 5; i++ {
+		p, err := multi.PutPart(i+1, strings.NewReader(fmt.Sprintf("<part %d>", i+1)))
+		c.Assert(err, IsNil)
+		c.Assert(p.N, Equals, i+1)
+		c.Assert(p.Size, Equals, int64(8))
+		c.Assert(p.ETag, Matches, ".+")
+		sent = append(sent, p)
+	}
+
+	s3.SetListPartsMax(2)
+
+	parts, err := multi.ListParts()
+	c.Assert(err, IsNil)
+	c.Assert(parts, HasLen, len(sent))
+	for i := range parts {
+		c.Assert(parts[i].N, Equals, sent[i].N)
+		c.Assert(parts[i].Size, Equals, sent[i].Size)
+		c.Assert(parts[i].ETag, Equals, sent[i].ETag)
+	}
+
+	err = multi.Complete(parts)
+	s3err, failed := err.(*s3.Error)
+	c.Assert(failed, Equals, true)
+	c.Assert(s3err.Code, Equals, "EntityTooSmall")
+
+	err = multi.Abort()
+	c.Assert(err, IsNil)
+	_, err = multi.ListParts()
+	s3err, ok := err.(*s3.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(s3err.Code, Equals, "NoSuchUpload")
+}
+
+// This may take a minute or more due to the minimum size accepted S3
+// on multipart upload parts.
+func (s *ClientTests) TestMultiComplete(c *C) {
+	b := testBucket(s.s3)
+	err := b.PutBucket(s3.Private)
+	c.Assert(err, IsNil)
+
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	c.Assert(err, IsNil)
+	c.Assert(multi.UploadId, Matches, ".+")
+	defer multi.Abort()
+
+	// Minimum size S3 accepts for all but the last part is 5MB.
+	data1 := make([]byte, 5*1024*1024)
+	data2 := []byte("<part 2>")
+
+	part1, err := multi.PutPart(1, bytes.NewReader(data1))
+	c.Assert(err, IsNil)
+	part2, err := multi.PutPart(2, bytes.NewReader(data2))
+	c.Assert(err, IsNil)
+
+	// Purposefully reversed. The order requirement must be handled.
+	err = multi.Complete([]s3.Part{part2, part1})
+	c.Assert(err, IsNil)
+
+	data, err := b.Get("multi")
+	c.Assert(err, IsNil)
+
+	c.Assert(len(data), Equals, len(data1)+len(data2))
+	for i := range data1 {
+		if data[i] != data1[i] {
+			c.Fatalf("uploaded object at byte %d: want %d, got %d", data1[i], data[i])
+		}
+	}
+	c.Assert(string(data[len(data1):]), Equals, string(data2))
+}
+
+type multiList []*s3.Multi
+
+func (l multiList) Len() int           { return len(l) }
+func (l multiList) Less(i, j int) bool { return l[i].Key < l[j].Key }
+func (l multiList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
+
+func (s *ClientTests) TestListMulti(c *C) {
+	b := testBucket(s.s3)
+	err := b.PutBucket(s3.Private)
+	c.Assert(err, IsNil)
+
+	// Ensure an empty state before testing its behavior.
+	multis, _, err := b.ListMulti("", "")
+	for _, m := range multis {
+		err := m.Abort()
+		c.Assert(err, IsNil)
+	}
+
+	keys := []string{
+		"a/multi2",
+		"a/multi3",
+		"b/multi4",
+		"multi1",
+	}
+	for _, key := range keys {
+		m, err := b.InitMulti(key, "", s3.Private)
+		c.Assert(err, IsNil)
+		defer m.Abort()
+	}
+
+	// Amazon's implementation of the multiple-request listing for
+	// multipart uploads in progress seems broken in multiple ways.
+	// (next tokens are not provided, etc).
+	//s3.SetListMultiMax(2)
+
+	multis, prefixes, err := b.ListMulti("", "")
+	c.Assert(err, IsNil)
+	for attempt := attempts.Start(); attempt.Next() && len(multis) < len(keys); {
+		multis, prefixes, err = b.ListMulti("", "")
+		c.Assert(err, IsNil)
+	}
+	sort.Sort(multiList(multis))
+	c.Assert(prefixes, IsNil)
+	var gotKeys []string
+	for _, m := range multis {
+		gotKeys = append(gotKeys, m.Key)
+	}
+	c.Assert(gotKeys, DeepEquals, keys)
+	for _, m := range multis {
+		c.Assert(m.Bucket, Equals, b)
+		c.Assert(m.UploadId, Matches, ".+")
+	}
+
+	multis, prefixes, err = b.ListMulti("", "/")
+	for attempt := attempts.Start(); attempt.Next() && len(prefixes) < 2 {
+		multis, prefixes, err = b.ListMulti("", "")
+		c.Assert(err, IsNil)
+	}
+	c.Assert(err, IsNil)
+	c.Assert(prefixes, DeepEquals, []string{"a/", "b/"})
+	c.Assert(multis, HasLen, 1)
+	c.Assert(multis[0].Bucket, Equals, b)
+	c.Assert(multis[0].Key, Equals, "multi1")
+	c.Assert(multis[0].UploadId, Matches, ".+")
+
+	for attempt := attempts.Start(); attempt.Next() && len(multis) < 2 {
+		multis, prefixes, err = b.ListMulti("", "")
+		c.Assert(err, IsNil)
+	}
+	multis, prefixes, err = b.ListMulti("a/", "/")
+	c.Assert(err, IsNil)
+	c.Assert(prefixes, IsNil)
+	c.Assert(multis, HasLen, 2)
+	c.Assert(multis[0].Bucket, Equals, b)
+	c.Assert(multis[0].Key, Equals, "a/multi2")
+	c.Assert(multis[0].UploadId, Matches, ".+")
+	c.Assert(multis[1].Bucket, Equals, b)
+	c.Assert(multis[1].Key, Equals, "a/multi3")
+	c.Assert(multis[1].UploadId, Matches, ".+")
 }
