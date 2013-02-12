@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/xml"
 	"errors"
 	"io"
@@ -83,6 +84,22 @@ func (b *Bucket) ListMulti(prefix, delim string) (multis []*Multi, prefixes []st
 	panic("unreachable")
 }
 
+// Multi returns a multipart upload handler for the provided key
+// inside b. If a multipart upload exists for key, it is returned,
+// otherwise a new multipart upload is initiated with contType and perm.
+func (b *Bucket) Multi(key, contType string, perm ACL) (*Multi, error) {
+	multis, _, err := b.ListMulti(key, "")
+	if err != nil && !hasCode(err, "NoSuchUpload") {
+		return nil, err
+	}
+	for _, m := range multis {
+		if m.Key == key {
+			return m, nil
+		}
+	}
+	return b.InitMulti(key, contType, perm)
+}
+
 // InitMulti initializes a new multipart upload at the provided
 // key inside b and returns a value for manipulating it.
 //
@@ -124,13 +141,17 @@ func (b *Bucket) InitMulti(key string, contType string, perm ACL) (*Multi, error
 //
 // See http://goo.gl/pqZer for details.
 func (m *Multi) PutPart(n int, r io.ReadSeeker) (Part, error) {
-	length, b64md5, err := seekerInfo(r)
+	partSize, _, md5b64, err := seekerInfo(r)
 	if err != nil {
 		return Part{}, err
 	}
+	return m.putPart(n, r, partSize, md5b64)
+}
+
+func (m *Multi) putPart(n int, r io.ReadSeeker, partSize int64, md5b64 string) (Part, error) {
 	headers := map[string][]string{
-		"Content-Length": {strconv.FormatInt(length, 10)},
-		"Content-MD5":    {b64md5},
+		"Content-Length": {strconv.FormatInt(partSize, 10)},
+		"Content-MD5":    {md5b64},
 	}
 	params := map[string][]string{
 		"uploadId":   {m.UploadId},
@@ -164,23 +185,25 @@ func (m *Multi) PutPart(n int, r io.ReadSeeker) (Part, error) {
 		if etag == "" {
 			return Part{}, errors.New("part upload succeeded with no ETag")
 		}
-		return Part{n, etag, length}, nil
+		return Part{n, etag, partSize}, nil
 	}
 	panic("unreachable")
 }
 
-func seekerInfo(r io.ReadSeeker) (length int64, b64md5 string, err error) {
+func seekerInfo(r io.ReadSeeker) (size int64, md5hex string, md5b64 string, err error) {
 	_, err = r.Seek(0, 0)
 	if err != nil {
-		return 0, "", err
+		return 0, "", "", err
 	}
 	digest := md5.New()
-	length, err = io.Copy(digest, r)
+	size, err = io.Copy(digest, r)
 	if err != nil {
-		return 0, "", err
+		return 0, "", "", err
 	}
-	b64md5 = base64.StdEncoding.EncodeToString(digest.Sum(nil))
-	return length, b64md5, nil
+	sum := digest.Sum(nil)
+	md5hex = hex.EncodeToString(sum)
+	md5b64 = base64.StdEncoding.EncodeToString(sum)
+	return size, md5hex, md5b64, nil
 }
 
 type Part struct {
@@ -188,6 +211,12 @@ type Part struct {
 	ETag string
 	Size int64
 }
+
+type partSlice []Part
+
+func (s partSlice) Len() int           { return len(s) }
+func (s partSlice) Less(i, j int) bool { return s[i].N < s[j].N }
+func (s partSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 type listPartsResp struct {
 	NextPartNumberMarker string
@@ -205,7 +234,7 @@ func (m *Multi) ListParts() ([]Part, error) {
 		"uploadId":  {m.UploadId},
 		"max-parts": {strconv.FormatInt(int64(listPartsMax), 10)},
 	}
-	var parts []Part
+	var parts partSlice
 	for attempt := attempts.Start(); attempt.Next(); {
 		req := &request{
 			method: "GET",
@@ -223,12 +252,69 @@ func (m *Multi) ListParts() ([]Part, error) {
 		}
 		parts = append(parts, resp.Part...)
 		if !resp.IsTruncated {
+			sort.Sort(parts)
 			return parts, nil
 		}
 		params["part-number-marker"] = []string{resp.NextPartNumberMarker}
 		attempt = attempts.Start() // Last request worked.
 	}
 	panic("unreachable")
+}
+
+type ReaderAtSeeker interface {
+	io.ReaderAt
+	io.ReadSeeker
+}
+
+// PutAll sends all of r via a multipart upload with parts no large
+// than partSize bytes, which must be set to at least 5MB.
+// Parts previously uploaded are either reused if their checksum matches
+// the new part, or otherwise overwritten with the new content.
+// PutAll returns all the parts of m (reused or not).
+func (m *Multi) PutAll(r ReaderAtSeeker, partSize int64) ([]Part, error) {
+	old, err := m.ListParts()
+	if err != nil && !hasCode(err, "NoSuchUpload") {
+		return nil, err
+	}
+	reuse := 1   // Index of next old part to consider reusing.
+	current := 1 // Index of lastest good part handled.
+	totalSize, err := r.Seek(0, 2)
+	if totalSize == 0 || err != nil {
+		return nil, err
+	}
+	var result []Part
+NextSection:
+	for offset := int64(0); offset < totalSize; offset += partSize {
+		if offset+partSize > totalSize {
+			partSize = totalSize - offset
+		}
+		section := io.NewSectionReader(r, offset, partSize)
+		_, md5hex, md5b64, err := seekerInfo(section)
+		if err != nil {
+			return nil, err
+		}
+		for reuse <= len(old) && old[reuse-1].N <= current {
+			// Looks like this part was already sent.
+			part := &old[reuse-1]
+			etag := `"` + md5hex + `"`
+			if part.N == current && part.Size == partSize && part.ETag == etag {
+				// Checksum matches. Reuse the old part.
+				result = append(result, *part)
+				current++
+				continue NextSection
+			}
+			reuse++
+		}
+
+		// Part wasn't found or doesn't match. Send it.
+		part, err := m.putPart(current, section, partSize, md5b64)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, part)
+		current++
+	}
+	return result, nil
 }
 
 type completeUpload struct {
@@ -298,14 +384,14 @@ func (m *Multi) Complete(parts []Part) error {
 // See http://goo.gl/dnyJw for details.
 func (m *Multi) Abort() error {
 	params := map[string][]string{
-		"uploadId":   {m.UploadId},
+		"uploadId": {m.UploadId},
 	}
 	for attempt := attempts.Start(); attempt.Next(); {
 		req := &request{
-			method:  "DELETE",
-			bucket:  m.Bucket.Name,
-			path:    m.Key,
-			params:  params,
+			method: "DELETE",
+			bucket: m.Bucket.Name,
+			path:   m.Key,
+			params: params,
 		}
 		err := m.Bucket.S3.query(req, nil)
 		if shouldRetry(err) && attempt.HasNext() {

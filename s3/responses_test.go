@@ -87,14 +87,14 @@ var ListPartsResultDump1 = `
   <Part>
     <PartNumber>1</PartNumber>
     <LastModified>2013-01-30T13:45:51.000Z</LastModified>
-    <ETag>&quot;26f90efd10d614f100252ff56d88dad8&quot;</ETag>
-    <Size>8</Size>
+    <ETag>&quot;ffc88b4ca90a355f8ddba6b2c3b2af5c&quot;</ETag>
+    <Size>5</Size>
   </Part>
   <Part>
     <PartNumber>2</PartNumber>
     <LastModified>2013-01-30T13:45:52.000Z</LastModified>
-    <ETag>&quot;b572ef59bfa4a719fdf2b3c13c583af8&quot;</ETag>
-    <Size>8</Size>
+    <ETag>&quot;d067a0fa9dc61a6e7195ca99696b5a89&quot;</ETag>
+    <Size>5</Size>
   </Part>
 </ListPartsResult>
 `
@@ -121,8 +121,8 @@ var ListPartsResultDump2 = `
   <Part>
     <PartNumber>3</PartNumber>
     <LastModified>2013-01-30T13:46:50.000Z</LastModified>
-    <ETag>&quot;50dbe110509c7952ba70a96587bd7c40&quot;</ETag>
-    <Size>4</Size>
+    <ETag>&quot;49dcd91231f801159e893fb5c6674985&quot;</ETag>
+    <Size>5</Size>
   </Part>
 </ListPartsResult>
 `

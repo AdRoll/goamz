@@ -29,6 +29,13 @@ func (s *S) SetUpSuite(c *C) {
 	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.s3 = s3.New(auth, aws.Region{Name: "faux-region-1", S3Endpoint: testServer.URL})
+}
+
+func (s *S) TearDownSuite(c *C) {
+	s3.SetAttemptStrategy(nil)
+}
+
+func (s *S) SetUpTest(c *C) {
 	attempts := aws.AttemptStrategy{
 		Total: 300 * time.Millisecond,
 		Delay: 100 * time.Millisecond,
@@ -36,12 +43,12 @@ func (s *S) SetUpSuite(c *C) {
 	s3.SetAttemptStrategy(&attempts)
 }
 
-func (s *S) TearDownSuite(c *C) {
-	s3.SetAttemptStrategy(nil)
-}
-
 func (s *S) TearDownTest(c *C) {
 	testServer.Flush()
+}
+
+func (s *S) DisableRetries() {
+	s3.SetAttemptStrategy(&aws.AttemptStrategy{})
 }
 
 // PutBucket docs: http://goo.gl/kBTCu

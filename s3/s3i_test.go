@@ -102,7 +102,7 @@ func testBucket(s *s3.S3) *s3.Bucket {
 }
 
 var attempts = aws.AttemptStrategy{
-	Min: 5,
+	Min:   5,
 	Total: 20 * time.Second,
 	Delay: 100 * time.Millisecond,
 }
