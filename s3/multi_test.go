@@ -203,6 +203,43 @@ func (s *S) TestPutAllNoPreviousUpload(c *C) {
 	c.Assert(readAll(req.Body), Equals, "last")
 }
 
+func (s *S) TestPutAllZeroSizeFile(c *C) {
+	// Don't retry the NoSuchUpload error.
+	s.DisableRetries()
+
+	etag1 := map[string]string{"ETag": `"etag1"`}
+	testServer.Response(200, nil, InitMultiResultDump)
+	testServer.Response(404, nil, NoSuchUploadErrorDump)
+	testServer.Response(200, etag1, "")
+
+	b := s.s3.Bucket("sample")
+
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	c.Assert(err, IsNil)
+
+	// Must send at least one part, so that completing it will work.
+	parts, err := multi.PutAll(strings.NewReader(""), 5)
+	c.Assert(parts, HasLen, 1)
+	c.Assert(parts[0].ETag, Equals, `"etag1"`)
+	c.Assert(err, IsNil)
+
+	// Init
+	testServer.WaitRequest()
+
+	// List old parts. Won't find anything.
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, Equals, "GET")
+	c.Assert(req.URL.Path, Equals, "/sample/multi")
+
+	// Send empty part.
+	req = testServer.WaitRequest()
+	c.Assert(req.Method, Equals, "PUT")
+	c.Assert(req.URL.Path, Equals, "/sample/multi")
+	c.Assert(req.Form["partNumber"], DeepEquals, []string{"1"})
+	c.Assert(req.Header["Content-Length"], DeepEquals, []string{"0"})
+	c.Assert(readAll(req.Body), Equals, "")
+}
+
 func (s *S) TestPutAllResume(c *C) {
 	etag2 := map[string]string{"ETag": `"etag2"`}
 	testServer.Response(200, nil, InitMultiResultDump)

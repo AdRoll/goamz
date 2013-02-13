@@ -567,3 +567,24 @@ func (s *ClientTests) TestListMulti(c *C) {
 	c.Assert(multis[1].Key, Equals, "a/multi3")
 	c.Assert(multis[1].UploadId, Matches, ".+")
 }
+
+func (s *ClientTests) TestMultiPutAllZeroLength(c *C) {
+	b := testBucket(s.s3)
+	err := b.PutBucket(s3.Private)
+	c.Assert(err, IsNil)
+
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	c.Assert(err, IsNil)
+	defer multi.Abort()
+
+	// This tests an edge case. Amazon requires at least one
+	// part for multiprat uploads to work, even the part is empty.
+	parts, err := multi.PutAll(strings.NewReader(""), 5*1024*1024)
+	c.Assert(err, IsNil)
+	c.Assert(parts, HasLen, 1)
+	c.Assert(parts[0].Size, Equals, int64(0))
+	c.Assert(parts[0].ETag, Equals, `"d41d8cd98f00b204e9800998ecf8427e"`)
+
+	err = multi.Complete(parts)
+	c.Assert(err, IsNil)
+}

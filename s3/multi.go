@@ -281,14 +281,16 @@ func (m *Multi) PutAll(r ReaderAtSeeker, partSize int64) ([]Part, error) {
 		return nil, err
 	}
 	reuse := 0   // Index of next old part to consider reusing.
-	current := 1 // Index of latest good part handled.
+	current := 1 // Part number of latest good part handled.
 	totalSize, err := r.Seek(0, 2)
-	if totalSize == 0 || err != nil {
+	if err != nil {
 		return nil, err
 	}
+	first := true // Must send at least one empty part if the file is empty.
 	var result []Part
 NextSection:
-	for offset := int64(0); offset < totalSize; offset += partSize {
+	for offset := int64(0); offset < totalSize || first; offset += partSize {
+		first = false
 		if offset+partSize > totalSize {
 			partSize = totalSize - offset
 		}
