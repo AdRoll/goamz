@@ -204,30 +204,30 @@ func (s *S) TestPutAllNoPreviousUpload(c *C) {
 }
 
 func (s *S) TestPutAllResume(c *C) {
-	etag3 := map[string]string{"ETag": `"etag3"`}
+	etag2 := map[string]string{"ETag": `"etag2"`}
 	testServer.Response(200, nil, InitMultiResultDump)
 	testServer.Response(200, nil, ListPartsResultDump1)
 	testServer.Response(200, nil, ListPartsResultDump2)
-	testServer.Response(200, etag3, "")
+	testServer.Response(200, etag2, "")
 
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
 	c.Assert(err, IsNil)
 
-	// "part1" and "part2" match the checksums in ResultDump1.
-	// The last one is a mismatch (ResultDump2 refers to "part3").
-	parts, err := multi.PutAll(strings.NewReader("part1part2partX"), 5)
+	// "part1" and "part3" match the checksums in ResultDump1.
+	// The middle one is a mismatch (it refers to "part2").
+	parts, err := multi.PutAll(strings.NewReader("part1partXpart3"), 5)
 	c.Assert(parts, HasLen, 3)
 	c.Assert(parts[0].N, Equals, 1)
 	c.Assert(parts[0].Size, Equals, int64(5))
 	c.Assert(parts[0].ETag, Equals, `"ffc88b4ca90a355f8ddba6b2c3b2af5c"`)
 	c.Assert(parts[1].N, Equals, 2)
 	c.Assert(parts[1].Size, Equals, int64(5))
-	c.Assert(parts[1].ETag, Equals, `"d067a0fa9dc61a6e7195ca99696b5a89"`)
+	c.Assert(parts[1].ETag, Equals, `"etag2"`)
 	c.Assert(parts[2].N, Equals, 3)
 	c.Assert(parts[2].Size, Equals, int64(5))
-	c.Assert(parts[2].ETag, Equals, `"etag3"`)
+	c.Assert(parts[2].ETag, Equals, `"49dcd91231f801159e893fb5c6674985"`)
 	c.Assert(err, IsNil)
 
 	// Init
@@ -240,11 +240,11 @@ func (s *S) TestPutAllResume(c *C) {
 		c.Assert(req.URL.Path, Equals, "/sample/multi")
 	}
 
-	// Send part 3, as it didn't match the checksum.
+	// Send part 2, as it didn't match the checksum.
 	req := testServer.WaitRequest()
 	c.Assert(req.Method, Equals, "PUT")
 	c.Assert(req.URL.Path, Equals, "/sample/multi")
-	c.Assert(req.Form["partNumber"], DeepEquals, []string{"3"})
+	c.Assert(req.Form["partNumber"], DeepEquals, []string{"2"})
 	c.Assert(req.Header["Content-Length"], DeepEquals, []string{"5"})
 	c.Assert(readAll(req.Body), Equals, "partX")
 }

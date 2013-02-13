@@ -25,6 +25,7 @@ type Multi struct {
 	UploadId string
 }
 
+// That's the default. Here just for testing.
 var listMultiMax = 1000
 
 type listMultiResp struct {
@@ -224,9 +225,11 @@ type listPartsResp struct {
 	Part                 []Part
 }
 
+// That's the default. Here just for testing.
 var listPartsMax = 1000
 
-// ListParts returns the list of previously uploaded parts in m.
+// ListParts returns the list of previously uploaded parts in m,
+// ordered by part number.
 //
 // See http://goo.gl/ePioY for details.
 func (m *Multi) ListParts() ([]Part, error) {
@@ -266,18 +269,19 @@ type ReaderAtSeeker interface {
 	io.ReadSeeker
 }
 
-// PutAll sends all of r via a multipart upload with parts no large
+// PutAll sends all of r via a multipart upload with parts no larger
 // than partSize bytes, which must be set to at least 5MB.
-// Parts previously uploaded are either reused if their checksum matches
-// the new part, or otherwise overwritten with the new content.
+// Parts previously uploaded are either reused if their checksum
+// and size match the new part, or otherwise overwritten with the
+// new content.
 // PutAll returns all the parts of m (reused or not).
 func (m *Multi) PutAll(r ReaderAtSeeker, partSize int64) ([]Part, error) {
 	old, err := m.ListParts()
 	if err != nil && !hasCode(err, "NoSuchUpload") {
 		return nil, err
 	}
-	reuse := 1   // Index of next old part to consider reusing.
-	current := 1 // Index of lastest good part handled.
+	reuse := 0   // Index of next old part to consider reusing.
+	current := 1 // Index of latest good part handled.
 	totalSize, err := r.Seek(0, 2)
 	if totalSize == 0 || err != nil {
 		return nil, err
@@ -293,9 +297,9 @@ NextSection:
 		if err != nil {
 			return nil, err
 		}
-		for reuse <= len(old) && old[reuse-1].N <= current {
+		for reuse < len(old) && old[reuse].N <= current {
 			// Looks like this part was already sent.
-			part := &old[reuse-1]
+			part := &old[reuse]
 			etag := `"` + md5hex + `"`
 			if part.N == current && part.Size == partSize && part.ETag == etag {
 				// Checksum matches. Reuse the old part.
