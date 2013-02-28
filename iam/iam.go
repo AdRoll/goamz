@@ -158,8 +158,9 @@ type Group struct {
 
 // CreateGroup creates a new group in IAM.
 //
-// The path parameter is optional. Set it to "" and it will not be sent to the
-// server.
+// The path parameter can be used to identify which division or part of the
+// organization the user belongs to. It's optional, set it to "" and it will
+// not be sent to the server.
 //
 // See http://goo.gl/n7NNQ for more details.
 func (iam *IAM) CreateGroup(name string, path string) (*CreateGroupResp, error) {
@@ -187,8 +188,8 @@ type GroupsResp struct {
 
 // Groups list the groups that have the specified path prefix.
 //
-// The parameter pathPrefix is optional. When set to "", Groups will return all
-// groups.
+// The parameter pathPrefix is optional. If pathPrefix is "", all groups are
+// returned.
 //
 // See http://goo.gl/W2TRj for more details.
 func (iam *IAM) Groups(pathPrefix string) (*GroupsResp, error) {
