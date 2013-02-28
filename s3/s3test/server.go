@@ -584,7 +584,8 @@ func (objr objectResource) put(a *action) interface{} {
 
 	// PUT request has been successful - save data and metadata
 	for key, values := range a.req.Header {
-		if metaHeaders[key] || strings.HasPrefix(key, "x-amz-meta-") {
+		key = http.CanonicalHeaderKey(key)
+		if metaHeaders[key] || strings.HasPrefix(key, "X-Amz-Meta-") {
 			obj.meta[key] = values
 		}
 	}
