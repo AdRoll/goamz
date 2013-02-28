@@ -21,11 +21,12 @@ type action struct {
 
 // Server implements an IAM simulator for use in tests.
 type Server struct {
-	reqId    int
-	url      string
-	listener net.Listener
-	users    []iam.User
-	mutex    sync.Mutex
+	reqId      int
+	url        string
+	listener   net.Listener
+	users      []iam.User
+	accessKeys []iam.AccessKey
+	mutex      sync.Mutex
 }
 
 func NewServer() (*Server, error) {
@@ -138,19 +139,9 @@ func (srv *Server) getUser(w http.ResponseWriter, req *http.Request, reqId strin
 		return nil, err
 	}
 	name := req.FormValue("UserName")
-	index := -1
-	for i, user := range srv.users {
-		if user.Name == name {
-			index = i
-			break
-		}
-	}
-	if index < 0 {
-		return nil, &iam.Error{
-			StatusCode: 404,
-			Code:       "NoSuchEntity",
-			Message:    fmt.Sprintf("The user with name %s cannot be found.", name),
-		}
+	index, err := srv.findUser(name)
+	if err != nil {
+		return nil, err
 	}
 	return iam.GetUserResp{RequestId: reqId, User: srv.users[index]}, nil
 }
@@ -160,9 +151,62 @@ func (srv *Server) deleteUser(w http.ResponseWriter, req *http.Request, reqId st
 		return nil, err
 	}
 	name := req.FormValue("UserName")
-	index := -1
+	index, err := srv.findUser(name)
+	if err != nil {
+		return nil, err
+	}
+	copy(srv.users[index:], srv.users[index+1:])
+	srv.users = srv.users[:len(srv.users)-1]
+	return iam.SimpleResp{RequestId: reqId}, nil
+}
+
+func (srv *Server) findUser(userName string) (int, error) {
+	var (
+		err   error
+		index = -1
+	)
 	for i, user := range srv.users {
-		if user.Name == name {
+		if user.Name == userName {
+			index = i
+			break
+		}
+	}
+	if index < 0 {
+		err = &iam.Error{
+			StatusCode: 404,
+			Code:       "NoSuchEntity",
+			Message:    fmt.Sprintf("The user with name %s cannot be found.", userName),
+		}
+	}
+	return index, err
+}
+
+func (srv *Server) createAccessKey(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"UserName"}); err != nil {
+		return nil, err
+	}
+	userName := req.FormValue("UserName")
+	if _, err := srv.findUser(userName); err != nil {
+		return nil, err
+	}
+	key := iam.AccessKey{
+		Id:       fmt.Sprintf("%s%d", userName, len(srv.accessKeys)),
+		Secret:   "secret",
+		UserName: userName,
+		Status:   "Active",
+	}
+	srv.accessKeys = append(srv.accessKeys, key)
+	return iam.CreateAccessKeyResp{RequestId: reqId, AccessKey: key}, nil
+}
+
+func (srv *Server) deleteAccessKey(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"AccessKeyId", "UserName"}); err != nil {
+		return nil, err
+	}
+	key := req.FormValue("AccessKeyId")
+	index := -1
+	for i, ak := range srv.accessKeys {
+		if ak.Id == key {
 			index = i
 			break
 		}
@@ -171,12 +215,32 @@ func (srv *Server) deleteUser(w http.ResponseWriter, req *http.Request, reqId st
 		return nil, &iam.Error{
 			StatusCode: 404,
 			Code:       "NoSuchEntity",
-			Message:    fmt.Sprintf("The user with name %s cannot be found.", name),
+			Message:    "No such key.",
 		}
 	}
-	copy(srv.users[index:], srv.users[index+1:])
-	srv.users = srv.users[:len(srv.users)-1]
+	copy(srv.accessKeys[index:], srv.accessKeys[index+1:])
+	srv.accessKeys = srv.accessKeys[:len(srv.accessKeys)-1]
 	return iam.SimpleResp{RequestId: reqId}, nil
+}
+
+func (srv *Server) listAccessKeys(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"UserName"}); err != nil {
+		return nil, err
+	}
+	userName := req.FormValue("UserName")
+	if _, err := srv.findUser(userName); err != nil {
+		return nil, err
+	}
+	var keys []iam.AccessKey
+	for _, k := range srv.accessKeys {
+		if k.UserName == userName {
+			keys = append(keys, k)
+		}
+	}
+	return iam.AccessKeysResp{
+		RequestId:  reqId,
+		AccessKeys: keys,
+	}, nil
 }
 
 // Validates the presence of required request parameters.
@@ -194,7 +258,10 @@ func (srv *Server) validate(req *http.Request, required []string) error {
 }
 
 var actions = map[string]func(*Server, http.ResponseWriter, *http.Request, string) (interface{}, error){
-	"CreateUser": (*Server).createUser,
-	"DeleteUser": (*Server).deleteUser,
-	"GetUser":    (*Server).getUser,
+	"CreateUser":      (*Server).createUser,
+	"DeleteUser":      (*Server).deleteUser,
+	"GetUser":         (*Server).getUser,
+	"CreateAccessKey": (*Server).createAccessKey,
+	"DeleteAccessKey": (*Server).deleteAccessKey,
+	"ListAccessKeys":  (*Server).listAccessKeys,
 }
