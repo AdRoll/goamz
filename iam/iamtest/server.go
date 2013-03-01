@@ -193,7 +193,7 @@ func (srv *Server) createAccessKey(w http.ResponseWriter, req *http.Request, req
 	}
 	key := iam.AccessKey{
 		Id:       fmt.Sprintf("%s%d", userName, len(srv.accessKeys)),
-		Secret:   "secret",
+		Secret:   "",
 		UserName: userName,
 		Status:   "Active",
 	}
@@ -337,6 +337,7 @@ var actions = map[string]func(*Server, http.ResponseWriter, *http.Request, strin
 	"GetUser":         (*Server).getUser,
 	"CreateAccessKey": (*Server).createAccessKey,
 	"DeleteAccessKey": (*Server).deleteAccessKey,
+	"ListAccessKeys":  (*Server).listAccessKeys,
 	"CreateGroup":     (*Server).createGroup,
 	"DeleteGroup":     (*Server).deleteGroup,
 	"ListGroups":      (*Server).listGroups,

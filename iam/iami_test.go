@@ -92,7 +92,7 @@ func (s *ClientTests) TestCreateListAndDeleteAccessKey(c *C) {
 	listKeyResp, err := s.iam.AccessKeys(createUserResp.User.Name)
 	c.Assert(err, IsNil)
 	c.Assert(listKeyResp.AccessKeys, HasLen, 1)
-	createKeyResp.AccessKey.Secret = "secret"
+	createKeyResp.AccessKey.Secret = ""
 	c.Assert(listKeyResp.AccessKeys[0], DeepEquals, createKeyResp.AccessKey)
 	_, err = s.iam.DeleteAccessKey(createKeyResp.AccessKey.Id, createUserResp.User.Name)
 	c.Assert(err, IsNil)

@@ -88,7 +88,7 @@ func (s *S) TestDeleteUser(c *C) {
 }
 
 func (s *S) TestCreateGroup(c *C) {
-	testServer.PrepareResponse(200, nil, CreateGroupExample)
+	testServer.Response(200, nil, CreateGroupExample)
 	resp, err := s.iam.CreateGroup("Admins", "/admins/")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "CreateGroup")
@@ -102,7 +102,7 @@ func (s *S) TestCreateGroup(c *C) {
 }
 
 func (s *S) TestCreateGroupWithoutPath(c *C) {
-	testServer.PrepareResponse(200, nil, CreateGroupExample)
+	testServer.Response(200, nil, CreateGroupExample)
 	_, err := s.iam.CreateGroup("Managers", "")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "CreateGroup")
@@ -112,7 +112,7 @@ func (s *S) TestCreateGroupWithoutPath(c *C) {
 }
 
 func (s *S) TestDeleteGroup(c *C) {
-	testServer.PrepareResponse(200, nil, RequestIdExample)
+	testServer.Response(200, nil, RequestIdExample)
 	resp, err := s.iam.DeleteGroup("Admins")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "DeleteGroup")
@@ -122,7 +122,7 @@ func (s *S) TestDeleteGroup(c *C) {
 }
 
 func (s *S) TestListGroups(c *C) {
-	testServer.PrepareResponse(200, nil, ListGroupsExample)
+	testServer.Response(200, nil, ListGroupsExample)
 	resp, err := s.iam.Groups("/division_abc/")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "ListGroups")
@@ -153,7 +153,7 @@ func (s *S) TestListGroups(c *C) {
 }
 
 func (s *S) TestListGroupsWithoutPathPrefix(c *C) {
-	testServer.PrepareResponse(200, nil, ListGroupsExample)
+	testServer.Response(200, nil, ListGroupsExample)
 	_, err := s.iam.Groups("")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "ListGroups")
@@ -176,7 +176,7 @@ func (s *S) TestCreateAccessKey(c *C) {
 }
 
 func (s *S) TestDeleteAccessKey(c *C) {
-	testServer.PrepareResponse(200, nil, RequestIdExample)
+	testServer.Response(200, nil, RequestIdExample)
 	resp, err := s.iam.DeleteAccessKey("ysa8hasdhasdsi", "Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "DeleteAccessKey")
@@ -187,7 +187,7 @@ func (s *S) TestDeleteAccessKey(c *C) {
 }
 
 func (s *S) TestDeleteAccessKeyBlankUserName(c *C) {
-	testServer.PrepareResponse(200, nil, RequestIdExample)
+	testServer.Response(200, nil, RequestIdExample)
 	_, err := s.iam.DeleteAccessKey("ysa8hasdhasdsi", "")
 	c.Assert(err, IsNil)
 	values := testServer.WaitRequest().URL.Query()
@@ -198,7 +198,7 @@ func (s *S) TestDeleteAccessKeyBlankUserName(c *C) {
 }
 
 func (s *S) TestAccessKeys(c *C) {
-	testServer.PrepareResponse(200, nil, ListAccessKeyExample)
+	testServer.Response(200, nil, ListAccessKeyExample)
 	resp, err := s.iam.AccessKeys("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "ListAccessKeys")
@@ -215,7 +215,7 @@ func (s *S) TestAccessKeys(c *C) {
 }
 
 func (s *S) TestAccessKeysBlankUserName(c *C) {
-	testServer.PrepareResponse(200, nil, ListAccessKeyExample)
+	testServer.Response(200, nil, ListAccessKeyExample)
 	_, err := s.iam.AccessKeys("")
 	c.Assert(err, IsNil)
 	values := testServer.WaitRequest().URL.Query()
