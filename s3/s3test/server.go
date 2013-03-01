@@ -40,6 +40,25 @@ type action struct {
 	reqId string
 }
 
+// Config controls the internal behaviour of the Server. A nil config is the default
+// and behaves as if all configurations assume their default behaviour. Once passed
+// to NewServer, the configuration must not be modified.
+type Config struct {
+	// Send409Conflict controls how the Server will respond to calls to PUT on a
+	// previously existing bucket. The default is false, and corresponds to the
+	// us-east-1 s3 enpoint. Setting this value to true emulates the behaviour of
+	// all other regions.
+	// http://docs.amazonwebservices.com/AmazonS3/latest/API/ErrorResponses.html
+	Send409Conflict bool
+}
+
+func (c *Config) send409Conflict() bool {
+	if c != nil {
+		return c.Send409Conflict
+	}
+	return false
+}
+
 // Server is a fake S3 server for testing purposes.
 // All of the data for the server is kept in memory.
 type Server struct {
@@ -48,6 +67,7 @@ type Server struct {
 	listener net.Listener
 	mu       sync.Mutex
 	buckets  map[string]*bucket
+	config   *Config
 }
 
 type bucket struct {
@@ -75,7 +95,7 @@ type resource interface {
 	delete(a *action) interface{}
 }
 
-func NewServer() (*Server, error) {
+func NewServer(config *Config) (*Server, error) {
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen on localhost: %v", err)
@@ -84,6 +104,7 @@ func NewServer() (*Server, error) {
 		listener: l,
 		url:      "http://" + l.Addr().String(),
 		buckets:  make(map[string]*bucket),
+		config:   config,
 	}
 	go http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		srv.serveHTTP(w, req)
@@ -386,6 +407,7 @@ func (r bucketResource) delete(a *action) interface{} {
 // PUT on a bucket creates the bucket.
 // http://docs.amazonwebservices.com/AmazonS3/latest/API/RESTBucketPUT.html
 func (r bucketResource) put(a *action) interface{} {
+	var created bool
 	if r.bucket == nil {
 		if !validBucketName(r.name) {
 			fatalf(400, "InvalidBucketName", "The specified bucket is not valid")
@@ -400,6 +422,10 @@ func (r bucketResource) put(a *action) interface{} {
 			objects: make(map[string]*object),
 		}
 		a.srv.buckets[r.name] = r.bucket
+		created = true
+	}
+	if !created && a.srv.config.send409Conflict() {
+		fatalf(409, "BucketAlreadyOwnedByYou", "Your previous request to create the named bucket succeeded and you already own it.")
 	}
 	r.bucket.acl = s3.ACL(a.req.Header.Get("x-amz-acl"))
 	return nil
@@ -413,15 +439,15 @@ func (bucketResource) post(a *action) interface{} {
 // validBucketName returns whether name is a valid bucket name.
 // Here are the rules, from:
 // http://docs.amazonwebservices.com/AmazonS3/2006-03-01/dev/BucketRestrictions.html
-// 
-// Can contain lowercase letters, numbers, periods (.), underscores (_), 
+//
+// Can contain lowercase letters, numbers, periods (.), underscores (_),
 // and dashes (-). You can use uppercase letters for buckets only in the
 // US Standard region.
-// 
+//
 // Must start with a number or letter
-// 
+//
 // Must be between 3 and 255 characters long
-// 
+//
 // There's one extra rule (Must not be formatted as an IP address (e.g., 192.168.5.4)
 // but the real S3 server does not seem to check that rule, so we will not
 // check it either.
@@ -558,7 +584,8 @@ func (objr objectResource) put(a *action) interface{} {
 
 	// PUT request has been successful - save data and metadata
 	for key, values := range a.req.Header {
-		if metaHeaders[key] || strings.HasPrefix(key, "x-amz-meta-") {
+		key = http.CanonicalHeaderKey(key)
+		if metaHeaders[key] || strings.HasPrefix(key, "X-Amz-Meta-") {
 			obj.meta[key] = values
 		}
 	}

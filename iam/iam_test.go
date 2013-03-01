@@ -3,24 +3,35 @@ package iam_test
 import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/iam"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"testing"
 )
 
+func Test(t *testing.T) {
+	TestingT(t)
+}
+
 type S struct {
-	HTTPSuite
 	iam *iam.IAM
 }
 
 var _ = Suite(&S{})
 
+var testServer = testutil.NewHTTPServer()
+
 func (s *S) SetUpSuite(c *C) {
-	s.HTTPSuite.SetUpSuite(c)
+	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.iam = iam.New(auth, aws.Region{IAMEndpoint: testServer.URL})
 }
 
+func (s *S) TearDownTest(c *C) {
+	testServer.Flush()
+}
+
 func (s *S) TestCreateUser(c *C) {
-	testServer.PrepareResponse(200, nil, CreateUserExample)
+	testServer.Response(200, nil, CreateUserExample)
 	resp, err := s.iam.CreateUser("Bob", "/division_abc/subdivision_xyz/")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "CreateUser")
@@ -38,7 +49,7 @@ func (s *S) TestCreateUser(c *C) {
 }
 
 func (s *S) TestCreateUserConflict(c *C) {
-	testServer.PrepareResponse(409, nil, DuplicateUserExample)
+	testServer.Response(409, nil, DuplicateUserExample)
 	resp, err := s.iam.CreateUser("Bob", "/division_abc/subdivision_xyz/")
 	testServer.WaitRequest()
 	c.Assert(resp, IsNil)
@@ -50,7 +61,7 @@ func (s *S) TestCreateUserConflict(c *C) {
 }
 
 func (s *S) TestGetUser(c *C) {
-	testServer.PrepareResponse(200, nil, GetUserExample)
+	testServer.Response(200, nil, GetUserExample)
 	resp, err := s.iam.GetUser("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "GetUser")
@@ -67,7 +78,7 @@ func (s *S) TestGetUser(c *C) {
 }
 
 func (s *S) TestDeleteUser(c *C) {
-	testServer.PrepareResponse(200, nil, RequestIdExample)
+	testServer.Response(200, nil, RequestIdExample)
 	resp, err := s.iam.DeleteUser("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "DeleteUser")
@@ -152,7 +163,7 @@ func (s *S) TestListGroupsWithoutPathPrefix(c *C) {
 }
 
 func (s *S) TestCreateAccessKey(c *C) {
-	testServer.PrepareResponse(200, nil, CreateAccessKeyExample)
+	testServer.Response(200, nil, CreateAccessKeyExample)
 	resp, err := s.iam.CreateAccessKey("Bob")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), Equals, "CreateAccessKey")
@@ -162,4 +173,53 @@ func (s *S) TestCreateAccessKey(c *C) {
 	c.Assert(resp.AccessKey.Id, Equals, "AKIAIOSFODNN7EXAMPLE")
 	c.Assert(resp.AccessKey.Secret, Equals, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
 	c.Assert(resp.AccessKey.Status, Equals, "Active")
+}
+
+func (s *S) TestDeleteAccessKey(c *C) {
+	testServer.PrepareResponse(200, nil, RequestIdExample)
+	resp, err := s.iam.DeleteAccessKey("ysa8hasdhasdsi", "Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "DeleteAccessKey")
+	c.Assert(values.Get("AccessKeyId"), Equals, "ysa8hasdhasdsi")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestDeleteAccessKeyBlankUserName(c *C) {
+	testServer.PrepareResponse(200, nil, RequestIdExample)
+	_, err := s.iam.DeleteAccessKey("ysa8hasdhasdsi", "")
+	c.Assert(err, IsNil)
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "DeleteAccessKey")
+	c.Assert(values.Get("AccessKeyId"), Equals, "ysa8hasdhasdsi")
+	_, ok := map[string][]string(values)["UserName"]
+	c.Assert(ok, Equals, false)
+}
+
+func (s *S) TestAccessKeys(c *C) {
+	testServer.PrepareResponse(200, nil, ListAccessKeyExample)
+	resp, err := s.iam.AccessKeys("Bob")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "ListAccessKeys")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.AccessKeys, HasLen, 2)
+	c.Assert(resp.AccessKeys[0].Id, Equals, "AKIAIOSFODNN7EXAMPLE")
+	c.Assert(resp.AccessKeys[0].UserName, Equals, "Bob")
+	c.Assert(resp.AccessKeys[0].Status, Equals, "Active")
+	c.Assert(resp.AccessKeys[1].Id, Equals, "AKIAI44QH8DHBEXAMPLE")
+	c.Assert(resp.AccessKeys[1].UserName, Equals, "Bob")
+	c.Assert(resp.AccessKeys[1].Status, Equals, "Inactive")
+}
+
+func (s *S) TestAccessKeysBlankUserName(c *C) {
+	testServer.PrepareResponse(200, nil, ListAccessKeyExample)
+	_, err := s.iam.AccessKeys("")
+	c.Assert(err, IsNil)
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "ListAccessKeys")
+	_, ok := map[string][]string(values)["UserName"]
+	c.Assert(ok, Equals, false)
 }

@@ -1,13 +1,11 @@
 package iam_test
 
 import (
-	"flag"
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/iam"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 )
-
-var amazon = flag.Bool("amazon", false, "Enable tests against amazon server")
 
 // AmazonServer represents an Amazon AWS server.
 type AmazonServer struct {
@@ -31,7 +29,7 @@ type AmazonClientSuite struct {
 }
 
 func (s *AmazonClientSuite) SetUpSuite(c *C) {
-	if !*amazon {
+	if !testutil.Amazon {
 		c.Skip("AmazonClientSuite tests not enabled")
 	}
 	s.srv.SetUp(c)
@@ -83,6 +81,50 @@ func (s *ClientTests) TestGetUserError(c *C) {
 	c.Assert(iamErr.StatusCode, Equals, 404)
 	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
 	c.Assert(iamErr.Message, Equals, "The user with name gopher cannot be found.")
+}
+
+func (s *ClientTests) TestCreateListAndDeleteAccessKey(c *C) {
+	createUserResp, err := s.iam.CreateUser("gopher", "/gopher/")
+	c.Assert(err, IsNil)
+	defer s.iam.DeleteUser(createUserResp.User.Name)
+	createKeyResp, err := s.iam.CreateAccessKey(createUserResp.User.Name)
+	c.Assert(err, IsNil)
+	listKeyResp, err := s.iam.AccessKeys(createUserResp.User.Name)
+	c.Assert(err, IsNil)
+	c.Assert(listKeyResp.AccessKeys, HasLen, 1)
+	createKeyResp.AccessKey.Secret = "secret"
+	c.Assert(listKeyResp.AccessKeys[0], DeepEquals, createKeyResp.AccessKey)
+	_, err = s.iam.DeleteAccessKey(createKeyResp.AccessKey.Id, createUserResp.User.Name)
+	c.Assert(err, IsNil)
+}
+
+func (s *ClientTests) TestCreateAccessKeyError(c *C) {
+	_, err := s.iam.CreateAccessKey("unknowngopher")
+	c.Assert(err, NotNil)
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 404)
+	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
+	c.Assert(iamErr.Message, Equals, "The user with name unknowngopher cannot be found.")
+}
+
+func (s *ClientTests) TestListAccessKeysUserNotFound(c *C) {
+	_, err := s.iam.AccessKeys("unknowngopher")
+	c.Assert(err, NotNil)
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 404)
+	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
+	c.Assert(iamErr.Message, Equals, "The user with name unknowngopher cannot be found.")
+}
+
+func (s *ClientTests) TestListAccessKeysUserWithoutKeys(c *C) {
+	createUserResp, err := s.iam.CreateUser("gopher", "/")
+	c.Assert(err, IsNil)
+	defer s.iam.DeleteUser(createUserResp.User.Name)
+	resp, err := s.iam.AccessKeys(createUserResp.User.Name)
+	c.Assert(err, IsNil)
+	c.Assert(resp.AccessKeys, HasLen, 0)
 }
 
 func (s *ClientTests) TestCreateListAndDeleteGroup(c *C) {
