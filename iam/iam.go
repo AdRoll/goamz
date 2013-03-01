@@ -159,8 +159,9 @@ type Group struct {
 // CreateGroup creates a new group in IAM.
 //
 // The path parameter can be used to identify which division or part of the
-// organization the user belongs to. It's optional, set it to "" and it will
-// not be sent to the server.
+// organization the user belongs to.
+//
+// If path is unset ("") it defaults to "/".
 //
 // See http://goo.gl/n7NNQ for more details.
 func (iam *IAM) CreateGroup(name string, path string) (*CreateGroupResp, error) {
