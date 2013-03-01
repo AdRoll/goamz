@@ -9,6 +9,7 @@ import (
 	"launchpad.net/goamz/iam"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -25,6 +26,7 @@ type Server struct {
 	url        string
 	listener   net.Listener
 	users      []iam.User
+	groups     []iam.Group
 	accessKeys []iam.AccessKey
 	mutex      sync.Mutex
 }
@@ -98,7 +100,7 @@ func (srv *Server) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		srv.error(w, &iam.Error{
 			StatusCode: 400,
 			Code:       "InvalidAction",
-			Message:    "Invalid action",
+			Message:    "Invalid action: " + action,
 		})
 	}
 }
@@ -191,7 +193,7 @@ func (srv *Server) createAccessKey(w http.ResponseWriter, req *http.Request, req
 	}
 	key := iam.AccessKey{
 		Id:       fmt.Sprintf("%s%d", userName, len(srv.accessKeys)),
-		Secret:   "secret",
+		Secret:   "",
 		UserName: userName,
 		Status:   "Active",
 	}
@@ -243,6 +245,78 @@ func (srv *Server) listAccessKeys(w http.ResponseWriter, req *http.Request, reqI
 	}, nil
 }
 
+func (srv *Server) createGroup(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"GroupName"}); err != nil {
+		return nil, err
+	}
+	name := req.FormValue("GroupName")
+	path := req.FormValue("Path")
+	for _, group := range srv.groups {
+		if group.Name == name {
+			return nil, &iam.Error{
+				StatusCode: 409,
+				Code:       "EntityAlreadyExists",
+				Message:    fmt.Sprintf("Group with name %s already exists.", name),
+			}
+		}
+	}
+	group := iam.Group{
+		Id:   "GROUP " + reqId + "EXAMPLE",
+		Arn:  fmt.Sprintf("arn:aws:iam:::123456789012:group%s%s", path, name),
+		Name: name,
+		Path: path,
+	}
+	srv.groups = append(srv.groups, group)
+	return iam.CreateGroupResp{
+		RequestId: reqId,
+		Group:     group,
+	}, nil
+}
+
+func (srv *Server) listGroups(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	pathPrefix := req.FormValue("PathPrefix")
+	if pathPrefix == "" {
+		return iam.GroupsResp{
+			RequestId: reqId,
+			Groups:    srv.groups,
+		}, nil
+	}
+	var groups []iam.Group
+	for _, group := range srv.groups {
+		if strings.HasPrefix(group.Path, pathPrefix) {
+			groups = append(groups, group)
+		}
+	}
+	return iam.GroupsResp{
+		RequestId: reqId,
+		Groups:    groups,
+	}, nil
+}
+
+func (srv *Server) deleteGroup(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"GroupName"}); err != nil {
+		return nil, err
+	}
+	name := req.FormValue("GroupName")
+	index := -1
+	for i, group := range srv.groups {
+		if group.Name == name {
+			index = i
+			break
+		}
+	}
+	if index == -1 {
+		return nil, &iam.Error{
+			StatusCode: 404,
+			Code:       "NoSuchEntity",
+			Message:    fmt.Sprintf("The group with name %s cannot be found.", name),
+		}
+	}
+	copy(srv.groups[index:], srv.groups[index+1:])
+	srv.groups = srv.groups[:len(srv.groups)-1]
+	return iam.SimpleResp{RequestId: reqId}, nil
+}
+
 // Validates the presence of required request parameters.
 func (srv *Server) validate(req *http.Request, required []string) error {
 	for _, r := range required {
@@ -264,4 +338,7 @@ var actions = map[string]func(*Server, http.ResponseWriter, *http.Request, strin
 	"CreateAccessKey": (*Server).createAccessKey,
 	"DeleteAccessKey": (*Server).deleteAccessKey,
 	"ListAccessKeys":  (*Server).listAccessKeys,
+	"CreateGroup":     (*Server).createGroup,
+	"DeleteGroup":     (*Server).deleteGroup,
+	"ListGroups":      (*Server).listGroups,
 }

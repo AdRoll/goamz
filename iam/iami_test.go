@@ -92,7 +92,7 @@ func (s *ClientTests) TestCreateListAndDeleteAccessKey(c *C) {
 	listKeyResp, err := s.iam.AccessKeys(createUserResp.User.Name)
 	c.Assert(err, IsNil)
 	c.Assert(listKeyResp.AccessKeys, HasLen, 1)
-	createKeyResp.AccessKey.Secret = "secret"
+	createKeyResp.AccessKey.Secret = ""
 	c.Assert(listKeyResp.AccessKeys[0], DeepEquals, createKeyResp.AccessKey)
 	_, err = s.iam.DeleteAccessKey(createKeyResp.AccessKey.Id, createUserResp.User.Name)
 	c.Assert(err, IsNil)
@@ -125,4 +125,51 @@ func (s *ClientTests) TestListAccessKeysUserWithoutKeys(c *C) {
 	resp, err := s.iam.AccessKeys(createUserResp.User.Name)
 	c.Assert(err, IsNil)
 	c.Assert(resp.AccessKeys, HasLen, 0)
+}
+
+func (s *ClientTests) TestCreateListAndDeleteGroup(c *C) {
+	cResp1, err := s.iam.CreateGroup("Finances", "/finances/")
+	c.Assert(err, IsNil)
+	cResp2, err := s.iam.CreateGroup("DevelopmentManagers", "/development/managers/")
+	c.Assert(err, IsNil)
+	lResp, err := s.iam.Groups("/development/")
+	c.Assert(err, IsNil)
+	c.Assert(lResp.Groups, HasLen, 1)
+	c.Assert(cResp2.Group, DeepEquals, lResp.Groups[0])
+	lResp, err = s.iam.Groups("")
+	c.Assert(err, IsNil)
+	c.Assert(lResp.Groups, HasLen, 2)
+	if lResp.Groups[0].Name == cResp1.Group.Name {
+		c.Assert([]iam.Group{cResp1.Group, cResp2.Group}, DeepEquals, lResp.Groups)
+	} else {
+		c.Assert([]iam.Group{cResp2.Group, cResp1.Group}, DeepEquals, lResp.Groups)
+	}
+	_, err = s.iam.DeleteGroup("DevelopmentManagers")
+	c.Assert(err, IsNil)
+	lResp, err = s.iam.Groups("/development/")
+	c.Assert(err, IsNil)
+	c.Assert(lResp.Groups, HasLen, 0)
+	_, err = s.iam.DeleteGroup("Finances")
+	c.Assert(err, IsNil)
+}
+
+func (s *ClientTests) TestCreateGroupError(c *C) {
+	_, err := s.iam.CreateGroup("Finances", "/finances/")
+	c.Assert(err, IsNil)
+	defer s.iam.DeleteGroup("Finances")
+	_, err = s.iam.CreateGroup("Finances", "/something-else/")
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 409)
+	c.Assert(iamErr.Code, Equals, "EntityAlreadyExists")
+	c.Assert(iamErr.Message, Equals, "Group with name Finances already exists.")
+}
+
+func (s *ClientTests) TestDeleteGroupError(c *C) {
+	_, err := s.iam.DeleteGroup("Finances")
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 404)
+	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
+	c.Assert(iamErr.Message, Equals, "The group with name Finances cannot be found.")
 }
