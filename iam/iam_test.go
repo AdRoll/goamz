@@ -106,19 +106,18 @@ func (s *S) TestGetUserPolicy(c *C) {
 
 func (s *S) TestPutUserPolicy(c *C) {
 	document := `{
-  "Statement": [
-    {
-      "Action": [
-        "s3:*"
-      ],
-      "Effect": "Allow",
-      "Resource": [
-        "arn:aws:s3:::8shsns19s90ajahadsj/*",
-        "arn:aws:s3:::8shsns19s90ajahadsj"
-      ]
-    }
-  ]
-}`
+		"Statement": [
+		{
+			"Action": [
+				"s3:*"
+			],
+			"Effect": "Allow",
+			"Resource": [
+				"arn:aws:s3:::8shsns19s90ajahadsj/*",
+				"arn:aws:s3:::8shsns19s90ajahadsj"
+			]
+		}]
+	}`
 	testServer.PrepareResponse(200, nil, RequestIdExample)
 	resp, err := s.iam.PutUserPolicy("Bob", "AllAccessPolicy", document)
 	req := testServer.WaitRequest()

@@ -91,19 +91,18 @@ func (s *ClientTests) TestPutGetAndDeleteUserPolicy(c *C) {
 	c.Assert(err, IsNil)
 	defer s.iam.DeleteUser(userResp.User.Name)
 	document := `{
-  "Statement": [
-    {
-      "Action": [
-        "s3:*"
-      ],
-      "Effect": "Allow",
-      "Resource": [
-        "arn:aws:s3:::8shsns19s90ajahadsj/*",
-        "arn:aws:s3:::8shsns19s90ajahadsj"
-      ]
-    }
-  ]
-}`
+		"Statement": [
+		{
+			"Action": [
+				"s3:*"
+			],
+			"Effect": "Allow",
+			"Resource": [
+				"arn:aws:s3:::8shsns19s90ajahadsj/*",
+				"arn:aws:s3:::8shsns19s90ajahadsj"
+			]
+		}]
+	}`
 	_, err = s.iam.PutUserPolicy(userResp.User.Name, "EverythingS3", document)
 	c.Assert(err, IsNil)
 	resp, err := s.iam.GetUserPolicy(userResp.User.Name, "EverythingS3")
