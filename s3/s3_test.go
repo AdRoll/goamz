@@ -4,29 +4,57 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"testing"
 
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/s3"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"time"
 )
 
-var _ = Suite(&S{})
+func Test(t *testing.T) {
+	TestingT(t)
+}
 
 type S struct {
-	HTTPSuite
 	s3 *s3.S3
 }
 
+var _ = Suite(&S{})
+
+var testServer = testutil.NewHTTPServer()
+
 func (s *S) SetUpSuite(c *C) {
-	s.HTTPSuite.SetUpSuite(c)
+	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.s3 = s3.New(auth, aws.Region{Name: "faux-region-1", S3Endpoint: testServer.URL})
+}
+
+func (s *S) TearDownSuite(c *C) {
+	s3.SetAttemptStrategy(nil)
+}
+
+func (s *S) SetUpTest(c *C) {
+	attempts := aws.AttemptStrategy{
+		Total: 300 * time.Millisecond,
+		Delay: 100 * time.Millisecond,
+	}
+	s3.SetAttemptStrategy(&attempts)
+}
+
+func (s *S) TearDownTest(c *C) {
+	testServer.Flush()
+}
+
+func (s *S) DisableRetries() {
+	s3.SetAttemptStrategy(&aws.AttemptStrategy{})
 }
 
 // PutBucket docs: http://goo.gl/kBTCu
 
 func (s *S) TestPutBucket(c *C) {
-	testServer.PrepareResponse(200, nil, "")
+	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
 	err := b.PutBucket(s3.Private)
@@ -41,7 +69,7 @@ func (s *S) TestPutBucket(c *C) {
 // DeleteBucket docs: http://goo.gl/GoBrY
 
 func (s *S) TestDelBucket(c *C) {
-	testServer.PrepareResponse(204, nil, "")
+	testServer.Response(204, nil, "")
 
 	b := s.s3.Bucket("bucket")
 	err := b.DelBucket()
@@ -56,7 +84,7 @@ func (s *S) TestDelBucket(c *C) {
 // GetObject docs: http://goo.gl/isCO7
 
 func (s *S) TestGet(c *C) {
-	testServer.PrepareResponse(200, nil, "content")
+	testServer.Response(200, nil, "content")
 
 	b := s.s3.Bucket("bucket")
 	data, err := b.Get("name")
@@ -71,7 +99,7 @@ func (s *S) TestGet(c *C) {
 }
 
 func (s *S) TestURL(c *C) {
-	testServer.PrepareResponse(200, nil, "content")
+	testServer.Response(200, nil, "content")
 
 	b := s.s3.Bucket("bucket")
 	url := b.URL("name")
@@ -88,7 +116,7 @@ func (s *S) TestURL(c *C) {
 }
 
 func (s *S) TestGetReader(c *C) {
-	testServer.PrepareResponse(200, nil, "content")
+	testServer.Response(200, nil, "content")
 
 	b := s.s3.Bucket("bucket")
 	rc, err := b.GetReader("name")
@@ -105,7 +133,9 @@ func (s *S) TestGetReader(c *C) {
 }
 
 func (s *S) TestGetNotFound(c *C) {
-	testServer.PrepareResponse(404, nil, GetObjectErrorDump)
+	for i := 0; i < 10; i++ {
+		testServer.Response(404, nil, GetObjectErrorDump)
+	}
 
 	b := s.s3.Bucket("non-existent-bucket")
 	data, err := b.Get("non-existent")
@@ -130,7 +160,7 @@ func (s *S) TestGetNotFound(c *C) {
 // PutObject docs: http://goo.gl/FEBPD
 
 func (s *S) TestPutObject(c *C) {
-	testServer.PrepareResponse(200, nil, "")
+	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
 	err := b.Put("name", []byte("content"), "content-type", s3.Private)
@@ -147,7 +177,7 @@ func (s *S) TestPutObject(c *C) {
 }
 
 func (s *S) TestPutReader(c *C) {
-	testServer.PrepareResponse(200, nil, "")
+	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
 	buf := bytes.NewBufferString("content")
@@ -167,7 +197,7 @@ func (s *S) TestPutReader(c *C) {
 // DelObject docs: http://goo.gl/APeTt
 
 func (s *S) TestDelObject(c *C) {
-	testServer.PrepareResponse(200, nil, "")
+	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
 	err := b.Del("name")
@@ -182,7 +212,7 @@ func (s *S) TestDelObject(c *C) {
 // Bucket List Objects docs: http://goo.gl/YjQTc
 
 func (s *S) TestList(c *C) {
-	testServer.PrepareResponse(200, nil, GetListResultDump1)
+	testServer.Response(200, nil, GetListResultDump1)
 
 	b := s.s3.Bucket("quotes")
 
@@ -221,7 +251,7 @@ func (s *S) TestList(c *C) {
 }
 
 func (s *S) TestListWithDelimiter(c *C) {
-	testServer.PrepareResponse(200, nil, GetListResultDump2)
+	testServer.Response(200, nil, GetListResultDump2)
 
 	b := s.s3.Bucket("quotes")
 

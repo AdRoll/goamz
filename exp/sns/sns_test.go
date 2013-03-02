@@ -3,20 +3,31 @@ package sns_test
 import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/exp/sns"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"testing"
 )
+
+func Test(t *testing.T) {
+	TestingT(t)
+}
 
 var _ = Suite(&S{})
 
 type S struct {
-	HTTPSuite
 	sns *sns.SNS
 }
 
+var testServer = testutil.NewHTTPServer()
+
 func (s *S) SetUpSuite(c *C) {
-	s.HTTPSuite.SetUpSuite(c)
+	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.sns = sns.New(auth, aws.Region{SNSEndpoint: testServer.URL})
+}
+
+func (s *S) TearDownTest(c *C) {
+	testServer.Flush()
 }
 
 func (s *S) TestListTopicsOK(c *C) {

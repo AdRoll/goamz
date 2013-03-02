@@ -1,14 +1,12 @@
 package iam_test
 
 import (
-	"flag"
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/iam"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"net/url"
 )
-
-var amazon = flag.Bool("amazon", false, "Enable tests against amazon server")
 
 // AmazonServer represents an Amazon AWS server.
 type AmazonServer struct {
@@ -32,7 +30,7 @@ type AmazonClientSuite struct {
 }
 
 func (s *AmazonClientSuite) SetUpSuite(c *C) {
-	if !*amazon {
+	if !testutil.Amazon {
 		c.Skip("AmazonClientSuite tests not enabled")
 	}
 	s.srv.SetUp(c)
@@ -84,6 +82,97 @@ func (s *ClientTests) TestGetUserError(c *C) {
 	c.Assert(iamErr.StatusCode, Equals, 404)
 	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
 	c.Assert(iamErr.Message, Equals, "The user with name gopher cannot be found.")
+}
+
+func (s *ClientTests) TestCreateListAndDeleteAccessKey(c *C) {
+	createUserResp, err := s.iam.CreateUser("gopher", "/gopher/")
+	c.Assert(err, IsNil)
+	defer s.iam.DeleteUser(createUserResp.User.Name)
+	createKeyResp, err := s.iam.CreateAccessKey(createUserResp.User.Name)
+	c.Assert(err, IsNil)
+	listKeyResp, err := s.iam.AccessKeys(createUserResp.User.Name)
+	c.Assert(err, IsNil)
+	c.Assert(listKeyResp.AccessKeys, HasLen, 1)
+	createKeyResp.AccessKey.Secret = ""
+	c.Assert(listKeyResp.AccessKeys[0], DeepEquals, createKeyResp.AccessKey)
+	_, err = s.iam.DeleteAccessKey(createKeyResp.AccessKey.Id, createUserResp.User.Name)
+	c.Assert(err, IsNil)
+}
+
+func (s *ClientTests) TestCreateAccessKeyError(c *C) {
+	_, err := s.iam.CreateAccessKey("unknowngopher")
+	c.Assert(err, NotNil)
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 404)
+	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
+	c.Assert(iamErr.Message, Equals, "The user with name unknowngopher cannot be found.")
+}
+
+func (s *ClientTests) TestListAccessKeysUserNotFound(c *C) {
+	_, err := s.iam.AccessKeys("unknowngopher")
+	c.Assert(err, NotNil)
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 404)
+	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
+	c.Assert(iamErr.Message, Equals, "The user with name unknowngopher cannot be found.")
+}
+
+func (s *ClientTests) TestListAccessKeysUserWithoutKeys(c *C) {
+	createUserResp, err := s.iam.CreateUser("gopher", "/")
+	c.Assert(err, IsNil)
+	defer s.iam.DeleteUser(createUserResp.User.Name)
+	resp, err := s.iam.AccessKeys(createUserResp.User.Name)
+	c.Assert(err, IsNil)
+	c.Assert(resp.AccessKeys, HasLen, 0)
+}
+
+func (s *ClientTests) TestCreateListAndDeleteGroup(c *C) {
+	cResp1, err := s.iam.CreateGroup("Finances", "/finances/")
+	c.Assert(err, IsNil)
+	cResp2, err := s.iam.CreateGroup("DevelopmentManagers", "/development/managers/")
+	c.Assert(err, IsNil)
+	lResp, err := s.iam.Groups("/development/")
+	c.Assert(err, IsNil)
+	c.Assert(lResp.Groups, HasLen, 1)
+	c.Assert(cResp2.Group, DeepEquals, lResp.Groups[0])
+	lResp, err = s.iam.Groups("")
+	c.Assert(err, IsNil)
+	c.Assert(lResp.Groups, HasLen, 2)
+	if lResp.Groups[0].Name == cResp1.Group.Name {
+		c.Assert([]iam.Group{cResp1.Group, cResp2.Group}, DeepEquals, lResp.Groups)
+	} else {
+		c.Assert([]iam.Group{cResp2.Group, cResp1.Group}, DeepEquals, lResp.Groups)
+	}
+	_, err = s.iam.DeleteGroup("DevelopmentManagers")
+	c.Assert(err, IsNil)
+	lResp, err = s.iam.Groups("/development/")
+	c.Assert(err, IsNil)
+	c.Assert(lResp.Groups, HasLen, 0)
+	_, err = s.iam.DeleteGroup("Finances")
+	c.Assert(err, IsNil)
+}
+
+func (s *ClientTests) TestCreateGroupError(c *C) {
+	_, err := s.iam.CreateGroup("Finances", "/finances/")
+	c.Assert(err, IsNil)
+	defer s.iam.DeleteGroup("Finances")
+	_, err = s.iam.CreateGroup("Finances", "/something-else/")
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 409)
+	c.Assert(iamErr.Code, Equals, "EntityAlreadyExists")
+	c.Assert(iamErr.Message, Equals, "Group with name Finances already exists.")
+}
+
+func (s *ClientTests) TestDeleteGroupError(c *C) {
+	_, err := s.iam.DeleteGroup("Finances")
+	iamErr, ok := err.(*iam.Error)
+	c.Assert(ok, Equals, true)
+	c.Assert(iamErr.StatusCode, Equals, 404)
+	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
+	c.Assert(iamErr.Message, Equals, "The group with name Finances cannot be found.")
 }
 
 func (s *ClientTests) TestPutGetAndDeleteUserPolicy(c *C) {

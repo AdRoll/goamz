@@ -10,6 +10,7 @@ import (
 	"launchpad.net/goamz/iam"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -26,6 +27,8 @@ type Server struct {
 	url          string
 	listener     net.Listener
 	users        []iam.User
+	groups       []iam.Group
+	accessKeys   []iam.AccessKey
 	userPolicies []iam.UserPolicy
 	mutex        sync.Mutex
 }
@@ -99,7 +102,7 @@ func (srv *Server) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		srv.error(w, &iam.Error{
 			StatusCode: 400,
 			Code:       "InvalidAction",
-			Message:    "Invalid action",
+			Message:    "Invalid action: " + action,
 		})
 	}
 }
@@ -140,19 +143,9 @@ func (srv *Server) getUser(w http.ResponseWriter, req *http.Request, reqId strin
 		return nil, err
 	}
 	name := req.FormValue("UserName")
-	index := -1
-	for i, user := range srv.users {
-		if user.Name == name {
-			index = i
-			break
-		}
-	}
-	if index < 0 {
-		return nil, &iam.Error{
-			StatusCode: 404,
-			Code:       "NoSuchEntity",
-			Message:    fmt.Sprintf("The user with name %s cannot be found.", name),
-		}
+	index, err := srv.findUser(name)
+	if err != nil {
+		return nil, err
 	}
 	return iam.GetUserResp{RequestId: reqId, User: srv.users[index]}, nil
 }
@@ -162,9 +155,41 @@ func (srv *Server) deleteUser(w http.ResponseWriter, req *http.Request, reqId st
 		return nil, err
 	}
 	name := req.FormValue("UserName")
+	index, err := srv.findUser(name)
+	if err != nil {
+		return nil, err
+	}
+	copy(srv.users[index:], srv.users[index+1:])
+	srv.users = srv.users[:len(srv.users)-1]
+	return iam.SimpleResp{RequestId: reqId}, nil
+}
+
+func (srv *Server) createAccessKey(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"UserName"}); err != nil {
+		return nil, err
+	}
+	userName := req.FormValue("UserName")
+	if _, err := srv.findUser(userName); err != nil {
+		return nil, err
+	}
+	key := iam.AccessKey{
+		Id:       fmt.Sprintf("%s%d", userName, len(srv.accessKeys)),
+		Secret:   "",
+		UserName: userName,
+		Status:   "Active",
+	}
+	srv.accessKeys = append(srv.accessKeys, key)
+	return iam.CreateAccessKeyResp{RequestId: reqId, AccessKey: key}, nil
+}
+
+func (srv *Server) deleteAccessKey(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"AccessKeyId", "UserName"}); err != nil {
+		return nil, err
+	}
+	key := req.FormValue("AccessKeyId")
 	index := -1
-	for i, user := range srv.users {
-		if user.Name == name {
+	for i, ak := range srv.accessKeys {
+		if ak.Id == key {
 			index = i
 			break
 		}
@@ -173,11 +198,103 @@ func (srv *Server) deleteUser(w http.ResponseWriter, req *http.Request, reqId st
 		return nil, &iam.Error{
 			StatusCode: 404,
 			Code:       "NoSuchEntity",
-			Message:    fmt.Sprintf("The user with name %s cannot be found.", name),
+			Message:    "No such key.",
 		}
 	}
-	copy(srv.users[index:], srv.users[index+1:])
-	srv.users = srv.users[:len(srv.users)-1]
+	copy(srv.accessKeys[index:], srv.accessKeys[index+1:])
+	srv.accessKeys = srv.accessKeys[:len(srv.accessKeys)-1]
+	return iam.SimpleResp{RequestId: reqId}, nil
+}
+
+func (srv *Server) listAccessKeys(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"UserName"}); err != nil {
+		return nil, err
+	}
+	userName := req.FormValue("UserName")
+	if _, err := srv.findUser(userName); err != nil {
+		return nil, err
+	}
+	var keys []iam.AccessKey
+	for _, k := range srv.accessKeys {
+		if k.UserName == userName {
+			keys = append(keys, k)
+		}
+	}
+	return iam.AccessKeysResp{
+		RequestId:  reqId,
+		AccessKeys: keys,
+	}, nil
+}
+
+func (srv *Server) createGroup(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"GroupName"}); err != nil {
+		return nil, err
+	}
+	name := req.FormValue("GroupName")
+	path := req.FormValue("Path")
+	for _, group := range srv.groups {
+		if group.Name == name {
+			return nil, &iam.Error{
+				StatusCode: 409,
+				Code:       "EntityAlreadyExists",
+				Message:    fmt.Sprintf("Group with name %s already exists.", name),
+			}
+		}
+	}
+	group := iam.Group{
+		Id:   "GROUP " + reqId + "EXAMPLE",
+		Arn:  fmt.Sprintf("arn:aws:iam:::123456789012:group%s%s", path, name),
+		Name: name,
+		Path: path,
+	}
+	srv.groups = append(srv.groups, group)
+	return iam.CreateGroupResp{
+		RequestId: reqId,
+		Group:     group,
+	}, nil
+}
+
+func (srv *Server) listGroups(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	pathPrefix := req.FormValue("PathPrefix")
+	if pathPrefix == "" {
+		return iam.GroupsResp{
+			RequestId: reqId,
+			Groups:    srv.groups,
+		}, nil
+	}
+	var groups []iam.Group
+	for _, group := range srv.groups {
+		if strings.HasPrefix(group.Path, pathPrefix) {
+			groups = append(groups, group)
+		}
+	}
+	return iam.GroupsResp{
+		RequestId: reqId,
+		Groups:    groups,
+	}, nil
+}
+
+func (srv *Server) deleteGroup(w http.ResponseWriter, req *http.Request, reqId string) (interface{}, error) {
+	if err := srv.validate(req, []string{"GroupName"}); err != nil {
+		return nil, err
+	}
+	name := req.FormValue("GroupName")
+	index := -1
+	for i, group := range srv.groups {
+		if group.Name == name {
+			index = i
+			break
+		}
+	}
+	if index == -1 {
+		return nil, &iam.Error{
+			StatusCode: 404,
+			Code:       "NoSuchEntity",
+			Message:    fmt.Sprintf("The group with name %s cannot be found.", name),
+		}
+	}
+	copy(srv.groups[index:], srv.groups[index+1:])
+	srv.groups = srv.groups[:len(srv.groups)-1]
 	return iam.SimpleResp{RequestId: reqId}, nil
 }
 
@@ -264,6 +381,27 @@ func (srv *Server) getUserPolicy(w http.ResponseWriter, req *http.Request, reqId
 	}, nil
 }
 
+func (srv *Server) findUser(userName string) (int, error) {
+	var (
+		err   error
+		index = -1
+	)
+	for i, user := range srv.users {
+		if user.Name == userName {
+			index = i
+			break
+		}
+	}
+	if index < 0 {
+		err = &iam.Error{
+			StatusCode: 404,
+			Code:       "NoSuchEntity",
+			Message:    fmt.Sprintf("The user with name %s cannot be found.", userName),
+		}
+	}
+	return index, err
+}
+
 // Validates the presence of required request parameters.
 func (srv *Server) validate(req *http.Request, required []string) error {
 	for _, r := range required {
@@ -282,7 +420,13 @@ var actions = map[string]func(*Server, http.ResponseWriter, *http.Request, strin
 	"CreateUser":       (*Server).createUser,
 	"DeleteUser":       (*Server).deleteUser,
 	"GetUser":          (*Server).getUser,
+	"CreateAccessKey":  (*Server).createAccessKey,
+	"DeleteAccessKey":  (*Server).deleteAccessKey,
+	"ListAccessKeys":   (*Server).listAccessKeys,
 	"PutUserPolicy":    (*Server).putUserPolicy,
 	"DeleteUserPolicy": (*Server).deleteUserPolicy,
 	"GetUserPolicy":    (*Server).getUserPolicy,
+	"CreateGroup":      (*Server).createGroup,
+	"DeleteGroup":      (*Server).deleteGroup,
+	"ListGroups":       (*Server).listGroups,
 }

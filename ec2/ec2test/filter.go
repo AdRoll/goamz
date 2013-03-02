@@ -13,13 +13,13 @@ import (
 type filter map[string][]string
 
 // newFilter creates a new filter from the Filter fields in the url form.
-// 
+//
 // The filtering is specified through a map of name=>values, where the
 // name is a well-defined key identifying the data to be matched,
 // and the list of values holds the possible values the filtered
 // item can take for the key to be included in the
 // result set. For example:
-// 
+//
 //   Filter.1.Name=instance-type
 //   Filter.1.Value.1=m1.small
 //   Filter.1.Value.2=m1.large

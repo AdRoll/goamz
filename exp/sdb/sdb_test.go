@@ -3,24 +3,35 @@ package sdb_test
 import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/exp/sdb"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"testing"
 )
+
+func Test(t *testing.T) {
+	TestingT(t)
+}
 
 var _ = Suite(&S{})
 
 type S struct {
-	HTTPSuite
 	sdb *sdb.SDB
 }
 
+var testServer = testutil.NewHTTPServer()
+
 func (s *S) SetUpSuite(c *C) {
-	s.HTTPSuite.SetUpSuite(c)
+	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.sdb = sdb.New(auth, aws.Region{SDBEndpoint: testServer.URL})
 }
 
+func (s *S) TearDownTest(c *C) {
+	testServer.Flush()
+}
+
 func (s *S) TestCreateDomainOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestCreateDomainXmlOK)
+	testServer.Response(200, nil, TestCreateDomainXmlOK)
 
 	domain := s.sdb.Domain("domain")
 	resp, err := domain.CreateDomain()
@@ -37,7 +48,7 @@ func (s *S) TestCreateDomainOK(c *C) {
 }
 
 func (s *S) TestListDomainsOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestListDomainsXmlOK)
+	testServer.Response(200, nil, TestListDomainsXmlOK)
 
 	resp, err := s.sdb.ListDomains()
 	req := testServer.WaitRequest()
@@ -54,7 +65,7 @@ func (s *S) TestListDomainsOK(c *C) {
 }
 
 func (s *S) TestListDomainsWithNextTokenXmlOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestListDomainsWithNextTokenXmlOK)
+	testServer.Response(200, nil, TestListDomainsWithNextTokenXmlOK)
 
 	resp, err := s.sdb.ListDomains()
 	req := testServer.WaitRequest()
@@ -72,7 +83,7 @@ func (s *S) TestListDomainsWithNextTokenXmlOK(c *C) {
 }
 
 func (s *S) TestDeleteDomainOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestDeleteDomainXmlOK)
+	testServer.Response(200, nil, TestDeleteDomainXmlOK)
 
 	domain := s.sdb.Domain("domain")
 	resp, err := domain.DeleteDomain()
@@ -89,7 +100,7 @@ func (s *S) TestDeleteDomainOK(c *C) {
 }
 
 func (s *S) TestPutAttrsOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestPutAttrsXmlOK)
+	testServer.Response(200, nil, TestPutAttrsXmlOK)
 
 	domain := s.sdb.Domain("MyDomain")
 	item := domain.Item("Item123")
@@ -128,7 +139,7 @@ func (s *S) TestPutAttrsOK(c *C) {
 }
 
 func (s *S) TestAttrsOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestAttrsXmlOK)
+	testServer.Response(200, nil, TestAttrsXmlOK)
 
 	domain := s.sdb.Domain("MyDomain")
 	item := domain.Item("Item123")
@@ -155,7 +166,7 @@ func (s *S) TestAttrsOK(c *C) {
 }
 
 func (s *S) TestAttrsSelectOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestAttrsXmlOK)
+	testServer.Response(200, nil, TestAttrsXmlOK)
 
 	domain := s.sdb.Domain("MyDomain")
 	item := domain.Item("Item123")
@@ -184,7 +195,7 @@ func (s *S) TestAttrsSelectOK(c *C) {
 }
 
 func (s *S) TestSelectOK(c *C) {
-	testServer.PrepareResponse(200, nil, TestSelectXmlOK)
+	testServer.Response(200, nil, TestSelectXmlOK)
 
 	resp, err := s.sdb.Select("select Color from MyDomain where Color like 'Blue%'", true)
 	req := testServer.WaitRequest()

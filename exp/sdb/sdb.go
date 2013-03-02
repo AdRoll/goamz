@@ -18,7 +18,7 @@ package sdb
 
 // BUG: SelectResp isn't properly organized. It must change.
 
-// 
+//
 
 import (
 	"encoding/xml"
@@ -129,7 +129,7 @@ type SelectResp struct {
 
 // Select returns a set of items and attributes that match expr.
 // Select is similar to the standard SQL SELECT statement.
-// 
+//
 // See http://goo.gl/GTsSZ for more details.
 func (sdb *SDB) Select(expr string, consistent bool) (resp *SelectResp, err error) {
 	resp = &SelectResp{}
@@ -206,7 +206,7 @@ func (pa *PutAttrs) IfMissing(name string) {
 	pa.missing[name] = true
 }
 
-// PutAttrs adds attrs to item.	
+// PutAttrs adds attrs to item.
 //
 // See http://goo.gl/yTAV4 for more details.
 func (item *Item) PutAttrs(attrs *PutAttrs) (resp *SimpleResp, err error) {

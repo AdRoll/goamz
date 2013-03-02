@@ -3,24 +3,35 @@ package ec2_test
 import (
 	"launchpad.net/goamz/aws"
 	"launchpad.net/goamz/ec2"
+	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"testing"
 )
+
+func Test(t *testing.T) {
+	TestingT(t)
+}
 
 var _ = Suite(&S{})
 
 type S struct {
-	HTTPSuite
 	ec2 *ec2.EC2
 }
 
+var testServer = testutil.NewHTTPServer()
+
 func (s *S) SetUpSuite(c *C) {
-	s.HTTPSuite.SetUpSuite(c)
+	testServer.Start()
 	auth := aws.Auth{"abc", "123"}
 	s.ec2 = ec2.New(auth, aws.Region{EC2Endpoint: testServer.URL})
 }
 
+func (s *S) TearDownTest(c *C) {
+	testServer.Flush()
+}
+
 func (s *S) TestRunInstancesErrorDump(c *C) {
-	testServer.PrepareResponse(400, nil, ErrorDump)
+	testServer.Response(400, nil, ErrorDump)
 
 	options := ec2.RunInstances{
 		ImageId:      "ami-a6f504cf", // Ubuntu Maverick, i386, instance store
@@ -45,7 +56,7 @@ func (s *S) TestRunInstancesErrorDump(c *C) {
 }
 
 func (s *S) TestRunInstancesErrorWithoutXML(c *C) {
-	testServer.PrepareResponse(500, nil, "")
+	testServer.Response(500, nil, "")
 	options := ec2.RunInstances{ImageId: "image-id"}
 
 	resp, err := s.ec2.RunInstances(&options)
@@ -64,7 +75,7 @@ func (s *S) TestRunInstancesErrorWithoutXML(c *C) {
 }
 
 func (s *S) TestRunInstancesExample(c *C) {
-	testServer.PrepareResponse(200, nil, RunInstancesExample)
+	testServer.Response(200, nil, RunInstancesExample)
 
 	options := ec2.RunInstances{
 		KeyName:               "my-keys",
@@ -145,7 +156,7 @@ func (s *S) TestRunInstancesExample(c *C) {
 }
 
 func (s *S) TestTerminateInstancesExample(c *C) {
-	testServer.PrepareResponse(200, nil, TerminateInstancesExample)
+	testServer.Response(200, nil, TerminateInstancesExample)
 
 	resp, err := s.ec2.TerminateInstances([]string{"i-1", "i-2"})
 
@@ -175,7 +186,7 @@ func (s *S) TestTerminateInstancesExample(c *C) {
 }
 
 func (s *S) TestDescribeInstancesExample1(c *C) {
-	testServer.PrepareResponse(200, nil, DescribeInstancesExample1)
+	testServer.Response(200, nil, DescribeInstancesExample1)
 
 	filter := ec2.NewFilter()
 	filter.Add("key1", "value1")
@@ -207,7 +218,7 @@ func (s *S) TestDescribeInstancesExample1(c *C) {
 }
 
 func (s *S) TestDescribeInstancesExample2(c *C) {
-	testServer.PrepareResponse(200, nil, DescribeInstancesExample2)
+	testServer.Response(200, nil, DescribeInstancesExample2)
 
 	filter := ec2.NewFilter()
 	filter.Add("key1", "value1")
@@ -244,7 +255,7 @@ func (s *S) TestDescribeInstancesExample2(c *C) {
 }
 
 func (s *S) TestDescribeImagesExample(c *C) {
-	testServer.PrepareResponse(200, nil, DescribeImagesExample)
+	testServer.Response(200, nil, DescribeImagesExample)
 
 	filter := ec2.NewFilter()
 	filter.Add("key1", "value1")
@@ -292,7 +303,7 @@ func (s *S) TestDescribeImagesExample(c *C) {
 }
 
 func (s *S) TestCreateSnapshotExample(c *C) {
-	testServer.PrepareResponse(200, nil, CreateSnapshotExample)
+	testServer.Response(200, nil, CreateSnapshotExample)
 
 	resp, err := s.ec2.CreateSnapshot("vol-4d826724", "Daily Backup")
 
@@ -314,7 +325,7 @@ func (s *S) TestCreateSnapshotExample(c *C) {
 }
 
 func (s *S) TestDeleteSnapshotsExample(c *C) {
-	testServer.PrepareResponse(200, nil, DeleteSnapshotExample)
+	testServer.Response(200, nil, DeleteSnapshotExample)
 
 	resp, err := s.ec2.DeleteSnapshots([]string{"snap-78a54011"})
 
@@ -327,7 +338,7 @@ func (s *S) TestDeleteSnapshotsExample(c *C) {
 }
 
 func (s *S) TestDescribeSnapshotsExample(c *C) {
-	testServer.PrepareResponse(200, nil, DescribeSnapshotsExample)
+	testServer.Response(200, nil, DescribeSnapshotsExample)
 
 	filter := ec2.NewFilter()
 	filter.Add("key1", "value1")
@@ -366,7 +377,7 @@ func (s *S) TestDescribeSnapshotsExample(c *C) {
 }
 
 func (s *S) TestCreateSecurityGroupExample(c *C) {
-	testServer.PrepareResponse(200, nil, CreateSecurityGroupExample)
+	testServer.Response(200, nil, CreateSecurityGroupExample)
 
 	resp, err := s.ec2.CreateSecurityGroup("websrv", "Web Servers")
 
@@ -382,7 +393,7 @@ func (s *S) TestCreateSecurityGroupExample(c *C) {
 }
 
 func (s *S) TestDescribeSecurityGroupsExample(c *C) {
-	testServer.PrepareResponse(200, nil, DescribeSecurityGroupsExample)
+	testServer.Response(200, nil, DescribeSecurityGroupsExample)
 
 	resp, err := s.ec2.SecurityGroups([]ec2.SecurityGroup{{Name: "WebServers"}, {Name: "RangedPortsBySource"}}, nil)
 
@@ -423,7 +434,7 @@ func (s *S) TestDescribeSecurityGroupsExample(c *C) {
 }
 
 func (s *S) TestDescribeSecurityGroupsExampleWithFilter(c *C) {
-	testServer.PrepareResponse(200, nil, DescribeSecurityGroupsExample)
+	testServer.Response(200, nil, DescribeSecurityGroupsExample)
 
 	filter := ec2.NewFilter()
 	filter.Add("ip-permission.protocol", "tcp")
@@ -449,7 +460,7 @@ func (s *S) TestDescribeSecurityGroupsExampleWithFilter(c *C) {
 }
 
 func (s *S) TestDescribeSecurityGroupsDumpWithGroup(c *C) {
-	testServer.PrepareResponse(200, nil, DescribeSecurityGroupsDump)
+	testServer.Response(200, nil, DescribeSecurityGroupsDump)
 
 	resp, err := s.ec2.SecurityGroups(nil, nil)
 
@@ -477,7 +488,7 @@ func (s *S) TestDescribeSecurityGroupsDumpWithGroup(c *C) {
 }
 
 func (s *S) TestDeleteSecurityGroupExample(c *C) {
-	testServer.PrepareResponse(200, nil, DeleteSecurityGroupExample)
+	testServer.Response(200, nil, DeleteSecurityGroupExample)
 
 	resp, err := s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Name: "websrv"})
 	req := testServer.WaitRequest()
@@ -490,7 +501,7 @@ func (s *S) TestDeleteSecurityGroupExample(c *C) {
 }
 
 func (s *S) TestDeleteSecurityGroupExampleWithId(c *C) {
-	testServer.PrepareResponse(200, nil, DeleteSecurityGroupExample)
+	testServer.Response(200, nil, DeleteSecurityGroupExample)
 
 	// ignore return and error - we're only want to check the parameter handling.
 	s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Id: "sg-67ad940e", Name: "ignored"})
@@ -501,7 +512,7 @@ func (s *S) TestDeleteSecurityGroupExampleWithId(c *C) {
 }
 
 func (s *S) TestAuthorizeSecurityGroupExample1(c *C) {
-	testServer.PrepareResponse(200, nil, AuthorizeSecurityGroupIngressExample)
+	testServer.Response(200, nil, AuthorizeSecurityGroupIngressExample)
 
 	perms := []ec2.IPPerm{{
 		Protocol:  "tcp",
@@ -526,7 +537,7 @@ func (s *S) TestAuthorizeSecurityGroupExample1(c *C) {
 }
 
 func (s *S) TestAuthorizeSecurityGroupExample1WithId(c *C) {
-	testServer.PrepareResponse(200, nil, AuthorizeSecurityGroupIngressExample)
+	testServer.Response(200, nil, AuthorizeSecurityGroupIngressExample)
 
 	perms := []ec2.IPPerm{{
 		Protocol:  "tcp",
@@ -544,7 +555,7 @@ func (s *S) TestAuthorizeSecurityGroupExample1WithId(c *C) {
 }
 
 func (s *S) TestAuthorizeSecurityGroupExample2(c *C) {
-	testServer.PrepareResponse(200, nil, AuthorizeSecurityGroupIngressExample)
+	testServer.Response(200, nil, AuthorizeSecurityGroupIngressExample)
 
 	perms := []ec2.IPPerm{{
 		Protocol: "tcp",
@@ -577,7 +588,7 @@ func (s *S) TestAuthorizeSecurityGroupExample2(c *C) {
 func (s *S) TestRevokeSecurityGroupExample(c *C) {
 	// RevokeSecurityGroup is implemented by the same code as AuthorizeSecurityGroup
 	// so there's no need to duplicate all the tests.
-	testServer.PrepareResponse(200, nil, RevokeSecurityGroupIngressExample)
+	testServer.Response(200, nil, RevokeSecurityGroupIngressExample)
 
 	resp, err := s.ec2.RevokeSecurityGroup(ec2.SecurityGroup{Name: "websrv"}, nil)
 
@@ -590,7 +601,7 @@ func (s *S) TestRevokeSecurityGroupExample(c *C) {
 }
 
 func (s *S) TestCreateTags(c *C) {
-	testServer.PrepareResponse(200, nil, CreateTagsExample)
+	testServer.Response(200, nil, CreateTagsExample)
 
 	resp, err := s.ec2.CreateTags([]string{"ami-1a2b3c4d", "i-7f4d3a2b"}, []ec2.Tag{{"webserver", ""}, {"stack", "Production"}})
 
@@ -607,7 +618,7 @@ func (s *S) TestCreateTags(c *C) {
 }
 
 func (s *S) TestStartInstances(c *C) {
-	testServer.PrepareResponse(200, nil, StartInstancesExample)
+	testServer.Response(200, nil, StartInstancesExample)
 
 	resp, err := s.ec2.StartInstances("i-10a64379")
 	req := testServer.WaitRequest()
@@ -627,7 +638,7 @@ func (s *S) TestStartInstances(c *C) {
 }
 
 func (s *S) TestStopInstances(c *C) {
-	testServer.PrepareResponse(200, nil, StopInstancesExample)
+	testServer.Response(200, nil, StopInstancesExample)
 
 	resp, err := s.ec2.StopInstances("i-10a64379")
 	req := testServer.WaitRequest()
@@ -647,7 +658,7 @@ func (s *S) TestStopInstances(c *C) {
 }
 
 func (s *S) TestRebootInstances(c *C) {
-	testServer.PrepareResponse(200, nil, RebootInstancesExample)
+	testServer.Response(200, nil, RebootInstancesExample)
 
 	resp, err := s.ec2.RebootInstances("i-10a64379")
 	req := testServer.WaitRequest()
@@ -663,7 +674,7 @@ func (s *S) TestSignatureWithEndpointPath(c *C) {
 	ec2.FakeTime(true)
 	defer ec2.FakeTime(false)
 
-	testServer.PrepareResponse(200, nil, RebootInstancesExample)
+	testServer.Response(200, nil, RebootInstancesExample)
 
 	// https://bugs.launchpad.net/goamz/+bug/1022749
 	ec2 := ec2.New(s.ec2.Auth, aws.Region{EC2Endpoint: testServer.URL + "/services/Cloud"})

@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"launchpad.net/goamz/aws"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -47,6 +48,12 @@ type Owner struct {
 	DisplayName string
 }
 
+var attempts = aws.AttemptStrategy{
+	Min:   5,
+	Total: 5 * time.Second,
+	Delay: 200 * time.Millisecond,
+}
+
 // New creates a new S3.
 func New(auth aws.Auth, region aws.Region) *S3 {
 	return &S3{auth, region, 0}
@@ -64,10 +71,10 @@ var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.ama
   <LocationConstraint>%s</LocationConstraint> 
 </CreateBucketConfiguration>`
 
-// locationConstraint returns an io.Reader specifying a LocationConstraint if 
+// locationConstraint returns an io.Reader specifying a LocationConstraint if
 // required for the region.
 //
-// See http://goo.gl/bh9Kq for more details.
+// See http://goo.gl/bh9Kq for details.
 func (s3 *S3) locationConstraint() io.Reader {
 	constraint := ""
 	if s3.Region.S3LocationConstraint {
@@ -89,7 +96,7 @@ const (
 
 // PutBucket creates a new bucket.
 //
-// See http://goo.gl/ndjnR for more details.
+// See http://goo.gl/ndjnR for details.
 func (b *Bucket) PutBucket(perm ACL) error {
 	headers := map[string][]string{
 		"x-amz-acl": {string(perm)},
@@ -107,19 +114,25 @@ func (b *Bucket) PutBucket(perm ACL) error {
 // DelBucket removes an existing S3 bucket. All objects in the bucket must
 // be removed before the bucket itself can be removed.
 //
-// See http://goo.gl/GoBrY for more details.
-func (b *Bucket) DelBucket() error {
+// See http://goo.gl/GoBrY for details.
+func (b *Bucket) DelBucket() (err error) {
 	req := &request{
 		method: "DELETE",
 		bucket: b.Name,
 		path:   "/",
 	}
-	return b.S3.query(req, nil)
+	for attempt := attempts.Start(); attempt.Next(); {
+		err = b.S3.query(req, nil)
+		if !shouldRetry(err) {
+			break
+		}
+	}
+	return err
 }
 
 // Get retrieves an object from an S3 bucket.
 //
-// See http://goo.gl/isCO7 for more details.
+// See http://goo.gl/isCO7 for details.
 func (b *Bucket) Get(path string) (data []byte, err error) {
 	body, err := b.GetReader(path)
 	if err != nil {
@@ -142,16 +155,22 @@ func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := b.S3.run(req, nil)
-	if err != nil {
-		return nil, err
+	for attempt := attempts.Start(); attempt.Next(); {
+		resp, err := b.S3.run(req, nil)
+		if shouldRetry(err) && attempt.HasNext() {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return resp.Body, nil
 	}
-	return resp.Body, nil
+	panic("unreachable")
 }
 
 // Put inserts an object into the S3 bucket.
 //
-// See http://goo.gl/FEBPD for more details.
+// See http://goo.gl/FEBPD for details.
 func (b *Bucket) Put(path string, data []byte, contType string, perm ACL) error {
 	body := bytes.NewBuffer(data)
 	return b.PutReader(path, body, int64(len(data)), contType, perm)
@@ -177,7 +196,7 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 
 // Del removes an object from the S3 bucket.
 //
-// See http://goo.gl/APeTt for more details.
+// See http://goo.gl/APeTt for details.
 func (b *Bucket) Del(path string) error {
 	req := &request{
 		method: "DELETE",
@@ -215,15 +234,15 @@ type Key struct {
 	Owner        Owner
 }
 
-// List returns a information about objects in an S3 bucket.
+// List returns information about objects in an S3 bucket.
 //
 // The prefix parameter limits the response to keys that begin with the
-// specified prefix. You can use prefixes to separate a bucket into different
-// groupings of keys (e.g. to get a feeling of folders).
+// specified prefix.
 //
-// The delimited parameter causes the response to group all of the keys that
-// share a common prefix up to the next delimiter to be grouped in a single
-// entry within the CommonPrefixes field.
+// The delim parameter causes the response to group all of the keys that
+// share a common prefix up to the next delimiter in a single entry within
+// the CommonPrefixes field. You can use delimiters to separate a bucket
+// into different groupings of keys, similar to how folders would work.
 //
 // The marker parameter specifies the key to start with when listing objects
 // in a bucket. Amazon S3 lists objects in alphabetical order and
@@ -269,8 +288,8 @@ type Key struct {
 //             "photos/2006/January/",
 //         },
 //     }
-// 
-// See http://goo.gl/YjQTc for more details.
+//
+// See http://goo.gl/YjQTc for details.
 func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, err error) {
 	params := map[string][]string{
 		"prefix":    {prefix},
@@ -285,7 +304,12 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 		params: params,
 	}
 	result = &ListResp{}
-	err = b.S3.query(req, result)
+	for attempt := attempts.Start(); attempt.Next(); {
+		err = b.S3.query(req, result)
+		if !shouldRetry(err) {
+			break
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -332,13 +356,15 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 }
 
 type request struct {
-	method  string
-	bucket  string
-	path    string
-	params  url.Values
-	headers http.Header
-	baseurl string
-	payload io.Reader
+	method   string
+	bucket   string
+	path     string
+	signpath string
+	params   url.Values
+	headers  http.Header
+	baseurl  string
+	payload  io.Reader
+	prepared bool
 }
 
 func (req *request) url() (*url.URL, error) {
@@ -364,41 +390,52 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
-	if req.method == "" {
-		req.method = "GET"
-	}
-	if req.params == nil {
-		req.params = make(url.Values)
-	}
-	if req.headers == nil {
-		req.headers = make(http.Header)
-	}
-	if !strings.HasPrefix(req.path, "/") {
-		req.path = "/" + req.path
-	}
-	canonicalPath := req.path
-	if req.bucket != "" {
-		req.baseurl = s3.Region.S3BucketEndpoint
-		if req.baseurl == "" {
-			// Use the path method to address the bucket.
-			req.baseurl = s3.Region.S3Endpoint
-			req.path = "/" + req.bucket + req.path
-		} else {
-			// Just in case, prevent injection.
-			if strings.IndexAny(req.bucket, "/:@") >= 0 {
-				return fmt.Errorf("bad S3 bucket: %q", req.bucket)
-			}
-			req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
+	if !req.prepared {
+		req.prepared = true
+		if req.method == "" {
+			req.method = "GET"
 		}
-		canonicalPath = "/" + req.bucket + canonicalPath
+		// Copy so they can be mutated without affecting on retries.
+		params := make(url.Values)
+		headers := make(http.Header)
+		for k, v := range req.params {
+			params[k] = v
+		}
+		for k, v := range req.headers {
+			headers[k] = v
+		}
+		req.params = params
+		req.headers = headers
+		if !strings.HasPrefix(req.path, "/") {
+			req.path = "/" + req.path
+		}
+		req.signpath = req.path
+		if req.bucket != "" {
+			req.baseurl = s3.Region.S3BucketEndpoint
+			if req.baseurl == "" {
+				// Use the path method to address the bucket.
+				req.baseurl = s3.Region.S3Endpoint
+				req.path = "/" + req.bucket + req.path
+			} else {
+				// Just in case, prevent injection.
+				if strings.IndexAny(req.bucket, "/:@") >= 0 {
+					return fmt.Errorf("bad S3 bucket: %q", req.bucket)
+				}
+				req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
+			}
+			req.signpath = "/" + req.bucket + req.signpath
+		}
 	}
+
+	// Always sign again as it's not clear how far the
+	// server has handled a previous attempt.
 	u, err := url.Parse(req.baseurl)
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-	sign(s3.Auth, req.method, canonicalPath, req.params, req.headers)
+	sign(s3.Auth, req.method, req.signpath, req.params, req.headers)
 	return nil
 }
 
@@ -415,25 +452,18 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		return nil, err
 	}
 
-	// Copy since headers may be mutated and we should be able to
-	// call this function twice with the same request.
-	headers := make(http.Header, len(req.headers))
-	for k, v := range req.headers {
-		headers[k] = v
-	}
-
 	hreq := http.Request{
 		URL:        u,
 		Method:     req.method,
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		Close:      true,
-		Header:     headers,
+		Header:     req.headers,
 	}
 
-	if v, ok := headers["Content-Length"]; ok {
+	if v, ok := req.headers["Content-Length"]; ok {
 		hreq.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
-		delete(headers, "Content-Length")
+		delete(req.headers, "Content-Length")
 	}
 	if req.payload != nil {
 		hreq.Body = ioutil.NopCloser(req.payload)
@@ -495,4 +525,34 @@ func buildError(r *http.Response) error {
 		log.Printf("err: %#v\n", err)
 	}
 	return &err
+}
+
+func shouldRetry(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch err {
+	case io.ErrUnexpectedEOF, io.EOF:
+		return true
+	}
+	switch e := err.(type) {
+	case *net.DNSError:
+		return true
+	case *net.OpError:
+		switch e.Op {
+		case "read", "write":
+			return true
+		}
+	case *Error:
+		switch e.Code {
+		case "InternalError", "NoSuchUpload", "NoSuchBucket":
+			return true
+		}
+	}
+	return false
+}
+
+func hasCode(err error, code string) bool {
+	s3err, ok := err.(*Error)
+	return ok && s3err.Code == code
 }

@@ -44,6 +44,53 @@ var GetUserExample = `
 </GetUserResponse>
 `
 
+var CreateGroupExample = `
+<CreateGroupResponse>
+   <CreateGroupResult>
+      <Group>
+         <Path>/admins/</Path>
+         <GroupName>Admins</GroupName>
+         <GroupId>AGPACKCEVSQ6C2EXAMPLE</GroupId>
+         <Arn>arn:aws:iam::123456789012:group/Admins</Arn>
+      </Group>
+   </CreateGroupResult>
+   <ResponseMetadata>
+      <RequestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</RequestId>
+   </ResponseMetadata>
+</CreateGroupResponse>
+`
+
+var ListGroupsExample = `
+<ListGroupsResponse>
+   <ListGroupsResult>
+      <Groups>
+         <member>
+            <Path>/division_abc/subdivision_xyz/</Path>
+            <GroupName>Admins</GroupName>
+            <GroupId>AGPACKCEVSQ6C2EXAMPLE</GroupId>
+            <Arn>arn:aws:iam::123456789012:group/Admins</Arn>
+         </member>
+         <member>
+            <Path>/division_abc/subdivision_xyz/product_1234/engineering/</Path>
+            <GroupName>Test</GroupName>
+            <GroupId>AGP2MAB8DPLSRHEXAMPLE</GroupId>
+            <Arn>arn:aws:iam::123456789012:group/division_abc/subdivision_xyz/product_1234/engineering/Test</Arn>
+         </member>
+         <member>
+            <Path>/division_abc/subdivision_xyz/product_1234/</Path>
+            <GroupName>Managers</GroupName>
+            <GroupId>AGPIODR4TAW7CSEXAMPLE</GroupId>
+            <Arn>arn:aws:iam::123456789012:group/division_abc/subdivision_xyz/product_1234/Managers</Arn>
+         </member>
+      </Groups>
+      <IsTruncated>false</IsTruncated>
+   </ListGroupsResult>
+   <ResponseMetadata>
+      <RequestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</RequestId>
+   </ResponseMetadata>
+</ListGroupsResponse>
+`
+
 var RequestIdExample = `
 <AddUserToGroupResponse>
    <ResponseMetadata>
@@ -66,6 +113,30 @@ var CreateAccessKeyExample = `
       <RequestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</RequestId>
    </ResponseMetadata>
 </CreateAccessKeyResponse>
+`
+
+var ListAccessKeyExample = `
+<ListAccessKeysResponse>
+   <ListAccessKeysResult>
+      <UserName>Bob</UserName>
+      <AccessKeyMetadata>
+         <member>
+            <UserName>Bob</UserName>
+            <AccessKeyId>AKIAIOSFODNN7EXAMPLE</AccessKeyId>
+            <Status>Active</Status>
+         </member>
+         <member>
+            <UserName>Bob</UserName>
+            <AccessKeyId>AKIAI44QH8DHBEXAMPLE</AccessKeyId>
+            <Status>Inactive</Status>
+         </member>
+      </AccessKeyMetadata>
+      <IsTruncated>false</IsTruncated>
+   </ListAccessKeysResult>
+   <ResponseMetadata>
+      <RequestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</RequestId>
+   </ResponseMetadata>
+</ListAccessKeysResponse>
 `
 
 var GetUserPolicyExample = `
