@@ -5,6 +5,7 @@ import (
 	"launchpad.net/goamz/iam"
 	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"net/url"
 )
 
 // AmazonServer represents an Amazon AWS server.
@@ -172,4 +173,36 @@ func (s *ClientTests) TestDeleteGroupError(c *C) {
 	c.Assert(iamErr.StatusCode, Equals, 404)
 	c.Assert(iamErr.Code, Equals, "NoSuchEntity")
 	c.Assert(iamErr.Message, Equals, "The group with name Finances cannot be found.")
+}
+
+func (s *ClientTests) TestPutGetAndDeleteUserPolicy(c *C) {
+	userResp, err := s.iam.CreateUser("gopher", "/gopher/")
+	c.Assert(err, IsNil)
+	defer s.iam.DeleteUser(userResp.User.Name)
+	document := `{
+		"Statement": [
+		{
+			"Action": [
+				"s3:*"
+			],
+			"Effect": "Allow",
+			"Resource": [
+				"arn:aws:s3:::8shsns19s90ajahadsj/*",
+				"arn:aws:s3:::8shsns19s90ajahadsj"
+			]
+		}]
+	}`
+	_, err = s.iam.PutUserPolicy(userResp.User.Name, "EverythingS3", document)
+	c.Assert(err, IsNil)
+	resp, err := s.iam.GetUserPolicy(userResp.User.Name, "EverythingS3")
+	c.Assert(err, IsNil)
+	c.Assert(resp.Policy.Name, Equals, "EverythingS3")
+	c.Assert(resp.Policy.UserName, Equals, userResp.User.Name)
+	gotDocument, err := url.QueryUnescape(resp.Policy.Document)
+	c.Assert(err, IsNil)
+	c.Assert(gotDocument, Equals, document)
+	_, err = s.iam.DeleteUserPolicy(userResp.User.Name, "EverythingS3")
+	c.Assert(err, IsNil)
+	_, err = s.iam.GetUserPolicy(userResp.User.Name, "EverythingS3")
+	c.Assert(err, NotNil)
 }

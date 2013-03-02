@@ -5,6 +5,7 @@ import (
 	"launchpad.net/goamz/iam"
 	"launchpad.net/goamz/testutil"
 	. "launchpad.net/gocheck"
+	"strings"
 	"testing"
 )
 
@@ -222,4 +223,56 @@ func (s *S) TestAccessKeysBlankUserName(c *C) {
 	c.Assert(values.Get("Action"), Equals, "ListAccessKeys")
 	_, ok := map[string][]string(values)["UserName"]
 	c.Assert(ok, Equals, false)
+}
+
+func (s *S) TestGetUserPolicy(c *C) {
+	testServer.Response(200, nil, GetUserPolicyExample)
+	resp, err := s.iam.GetUserPolicy("Bob", "AllAccessPolicy")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "GetUserPolicy")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(values.Get("PolicyName"), Equals, "AllAccessPolicy")
+	c.Assert(err, IsNil)
+	c.Assert(resp.Policy.UserName, Equals, "Bob")
+	c.Assert(resp.Policy.Name, Equals, "AllAccessPolicy")
+	c.Assert(strings.TrimSpace(resp.Policy.Document), Equals, `{"Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]}`)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestPutUserPolicy(c *C) {
+	document := `{
+		"Statement": [
+		{
+			"Action": [
+				"s3:*"
+			],
+			"Effect": "Allow",
+			"Resource": [
+				"arn:aws:s3:::8shsns19s90ajahadsj/*",
+				"arn:aws:s3:::8shsns19s90ajahadsj"
+			]
+		}]
+	}`
+	testServer.Response(200, nil, RequestIdExample)
+	resp, err := s.iam.PutUserPolicy("Bob", "AllAccessPolicy", document)
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, Equals, "POST")
+	c.Assert(req.FormValue("Action"), Equals, "PutUserPolicy")
+	c.Assert(req.FormValue("PolicyName"), Equals, "AllAccessPolicy")
+	c.Assert(req.FormValue("UserName"), Equals, "Bob")
+	c.Assert(req.FormValue("PolicyDocument"), Equals, document)
+	c.Assert(req.FormValue("Version"), Equals, "2010-05-08")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
+func (s *S) TestDeleteUserPolicy(c *C) {
+	testServer.Response(200, nil, RequestIdExample)
+	resp, err := s.iam.DeleteUserPolicy("Bob", "AllAccessPolicy")
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), Equals, "DeleteUserPolicy")
+	c.Assert(values.Get("PolicyName"), Equals, "AllAccessPolicy")
+	c.Assert(values.Get("UserName"), Equals, "Bob")
+	c.Assert(err, IsNil)
+	c.Assert(resp.RequestId, Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }

@@ -138,3 +138,18 @@ var ListAccessKeyExample = `
    </ResponseMetadata>
 </ListAccessKeysResponse>
 `
+
+var GetUserPolicyExample = `
+<GetUserPolicyResponse>
+   <GetUserPolicyResult>
+      <UserName>Bob</UserName>
+      <PolicyName>AllAccessPolicy</PolicyName>
+      <PolicyDocument>
+      {"Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]}
+      </PolicyDocument>
+   </GetUserPolicyResult>
+   <ResponseMetadata>
+      <RequestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</RequestId>
+   </ResponseMetadata>
+</GetUserPolicyResponse>
+`
