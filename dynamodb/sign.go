@@ -33,10 +33,10 @@ func DerivedKey(serviceName string, regionName string, k *aws.Auth, t time.Time)
 }
 
 // Sign signs an HTTP request with the given AWS keys for use on service s.
-func SignV4(serviceName string, regionName string, keys *aws.Auth, r *http.Request) error {
+func SignV4(serviceName string, regionName string, keys *aws.Auth, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) error {
 	var t time.Time
 
-	date := r.Header.Get("Date")
+	date := headers["Date"][0]
 	if date == "" {
 		return ErrNoDate
 	}
@@ -46,21 +46,21 @@ func SignV4(serviceName string, regionName string, keys *aws.Auth, r *http.Reque
 		return err
 	}
 
-	r.Header.Set("Date", t.Format(iSO8601BasicFormat))
+  // r.Header.Set("Date", t.Format(iSO8601BasicFormat)) // assume this is already done for us
 
 	k := sign(serviceName, regionName, keys, t)
 	h := hmac.New(sha256.New, k)
-	writeStringToSign(serviceName, regionName, h, t, r)
+	writeStringToSign(serviceName, regionName, h, t, method, canonicalPath, params, headers, payload)
 
 	auth := bytes.NewBufferString("AWS4-HMAC-SHA256 ")
 	auth.Write([]byte("Credential=" + keys.AccessKey + "/" + creds(serviceName, regionName, t)))
 	auth.Write([]byte{',', ' '})
 	auth.Write([]byte("SignedHeaders="))
-	writeHeaderList(serviceName, regionName, auth, r)
+	writeHeaderList(serviceName, regionName, auth, method, canonicalPath, params, headers)
 	auth.Write([]byte{',', ' '})
 	auth.Write([]byte("Signature=" + fmt.Sprintf("%x", h.Sum(nil))))
 
-	r.Header.Set("Authorization", auth.String())
+	headers["Authorization"] = []string{auth.String()}
 
 	return nil
 }
@@ -73,9 +73,9 @@ func sign(serviceName string, regionName string, k *aws.Auth, t time.Time) []byt
 	return h
 }
 
-func writeQuery(serviceName string, regionName string, w io.Writer, r *http.Request) {
+func writeQuery(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
 	var a []string
-	for k, vs := range r.URL.Query() {
+	for k, vs := range params {
 		k = url.QueryEscape(k)
 		for _, v := range vs {
 			if v == "" {
@@ -96,9 +96,9 @@ func writeQuery(serviceName string, regionName string, w io.Writer, r *http.Requ
 	}
 }
 
-func writeHeader(serviceName string, regionName string, w io.Writer, r *http.Request) {
-	i, a := 0, make([]string, len(r.Header))
-	for k, v := range r.Header {
+func writeHeader(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
+	i, a := 0, make([]string, len(headers))
+	for k, v := range headers {
 		sort.Strings(v)
 		a[i] = strings.ToLower(k) + ":" + strings.Join(v, ",")
 		i++
@@ -109,14 +109,13 @@ func writeHeader(serviceName string, regionName string, w io.Writer, r *http.Req
 			w.Write(lf)
 		}
 
-		io.WriteString(w, regionName)
-		io.WriteString(w, serviceName)
+		io.WriteString(w, s)
 	}
 }
 
-func writeHeaderList(serviceName string, regionName string, w io.Writer, r *http.Request) {
-	i, a := 0, make([]string, len(r.Header))
-	for k, _ := range r.Header {
+func writeHeaderList(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
+	i, a := 0, make([]string, len(headers))
+	for k, _ := range headers {
 		a[i] = strings.ToLower(k)
 		i++
 	}
@@ -130,19 +129,22 @@ func writeHeaderList(serviceName string, regionName string, w io.Writer, r *http
 
 }
 
-func writeBody(serviceName string, regionName string, w io.Writer, r *http.Request) {
+func writeBody(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) {
 	var b []byte
-	if r.Body == nil {
+	if payload == nil {
 		b = []byte("")
 	} else {
 		var err error
-		b, err = ioutil.ReadAll(r.Body)
+		b, err = ioutil.ReadAll(payload)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+  // rewindPayload, err := payload.Seek(0, 0)
+  //   if err != nil {
+  //     panic(err);
+  //   }
 
 	h := sha256.New()
 	h.Write(b)
@@ -152,11 +154,8 @@ func writeBody(serviceName string, regionName string, w io.Writer, r *http.Reque
 	fmt.Fprintf(w, "%x", sum)
 }
 
-func writeURI(serviceName string, regionName string, w io.Writer, r *http.Request) {
-	path := r.URL.RequestURI()
-	if r.URL.RawQuery != "" {
-		path = path[:len(path)-len(r.URL.RawQuery)-1]
-	}
+func writeURI(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
+	path := canonicalPath
 	slash := strings.HasSuffix(path, "/")
 	path = filepath.Clean(path)
 	if path != "/" && slash {
@@ -166,24 +165,24 @@ func writeURI(serviceName string, regionName string, w io.Writer, r *http.Reques
 	w.Write([]byte(path))
 }
 
-func writeRequest(serviceName string, regionName string, w io.Writer, r *http.Request) {
-	r.Header.Set("host", r.Host)
+func writeRequest(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) {
+	//headers["host"] = []string{r.Host} assume this is already done for us
 
-	w.Write([]byte(r.Method))
+	w.Write([]byte(method))
 	w.Write(lf)
-	writeURI(serviceName, regionName, w, r)
+	writeURI(serviceName, regionName, w, method, canonicalPath, params, headers)
 	w.Write(lf)
-	writeQuery(serviceName, regionName, w, r)
+	writeQuery(serviceName, regionName, w, method, canonicalPath, params, headers)
 	w.Write(lf)
-	writeHeader(serviceName, regionName, w, r)
+	writeHeader(serviceName, regionName, w, method, canonicalPath, params, headers)
 	w.Write(lf)
 	w.Write(lf)
-	writeHeaderList(serviceName, regionName, w, r)
+	writeHeaderList(serviceName, regionName, w, method, canonicalPath, params, headers)
 	w.Write(lf)
-	writeBody(serviceName, regionName, w, r)
+	writeBody(serviceName, regionName, w, method, canonicalPath, params, headers, payload)
 }
 
-func writeStringToSign(serviceName string, regionName string, w io.Writer, t time.Time, r *http.Request) {
+func writeStringToSign(serviceName string, regionName string, w io.Writer, t time.Time, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) {
 	w.Write([]byte("AWS4-HMAC-SHA256"))
 	w.Write(lf)
 	w.Write([]byte(t.Format(iSO8601BasicFormat)))
@@ -193,7 +192,7 @@ func writeStringToSign(serviceName string, regionName string, w io.Writer, t tim
 	w.Write(lf)
 
 	h := sha256.New()
-	writeRequest(serviceName, regionName, h, r)
+	writeRequest(serviceName, regionName, h, method, canonicalPath, params, headers, payload)
 	fmt.Fprintf(w, "%x", h.Sum(nil))
 }
 

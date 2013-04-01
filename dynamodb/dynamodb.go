@@ -178,8 +178,8 @@ func (dynamoDb *DynamoDB) prepare(req *request) error {
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 
-	err = SignV4("dynamodb", dynamoDb.Region.Name, &dynamoDb.Auth, req)
-  // sign(dynamoDb.Auth, req.method, req.signpath, req.params, req.headers) // maybe change back to this format eventually
+  // err = SignV4("dynamodb", dynamoDb.Region.Name, &dynamoDb.Auth, req)
+  SignV4("dynamodb", dynamoDb.Region.Name, &dynamoDb.Auth, req.method, req.signpath, req.params, req.headers, req.payload)
 	return nil
 }
 
