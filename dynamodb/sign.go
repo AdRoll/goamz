@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"goamz/aws"
+	"launchpad.net/goamz/aws"
 	"io"
 	"io/ioutil"
 	"net/http"
