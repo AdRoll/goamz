@@ -92,6 +92,45 @@ func (t *Table) CreateTable() error {
 	return t.DynamoDB.query(req, nil)
 }
 
+
+
+
+// ListTables returns an array of all the tables associated with the current account and endpoint. Each Amazon DynamoDB endpoint is entirely independent. For example, if you have two tables called "MyTable," one in dynamodb.us-east-1.amazonaws.com and one in dynamodb.us-west-1.amazonaws.com, they are completely independent and do not share any data. 
+//
+// See http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/API_ListTables.html
+
+// The ListTablesResponse type holds the results of a List bucket operation.
+type ListTablesResponse struct {
+	TableNames              []string
+	LastEvaluatedTableName  string
+}
+
+func (d *DynamoDB) ListTables(exclusiveStartTableName string, limit int) (result *ListTablesResponse, err error) {
+  payld := "{\"ExclusiveStartTableName\":\"" + exclusiveStartTableName + "\",\"Limit\":" + strconv.Itoa(limit) + "}"
+  
+	headers := map[string][]string{
+		"x-amz-target": { "DynamoDB_20111205.ListTables" },
+    "content-type": { "application/x-amz-json-1" },
+  }
+  
+  
+  req := &request{
+		method:  "POST",
+		path:    "/",
+		headers: headers,
+    payload: strings.NewReader(payld),
+	}
+  
+  err = d.query(req, result)
+	return result, err
+}
+
+
+
+
+
+
+
 // -----------------------------------------------------
 //   Generic Request Helpers
 // -----------------------------------------------------
@@ -166,7 +205,9 @@ func (dynamoDb *DynamoDB) prepare(req *request) error {
 				req.baseurl = strings.Replace(req.baseurl, "${table}", req.table, -1)
 			}
 			req.signpath = "/" + req.table + req.signpath
-		}
+		} else  {
+			req.baseurl = strings.Replace(dynamoDb.Region.EC2Endpoint, "ec2", "dynamodb", -1)
+    }
 	}
 
 	// Always sign again as it's not clear how far the
@@ -177,9 +218,12 @@ func (dynamoDb *DynamoDB) prepare(req *request) error {
 	}
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-
-  // err = SignV4("dynamodb", dynamoDb.Region.Name, &dynamoDb.Auth, req)
-  SignV4("dynamodb", dynamoDb.Region.Name, &dynamoDb.Auth, req.method, req.signpath, req.params, req.headers, req.payload)
+  
+  err = SignV4("dynamodb", dynamoDb.Region.Name, &dynamoDb.Auth, req.method, req.signpath, req.params, req.headers, req.payload)
+	if err != nil {
+		return fmt.Errorf("Couldn't sign request %v: %v", req, err)
+	}
+  
 	return nil
 }
 
@@ -210,16 +254,31 @@ func (dynamoDb *DynamoDB) run(req *request, resp interface{}) (*http.Response, e
 		delete(req.headers, "Content-Length")
 	}
 	if req.payload != nil {
-		hreq.Body = ioutil.NopCloser(req.payload)
+  	if debug {
+  		log.Printf("PAYLOAD WAS NOT NULL! %#v", req.payload)
+  	}
+
+    if hreq.ContentLength == 0 {
+      hreq.ContentLength = -1
+    }
+    // FIXME getting an odd error here with a prepended 2c and trailing 0
+    hreq.Body = ioutil.NopCloser(req.payload)
 	}
+
+  if debug {
+    dump1, _ := httputil.DumpRequestOut(&hreq, true)
+		log.Printf("} -> %s\n", dump1)
+    
+  }
 
 	hresp, err := http.DefaultClient.Do(&hreq)
 	if err != nil {
+    log.Printf("ERROR!!!!!!!!!!!!!!!!!!!!!!!!!!!! %#v", err)
 		return nil, err
 	}
 	if debug {
-		dump, _ := httputil.DumpResponse(hresp, true)
-		log.Printf("} -> %s\n", dump)
+		dump2, _ := httputil.DumpResponse(hresp, true)
+		log.Printf("} <- %s\n", dump2)
 	}
 	if hresp.StatusCode != 200 && hresp.StatusCode != 204 {
 		return nil, buildError(hresp)
@@ -233,12 +292,12 @@ func (dynamoDb *DynamoDB) run(req *request, resp interface{}) (*http.Response, e
 
 
 
-// Error represents an error in an operation with S3.
+// Error represents an error in an operation with DynamoDB.
 type Error struct {
 	StatusCode int    // HTTP status code (200, 403, ...)
 	Code       string // EC2 error code ("UnsupportedOperation", ...)
 	Message    string // The human-oriented error message
-	BucketName string
+	TableName string
 	RequestId  string
 	HostId     string
 }
@@ -318,7 +377,7 @@ func hasCode(err error, code string) bool {
   DeleteTable
   DescribeTable
   GetItem
-  ListTables
+√ ListTables
   PutItem
   Query
   Scan

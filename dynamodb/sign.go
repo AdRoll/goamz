@@ -1,6 +1,7 @@
 package dynamodb
 
 import (
+  "log"
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -9,7 +10,6 @@ import (
 	"launchpad.net/goamz/aws"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"path/filepath"
 	"sort"
@@ -41,12 +41,12 @@ func SignV4(serviceName string, regionName string, keys *aws.Auth, method, canon
 		return ErrNoDate
 	}
 
-	t, err := time.Parse(http.TimeFormat, date)
+	t, err := time.Parse(time.RFC1123, date)
 	if err != nil {
 		return err
 	}
 
-  // r.Header.Set("Date", t.Format(iSO8601BasicFormat)) // assume this is already done for us
+  headers["Date"] = []string{t.Format(iSO8601BasicFormat)}
 
 	k := sign(serviceName, regionName, keys, t)
 	h := hmac.New(sha256.New, k)
@@ -61,7 +61,10 @@ func SignV4(serviceName string, regionName string, keys *aws.Auth, method, canon
 	auth.Write([]byte("Signature=" + fmt.Sprintf("%x", h.Sum(nil))))
 
 	headers["Authorization"] = []string{auth.String()}
-
+  
+	if debug {
+		log.Printf("Set authorization heaader to: %#v", headers["Authorization"])
+	}
 	return nil
 }
 
@@ -140,12 +143,16 @@ func writeBody(serviceName string, regionName string, w io.Writer, method, canon
 			panic(err)
 		}
 	}
-
-  // rewindPayload, err := payload.Seek(0, 0)
-  //   if err != nil {
-  //     panic(err);
-  //   }
-
+  
+	if debug {
+		log.Printf("Read payload as: %#v", string(b))
+	}
+  
+  _, err := payload.(io.Seeker).Seek(0, 0)
+  if err != nil {
+    panic(err)
+  }
+  
 	h := sha256.New()
 	h.Write(b)
 
