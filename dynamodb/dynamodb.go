@@ -2,7 +2,7 @@ package dynamodb
 
 import (
 	"fmt"
-	"goamz/aws"
+	"github.com/crowdmob/goamz/aws"
 	"io/ioutil"
 	"net/http"
 	"strings"
