@@ -1,15 +1,15 @@
 package dynamodb
 
 import (
-  "log"
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"launchpad.net/goamz/aws"
+	"goamz/aws"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"sort"
@@ -26,59 +26,64 @@ var (
 
 var lf = []byte{'\n'}
 
+// Service represents an AWS-compatible service.
+type Service struct {
+	// Name is the name of the service being used (i.e. iam, etc)
+	Name string
 
-// For Testing.
-func DerivedKey(serviceName string, regionName string, k *aws.Auth, t time.Time) []byte {
-	return sign(serviceName, regionName, k, t)
+	// Region is the region you want to communicate with the service through. (i.e. us-east-1)
+	Region string
 }
 
-// Sign signs an HTTP request with the given AWS keys for use on service s.
-func SignV4(serviceName string, regionName string, keys *aws.Auth, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) error {
-	var t time.Time
-
-	date := headers["Date"][0]
-	if date == "" {
-		return ErrNoDate
-	}
-
-	t, err := time.Parse(time.RFC1123, date)
-	if err != nil {
-		return err
-	}
-
-  headers["Date"] = []string{t.Format(iSO8601BasicFormat)}
-
-	k := sign(serviceName, regionName, keys, t)
-	h := hmac.New(sha256.New, k)
-	writeStringToSign(serviceName, regionName, h, t, method, canonicalPath, params, headers, payload)
-
-	auth := bytes.NewBufferString("AWS4-HMAC-SHA256 ")
-	auth.Write([]byte("Credential=" + keys.AccessKey + "/" + creds(serviceName, regionName, t)))
-	auth.Write([]byte{',', ' '})
-	auth.Write([]byte("SignedHeaders="))
-	writeHeaderList(serviceName, regionName, auth, method, canonicalPath, params, headers)
-	auth.Write([]byte{',', ' '})
-	auth.Write([]byte("Signature=" + fmt.Sprintf("%x", h.Sum(nil))))
-
-	headers["Authorization"] = []string{auth.String()}
-  
-	if debug {
-		log.Printf("Set authorization heaader to: %#v", headers["Authorization"])
-	}
-	return nil
-}
-
-func sign(serviceName string, regionName string, k *aws.Auth, t time.Time) []byte {
+func (s *Service) sign(k *aws.Auth, t time.Time) []byte {
 	h := ghmac([]byte("AWS4"+k.SecretKey), []byte(t.Format(iSO8601BasicFormatShort)))
-	h = ghmac(h, []byte(regionName))
-	h = ghmac(h, []byte(serviceName))
+	h = ghmac(h, []byte(s.Region))
+	h = ghmac(h, []byte(s.Name))
 	h = ghmac(h, []byte("aws4_request"))
 	return h
 }
 
-func writeQuery(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
+// For Testing.
+func (s *Service) DerivedKey(k *aws.Auth, t time.Time) []byte {
+	return s.sign(k, t)
+}
+
+// Sign signs an HTTP request with the given AWS keys for use on service s.
+func (s *Service) Sign(keys *aws.Auth, r *http.Request) error {
+	var t time.Time
+
+	date := r.Header.Get("Date")
+	if date == "" {
+		return ErrNoDate
+	}
+
+	t, err := time.Parse(http.TimeFormat, date)
+	if err != nil {
+		return err
+	}
+
+	r.Header.Set("Date", t.Format(iSO8601BasicFormat))
+
+	k := s.sign(keys, t)
+	h := hmac.New(sha256.New, k)
+	s.writeStringToSign(h, t, r)
+
+	auth := bytes.NewBufferString("AWS4-HMAC-SHA256 ")
+	auth.Write([]byte("Credential=" + keys.AccessKey + "/" + s.creds(t)))
+	auth.Write([]byte{',', ' '})
+	auth.Write([]byte("SignedHeaders="))
+	s.writeHeaderList(auth, r)
+	auth.Write([]byte{',', ' '})
+	auth.Write([]byte("Signature=" + fmt.Sprintf("%x", h.Sum(nil))))
+
+	r.Header.Set("Authorization", auth.String())
+
+	return nil
+}
+
+func (s *Service) writeQuery(w io.Writer, r *http.Request) {
 	var a []string
-	for k, vs := range params {
+	for k, vs := range r.URL.Query() {
 		k = url.QueryEscape(k)
 		for _, v := range vs {
 			if v == "" {
@@ -99,9 +104,9 @@ func writeQuery(serviceName string, regionName string, w io.Writer, method, cano
 	}
 }
 
-func writeHeader(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
-	i, a := 0, make([]string, len(headers))
-	for k, v := range headers {
+func (s *Service) writeHeader(w io.Writer, r *http.Request) {
+	i, a := 0, make([]string, len(r.Header))
+	for k, v := range r.Header {
 		sort.Strings(v)
 		a[i] = strings.ToLower(k) + ":" + strings.Join(v, ",")
 		i++
@@ -116,9 +121,9 @@ func writeHeader(serviceName string, regionName string, w io.Writer, method, can
 	}
 }
 
-func writeHeaderList(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
-	i, a := 0, make([]string, len(headers))
-	for k, _ := range headers {
+func (s *Service) writeHeaderList(w io.Writer, r *http.Request) {
+	i, a := 0, make([]string, len(r.Header))
+	for k, _ := range r.Header {
 		a[i] = strings.ToLower(k)
 		i++
 	}
@@ -132,27 +137,20 @@ func writeHeaderList(serviceName string, regionName string, w io.Writer, method,
 
 }
 
-func writeBody(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) {
+func (s *Service) writeBody(w io.Writer, r *http.Request) {
 	var b []byte
-	if payload == nil {
+	if r.Body == nil {
 		b = []byte("")
 	} else {
 		var err error
-		b, err = ioutil.ReadAll(payload)
+		b, err = ioutil.ReadAll(r.Body)
 		if err != nil {
 			panic(err)
 		}
 	}
-  
-	if debug {
-		log.Printf("Read payload as: %#v", string(b))
-	}
-  
-  _, err := payload.(io.Seeker).Seek(0, 0)
-  if err != nil {
-    panic(err)
-  }
-  
+
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+
 	h := sha256.New()
 	h.Write(b)
 
@@ -161,8 +159,11 @@ func writeBody(serviceName string, regionName string, w io.Writer, method, canon
 	fmt.Fprintf(w, "%x", sum)
 }
 
-func writeURI(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string) {
-	path := canonicalPath
+func (s *Service) writeURI(w io.Writer, r *http.Request) {
+	path := r.URL.RequestURI()
+	if r.URL.RawQuery != "" {
+		path = path[:len(path)-len(r.URL.RawQuery)-1]
+	}
 	slash := strings.HasSuffix(path, "/")
 	path = filepath.Clean(path)
 	if path != "/" && slash {
@@ -172,39 +173,39 @@ func writeURI(serviceName string, regionName string, w io.Writer, method, canoni
 	w.Write([]byte(path))
 }
 
-func writeRequest(serviceName string, regionName string, w io.Writer, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) {
-	//headers["host"] = []string{r.Host} assume this is already done for us
+func (s *Service) writeRequest(w io.Writer, r *http.Request) {
+	r.Header.Set("host", r.Host)
 
-	w.Write([]byte(method))
+	w.Write([]byte(r.Method))
 	w.Write(lf)
-	writeURI(serviceName, regionName, w, method, canonicalPath, params, headers)
+	s.writeURI(w, r)
 	w.Write(lf)
-	writeQuery(serviceName, regionName, w, method, canonicalPath, params, headers)
+	s.writeQuery(w, r)
 	w.Write(lf)
-	writeHeader(serviceName, regionName, w, method, canonicalPath, params, headers)
+	s.writeHeader(w, r)
 	w.Write(lf)
 	w.Write(lf)
-	writeHeaderList(serviceName, regionName, w, method, canonicalPath, params, headers)
+	s.writeHeaderList(w, r)
 	w.Write(lf)
-	writeBody(serviceName, regionName, w, method, canonicalPath, params, headers, payload)
+	s.writeBody(w, r)
 }
 
-func writeStringToSign(serviceName string, regionName string, w io.Writer, t time.Time, method, canonicalPath string, params, headers map[string][]string, payload io.Reader) {
+func (s *Service) writeStringToSign(w io.Writer, t time.Time, r *http.Request) {
 	w.Write([]byte("AWS4-HMAC-SHA256"))
 	w.Write(lf)
 	w.Write([]byte(t.Format(iSO8601BasicFormat)))
 	w.Write(lf)
 
-	w.Write([]byte(creds(serviceName, regionName, t)))
+	w.Write([]byte(s.creds(t)))
 	w.Write(lf)
 
 	h := sha256.New()
-	writeRequest(serviceName, regionName, h, method, canonicalPath, params, headers, payload)
+	s.writeRequest(h, r)
 	fmt.Fprintf(w, "%x", h.Sum(nil))
 }
 
-func creds(serviceName string, regionName string, t time.Time) string {
-	return t.Format(iSO8601BasicFormatShort) + "/" + regionName + "/" + serviceName + "/aws4_request"
+func (s *Service) creds(t time.Time) string {
+	return t.Format(iSO8601BasicFormatShort) + "/" + s.Region + "/" + s.Name + "/aws4_request"
 }
 
 func ghmac(key, data []byte) []byte {
