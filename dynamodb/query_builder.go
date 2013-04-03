@@ -22,6 +22,7 @@ func NewQuery(t *Table) *Query {
 }
 
 // This way of specifing the key is used when doing a Get.
+// If rangeKey is "", it is assumed to not want to be used
 func (q *Query) AddKey(t *Table, hashKey string, rangeKey string) {
 	b := q.buffer
 	k := t.Key
@@ -42,7 +43,7 @@ func (q *Query) AddKey(t *Table, hashKey string, rangeKey string) {
 
 	b.WriteString("}")
 	
-	if k.HasRange() {
+	if len(rangeKey) > 0 && k.HasRange() {
 		b.WriteString(",")
 		b.WriteString(quote("RangeKeyElement"))
 		b.WriteString(":")

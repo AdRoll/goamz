@@ -7,7 +7,11 @@ import (
 const (
 	TYPE_STRING = "S"
 	TYPE_NUMBER = "N"
-	TYPE_BIN    = "B"
+	TYPE_BINARY = "B"
+  
+  TYPE_STRING_SET = "SS"
+  TYPE_NUMBER_SET = "NS"
+  TYPE_BINARY_SET = "BS"
   
   COMPARISON_EQUAL                    = "EQ"
   COMPARISON_NOT_EQUAL                = "NE"
@@ -71,7 +75,7 @@ func NewNumericAttribute(name string, value string) *Attribute {
 }
 
 func NewBinaryAttribute(name string, value string) *Attribute {
-	return &Attribute{TYPE_BIN,
+	return &Attribute{TYPE_BINARY,
 		name,
 		value,
 	}
