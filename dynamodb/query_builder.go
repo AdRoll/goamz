@@ -90,6 +90,39 @@ func(q *Query) ConsistentRead(c bool){
 	}
 }
 
+/*
+    "ScanFilter":{
+        "AttributeName1":{"AttributeValueList":[{"S":"AttributeValue"}],"ComparisonOperator":"EQ"}
+    },
+*/
+func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
+	b := q.buffer
+	addComma(b)
+	b.WriteString("{\"ScanFilter\":")
+	for i, c := range comparisons {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		
+		b.WriteString(quote(c.AttributeName))
+		b.WriteString(":{\"AttributeValueList\":[")
+    for j, attributeValue := range c.AttributeValueList {
+  		if j > 0 {
+  			b.WriteString(",")
+  		}
+      b.WriteString("{")
+      b.WriteString(quote(attributeValue.Type))
+      b.WriteString(":")
+      b.WriteString(quote(attributeValue.Name))
+      b.WriteString("}")
+    }
+    b.WriteString("], \"ComparisonOperator\":")
+		b.WriteString(quote(c.ComparisonOperator))
+		b.WriteString("}")
+	}
+	b.WriteString("}")
+}
+
 // The primary key must be included in attributes.
 func (q *Query) AddItem(attributes []Attribute) {
 	b := q.buffer

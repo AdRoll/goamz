@@ -4,6 +4,20 @@ const (
 	TYPE_STRING = "S"
 	TYPE_NUMBER = "N"
 	TYPE_BIN    = "B"
+  
+  COMPARISON_EQUAL                    = "EQ"
+  COMPARISON_NOT_EQUAL                = "NE"
+ 	COMPARISON_LESS_THAN_OR_EQUAL       = "LE"
+ 	COMPARISON_LESS_THAN                = "LT"
+  COMPARISON_GREATER_THAN_OR_EQUAL    = "GE"
+ 	COMPARISON_GREATER_THAN             = "GT"
+  COMPARISON_ATTRIBUTE_EXISTS         = "NOT_NULL"
+  COMPARISON_ATTRIBUTE_DOES_NOT_EXIST = "NULL"
+  COMPARISON_CONTAINS                 = "CONTAINS"
+  COMPARISON_DOES_NOT_CONTAIN         = "NOT_CONTAINS"
+ 	COMPARISON_BEGINS_WITH              = "BEGINS_WITH"
+  COMPARISON_IN                       = "IN"
+ 	COMPARISON_BETWEEN                  = "BETWEEN"
 )
 
 type PrimaryKey struct {
@@ -15,6 +29,31 @@ type Attribute struct {
 	Type  string
 	Name  string
 	Value string
+}
+
+type AttributeComparison struct {
+  AttributeName string
+  ComparisonOperator string
+  AttributeValueList []Attribute // contains attributes with only types and names (value ignored)
+}
+
+func NewEqualInt64AttributeComparison(attributeName string, equalToValue int64) *AttributeComparison {
+  return &AttributeComparison{
+    attributeName,
+    COMPARISON_EQUAL, 
+    []Attribute{
+      NewNumericAttribute(attributeName, strconv.FormatInt(equalToValue, 10))
+    }
+  }
+}
+func NewEqualStringAttributeComparison(attributeName string, equalToValue string) *AttributeComparison {
+  return &AttributeComparison{
+    attributeName,
+    COMPARISON_EQUAL, 
+    []Attribute{
+      NewStringAttribute(attributeName, equalToValue)
+    }
+  }
 }
 
 func NewStringAttribute(name string, value string) *Attribute {
