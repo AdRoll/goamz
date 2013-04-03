@@ -98,7 +98,7 @@ func(q *Query) ConsistentRead(c bool){
 func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
 	b := q.buffer
 	addComma(b)
-	b.WriteString("{\"ScanFilter\":")
+	b.WriteString("\"ScanFilter\":{")
 	for i, c := range comparisons {
 		if i > 0 {
 			b.WriteString(",")
@@ -113,7 +113,7 @@ func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
       b.WriteString("{")
       b.WriteString(quote(attributeValue.Type))
       b.WriteString(":")
-      b.WriteString(quote(attributeValue.Name))
+      b.WriteString(quote(attributeValue.Value))
       b.WriteString("}")
     }
     b.WriteString("], \"ComparisonOperator\":")
@@ -122,6 +122,7 @@ func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
 	}
 	b.WriteString("}")
 }
+
 
 // The primary key must be included in attributes.
 func (q *Query) AddItem(attributes []Attribute) {

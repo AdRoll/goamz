@@ -25,7 +25,7 @@ func (t *Table) Scan(attributeComparisons []AttributeComparison) ([]map[string]*
 		return nil, errors.New(message)
 	}
   
-  results = make([]map[string]*Attribute, itemCount)
+  results := make([]map[string]*Attribute, itemCount)
   
   for i, _ := range results {
   	item, err := json.Get("Items").GetIndex(i).Map()

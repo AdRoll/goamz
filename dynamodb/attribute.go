@@ -1,5 +1,9 @@
 package dynamodb
 
+import (
+  "strconv"
+)
+
 const (
 	TYPE_STRING = "S"
 	TYPE_NUMBER = "N"
@@ -38,21 +42,17 @@ type AttributeComparison struct {
 }
 
 func NewEqualInt64AttributeComparison(attributeName string, equalToValue int64) *AttributeComparison {
-  return &AttributeComparison{
-    attributeName,
+  numeric := NewNumericAttribute(attributeName, strconv.FormatInt(equalToValue, 10))
+  return &AttributeComparison{attributeName,
     COMPARISON_EQUAL, 
-    []Attribute{
-      NewNumericAttribute(attributeName, strconv.FormatInt(equalToValue, 10))
-    }
+    []Attribute{ *numeric },
   }
 }
 func NewEqualStringAttributeComparison(attributeName string, equalToValue string) *AttributeComparison {
-  return &AttributeComparison{
-    attributeName,
+  str := NewStringAttribute(attributeName, equalToValue)
+  return &AttributeComparison{attributeName,
     COMPARISON_EQUAL, 
-    []Attribute{
-      NewStringAttribute(attributeName, equalToValue)
-    }
+    []Attribute{ *str },
   }
 }
 
