@@ -43,7 +43,7 @@ func (q *Query) AddKey(t *Table, hashKey string, rangeKey string) {
 
 	b.WriteString("}")
 	
-	if len(rangeKey) > 0 && k.HasRange() {
+	if k.HasRange() {
 		b.WriteString(",")
 		b.WriteString(quote("RangeKeyElement"))
 		b.WriteString(":")
