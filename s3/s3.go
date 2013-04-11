@@ -184,6 +184,9 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 		if shouldRetry(err) && attempt.HasNext() {
 			continue
 		}
+		if err != nil {
+			return false, err
+		}
 		if resp.StatusCode/100 == 2 {
 			exists = true
 		}
