@@ -1,8 +1,8 @@
 package s3_test
 
 import (
-	"../aws"
-	"../s3"
+	"goamz/aws"
+	"goamz/s3"
 	. "launchpad.net/gocheck"
 )
 

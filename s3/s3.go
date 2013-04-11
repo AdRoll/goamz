@@ -16,7 +16,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"../aws"
+	"goamz/aws"
 	"log"
 	"net"
 	"net/http"
