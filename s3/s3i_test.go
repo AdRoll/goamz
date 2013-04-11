@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	"launchpad.net/goamz/aws"
-	"launchpad.net/goamz/s3"
-	"launchpad.net/goamz/testutil"
+	"../aws"
+	"../s3"
+	"../testutil"
 	. "launchpad.net/gocheck"
 	"net"
 	"sort"

@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"io"
 	"io/ioutil"
-	"launchpad.net/goamz/s3"
+	"../s3"
 	. "launchpad.net/gocheck"
 	"strings"
 )
