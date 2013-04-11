@@ -168,6 +168,30 @@ func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
 	panic("unreachable")
 }
 
+// Exists checks whether or not an object exists on an S3 bucket using a HEAD request.
+func (b *Bucket) Exists(path string) (exists bool, err error) {
+	req := &request{
+		method: "HEAD",
+		bucket: b.Name,
+		path:   path,
+	}
+	err = b.S3.prepare(req)
+	if err != nil {
+		return
+	}
+	for attempt := attempts.Start(); attempt.Next(); {
+		resp, err := b.S3.run(req, nil)
+		if shouldRetry(err) && attempt.HasNext() {
+			continue
+		}
+		if resp.StatusCode/100 == 2 {
+			exists = true
+		}
+		return exists, err
+	}
+	panic("unreachable")
+}
+
 // Put inserts an object into the S3 bucket.
 //
 // See http://goo.gl/FEBPD for details.
