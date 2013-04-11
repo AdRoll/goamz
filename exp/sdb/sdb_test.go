@@ -1,9 +1,9 @@
 package sdb_test
 
 import (
-	"launchpad.net/goamz/aws"
-	"launchpad.net/goamz/exp/sdb"
-	"launchpad.net/goamz/testutil"
+	"github.com/crowdmob/goamz/aws"
+	"github.com/crowdmob/goamz/exp/sdb"
+	"github.com/crowdmob/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"testing"
 )

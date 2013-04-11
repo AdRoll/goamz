@@ -16,7 +16,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"goamz/aws"
+	"github.com/crowdmob/goamz/aws"
 	"log"
 	"net"
 	"net/http"
