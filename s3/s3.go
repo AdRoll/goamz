@@ -27,7 +27,7 @@ import (
 	"time"
 )
 
-const debug = false
+const debug = true
 
 // The S3 type encapsulates operations with an S3 region.
 type S3 struct {
