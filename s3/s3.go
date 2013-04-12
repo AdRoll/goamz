@@ -384,9 +384,15 @@ func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker strin
 	params := map[string][]string{
 		"prefix":             {prefix},
 		"delimiter":          {delim},
-		"key-marker":         {keyMarker},
-		"version-id-marker":  {versionIdMarker},
 	}
+  
+  if len(versionIdMarker) != 0 {
+    params["version-id-marker"] = {versionIdMarker}
+  }
+  if len(keyMarker) != 0 {
+    params["key-marker"] = {keyMarker}
+  }
+  
 	if max != 0 {
 		params["max-keys"] = []string{strconv.FormatInt(int64(max), 10)}
 	}
