@@ -183,7 +183,7 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 		resp, err := b.S3.run(req, nil)
     
     // We can treat a 403 or 404 as non existance
-    if err.StatusCode == 403 || err.StatusCode == 404 {
+    if err.(Error).StatusCode == 403 || err.(Error).StatusCode == 404 {
       return false, nil
     }
     
