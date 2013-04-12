@@ -395,7 +395,7 @@ func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker strin
 		params: params,
     path:   "/?versions",
 	}
-	result = &VersonsResp{}
+	result = &VersionsResp{}
 	for attempt := attempts.Start(); attempt.Next(); {
 		err = b.S3.query(req, result)
 		if !shouldRetry(err) {
