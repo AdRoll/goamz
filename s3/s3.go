@@ -380,7 +380,7 @@ type Version struct {
 	StorageClass string
 }
 
-func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker string, max int) (result *ListResp, err error) {
+func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker string, max int) (result *VersionsResp, err error) {
 	params := map[string][]string{
 		"prefix":             {prefix},
 		"delimiter":          {delim},
