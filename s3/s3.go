@@ -267,6 +267,9 @@ type Key struct {
 	Owner        Owner
 }
 
+
+
+
 // List returns information about objects in an S3 bucket.
 //
 // The prefix parameter limits the response to keys that begin with the
@@ -348,6 +351,63 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 	}
 	return result, nil
 }
+
+
+// The VersionsResp type holds the results of a list bucket Versions operation.
+type VersionsResp struct {
+	Name            string
+	Prefix          string
+	KeyMarker       string
+	VersionIdMarker string
+	MaxKeys         int
+	Delimiter       string
+	IsTruncated     bool
+	Versions        []Version
+	CommonPrefixes  []string `xml:">Prefix"`
+}
+
+// The Version type represents an object version stored in an S3 bucket.
+type Version struct {
+	Key          string
+	VersionId    string
+	IsLatest     bool
+	LastModified string
+	// ETag gives the hex-encoded MD5 sum of the contents,
+	// surrounded with double-quotes.
+	ETag         string
+	Size         int64
+	Owner        Owner
+	StorageClass string
+}
+
+func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker string, max int) (result *ListResp, err error) {
+	params := map[string][]string{
+		"prefix":             {prefix},
+		"delimiter":          {delim},
+		"key-marker":         {keyMarker},
+		"version-id-marker":  {versionIdMarker},
+	}
+	if max != 0 {
+		params["max-keys"] = []string{strconv.FormatInt(int64(max), 10)}
+	}
+	req := &request{
+		bucket: b.Name,
+		params: params,
+    path:   "/?versions",
+	}
+	result = &VersonsResp{}
+	for attempt := attempts.Start(); attempt.Next(); {
+		err = b.S3.query(req, result)
+		if !shouldRetry(err) {
+			break
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 
 // URL returns a non-signed URL that allows retriving the
 // object at path. It only works if the object is publicly
