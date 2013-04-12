@@ -387,10 +387,10 @@ func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker strin
 	}
   
   if len(versionIdMarker) != 0 {
-    params["version-id-marker"] = {versionIdMarker}
+    params["version-id-marker"] = []string{versionIdMarker}
   }
   if len(keyMarker) != 0 {
-    params["key-marker"] = {keyMarker}
+    params["key-marker"] = []string{keyMarker}
   }
   
 	if max != 0 {
