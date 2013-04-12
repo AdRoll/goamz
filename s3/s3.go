@@ -400,7 +400,6 @@ func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker strin
 	req := &request{
 		bucket: b.Name,
 		params: params,
-    // path:   "/?versions",
 	}
 	result = &VersionsResp{}
 	for attempt := attempts.Start(); attempt.Next(); {
@@ -583,6 +582,11 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 	if resp != nil {
 		err = xml.NewDecoder(hresp.Body).Decode(resp)
 		hresp.Body.Close()
+    
+    if debug {
+      log.Printf("goamz.s3> decoded xml into %#v", resp)
+    }
+    
 	}
 	return hresp, err
 }
