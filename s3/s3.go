@@ -382,6 +382,7 @@ type Version struct {
 
 func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker string, max int) (result *VersionsResp, err error) {
 	params := map[string][]string{
+    "versions":           {""}
 		"prefix":             {prefix},
 		"delimiter":          {delim},
 	}
@@ -399,7 +400,7 @@ func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker strin
 	req := &request{
 		bucket: b.Name,
 		params: params,
-    path:   "/?versions",
+    // path:   "/?versions",
 	}
 	result = &VersionsResp{}
 	for attempt := attempts.Start(); attempt.Next(); {
