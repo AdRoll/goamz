@@ -382,7 +382,7 @@ type Version struct {
 
 func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker string, max int) (result *VersionsResp, err error) {
 	params := map[string][]string{
-    "versions":           {""}
+    "versions":           {""},
 		"prefix":             {prefix},
 		"delimiter":          {delim},
 	}
