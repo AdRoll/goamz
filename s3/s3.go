@@ -181,6 +181,12 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 	}
 	for attempt := attempts.Start(); attempt.Next(); {
 		resp, err := b.S3.run(req, nil)
+    
+    // We can treat a 403 or 404 as non existance
+    if err.StatusCode == 403 || err.StatusCode == 404 {
+      return false, nil
+    }
+    
 		if shouldRetry(err) && attempt.HasNext() {
 			continue
 		}
