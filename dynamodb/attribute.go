@@ -38,6 +38,17 @@ type AttributeDefinition struct {
 	Name  string
 }
 
+type KeySchema struct {
+  AttributeName string
+  KeyType       string
+}
+
+type TableDescription struct {
+	TableName       string
+  TableSizeBytes  int64
+	TableStatus     string
+}
+
 type Attribute struct {
 	Type  string
 	Name  string
