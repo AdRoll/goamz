@@ -43,6 +43,10 @@ type KeySchema struct {
   KeyType       string
 }
 
+type Projection struct {
+  ProjectionType  string
+}
+
 type TableDescription struct {
 	TableName       string
   TableSizeBytes  int64
