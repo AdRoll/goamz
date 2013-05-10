@@ -33,6 +33,11 @@ type PrimaryKey struct {
 	RangeAttribute *Attribute
 }
 
+type AttributeDefinition struct {
+	Type  string
+	Name  string
+}
+
 type Attribute struct {
 	Type  string
 	Name  string
