@@ -31,60 +31,20 @@ const (
 
 
 type PrimaryKey struct {
-	KeyAttribute            *Attribute
-	RangeAttribute          *Attribute
-}
-
-type AttributeDefinitionT struct {
-	Name                    string
-	Type                    string
-}
-
-type KeySchemaT struct {
-  AttributeName           string
-  KeyType                 string
-}
-
-type ProjectionT struct {
-  ProjectionType          string
-}
-
-type LocalSecondaryIndexT struct {
-  IndexName               string
-  IndexSizeBytes          int64
-  ItemCount               int64
-  KeySchema               []KeySchemaT
-  Projection              ProjectionT
-}
-
-type ProvisionedThroughputT struct {
-  NumberOfDecreasesToday  int64
-  ReadCapacityUnits       int64
-  WriteCapacityUnits      int64
-}
-
-type TableDescriptionT struct {
-  AttributeDefinitions    []AttributeDefinitionT
-  CreationDateTime        float64
-  ItemCount               int64
-  KeySchema               KeySchemaT
-  LocalSecondaryIndexes   []LocalSecondaryIndexT
-  ProvisionedThroughput   ProvisionedThroughputT
-	TableName               string
-  TableSizeBytes          int64
-	TableStatus             string
+	KeyAttribute        *Attribute
+	RangeAttribute      *Attribute
 }
 
 type Attribute struct {
-	Type                    string
-	Name                    string
-	Value                   string
+	Type                string
+	Name                string
+	Value               string
 }
 
 type AttributeComparison struct {
-  AttributeName           string
-  ComparisonOperator      string
-  AttributeValueList      []Attribute // contains attributes with only types and names (value ignored)
+  AttributeName       string
+  ComparisonOperator  string
+  AttributeValueList  []Attribute // contains attributes with only types and names (value ignored)
 }
 
 
