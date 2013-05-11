@@ -16,16 +16,16 @@ func (t *Table) DescribeTable() (*TableDescriptionT, error) {
 
   // TODO: Populate tableDescription.AttributeDefinitions.
 
-  tableDescription.CreationDateTime = json.Get("CreationDateTime").Float64()
-  tableDescription.ItemCount = json.Get("ItemCount").Int64()
+  tableDescription.CreationDateTime, _ = json.Get("CreationDateTime").Float64()
+  tableDescription.ItemCount, _ = json.Get("ItemCount").Int64()
 
   // TODO: Populate tableDescription.KeySchema.
   // TODO: Populate tableDescription.LocalSecondaryIndexes.
   // TODO: Populate tableDescription.ProvisionedThroughPut.
 
-  tableDescription.TableName = json.Get("TableName").String()
-  tableDescription.TableSizeBytes = json.Get("TableSizeBytes").Int64()
-  tableDescription.TableStatus = json.Get("TableStatus").String()
+  tableDescription.TableName, _ = json.Get("TableName").String()
+  tableDescription.TableSizeBytes, _ = json.Get("TableSizeBytes").Int64()
+  tableDescription.TableStatus, _ = json.Get("TableStatus").String()
 
   return &tableDescription, nil
 }
