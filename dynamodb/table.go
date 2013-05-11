@@ -1,9 +1,9 @@
 package dynamodb
 
-import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
 	"fmt"
+  simplejson "github.com/bitly/go-simplejson"
 )
 
 type Table struct {

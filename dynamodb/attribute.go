@@ -63,7 +63,7 @@ type ProvisionedThroughputT struct {
   WriteCapacityUnits      int64
 }
 
-type TableDescription struct {
+type TableDescriptionT struct {
   AttributeDefinitions    []AttributeDefinitionT
   CreationDateTime        float64
   ItemCount               int64
