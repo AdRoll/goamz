@@ -5,13 +5,13 @@ import (
 )
 
 const (
-	TYPE_STRING = "S"
-	TYPE_NUMBER = "N"
-	TYPE_BINARY = "B"
+	TYPE_STRING                         = "S"
+	TYPE_NUMBER                         = "N"
+	TYPE_BINARY                         = "B"
 
-  TYPE_STRING_SET = "SS"
-  TYPE_NUMBER_SET = "NS"
-  TYPE_BINARY_SET = "BS"
+  TYPE_STRING_SET                     = "SS"
+  TYPE_NUMBER_SET                     = "NS"
+  TYPE_BINARY_SET                     = "BS"
 
   COMPARISON_EQUAL                    = "EQ"
   COMPARISON_NOT_EQUAL                = "NE"
@@ -28,42 +28,66 @@ const (
  	COMPARISON_BETWEEN                  = "BETWEEN"
 )
 
+
+
 type PrimaryKey struct {
-	KeyAttribute   *Attribute
-	RangeAttribute *Attribute
+	KeyAttribute            *Attribute
+	RangeAttribute          *Attribute
 }
 
-type AttributeDefinition struct {
-	Type  string
-	Name  string
+type AttributeDefinitionT struct {
+	Name                    string
+	Type                    string
 }
 
-type KeySchema struct {
-  AttributeName string
-  KeyType       string
+type KeySchemaT struct {
+  AttributeName           string
+  KeyType                 string
 }
 
-type Projection struct {
-  ProjectionType  string
+type ProjectionT struct {
+  ProjectionType          string
+}
+
+type LocalSecondaryIndexT struct {
+  IndexName               string
+  IndexSizeBytes          int64
+  ItemCount               int64
+  KeySchema               []KeySchemaT
+  Projection              ProjectionT
+}
+
+type ProvisionedThroughputT struct {
+  NumberOfDecreasesToday  int64
+  ReadCapacityUnits       int64
+  WriteCapacityUnits      int64
 }
 
 type TableDescription struct {
-	TableName       string
-  TableSizeBytes  int64
-	TableStatus     string
+  AttributeDefinitions    []AttributeDefinitionT
+  CreationDateTime        float64
+  ItemCount               int64
+  KeySchema               KeySchemaT
+  LocalSecondaryIndexes   []LocalSecondaryIndexT
+  ProvisionedThroughput   ProvisionedThroughputT
+	TableName               string
+  TableSizeBytes          int64
+	TableStatus             string
 }
 
 type Attribute struct {
-	Type  string
-	Name  string
-	Value string
+	Type                    string
+	Name                    string
+	Value                   string
 }
 
 type AttributeComparison struct {
-  AttributeName       string
-  ComparisonOperator  string
-  AttributeValueList  []Attribute // contains attributes with only types and names (value ignored)
+  AttributeName           string
+  ComparisonOperator      string
+  AttributeValueList      []Attribute // contains attributes with only types and names (value ignored)
 }
+
+
 
 func NewEqualInt64AttributeComparison(attributeName string, equalToValue int64) *AttributeComparison {
   numeric := NewNumericAttribute(attributeName, strconv.FormatInt(equalToValue, 10))
