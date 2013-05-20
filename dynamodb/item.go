@@ -113,6 +113,20 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 					val,
 				}
 				results[key] = attr
+			} else if val, ok := v[TYPE_NUMBER].(string); ok {
+				attr := &Attribute{
+					TYPE_NUMBER,
+					key,
+					val,
+				}
+				results[key] = attr
+			} else if val, ok := v[TYPE_BINARY].(string); ok {
+				attr := &Attribute{
+					TYPE_BINARY,
+					key,
+					val,
+				}
+				results[key] = attr
 			}
 		} else {
 			fmt.Printf("type assertion to map[string] interface{} failed for : %s\n ", value)
