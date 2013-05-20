@@ -7,11 +7,11 @@ import (
 const (
 	TYPE_STRING                         = "S"
 	TYPE_NUMBER                         = "N"
-	TYPE_BLOB                           = "B"
+	TYPE_BINARY                         = "B"
 
   TYPE_STRING_SET                     = "SS"
   TYPE_NUMBER_SET                     = "NS"
-  TYPE_BLOB_SET                       = "BS"
+  TYPE_BINARY_SET                     = "BS"
 
   COMPARISON_EQUAL                    = "EQ"
   COMPARISON_NOT_EQUAL                = "NE"

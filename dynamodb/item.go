@@ -120,9 +120,9 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 					val,
 				}
 				results[key] = attr
-			} else if val, ok := v[TYPE_BLOB].(string); ok {
+			} else if val, ok := v[TYPE_BINARY].(string); ok {
 				attr := &Attribute{
-					TYPE_BLOB,
+					TYPE_BINARY,
 					key,
 					val,
 				}
