@@ -124,23 +124,41 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 					Name: key,
 					Value: val,
 				}
-			} else if val, ok := v[TYPE_STRING_SET].([]string); ok {
+			} else if vals, ok := v[TYPE_STRING_SET].([]interface{}); ok {
+        arry := make([]string, len(vals))
+        for i, ivalue := range vals {
+          if val, ok := ivalue.(string); ok {
+            arry[i] = val
+          }
+        }
 				results[key] = &Attribute{
 					Type: TYPE_STRING_SET,
 					Name: key,
-					SetValues: val,
+					SetValues: arry,
 				}
-			} else if val, ok := v[TYPE_NUMBER_SET].([]string); ok {
+			} else if vals, ok := v[TYPE_NUMBER_SET].([]interface{}); ok {
+        arry := make([]string, len(vals))
+        for i, ivalue := range vals {
+          if val, ok := ivalue.(string); ok {
+            arry[i] = val
+          }
+        }
 				results[key] = &Attribute{
 					Type: TYPE_NUMBER_SET,
 					Name: key,
-					SetValues: val,
+					SetValues: arry,
 				}
-			} else if val, ok := v[TYPE_BINARY_SET].([]string); ok {
+			} else if vals, ok := v[TYPE_BINARY_SET].([]interface{}); ok {
+        arry := make([]string, len(vals))
+        for i, ivalue := range vals {
+          if val, ok := ivalue.(string); ok {
+            arry[i] = val
+          }
+        }
 				results[key] = &Attribute{
 					Type: TYPE_BINARY_SET,
 					Name: key,
-					SetValues: val,
+					SetValues: arry,
 				}
 			}
 		} else {
