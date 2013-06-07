@@ -39,6 +39,7 @@ type Attribute struct {
   Type                string
   Name                string
   Value               string
+  SetValues           []string
 }
 
 type AttributeComparison struct {
@@ -66,24 +67,59 @@ func NewEqualStringAttributeComparison(attributeName string, equalToValue string
 }
 
 func NewStringAttribute(name string, value string) *Attribute {
-  return &Attribute{TYPE_STRING,
-    name,
-    value,
+  return &Attribute{
+    Type: TYPE_STRING,
+    Name: name,
+    Value: value,
   }
 }
 
 func NewNumericAttribute(name string, value string) *Attribute {
-  return &Attribute{TYPE_NUMBER,
-    name,
-    value,
+  return &Attribute{
+    Type: TYPE_NUMBER,
+    Name: name,
+    Value: value,
   }
 }
 
 func NewBinaryAttribute(name string, value string) *Attribute {
-  return &Attribute{TYPE_BINARY,
-    name,
-    value,
+  return &Attribute{
+    Type: TYPE_BINARY,
+    Name: name,
+    Value: value,
   }
+}
+
+func NewStringSetAttribute(name string, values []string) *Attribute {
+  return &Attribute{
+    Type: TYPE_STRING_SET,
+    Name: name,
+    SetValues: values,
+  }
+}
+
+func NewNumericSetAttribute(name string, values []string) *Attribute {
+  return &Attribute{
+    Type: TYPE_NUMBER_SET,
+    Name: name,
+    SetValues: values,
+  }
+}
+
+func NewBinarySetAttribute(name string, values []string) *Attribute {
+  return &Attribute{
+    Type: TYPE_BINARY_SET,
+    Name: name,
+    SetValues: values,
+  }
+}
+
+func (a *Attribute) SetType() bool {
+  switch a.Type {
+  case TYPE_BINARY_SET, TYPE_NUMBER_SET, TYPE_STRING_SET:
+    return true
+  }
+  return false
 }
 
 func (k *PrimaryKey) HasRange() bool {
@@ -92,17 +128,19 @@ func (k *PrimaryKey) HasRange() bool {
 
 // Useful when you may have many goroutines using a primary key, so they don't fuxor up your values.
 func (k *PrimaryKey) Clone(h string, r string) []Attribute {
-  pk := &Attribute{ k.KeyAttribute.Type,
-    k.KeyAttribute.Name,
-    h,
+  pk := &Attribute{ 
+    Type: k.KeyAttribute.Type,
+    Name: k.KeyAttribute.Name,
+    Value: h,
   }
 
   result := []Attribute{*pk}
 
   if k.HasRange() {
-    rk := &Attribute{ k.RangeAttribute.Type,
-      k.RangeAttribute.Name,
-      r,
+    rk := &Attribute{ 
+      Type: k.RangeAttribute.Type,
+      Name: k.RangeAttribute.Name,
+      Value: r,
     }
 
     result = append(result, *rk)

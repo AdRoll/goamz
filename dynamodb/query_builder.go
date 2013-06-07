@@ -159,7 +159,18 @@ func (q *Query) AddUpdates(attributes []Attribute, action string){
 		b.WriteString("{")
 		b.WriteString(quote(a.Type))
 		b.WriteString(":")
-		b.WriteString(quote(a.Value))
+    
+    if a.SetType() {
+       b.WriteString("[")
+       for i, aval := range a.SetValues {
+         if i > 0 { b.WriteString(",") }
+  	     b.WriteString(quote(aval))
+       }
+       b.WriteString("]")
+    } else {
+  		b.WriteString(quote(a.Value))
+    }
+    
 		b.WriteString("}")
 		b.WriteString(",")
 		b.WriteString(quote("Action"))
@@ -192,7 +203,18 @@ func (q *Query) AddExpected(attributes []Attribute){
 		b.WriteString("{")
 		b.WriteString(quote(a.Type))
 		b.WriteString(":")
-		b.WriteString(quote(a.Value))
+    
+    if a.SetType() {
+       b.WriteString("[")
+       for i, aval := range a.SetValues {
+         if i > 0 { b.WriteString(",") }
+  	     b.WriteString(quote(aval))
+       }
+       b.WriteString("]")
+    } else {
+  		b.WriteString(quote(a.Value))
+    }
+		
 		b.WriteString("}")
 		b.WriteString("}")
 	}
@@ -213,7 +235,18 @@ func attributeList(b *bytes.Buffer, attributes []Attribute){
 		b.WriteString("{")
 		b.WriteString(quote(a.Type))
 		b.WriteString(":")
-		b.WriteString(quote(a.Value))
+		
+    if a.SetType() {
+       b.WriteString("[")
+       for i, aval := range a.SetValues {
+         if i > 0 { b.WriteString(",") }
+  	     b.WriteString(quote(aval))
+       }
+       b.WriteString("]")
+    } else {
+  		b.WriteString(quote(a.Value))
+    }
+    
 		b.WriteString("}")
 	}
 	b.WriteString("}")

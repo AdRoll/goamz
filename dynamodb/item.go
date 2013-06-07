@@ -107,26 +107,41 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 	for key, value := range s {
 		if v, ok := value.(map[string]interface{}); ok {
 			if val, ok := v[TYPE_STRING].(string); ok {
-				attr := &Attribute{
-					TYPE_STRING,
-					key,
-					val,
+				results[key] = &Attribute{
+					Type: TYPE_STRING,
+					Name: key,
+					Value: val,
 				}
-				results[key] = attr
 			} else if val, ok := v[TYPE_NUMBER].(string); ok {
-				attr := &Attribute{
-					TYPE_NUMBER,
-					key,
-					val,
+				results[key] = &Attribute{
+					Type: TYPE_NUMBER,
+					Name: key,
+					Value: val,
 				}
-				results[key] = attr
 			} else if val, ok := v[TYPE_BINARY].(string); ok {
-				attr := &Attribute{
-					TYPE_BINARY,
-					key,
-					val,
+				results[key] = &Attribute{
+					Type: TYPE_BINARY,
+					Name: key,
+					Value: val,
 				}
-				results[key] = attr
+			} else if val, ok := v[TYPE_STRING_SET].([]string); ok {
+				results[key] = &Attribute{
+					Type: TYPE_STRING_SET,
+					Name: key,
+					SetValues: val,
+				}
+			} else if val, ok := v[TYPE_NUMBER_SET].([]string); ok {
+				results[key] = &Attribute{
+					Type: TYPE_NUMBER_SET,
+					Name: key,
+					SetValues: val,
+				}
+			} else if val, ok := v[TYPE_BINARY_SET].([]string); ok {
+				results[key] = &Attribute{
+					Type: TYPE_BINARY_SET,
+					Name: key,
+					SetValues: val,
+				}
 			}
 		} else {
 			fmt.Printf("type assertion to map[string] interface{} failed for : %s\n ", value)
