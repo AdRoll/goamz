@@ -29,6 +29,7 @@ type Region struct {
 	SQSEndpoint          string
 	IAMEndpoint          string
 	DynamoDBEndpoint     string
+	CloudWatchEndpoint   string
 }
 
 var USEast = Region{
@@ -43,6 +44,7 @@ var USEast = Region{
 	"https://sqs.us-east-1.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.us-east-1.amazonaws.com",
+	"https://monitoring.us-east-1.amazonaws.com",
 }
 
 var USWest = Region{
@@ -57,6 +59,7 @@ var USWest = Region{
 	"https://sqs.us-west-1.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.us-west-1.amazonaws.com",
+	"https://monitoring.us-west-1.amazonaws.com",
 }
 
 var USWest2 = Region{
@@ -71,6 +74,7 @@ var USWest2 = Region{
 	"https://sqs.us-west-2.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.us-west-2.amazonaws.com",
+	"https://monitoring.us-west-2.amazonaws.com",
 }
 
 var EUWest = Region{
@@ -85,6 +89,7 @@ var EUWest = Region{
 	"https://sqs.eu-west-1.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.eu-west-1.amazonaws.com",
+	"https://monitoring.eu-west-1.amazonaws.com",
 }
 
 var APSoutheast = Region{
@@ -99,6 +104,7 @@ var APSoutheast = Region{
 	"https://sqs.ap-southeast-1.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.ap-southeast-1.amazonaws.com",
+	"https://monitoring.ap-southeast-1.amazonaws.com",
 }
 
 var APSoutheast2 = Region{
@@ -113,6 +119,7 @@ var APSoutheast2 = Region{
 	"https://sqs.ap-southeast-2.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.ap-southeast-2.amazonaws.com",
+	"https://monitoring.ap-southeast-2.amazonaws.com",
 }
 
 var APNortheast = Region{
@@ -127,6 +134,7 @@ var APNortheast = Region{
 	"https://sqs.ap-northeast-1.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.ap-northeast-1.amazonaws.com",
+	"https://monitoring.ap-northeast-1.amazonaws.com",
 }
 
 var SAEast = Region{
@@ -141,6 +149,7 @@ var SAEast = Region{
 	"https://sqs.sa-east-1.amazonaws.com",
 	"https://iam.amazonaws.com",
 	"https://dynamodb.sa-east-1.amazonaws.com",
+	"https://monitoring.sa-east-1.amazonaws.com",
 }
 
 var Regions = map[string]Region{
@@ -156,6 +165,26 @@ var Regions = map[string]Region{
 
 type Auth struct {
 	AccessKey, SecretKey string
+}
+
+// ResponseMetadata
+type ResponseMetadata struct {
+	RequestId string // A unique ID for tracking the request
+}
+
+type BaseResponse struct {
+	ResponseMetadata ResponseMetadata
+}
+
+type AWSError struct {
+	Type    string
+	Code    string
+	Message string
+}
+
+type ErrorResponse struct {
+	Error     AWSError
+	RequestId string // A unique ID for tracking the request
 }
 
 var unreserved = make([]bool, 128)
