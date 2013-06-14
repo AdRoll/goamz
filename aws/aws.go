@@ -10,9 +10,26 @@
 package aws
 
 import (
+	"encoding/xml"
 	"errors"
+	"net/http"
+	"net/url"
 	"os"
+	"time"
 )
+
+// Defines the valid signers
+const (
+	V2Signature = iota
+	V4Signature = iota
+)
+
+// Defines the service endpoint and correct Signer implementation to use
+// to sign requests for this endpoint
+type ServiceInfo struct {
+	Endpoint string
+	Signer   uint
+}
 
 // Region defines the URLs where AWS services may be accessed.
 //
@@ -29,127 +46,7 @@ type Region struct {
 	SQSEndpoint          string
 	IAMEndpoint          string
 	DynamoDBEndpoint     string
-	CloudWatchEndpoint   string
-}
-
-var USEast = Region{
-	"us-east-1",
-	"https://ec2.us-east-1.amazonaws.com",
-	"https://s3.amazonaws.com",
-	"",
-	false,
-	false,
-	"https://sdb.amazonaws.com",
-	"https://sns.us-east-1.amazonaws.com",
-	"https://sqs.us-east-1.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.us-east-1.amazonaws.com",
-	"https://monitoring.us-east-1.amazonaws.com",
-}
-
-var USWest = Region{
-	"us-west-1",
-	"https://ec2.us-west-1.amazonaws.com",
-	"https://s3-us-west-1.amazonaws.com",
-	"",
-	true,
-	true,
-	"https://sdb.us-west-1.amazonaws.com",
-	"https://sns.us-west-1.amazonaws.com",
-	"https://sqs.us-west-1.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.us-west-1.amazonaws.com",
-	"https://monitoring.us-west-1.amazonaws.com",
-}
-
-var USWest2 = Region{
-	"us-west-2",
-	"https://ec2.us-west-2.amazonaws.com",
-	"https://s3-us-west-2.amazonaws.com",
-	"",
-	true,
-	true,
-	"https://sdb.us-west-2.amazonaws.com",
-	"https://sns.us-west-2.amazonaws.com",
-	"https://sqs.us-west-2.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.us-west-2.amazonaws.com",
-	"https://monitoring.us-west-2.amazonaws.com",
-}
-
-var EUWest = Region{
-	"eu-west-1",
-	"https://ec2.eu-west-1.amazonaws.com",
-	"https://s3-eu-west-1.amazonaws.com",
-	"",
-	true,
-	true,
-	"https://sdb.eu-west-1.amazonaws.com",
-	"https://sns.eu-west-1.amazonaws.com",
-	"https://sqs.eu-west-1.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.eu-west-1.amazonaws.com",
-	"https://monitoring.eu-west-1.amazonaws.com",
-}
-
-var APSoutheast = Region{
-	"ap-southeast-1",
-	"https://ec2.ap-southeast-1.amazonaws.com",
-	"https://s3-ap-southeast-1.amazonaws.com",
-	"",
-	true,
-	true,
-	"https://sdb.ap-southeast-1.amazonaws.com",
-	"https://sns.ap-southeast-1.amazonaws.com",
-	"https://sqs.ap-southeast-1.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.ap-southeast-1.amazonaws.com",
-	"https://monitoring.ap-southeast-1.amazonaws.com",
-}
-
-var APSoutheast2 = Region{
-	"ap-southeast-2",
-	"https://ec2.ap-southeast-2.amazonaws.com",
-	"https://s3-ap-southeast-2.amazonaws.com",
-	"",
-	true,
-	true,
-	"https://sdb.ap-southeast-2.amazonaws.com",
-	"https://sns.ap-southeast-2.amazonaws.com",
-	"https://sqs.ap-southeast-2.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.ap-southeast-2.amazonaws.com",
-	"https://monitoring.ap-southeast-2.amazonaws.com",
-}
-
-var APNortheast = Region{
-	"ap-northeast-1",
-	"https://ec2.ap-northeast-1.amazonaws.com",
-	"https://s3-ap-northeast-1.amazonaws.com",
-	"",
-	true,
-	true,
-	"https://sdb.ap-northeast-1.amazonaws.com",
-	"https://sns.ap-northeast-1.amazonaws.com",
-	"https://sqs.ap-northeast-1.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.ap-northeast-1.amazonaws.com",
-	"https://monitoring.ap-northeast-1.amazonaws.com",
-}
-
-var SAEast = Region{
-	"sa-east-1",
-	"https://ec2.sa-east-1.amazonaws.com",
-	"https://s3-sa-east-1.amazonaws.com",
-	"",
-	true,
-	true,
-	"https://sdb.sa-east-1.amazonaws.com",
-	"https://sns.sa-east-1.amazonaws.com",
-	"https://sqs.sa-east-1.amazonaws.com",
-	"https://iam.amazonaws.com",
-	"https://dynamodb.sa-east-1.amazonaws.com",
-	"https://monitoring.sa-east-1.amazonaws.com",
+	CloudWatchEndpoint   ServiceInfo
 }
 
 var Regions = map[string]Region{
@@ -161,6 +58,91 @@ var Regions = map[string]Region{
 	USWest.Name:       USWest,
 	USWest2.Name:      USWest2,
 	SAEast.Name:       SAEast,
+}
+
+// Designates a signer interface suitable for signing AWS requests, params
+// should be appropriately encoded for the request before signing.
+//
+// A signer should be initialized with Auth and the appropriate endpoint.
+type Signer interface {
+	Sign(method, path string, params map[string]string)
+}
+
+// An AWS Service interface with the API to query the AWS service
+//
+// Supplied as an easy way to mock out service calls during testing.
+type AWSService interface {
+	// Queries the AWS service at a given method/path with the params and
+	// returns an http.Response and error
+	Query(method, path string, params map[string]string) (*http.Response, error)
+	// Builds an error given an XML payload in the http.Response, can be used
+	// to process an error if the status code is not 200 for example.
+	BuildError(r *http.Response) error
+}
+
+// Implements a Server Query/Post API to easily query AWS services and build
+// errors when desired
+type Service struct {
+	service ServiceInfo
+	signer  Signer
+}
+
+// Create a new AWS server to handle making requests
+func NewService(auth Auth, service ServiceInfo) *Service {
+	var s Signer
+	if service.Signer == V2Signature {
+		s = &V2Signer{auth, service}
+	}
+	return &Service{signer: s}
+}
+
+func (s *Service) Query(method, path string, params map[string]string) (resp *http.Response, err error) {
+	params["Timestamp"] = time.Now().UTC().Format(time.RFC3339)
+	u, err := url.Parse(s.service.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path
+
+	s.signer.Sign(method, path, params)
+	if method == "GET" {
+		u.RawQuery = multimap(params).Encode()
+		resp, err = http.Get(u.String())
+	} else if method == "POST" {
+		resp, err = http.PostForm(u.String(), multimap(params))
+	}
+	return
+}
+
+func (s *Service) BuildError(r *http.Response) error {
+	errors := xmlErrors{}
+	xml.NewDecoder(r.Body).Decode(&errors)
+	var err Error
+	if len(errors.Errors) > 0 {
+		err = errors.Errors[0]
+	}
+	err.RequestId = errors.RequestId
+	err.StatusCode = r.StatusCode
+	if err.Message == "" {
+		err.Message = r.Status
+	}
+	return &err
+}
+
+type Error struct {
+	StatusCode int
+	Code       string
+	Message    string
+	RequestId  string
+}
+
+func (err *Error) Error() string {
+	return err.Message
+}
+
+type xmlErrors struct {
+	RequestId string
+	Errors    []Error `xml:"Errors>Error"`
 }
 
 type Auth struct {
@@ -196,6 +178,14 @@ func init() {
 	for _, c := range u {
 		unreserved[c] = true
 	}
+}
+
+func multimap(p map[string]string) url.Values {
+	q := make(url.Values, len(p))
+	for k, v := range p {
+		q[k] = []string{v}
+	}
+	return q
 }
 
 // EnvAuth creates an Auth based on environment information.
