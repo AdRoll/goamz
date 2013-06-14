@@ -15,16 +15,17 @@
 package cloudwatch
 
 import (
+	"encoding/xml"
 	"errors"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/feyeleanor/sets"
+	"strconv"
 	"time"
 )
 
 // The CloudWatch type encapsulates all the CloudWatch operations in a region.
 type CloudWatch struct {
-	aws.Auth
-	aws.Region
+	service   aws.AWSService
 	namespace string
 }
 
@@ -59,25 +60,6 @@ type Datapoint struct {
 	Unit        string
 }
 
-type Params map[string]string
-
-type RequestParams interface {
-	// All the params to include in the request
-	Params() Params
-	// All the params used to generate the request signature
-	SignedParams() Params
-}
-
-// ResponseMetadata
-type ResponseMetadata struct {
-	RequestId string  // A unique ID for tracking the request
-	BoxUsage  float64 // The measure of machine utilization for this request.
-}
-
-type AWSResponse struct {
-	ResponseMetadata ResponseMetadata
-}
-
 type GetMetricStatisticsRequest struct {
 	Dimensions []Dimension
 	EndTime    time.Time
@@ -88,14 +70,14 @@ type GetMetricStatisticsRequest struct {
 	Statistics []string
 }
 
-func (*GetMetricStatisticsRequest) Params() map[string]string {
-	p := make(map[string]string)
-	return p
-}
-
-type GetMetricStatisticsResult struct {
+type GetMatricStatisticResult struct {
 	Datapoints []Datapoint
 	Label      string
+}
+
+type GetMetricStatisticsResponse struct {
+	GetMatricStatisticResult
+	ResponseMetadata aws.ResponseMetadata
 }
 
 var attempts = aws.AttemptStrategy{
@@ -142,15 +124,36 @@ var validMetricStatistics = sets.SSet(
 )
 
 // Create a new CloudWatch object for a given namespace
-func New(auth aws.Auth, region aws.Region, namespace string) *CloudWatch {
-	return &CloudWatch{auth, region, namespace}
+func NewCloudWatch(auth aws.Auth, region aws.ServiceInfo, namespace string) *CloudWatch {
+	return &CloudWatch{
+		service:   aws.NewService(auth, region),
+		namespace: namespace,
+	}
+}
+
+func (c *CloudWatch) query(method, path string, params map[string]string, resp interface{}) error {
+	// Add basic Cloudwatch param
+	params["Version"] = "2010-08-01"
+	params["Namespace"] = c.namespace
+
+	r, err := c.service.Query(method, path, params)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+
+	if r.StatusCode != 200 {
+		return c.service.BuildError(r)
+	}
+	err = xml.NewDecoder(r.Body).Decode(resp)
+	return err
 }
 
 // Get statistics for specified metric
 //
 // If the arguments are invalid or the server returns an error, the error will
 // be set and the other values undefined.
-func (c *CloudWatch) GetMetricStatistics(req *GetMetricStatisticsRequest) (result *GetMetricStatisticsResult, err error) {
+func (c *CloudWatch) GetMetricStatistics(req *GetMetricStatisticsRequest) (result *GetMetricStatisticsResponse, err error) {
 	statisticsSet := sets.SSet(req.Statistics...)
 	// Kick out argument errors
 	switch {
@@ -173,6 +176,28 @@ func (c *CloudWatch) GetMetricStatistics(req *GetMetricStatisticsRequest) (resul
 		return
 	}
 
+	// Serialize all the params
+	params := aws.MakeParams("GetMetricStatistics")
+	params["EndTime"] = req.EndTime.UTC().Format(time.RFC3339)
+	params["StartTime"] = req.StartTime.UTC().Format(time.RFC3339)
+	params["MetricName"] = req.MetricName
+	params["Period"] = strconv.Itoa(req.Period)
+	if req.Unit != "" {
+		params["Unit"] = req.Unit
+	}
+
+	// Serialize the lists of data
+	for i, d := range req.Dimensions {
+		prefix := "Dimensions.member." + strconv.Itoa(i+1)
+		params[prefix+".Name"] = d.Name
+		params[prefix+".Value"] = d.Value
+	}
+	for i, d := range req.Statistics {
+		prefix := "Statistics.member." + strconv.Itoa(i+1)
+		params[prefix] = d
+	}
+
+	err = c.query("GET", "/", params, result)
 	return
 }
 
