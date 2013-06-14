@@ -87,6 +87,13 @@ type Service struct {
 	signer  Signer
 }
 
+// Create a base set of params for an action
+func MakeParams(action string) map[string]string {
+	params := make(map[string]string)
+	params["Action"] = action
+	return params
+}
+
 // Create a new AWS server to handle making requests
 func NewService(auth Auth, service ServiceInfo) *Service {
 	var s Signer
