@@ -12,6 +12,7 @@ package aws
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -35,18 +36,18 @@ type ServiceInfo struct {
 //
 // See http://goo.gl/d8BP1 for more details.
 type Region struct {
-	Name                 string // the canonical name of this region.
-	EC2Endpoint          string
-	S3Endpoint           string
-	S3BucketEndpoint     string // Not needed by AWS S3. Use ${bucket} for bucket name.
-	S3LocationConstraint bool   // true if this region requires a LocationConstraint declaration.
-	S3LowercaseBucket    bool   // true if the region requires bucket names to be lower case.
-	SDBEndpoint          string
-	SNSEndpoint          string
-	SQSEndpoint          string
-	IAMEndpoint          string
-	DynamoDBEndpoint     string
-	CloudWatchEndpoint   ServiceInfo
+	Name                   string // the canonical name of this region.
+	EC2Endpoint            string
+	S3Endpoint             string
+	S3BucketEndpoint       string // Not needed by AWS S3. Use ${bucket} for bucket name.
+	S3LocationConstraint   bool   // true if this region requires a LocationConstraint declaration.
+	S3LowercaseBucket      bool   // true if the region requires bucket names to be lower case.
+	SDBEndpoint            string
+	SNSEndpoint            string
+	SQSEndpoint            string
+	IAMEndpoint            string
+	DynamoDBEndpoint       string
+	CloudWatchServicepoint ServiceInfo
 }
 
 var Regions = map[string]Region{
@@ -100,7 +101,7 @@ func NewService(auth Auth, service ServiceInfo) *Service {
 	if service.Signer == V2Signature {
 		s = &V2Signer{auth, service}
 	}
-	return &Service{signer: s}
+	return &Service{service: service, signer: s}
 }
 
 func (s *Service) Query(method, path string, params map[string]string) (resp *http.Response, err error) {
@@ -138,18 +139,21 @@ func (s *Service) BuildError(r *http.Response) error {
 
 type Error struct {
 	StatusCode int
+	Type       string
 	Code       string
 	Message    string
 	RequestId  string
 }
 
 func (err *Error) Error() string {
-	return err.Message
+	return fmt.Sprintf("Type: %s, Code: %s, Message: %s",
+		err.Type, err.Code, err.Message,
+	)
 }
 
 type xmlErrors struct {
 	RequestId string
-	Errors    []Error `xml:"Errors>Error"`
+	Errors    []Error `xml:"Error"`
 }
 
 type Auth struct {
