@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"net/url"
 	"sort"
 	"strings"
 )
@@ -11,9 +12,18 @@ import (
 type V2Signer struct {
 	auth    Auth
 	service ServiceInfo
+	host    string
 }
 
 var b64 = base64.StdEncoding
+
+func NewV2Signer(auth Auth, service ServiceInfo) (*V2Signer, error) {
+	u, err := url.Parse(service.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+	return &V2Signer{auth: auth, service: service, host: u.Host}, nil
+}
 
 func (s *V2Signer) Sign(method, path string, params map[string]string) {
 	params["AWSAccessKeyId"] = s.auth.AccessKey
@@ -33,7 +43,7 @@ func (s *V2Signer) Sign(method, path string, params map[string]string) {
 		sarray = append(sarray, Encode(k)+"="+Encode(params[k]))
 	}
 	joined := strings.Join(sarray, "&")
-	payload := method + "\n" + s.service.Endpoint + "\n" + path + "\n" + joined
+	payload := method + "\n" + s.host + "\n" + path + "\n" + joined
 	hash := hmac.New(sha256.New, []byte(s.auth.SecretKey))
 	hash.Write([]byte(payload))
 	signature := make([]byte, b64.EncodedLen(hash.Size()))

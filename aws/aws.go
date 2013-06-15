@@ -96,12 +96,16 @@ func MakeParams(action string) map[string]string {
 }
 
 // Create a new AWS server to handle making requests
-func NewService(auth Auth, service ServiceInfo) *Service {
-	var s Signer
+func NewService(auth Auth, service ServiceInfo) (s *Service, err error) {
+	var signer Signer
 	if service.Signer == V2Signature {
-		s = &V2Signer{auth, service}
+		signer, err = NewV2Signer(auth, service)
 	}
-	return &Service{service: service, signer: s}
+	if err != nil {
+		return
+	}
+	s = &Service{service: service, signer: signer}
+	return
 }
 
 func (s *Service) Query(method, path string, params map[string]string) (resp *http.Response, err error) {
