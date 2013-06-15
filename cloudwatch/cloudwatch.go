@@ -17,6 +17,7 @@ package cloudwatch
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/feyeleanor/sets"
 	"strconv"
@@ -44,7 +45,7 @@ type StatisticSet struct {
 type MetricDatum struct {
 	Dimensions      []Dimension
 	MetricName      string
-	StatisticValues StatisticSet
+	StatisticValues []StatisticSet
 	Timestamp       time.Time
 	Unit            string
 	Value           float64
@@ -205,6 +206,39 @@ func (c *CloudWatch) GetMetricStatistics(req *GetMetricStatisticsRequest) (resul
 	return
 }
 
-func (c *CloudWatch) PutMetricData(metrics []MetricDatum) {
-
+func (c *CloudWatch) PutMetricData(metrics []MetricDatum) (result *aws.BaseResponse, err error) {
+	// Serialize the params
+	params := aws.MakeParams("PutMetricData")
+	for i, metric := range metrics {
+		prefix := "MetricData.member." + strconv.Itoa(i+1)
+		if metric.MetricName == "" {
+			err = fmt.Errorf("No metric name supplied for metric: %d", i)
+			return
+		}
+		params[prefix+".MetricName"] = metric.MetricName
+		if metric.Unit != "" {
+			params[prefix+".Unit"] = metric.Unit
+		}
+		if metric.Value != 0 {
+			params[prefix+".Value"] = strconv.FormatFloat(metric.Value, 'E', 10, 64)
+		}
+		if !metric.Timestamp.IsZero() {
+			params[prefix+".Timestamp"] = metric.Timestamp.UTC().Format(time.RFC3339)
+		}
+		for j, dim := range metric.Dimensions {
+			dimprefix := prefix + "Dimensions.member." + strconv.Itoa(j+1)
+			params[dimprefix+".Name"] = dim.Name
+			params[dimprefix+".Value"] = dim.Value
+		}
+		for j, stat := range metric.StatisticValues {
+			statprefix := prefix + "StatisticValues.member." + strconv.Itoa(j+1)
+			params[statprefix+".Maximum"] = strconv.FormatFloat(stat.Maximum, 'E', 10, 64)
+			params[statprefix+".Minimum"] = strconv.FormatFloat(stat.Minimum, 'E', 10, 64)
+			params[statprefix+".SampleCount"] = strconv.FormatFloat(stat.SampleCount, 'E', 10, 64)
+			params[statprefix+".Sum"] = strconv.FormatFloat(stat.Sum, 'E', 10, 64)
+		}
+	}
+	result = new(aws.BaseResponse)
+	err = c.query("POST", "/", params, result)
+	return
 }
