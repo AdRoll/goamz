@@ -70,14 +70,14 @@ type GetMetricStatisticsRequest struct {
 	Statistics []string
 }
 
-type GetMatricStatisticResult struct {
-	Datapoints []Datapoint
+type GetMetricStatisticsResult struct {
+	Datapoints []Datapoint `xml:"Datapoints>member"`
 	Label      string
 }
 
 type GetMetricStatisticsResponse struct {
-	GetMatricStatisticResult
-	ResponseMetadata aws.ResponseMetadata
+	GetMetricStatisticsResult GetMetricStatisticsResult
+	ResponseMetadata          aws.ResponseMetadata
 }
 
 var attempts = aws.AttemptStrategy{
@@ -124,11 +124,15 @@ var validMetricStatistics = sets.SSet(
 )
 
 // Create a new CloudWatch object for a given namespace
-func NewCloudWatch(auth aws.Auth, region aws.ServiceInfo, namespace string) *CloudWatch {
-	return &CloudWatch{
-		service:   aws.NewService(auth, region),
-		namespace: namespace,
+func NewCloudWatch(auth aws.Auth, region aws.ServiceInfo, namespace string) (*CloudWatch, error) {
+	service, err := aws.NewService(auth, region)
+	if err != nil {
+		return nil, err
 	}
+	return &CloudWatch{
+		service:   service,
+		namespace: namespace,
+	}, nil
 }
 
 func (c *CloudWatch) query(method, path string, params map[string]string, resp interface{}) error {
@@ -196,7 +200,7 @@ func (c *CloudWatch) GetMetricStatistics(req *GetMetricStatisticsRequest) (resul
 		prefix := "Statistics.member." + strconv.Itoa(i+1)
 		params[prefix] = d
 	}
-
+	result = new(GetMetricStatisticsResponse)
 	err = c.query("GET", "/", params, result)
 	return
 }
