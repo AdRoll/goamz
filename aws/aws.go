@@ -127,18 +127,21 @@ func (s *Service) Query(method, path string, params map[string]string) (resp *ht
 }
 
 func (s *Service) BuildError(r *http.Response) error {
-	errors := xmlErrors{}
+	errors := ErrorResponse{}
 	xml.NewDecoder(r.Body).Decode(&errors)
 	var err Error
-	if len(errors.Errors) > 0 {
-		err = errors.Errors[0]
-	}
+	err = errors.Errors
 	err.RequestId = errors.RequestId
 	err.StatusCode = r.StatusCode
 	if err.Message == "" {
 		err.Message = r.Status
 	}
 	return &err
+}
+
+type ErrorResponse struct {
+	Errors    Error  `xml:"Error"`
+	RequestId string // A unique ID for tracking the request
 }
 
 type Error struct {
@@ -155,11 +158,6 @@ func (err *Error) Error() string {
 	)
 }
 
-type xmlErrors struct {
-	RequestId string
-	Errors    []Error `xml:"Error"`
-}
-
 type Auth struct {
 	AccessKey, SecretKey string
 }
@@ -171,17 +169,6 @@ type ResponseMetadata struct {
 
 type BaseResponse struct {
 	ResponseMetadata ResponseMetadata
-}
-
-type AWSError struct {
-	Type    string
-	Code    string
-	Message string
-}
-
-type ErrorResponse struct {
-	Error     AWSError
-	RequestId string // A unique ID for tracking the request
 }
 
 var unreserved = make([]bool, 128)
