@@ -26,7 +26,7 @@ import (
 
 // The CloudWatch type encapsulates all the CloudWatch operations in a region.
 type CloudWatch struct {
-	service   aws.AWSService
+	Service   aws.AWSService
 	namespace string
 }
 
@@ -131,7 +131,7 @@ func NewCloudWatch(auth aws.Auth, region aws.ServiceInfo, namespace string) (*Cl
 		return nil, err
 	}
 	return &CloudWatch{
-		service:   service,
+		Service:   service,
 		namespace: namespace,
 	}, nil
 }
@@ -141,14 +141,14 @@ func (c *CloudWatch) query(method, path string, params map[string]string, resp i
 	params["Version"] = "2010-08-01"
 	params["Namespace"] = c.namespace
 
-	r, err := c.service.Query(method, path, params)
+	r, err := c.Service.Query(method, path, params)
 	if err != nil {
 		return err
 	}
 	defer r.Body.Close()
 
 	if r.StatusCode != 200 {
-		return c.service.BuildError(r)
+		return c.Service.BuildError(r)
 	}
 	err = xml.NewDecoder(r.Body).Decode(resp)
 	return err
