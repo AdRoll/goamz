@@ -92,7 +92,7 @@ func(q *Query) ConsistentRead(c bool){
 	}
 }
 
-func (q *Query) AddLimit(limit int) {
+func (q *Query) AddLimit(limit int64) {
 	b := q.buffer
 
 	addComma(b)
