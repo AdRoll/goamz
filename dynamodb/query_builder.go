@@ -91,22 +91,6 @@ func(q *Query) ConsistentRead(c bool){
 		b.WriteString("true")
 	}
 }
-
-func (q *Query) AddLimit(limit int64) {
-	b := q.buffer
-
-	addComma(b)
-
-	b.WriteString(keyValue("Limit", strconv.FormatInt(limit, 10) ))
-}
-
-func (q *Query) AddIndexName(indexName string) {
-	b := q.buffer
-
-	addComma(b)
-	b.WriteString(keyValue("IndexName", indexName))
-}
-
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
 	b := q.buffer
 	addComma(b)

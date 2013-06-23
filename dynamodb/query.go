@@ -6,31 +6,10 @@ import (
   simplejson "github.com/bitly/go-simplejson"
 )
 
-func (t *Table) Query(hashKey string, attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
-	q := NewQuery(t) 
-  b := q.buffer
-  k := t.Key
-
-  addComma(b)
-
-  b.WriteString(quote("Key"))
-  b.WriteString(":")
-
-  b.WriteString("{")
-  b.WriteString(quote("HashKeyElement"))
-  b.WriteString(":")
-
-  b.WriteString("{")
-  b.WriteString(quote(k.KeyAttribute.Type))
-  b.WriteString(":")
-  b.WriteString(quote(hashKey)) 
-
-  b.WriteString("}")
-
-  b.WriteString("}")
-
+func (t *Table) Query(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
+	q := NewQuery(t)
   q.AddKeyConditions(attributeComparisons)
-	jsonResponse, err := t.Server.queryServer(target("Query"), q)
+	jsonResponse, err := t.Server.queryServer("DynamoDB_20120810.Query"), q)
 	if err != nil { return nil, err	}
 
 	json, err := simplejson.NewJson(jsonResponse)
