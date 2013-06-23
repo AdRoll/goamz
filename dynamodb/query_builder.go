@@ -3,6 +3,7 @@ package dynamodb
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	)
 
 type Query struct {
@@ -89,6 +90,46 @@ func(q *Query) ConsistentRead(c bool){
 		b.WriteString(":")
 		b.WriteString("true")
 	}
+}
+
+func (q *Query) AddLimit(limit int) {
+	b := q.buffer
+
+	addComma(b)
+
+	buffer.WriteString(keyValue("Limit", strconv.FormatInt(limit, 10) ))
+}
+
+func (q *Query) addLocalSecondaryIndex(i *LocalSecondaryIndexT) {
+	q.buffer.WriteString(keyValue("IndexName", i.IndexName))
+}
+
+func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
+	b := q.buffer
+	addComma(b)
+	b.WriteString("\"KeyConditions\":{")
+	for i, c := range comparisons {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		
+		b.WriteString(quote(c.AttributeName))
+		b.WriteString(":{\"AttributeValueList\":[")
+    for j, attributeValue := range c.AttributeValueList {
+  		if j > 0 {
+  			b.WriteString(",")
+  		}
+      b.WriteString("{")
+      b.WriteString(quote(attributeValue.Type))
+      b.WriteString(":")
+      b.WriteString(quote(attributeValue.Value))
+      b.WriteString("}")
+    }
+    b.WriteString("], \"ComparisonOperator\":")
+		b.WriteString(quote(c.ComparisonOperator))
+		b.WriteString("}")
+	}
+	b.WriteString("}")
 }
 
 /*
