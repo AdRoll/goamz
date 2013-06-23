@@ -7,7 +7,8 @@ import (
 )
 
 func (t *Table) Query(hashKey string, attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
-	q := NewQuery(t)
+	q := NewQuery(t) 
+  b := q.buffer
   k := t.Key
 
   addComma(b)
@@ -27,7 +28,7 @@ func (t *Table) Query(hashKey string, attributeComparisons []AttributeComparison
   b.WriteString("}")
 
   b.WriteString("}")
-  
+
   q.AddKeyConditions(attributeComparisons)
 	jsonResponse, err := t.Server.queryServer(target("Query"), q)
 	if err != nil { return nil, err	}
