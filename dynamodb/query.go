@@ -6,10 +6,8 @@ import (
   simplejson "github.com/bitly/go-simplejson"
 )
 
-func (t *Table) Query(indexName string, attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
+func (t *Table) Query(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
 	q := NewQuery(t)
-  q.ConsistentRead(true)
-  q.AddIndexName(indexName)
   q.AddKeyConditions(attributeComparisons)
 	jsonResponse, err := t.Server.queryServer(target("Query"), q)
 	if err != nil { return nil, err	}
