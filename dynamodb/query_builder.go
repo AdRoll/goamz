@@ -100,11 +100,11 @@ func (q *Query) AddLimit(limit int64) {
 	b.WriteString(keyValue("Limit", strconv.FormatInt(limit, 10) ))
 }
 
-func (q *Query) addLocalSecondaryIndex(i *LocalSecondaryIndexT) {
+func (q *Query) AddIndexName(indexName string) {
 	b := q.buffer
 
 	addComma(b)
-	b.WriteString(keyValue("IndexName", i.IndexName))
+	b.WriteString(keyValue("IndexName", indexName))
 }
 
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
