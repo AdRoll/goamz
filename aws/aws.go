@@ -28,6 +28,7 @@ type Region struct {
 	SNSEndpoint          string
 	SQSEndpoint          string
 	IAMEndpoint          string
+  ELBEndpoint          string
 	DynamoDBEndpoint     string
 }
 
@@ -42,6 +43,7 @@ var USEast = Region{
 	"https://sns.us-east-1.amazonaws.com",
 	"https://sqs.us-east-1.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.us-east-1.amazonaws.com",
 }
 
@@ -56,6 +58,7 @@ var USWest = Region{
 	"https://sns.us-west-1.amazonaws.com",
 	"https://sqs.us-west-1.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.us-west-1.amazonaws.com",
 }
 
@@ -70,6 +73,7 @@ var USWest2 = Region{
 	"https://sns.us-west-2.amazonaws.com",
 	"https://sqs.us-west-2.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.us-west-2.amazonaws.com",
 }
 
@@ -84,6 +88,7 @@ var EUWest = Region{
 	"https://sns.eu-west-1.amazonaws.com",
 	"https://sqs.eu-west-1.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.eu-west-1.amazonaws.com",
 }
 
@@ -98,6 +103,7 @@ var APSoutheast = Region{
 	"https://sns.ap-southeast-1.amazonaws.com",
 	"https://sqs.ap-southeast-1.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.ap-southeast-1.amazonaws.com",
 }
 
@@ -112,6 +118,7 @@ var APSoutheast2 = Region{
 	"https://sns.ap-southeast-2.amazonaws.com",
 	"https://sqs.ap-southeast-2.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.ap-southeast-2.amazonaws.com",
 }
 
@@ -126,6 +133,7 @@ var APNortheast = Region{
 	"https://sns.ap-northeast-1.amazonaws.com",
 	"https://sqs.ap-northeast-1.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.ap-northeast-1.amazonaws.com",
 }
 
@@ -140,6 +148,7 @@ var SAEast = Region{
 	"https://sns.sa-east-1.amazonaws.com",
 	"https://sqs.sa-east-1.amazonaws.com",
 	"https://iam.amazonaws.com",
+  "https://elasticloadbalancing.amazonaws.com",
 	"https://dynamodb.sa-east-1.amazonaws.com",
 }
 
