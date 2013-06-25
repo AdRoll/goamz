@@ -9,7 +9,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"github.com/crowdmob/goamz/ec2"
+	"github.com/hailocab/goamz/ec2"
 	"net"
 	"net/http"
 	"net/url"

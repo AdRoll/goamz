@@ -1,7 +1,7 @@
 package aws_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
+	"github.com/hailocab/goamz/aws"
 	. "launchpad.net/gocheck"
 	"os"
 	"strings"

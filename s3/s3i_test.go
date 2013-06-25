@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/s3"
-	"github.com/crowdmob/goamz/testutil"
+	"github.com/hailocab/goamz/aws"
+	"github.com/hailocab/goamz/s3"
+	"github.com/hailocab/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"net"
 	"sort"

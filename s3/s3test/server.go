@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"github.com/crowdmob/goamz/s3"
+	"github.com/hailocab/goamz/s3"
 	"log"
 	"net"
 	"net/http"
