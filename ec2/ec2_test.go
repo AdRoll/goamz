@@ -33,7 +33,7 @@ func (s *S) TearDownTest(c *C) {
 func (s *S) TestRunInstancesErrorDump(c *C) {
 	testServer.Response(400, nil, ErrorDump)
 
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		ImageId:      "ami-a6f504cf", // Ubuntu Maverick, i386, instance store
 		InstanceType: "t1.micro",     // Doesn't work with micro, results in 400.
 	}
@@ -57,7 +57,7 @@ func (s *S) TestRunInstancesErrorDump(c *C) {
 
 func (s *S) TestRunInstancesErrorWithoutXML(c *C) {
 	testServer.Response(500, nil, "")
-	options := ec2.RunInstances{ImageId: "image-id"}
+	options := ec2.RunInstancesOptions{ImageId: "image-id"}
 
 	resp, err := s.ec2.RunInstances(&options)
 
@@ -77,7 +77,7 @@ func (s *S) TestRunInstancesErrorWithoutXML(c *C) {
 func (s *S) TestRunInstancesExample(c *C) {
 	testServer.Response(200, nil, RunInstancesExample)
 
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		KeyName:               "my-keys",
 		ImageId:               "image-id",
 		InstanceType:          "inst-type",
