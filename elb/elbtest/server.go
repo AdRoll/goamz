@@ -4,9 +4,9 @@
 package elbtest
 
 import (
+	"../elb"
 	"encoding/xml"
 	"fmt"
-	"../elb"
 	"net"
 	"net/http"
 	"net/url"
