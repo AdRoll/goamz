@@ -1,14 +1,80 @@
 package dynamodb
 
-import simplejson "github.com/bitly/go-simplejson"
+import simplejson "github.com/ld9999999999/go-simplejson"
 import (
 	"errors"
 	"fmt"
 )
 
-func (t *Table) GetItem(hashKey string, rangeKey string) (map[string]*Attribute, error) {
+type BatchGetItem struct {
+	Server  *Server
+	Keys 	map[*Table][]Key
+}
+
+func (t *Table) BatchGetItems(keys []Key) (*BatchGetItem, error) {
+	batchGetItem := &BatchGetItem{t.Server, make(map[*Table][]Key)}
+
+	batchGetItem.Keys[t] = keys
+	return batchGetItem,  nil
+}
+
+func (batchGetItem *BatchGetItem) AddTable(t *Table, keys *[]Key) {
+	batchGetItem.Keys[t] = *keys
+}
+
+func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute, error) {
+	q := NewEmptyQuery()
+	q.AddRequestItems(batchGetItem.Keys);
+
+	jsonResponse, err := batchGetItem.Server.queryServer("DynamoDB_20120810.BatchGetItem", q)
+	if err != nil {
+		return nil, err
+	}
+
+	json, err := simplejson.NewJson(jsonResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(map[string][]map[string]*Attribute)		
+
+
+	tables, err := json.Get("Responses").Map()
+	if err != nil {
+		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+		return nil, errors.New(message)
+	}
+
+	for table, entries := range tables {
+		var tableResult []map[string]*Attribute
+
+		jsonEntriesArray, err := simplejson.FromInterface(entries).Array()
+		if err != nil {
+			message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+			return nil, errors.New(message)
+		}
+
+		for _, entry := range jsonEntriesArray {
+			item, err := simplejson.FromInterface(entry).Map()	
+			if err != nil {
+				message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+				return nil, errors.New(message)
+			}
+
+			unmarshalledItem := parseAttributes(item)
+			tableResult = append(tableResult, unmarshalledItem)
+		}
+
+		results[table] = tableResult
+	}
+
+	return results, nil
+}
+
+func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 	q := NewQuery(t)
-	q.AddKey(t, hashKey, rangeKey)
+	q.AddKey(t, key)
 
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
 
@@ -68,14 +134,14 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	return true, nil
 }
 
-func (t *Table) AddItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
+func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
 
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
 	}
 
 	q := NewQuery(t)
-	q.AddKey(t, hashKey, rangeKey)
+	q.AddKey(t, key)
 	q.AddUpdates(attributes, "ADD")
 
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)

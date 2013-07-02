@@ -28,7 +28,10 @@ const (
   COMPARISON_BETWEEN                  = "BETWEEN"
 )
 
-
+type Key struct {
+  hashKey             string
+  rangeKey            string
+}
 
 type PrimaryKey struct {
   KeyAttribute        *Attribute

@@ -24,14 +24,20 @@ func NewQuery(t *Table) *Query {
 
 // This way of specifing the key is used when doing a Get.
 // If rangeKey is "", it is assumed to not want to be used
-func (q *Query) AddKey(t *Table, hashKey string, rangeKey string) {
+func (q *Query) AddKey(t *Table, key *Key) {
 	b := q.buffer
-	k := t.Key
 
 	addComma(b)
 
 	b.WriteString(quote("Key"))
 	b.WriteString(":")
+
+	q.addKeyAttributes(t, key)
+}
+
+func (q *Query) addKeyAttributes(t *Table, key *Key) {
+	b := q.buffer
+	k := t.Key
 
 	b.WriteString("{")
 	b.WriteString(quote("HashKeyElement"))
@@ -40,7 +46,7 @@ func (q *Query) AddKey(t *Table, hashKey string, rangeKey string) {
 	b.WriteString("{")
 	b.WriteString(quote(k.KeyAttribute.Type))
 	b.WriteString(":")
-	b.WriteString(quote(hashKey))	
+	b.WriteString(quote(key.hashKey))	
 
 	b.WriteString("}")
 	
@@ -52,7 +58,7 @@ func (q *Query) AddKey(t *Table, hashKey string, rangeKey string) {
 		b.WriteString("{")
 		b.WriteString(quote(k.RangeAttribute.Type))
 		b.WriteString(":")
-		b.WriteString(quote(rangeKey))
+		b.WriteString(quote(key.rangeKey))
 		b.WriteString("}")
 	}
 
@@ -91,32 +97,54 @@ func(q *Query) ConsistentRead(c bool){
 		b.WriteString("true")
 	}
 }
+
+func (q *Query) AddRequestItems(tableKeys map[*Table][]Key) {
+	b := q.buffer
+	
+	b.WriteString("{")
+	b.WriteString(quote("RequestItems"))
+	b.WriteString(":")
+	b.WriteString("{")
+
+	for table, keys := range tableKeys {
+		b.WriteString(quote(table.Name))
+		b.WriteString(":")
+		b.WriteString("{")
+
+		b.WriteString(quote("Keys"))
+		b.WriteString(":")
+		b.WriteString("{")
+		b.WriteString("[")
+		for _, key := range keys {
+			q.addKeyAttributes(table, &key)
+		}
+		b.WriteString("]")
+		b.WriteString("}")
+
+		b.WriteString("}")
+	}
+
+	b.WriteString("}")
+
+}
+
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
 	b := q.buffer
 	addComma(b)
 	b.WriteString("\"KeyConditions\":{")
-	for i, c := range comparisons {
-		if i > 0 {
-			b.WriteString(",")
-		}
-		
-		b.WriteString(quote(c.AttributeName))
-		b.WriteString(":{\"AttributeValueList\":[")
-    for j, attributeValue := range c.AttributeValueList {
-  		if j > 0 {
-  			b.WriteString(",")
-  		}
-      b.WriteString("{")
-      b.WriteString(quote(attributeValue.Type))
-      b.WriteString(":")
-      b.WriteString(quote(attributeValue.Value))
-      b.WriteString("}")
-    }
-    b.WriteString("], \"ComparisonOperator\":")
-		b.WriteString(quote(c.ComparisonOperator))
-		b.WriteString("}")
-	}
+	q.addComparisons(comparisons)
 	b.WriteString("}")
+}
+
+func (q *Query) AddLimit(limit int64) {
+	b := q.buffer
+	addComma(b)
+	q.buffer.WriteString(keyValue("Limit", strconv.FormatInt(limit, 10)))
+}
+func (q *Query) AddSelect(value string) {
+	b := q.buffer
+	addComma(b)
+	q.buffer.WriteString(keyValue("Select", value))
 }
 
 /*
@@ -128,6 +156,12 @@ func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
 	b := q.buffer
 	addComma(b)
 	b.WriteString("\"ScanFilter\":{")
+	q.addComparisons(comparisons)
+	b.WriteString("}")
+}
+
+func (q *Query) addComparisons(comparisons []AttributeComparison) {
+	b := q.buffer
 	for i, c := range comparisons {
 		if i > 0 {
 			b.WriteString(",")
@@ -135,21 +169,20 @@ func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
 		
 		b.WriteString(quote(c.AttributeName))
 		b.WriteString(":{\"AttributeValueList\":[")
-    for j, attributeValue := range c.AttributeValueList {
-  		if j > 0 {
-  			b.WriteString(",")
-  		}
-      b.WriteString("{")
-      b.WriteString(quote(attributeValue.Type))
-      b.WriteString(":")
-      b.WriteString(quote(attributeValue.Value))
-      b.WriteString("}")
-    }
-    b.WriteString("], \"ComparisonOperator\":")
+	    for j, attributeValue := range c.AttributeValueList {
+	  		if j > 0 {
+	  			b.WriteString(",")
+	  		}
+	      b.WriteString("{")
+	      b.WriteString(quote(attributeValue.Type))
+	      b.WriteString(":")
+	      b.WriteString(quote(attributeValue.Value))
+	      b.WriteString("}")
+    	}
+    	b.WriteString("], \"ComparisonOperator\":")
 		b.WriteString(quote(c.ComparisonOperator))
 		b.WriteString("}")
 	}
-	b.WriteString("}")
 }
 
 
