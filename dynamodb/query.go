@@ -19,7 +19,7 @@ func (t *Table) LimitedQuery(attributeComparisons []AttributeComparison, limit i
   	return runQuery(q, t)
 }
 
-func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int, error) {
+func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, error) {
 	q := NewQuery(t)
   	q.AddKeyConditions(attributeComparisons)
   	q.AddSelect("COUNT")
@@ -28,7 +28,7 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int, err
 	json, err := simplejson.NewJson(jsonResponse)
 	if err != nil { return 0, err	}
 
-  	itemCount, err := json.Get("Count").Int()
+  	itemCount, err := json.Get("Count").Int64()
 	if err != nil { return 0, err	}
 
 	return itemCount, nil
