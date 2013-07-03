@@ -1,6 +1,6 @@
 package dynamodb
 
-import simplejson "github.com/ld9999999999/go-simplejson"
+import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
 	"fmt"
@@ -11,15 +11,16 @@ type BatchGetItem struct {
 	Keys 	map[*Table][]Key
 }
 
-func (t *Table) BatchGetItems(keys []Key) (*BatchGetItem, error) {
+func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
 	batchGetItem := &BatchGetItem{t.Server, make(map[*Table][]Key)}
 
 	batchGetItem.Keys[t] = keys
-	return batchGetItem,  nil
+	return batchGetItem
 }
 
-func (batchGetItem *BatchGetItem) AddTable(t *Table, keys *[]Key) {
+func (batchGetItem *BatchGetItem) AddTable(t *Table, keys *[]Key) *BatchGetItem {
 	batchGetItem.Keys[t] = *keys
+	return batchGetItem
 }
 
 func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute, error) {
@@ -49,15 +50,15 @@ func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute,
 	for table, entries := range tables {
 		var tableResult []map[string]*Attribute
 
-		jsonEntriesArray, err := simplejson.FromInterface(entries).Array()
-		if err != nil {
+		jsonEntriesArray, ok := entries.([]interface{})
+		if !ok {
 			message := fmt.Sprintf("Unexpected response %s", jsonResponse)
 			return nil, errors.New(message)
 		}
 
 		for _, entry := range jsonEntriesArray {
-			item, err := simplejson.FromInterface(entry).Map()	
-			if err != nil {
+			item, ok := entry.(map[string]interface{})
+			if !ok {
 				message := fmt.Sprintf("Unexpected response %s", jsonResponse)
 				return nil, errors.New(message)
 			}

@@ -26,27 +26,21 @@ func NewQuery(t *Table) *Query {
 // If rangeKey is "", it is assumed to not want to be used
 func (q *Query) AddKey(t *Table, key *Key) {
 	b := q.buffer
+	k := t.Key
 
 	addComma(b)
 
 	b.WriteString(quote("Key"))
 	b.WriteString(":")
 
-	q.addKeyAttributes(t, key)
-}
-
-func (q *Query) addKeyAttributes(t *Table, key *Key) {
-	b := q.buffer
-	k := t.Key
-
 	b.WriteString("{")
-	b.WriteString(quote("HashKeyElement"))
+	b.WriteString(quote("HashKeyElement")) // old api
 	b.WriteString(":")
 
 	b.WriteString("{")
 	b.WriteString(quote(k.KeyAttribute.Type))
 	b.WriteString(":")
-	b.WriteString(quote(key.hashKey))	
+	b.WriteString(quote(key.HashKey))	
 
 	b.WriteString("}")
 	
@@ -58,7 +52,37 @@ func (q *Query) addKeyAttributes(t *Table, key *Key) {
 		b.WriteString("{")
 		b.WriteString(quote(k.RangeAttribute.Type))
 		b.WriteString(":")
-		b.WriteString(quote(key.rangeKey))
+		b.WriteString(quote(key.RangeKey))
+		b.WriteString("}")
+	}
+
+	b.WriteString("}")
+}
+
+func (q *Query) addKeyAttributes(t *Table, key *Key) {
+	b := q.buffer
+	k := t.Key
+
+	b.WriteString("{")
+	b.WriteString(quote(k.KeyAttribute.Name))
+	b.WriteString(":")
+
+	b.WriteString("{")
+	b.WriteString(quote(k.KeyAttribute.Type))
+	b.WriteString(":")
+	b.WriteString(quote(key.HashKey))	
+
+	b.WriteString("}")
+	
+	if k.HasRange() {
+		b.WriteString(",")
+		b.WriteString(quote(k.RangeAttribute.Name))
+		b.WriteString(":")
+
+		b.WriteString("{")
+		b.WriteString(quote(k.RangeAttribute.Type))
+		b.WriteString(":")
+		b.WriteString(quote(key.RangeKey))
 		b.WriteString("}")
 	}
 
@@ -101,31 +125,36 @@ func(q *Query) ConsistentRead(c bool){
 func (q *Query) AddRequestItems(tableKeys map[*Table][]Key) {
 	b := q.buffer
 	
-	b.WriteString("{")
 	b.WriteString(quote("RequestItems"))
 	b.WriteString(":")
 	b.WriteString("{")
 
-	for table, keys := range tableKeys {
+	firstItem := true
+	for table, keys := range tableKeys {		
+		if !firstItem {
+			b.WriteString(",")
+		} else {
+			firstItem = false
+		}
+
 		b.WriteString(quote(table.Name))
 		b.WriteString(":")
 		b.WriteString("{")
 
 		b.WriteString(quote("Keys"))
 		b.WriteString(":")
-		b.WriteString("{")
 		b.WriteString("[")
-		for _, key := range keys {
+		for index, key := range keys {		
+			if index > 0 {
+				b.WriteString(",")
+			}
 			q.addKeyAttributes(table, &key)
 		}
 		b.WriteString("]")
-		b.WriteString("}")
 
 		b.WriteString("}")
 	}
-
 	b.WriteString("}")
-
 }
 
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
