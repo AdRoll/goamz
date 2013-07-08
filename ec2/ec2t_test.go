@@ -61,7 +61,7 @@ func (s *LocalServerSuite) TestUserData(c *C) {
 	for i := range data {
 		data[i] = byte(i)
 	}
-	inst, err := s.ec2.RunInstances(&ec2.RunInstances{
+	inst, err := s.ec2.RunInstances(&ec2.RunInstancesOptions{
 		ImageId:      imageId,
 		InstanceType: "t1.micro",
 		UserData:     data,
@@ -290,7 +290,7 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 	defer s.ec2.DeleteSecurityGroup(group2)
 
 	insts := make([]*ec2.Instance, 3)
-	inst, err := s.ec2.RunInstances(&ec2.RunInstances{
+	inst, err := s.ec2.RunInstances(&ec2.RunInstancesOptions{
 		MinCount:       2,
 		ImageId:        imageId,
 		InstanceType:   "t1.micro",
@@ -302,7 +302,7 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 	defer terminateInstances(c, s.ec2, insts)
 
 	imageId2 := "ami-e358958a" // Natty server, i386, EBS store
-	inst, err = s.ec2.RunInstances(&ec2.RunInstances{
+	inst, err = s.ec2.RunInstances(&ec2.RunInstancesOptions{
 		ImageId:        imageId2,
 		InstanceType:   "t1.micro",
 		SecurityGroups: []ec2.SecurityGroup{group2},

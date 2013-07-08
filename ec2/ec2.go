@@ -192,7 +192,7 @@ func addParamsList(params map[string]string, label string, ids []string) {
 // The RunInstances type encapsulates options for the respective request in EC2.
 //
 // See http://goo.gl/Mcm3b for more details.
-type RunInstances struct {
+type RunInstancesOptions struct {
 	ImageId               string
 	MinCount              int
 	MaxCount              int
@@ -248,7 +248,7 @@ type Instance struct {
 // will be used insteead.
 //
 // See http://goo.gl/Mcm3b for more details.
-func (ec2 *EC2) RunInstances(options *RunInstances) (resp *RunInstancesResp, err error) {
+func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesResp, err error) {
 	params := makeParams("RunInstances")
 	params["ImageId"] = options.ImageId
 	params["InstanceType"] = options.InstanceType
