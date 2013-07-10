@@ -1,7 +1,9 @@
 language: go
 
 go:
+  - 1.0
   - 1.1
+  - tip
 
 before_install:
   - sudo apt-get update -qq > apt-get.out 2>&1  || (cat apt-get.out && exit 1)
