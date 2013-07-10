@@ -193,22 +193,24 @@ func addParamsList(params map[string]string, label string, ids []string) {
 //
 // See http://goo.gl/Mcm3b for more details.
 type RunInstancesOptions struct {
-	ImageId               string
-	MinCount              int
-	MaxCount              int
-	KeyName               string
-	InstanceType          string
-	SecurityGroups        []SecurityGroup
-	KernelId              string
-	RamdiskId             string
-	UserData              []byte
-	AvailZone             string
-	PlacementGroupName    string
-	Monitoring            bool
-	SubnetId              string
-	DisableAPITermination bool
-	ShutdownBehavior      string
-	PrivateIPAddress      string
+	ImageId                string
+	MinCount               int
+	MaxCount               int
+	KeyName                string
+	InstanceType           string
+	SecurityGroups         []SecurityGroup
+	KernelId               string
+	RamdiskId              string
+	UserData               []byte
+	AvailZone              string
+	PlacementGroupName     string
+	Monitoring             bool
+	SubnetId               string
+	DisableAPITermination  bool
+	ShutdownBehavior       string
+	PrivateIPAddress       string
+	IamInstanceProfileArn  string
+	IamInstanceProfileName string
 }
 
 // Response to a RunInstances request.
@@ -315,6 +317,12 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 	}
 	if options.PrivateIPAddress != "" {
 		params["PrivateIpAddress"] = options.PrivateIPAddress
+	}
+	if options.IamInstanceProfileArn != "" {
+		params["IamInstanceProfile.Arn"] = options.IamInstanceProfileArn
+	}
+	if options.IamInstanceProfileName != "" {
+		params["IamInstanceProfile.Name"] = options.IamInstanceProfileName
 	}
 
 	resp = &RunInstancesResp{}
