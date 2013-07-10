@@ -9,7 +9,7 @@ import (
 	"github.com/hailocab/goamz/aws"
 	"github.com/hailocab/goamz/s3"
 	"github.com/hailocab/goamz/testutil"
-	"launchpad.net/gocheck"
+	. "launchpad.net/gocheck"
 	"time"
 )
 
