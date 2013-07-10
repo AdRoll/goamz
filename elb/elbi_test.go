@@ -94,7 +94,7 @@ func (s *ClientTests) TestCreateLoadBalancerError(c *C) {
 }
 
 func (s *ClientTests) createInstanceAndLB(c *C) (*elb.CreateLoadBalancer, string) {
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		ImageId:      "ami-ccf405a5",
 		InstanceType: "t1.micro",
 		AvailZone:    "us-east-1c",
