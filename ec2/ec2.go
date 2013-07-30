@@ -199,6 +199,7 @@ type RunInstancesOptions struct {
 	KeyName               string
 	InstanceType          string
 	SecurityGroups        []SecurityGroup
+	IamInstanceProfile    string
 	KernelId              string
 	RamdiskId             string
 	UserData              []byte
@@ -240,6 +241,7 @@ type Instance struct {
 	PlacementGroupName string        `xml:"placement>groupName"`
 	State              InstanceState `xml:"instanceState"`
 	Tags               []Tag         `xml:"tagSet>item"`
+	IamInstanceProfile string        `xml:"iamInstanceProfile"`
 }
 
 // RunInstances starts new instances in EC2.
@@ -306,6 +308,9 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 	}
 	if options.SubnetId != "" {
 		params["SubnetId"] = options.SubnetId
+	}
+	if options.IamInstanceProfile != "" {
+		params["IamInstanceProfile.Name"] = options.IamInstanceProfile
 	}
 	if options.DisableAPITermination {
 		params["DisableApiTermination"] = "true"
