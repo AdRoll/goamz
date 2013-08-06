@@ -13,8 +13,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
-	"errors"
-	"fmt"
 	"fmt"
 	"io/ioutil"
 	"net"
