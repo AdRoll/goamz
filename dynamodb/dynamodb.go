@@ -39,6 +39,12 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
 	hreq.Header.Set("X-Amz-Target", target)
 
+	//ALI
+	if s.Auth.SecurityToken != "" {
+		hreq.Header.Set("X-Amz-Security-Token", s.Auth.SecurityToken)
+		//fmt.Printf("Ali: SecToken = %s \n", s.Auth.SecurityToken)
+	}
+
 	service := Service{
 		"dynamodb",
 		s.Region.Name,
