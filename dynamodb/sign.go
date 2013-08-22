@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/alimoeeny/goamz/aws"
 	"io"
 	"io/ioutil"
 	"net/http"

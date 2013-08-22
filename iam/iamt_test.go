@@ -1,9 +1,9 @@
 package iam_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/iam"
-	"github.com/crowdmob/goamz/iam/iamtest"
+	"github.com/alimoeeny/goamz/aws"
+	"github.com/alimoeeny/goamz/iam"
+	"github.com/alimoeeny/goamz/iam/iamtest"
 	. "launchpad.net/gocheck"
 )
 
