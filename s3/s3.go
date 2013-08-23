@@ -198,7 +198,34 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 		}
 		return exists, err
 	}
-	panic("unreachable")
+	return false, fmt.Errorf("S3 Currently Unreachable")
+}
+
+// Head HEADs an object in the S3 bucket, returns the response with
+// no body see http://bit.ly/17K1ylI
+func (b *Bucket) Head(path string, headers map[string][]string) (*http.Response, error) {
+	req := &request{
+		method:  "HEAD",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+	}
+	err := b.S3.prepare(req)
+	if err != nil {
+		return nil, err
+	}
+
+	for attempt := attempts.Start(); attempt.Next(); {
+		resp, err := b.S3.run(req, nil)
+		if shouldRetry(err) && attempt.HasNext() {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return resp, err
+	}
+	return nil, fmt.Errorf("S3 Currently Unreachable")
 }
 
 // Put inserts an object into the S3 bucket.
