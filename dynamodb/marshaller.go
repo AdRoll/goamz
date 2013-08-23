@@ -254,10 +254,12 @@ func (e *attributeBuilder) reflectToDynamoDBAttribute(name string, v reflect.Val
 		// as arrays.
 		fallthrough
 	case reflect.Array, reflect.Struct, reflect.Map, reflect.Interface, reflect.Ptr:
-    jsonVersion, err := json.Marshal(v.Interface())
-    if err != nil { return err }
-    escapedJson := strconv.Quote(string(jsonVersion))
-    e.Push(NewStringAttribute(name, escapedJson[1:len(escapedJson) - 1]))
+		jsonVersion, err := json.Marshal(v.Interface())
+		if err != nil {
+			return err
+		}
+		escapedJson := strconv.Quote(string(jsonVersion))
+		e.Push(NewStringAttribute(name, escapedJson[1:len(escapedJson)-1]))
 
 	default:
 		return fmt.Errorf("UnsupportedTypeError %#v", v.Type())

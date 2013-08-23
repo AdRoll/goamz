@@ -40,7 +40,7 @@ func (q *Query) AddKey(t *Table, key *Key) {
 	b.WriteString("{")
 	b.WriteString(quote(k.KeyAttribute.Type))
 	b.WriteString(":")
-	b.WriteString(quote(key.HashKey))	
+	b.WriteString(quote(key.HashKey))
 
 	b.WriteString("}")
 
@@ -70,10 +70,10 @@ func (q *Query) addKeyAttributes(t *Table, key *Key) {
 	b.WriteString("{")
 	b.WriteString(quote(k.KeyAttribute.Type))
 	b.WriteString(":")
-	b.WriteString(quote(key.HashKey))	
+	b.WriteString(quote(key.HashKey))
 
 	b.WriteString("}")
-	
+
 	if k.HasRange() {
 		b.WriteString(",")
 		b.WriteString(quote(k.RangeAttribute.Name))
@@ -124,13 +124,13 @@ func (q *Query) ConsistentRead(c bool) {
 
 func (q *Query) AddRequestItems(tableKeys map[*Table][]Key) {
 	b := q.buffer
-	
+
 	b.WriteString(quote("RequestItems"))
 	b.WriteString(":")
 	b.WriteString("{")
 
 	firstItem := true
-	for table, keys := range tableKeys {		
+	for table, keys := range tableKeys {
 		if !firstItem {
 			b.WriteString(",")
 		} else {
@@ -144,7 +144,7 @@ func (q *Query) AddRequestItems(tableKeys map[*Table][]Key) {
 		b.WriteString(quote("Keys"))
 		b.WriteString(":")
 		b.WriteString("[")
-		for index, key := range keys {		
+		for index, key := range keys {
 			if index > 0 {
 				b.WriteString(",")
 			}

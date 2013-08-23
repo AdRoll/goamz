@@ -29,8 +29,8 @@ const (
 )
 
 type Key struct {
-  HashKey             string
-  RangeKey            string
+	HashKey  string
+	RangeKey string
 }
 
 type PrimaryKey struct {

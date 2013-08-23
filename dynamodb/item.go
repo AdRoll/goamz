@@ -7,8 +7,8 @@ import (
 )
 
 type BatchGetItem struct {
-	Server  *Server
-	Keys 	map[*Table][]Key
+	Server *Server
+	Keys   map[*Table][]Key
 }
 
 func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
@@ -25,7 +25,7 @@ func (batchGetItem *BatchGetItem) AddTable(t *Table, keys *[]Key) *BatchGetItem 
 
 func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute, error) {
 	q := NewEmptyQuery()
-	q.AddRequestItems(batchGetItem.Keys);
+	q.AddRequestItems(batchGetItem.Keys)
 
 	jsonResponse, err := batchGetItem.Server.queryServer("DynamoDB_20120810.BatchGetItem", q)
 	if err != nil {
@@ -38,8 +38,7 @@ func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute,
 		return nil, err
 	}
 
-	results := make(map[string][]map[string]*Attribute)		
-
+	results := make(map[string][]map[string]*Attribute)
 
 	tables, err := json.Get("Responses").Map()
 	if err != nil {
