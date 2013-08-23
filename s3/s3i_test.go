@@ -169,7 +169,7 @@ func (s *ClientTests) TestBasicFunctionality(c *gocheck.C) {
 	err := b.PutBucket(s3.PublicRead)
 	c.Assert(err, gocheck.IsNil)
 
-	err = b.Put("name", []byte("yo!"), "text/plain", s3.PublicRead)
+	err = b.Put("name", []byte("yo!"), "text/plain", s3.PublicRead, s3.Options{})
 	c.Assert(err, gocheck.IsNil)
 	defer b.Del("name")
 
@@ -182,7 +182,7 @@ func (s *ClientTests) TestBasicFunctionality(c *gocheck.C) {
 	c.Assert(string(data), gocheck.Equals, "yo!")
 
 	buf := bytes.NewBufferString("hey!")
-	err = b.PutReader("name2", buf, int64(buf.Len()), "text/plain", s3.Private)
+	err = b.PutReader("name2", buf, int64(buf.Len()), "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, gocheck.IsNil)
 	defer b.Del("name2")
 
@@ -371,7 +371,7 @@ func (s *ClientTests) TestBucketList(c *gocheck.C) {
 	objData := make(map[string][]byte)
 	for i, path := range objectNames {
 		data := []byte(strings.Repeat("a", i))
-		err := b.Put(path, data, "text/plain", s3.Private)
+		err := b.Put(path, data, "text/plain", s3.Private, s3.Options{})
 		c.Assert(err, gocheck.IsNil)
 		defer b.Del(path)
 		objData[path] = data

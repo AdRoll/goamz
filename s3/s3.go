@@ -48,6 +48,20 @@ type Owner struct {
 	DisplayName string
 }
 
+// Fold options into an Options struct
+//
+type Options struct {
+	SSE  bool
+	Meta map[string][]string
+	// What else?
+	// Cache-Control string
+	// Content-Disposition string
+	// Content-Encoding ???
+	//// The following become headers so they are []strings rather than strings... I think
+	// x-amz-website-redirect-location: []string
+	// x-amz-storage-class []string
+}
+
 var attempts = aws.AttemptStrategy{
 	Min:   5,
 	Total: 5 * time.Second,
@@ -231,39 +245,23 @@ func (b *Bucket) Head(path string, headers map[string][]string) (*http.Response,
 // Put inserts an object into the S3 bucket.
 //
 // See http://goo.gl/FEBPD for details.
-func (b *Bucket) Put(path string, data []byte, contType string, perm ACL) error {
+func (b *Bucket) Put(path string, data []byte, contType string, perm ACL, options Options) error {
 	body := bytes.NewBuffer(data)
-	return b.PutReader(path, body, int64(len(data)), contType, perm)
+	return b.PutReader(path, body, int64(len(data)), contType, perm, options)
 }
 
 // PutReader inserts an object into the S3 bucket by consuming data
 // from r until EOF.
-func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL) error {
+func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL, options Options) error {
 	headers := map[string][]string{
 		"Content-Length": {strconv.FormatInt(length, 10)},
 		"Content-Type":   {contType},
 		"x-amz-acl":      {string(perm)},
 	}
-	req := &request{
-		method:  "PUT",
-		bucket:  b.Name,
-		path:    path,
-		headers: headers,
-		payload: r,
+	if options.SSE {
+		headers["x-amz-server-side-encryption"] = []string{"AES256"}
 	}
-	return b.S3.query(req, nil)
-}
-
-// PutReader inserts an object into the S3 bucket by consuming data
-// from r until EOF adding meta to the common headers
-func (b *Bucket) PutReaderWithMeta(path string, r io.Reader, length int64, contType string, perm ACL, meta map[string][]string) error {
-	headers := map[string][]string{
-		"Content-Length": {strconv.FormatInt(length, 10)},
-		"Content-Type":   {contType},
-		"x-amz-acl":      {string(perm)},
-	}
-
-	for k, v := range meta {
+	for k, v := range options.Meta {
 		headers["x-amz-meta-"+k] = v
 	}
 	req := &request{
