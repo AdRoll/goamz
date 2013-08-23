@@ -22,7 +22,7 @@ type AmazonServer struct {
 	auth aws.Auth
 }
 
-func (s *AmazonServer) SetUp(c *C) {
+func (s *AmazonServer) SetUp(c *gocheck.C) {
 	auth, err := aws.EnvAuth()
 	if err != nil {
 		c.Fatal(err.Error())

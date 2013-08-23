@@ -19,7 +19,7 @@ func TestEmptyQuery(t *testing.T) {
 }
 
 func TestGetItemQuery(t *testing.T) {
-	auth := &aws.Auth{"", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	server := dynamodb.Server{*auth, aws.USEast}
 	primary := dynamodb.NewStringAttribute("domain", "")
 	key := dynamodb.PrimaryKey{primary, nil}
@@ -67,7 +67,7 @@ func TestGetItemQuery(t *testing.T) {
 }
 
 func TestUpdateQuery(t *testing.T) {
-	auth := &aws.Auth{"", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	server := dynamodb.Server{*auth, aws.USEast}
 	primary := dynamodb.NewStringAttribute("domain", "")
 	rangek := dynamodb.NewNumericAttribute("time", "")

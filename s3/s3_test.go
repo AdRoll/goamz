@@ -14,28 +14,28 @@ import (
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
 type S struct {
 	s3 *s3.S3
 }
 
-var _ = Suite(&S{})
+var _ = gocheck.Suite(&S{})
 
 var testServer = testutil.NewHTTPServer()
 
-func (s *S) SetUpSuite(c *C) {
+func (s *S) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
-	auth := aws.Auth{"abc", "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
 	s.s3 = s3.New(auth, aws.Region{Name: "faux-region-1", S3Endpoint: testServer.URL})
 }
 
-func (s *S) TearDownSuite(c *C) {
+func (s *S) TearDownSuite(c *gocheck.C) {
 	s3.SetAttemptStrategy(nil)
 }
 
-func (s *S) SetUpTest(c *C) {
+func (s *S) SetUpTest(c *gocheck.C) {
 	attempts := aws.AttemptStrategy{
 		Total: 300 * time.Millisecond,
 		Delay: 100 * time.Millisecond,
@@ -43,7 +43,7 @@ func (s *S) SetUpTest(c *C) {
 	s3.SetAttemptStrategy(&attempts)
 }
 
-func (s *S) TearDownTest(c *C) {
+func (s *S) TearDownTest(c *gocheck.C) {
 	testServer.Flush()
 }
 
@@ -53,7 +53,7 @@ func (s *S) DisableRetries() {
 
 // PutBucket docs: http://goo.gl/kBTCu
 
-func (s *S) TestPutBucket(c *C) {
+func (s *S) TestPutBucket(c *gocheck.C) {
 	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
@@ -68,7 +68,7 @@ func (s *S) TestPutBucket(c *C) {
 
 // DeleteBucket docs: http://goo.gl/GoBrY
 
-func (s *S) TestDelBucket(c *C) {
+func (s *S) TestDelBucket(c *gocheck.C) {
 	testServer.Response(204, nil, "")
 
 	b := s.s3.Bucket("bucket")
@@ -83,7 +83,7 @@ func (s *S) TestDelBucket(c *C) {
 
 // GetObject docs: http://goo.gl/isCO7
 
-func (s *S) TestGet(c *C) {
+func (s *S) TestGet(c *gocheck.C) {
 	testServer.Response(200, nil, "content")
 
 	b := s.s3.Bucket("bucket")
@@ -98,7 +98,7 @@ func (s *S) TestGet(c *C) {
 	c.Assert(string(data), Equals, "content")
 }
 
-func (s *S) TestURL(c *C) {
+func (s *S) TestURL(c *gocheck.C) {
 	testServer.Response(200, nil, "content")
 
 	b := s.s3.Bucket("bucket")
@@ -115,7 +115,7 @@ func (s *S) TestURL(c *C) {
 	c.Assert(req.URL.Path, Equals, "/bucket/name")
 }
 
-func (s *S) TestGetReader(c *C) {
+func (s *S) TestGetReader(c *gocheck.C) {
 	testServer.Response(200, nil, "content")
 
 	b := s.s3.Bucket("bucket")
@@ -132,7 +132,7 @@ func (s *S) TestGetReader(c *C) {
 	c.Assert(req.Header["Date"], Not(Equals), "")
 }
 
-func (s *S) TestGetNotFound(c *C) {
+func (s *S) TestGetNotFound(c *gocheck.C) {
 	for i := 0; i < 10; i++ {
 		testServer.Response(404, nil, GetObjectErrorDump)
 	}
@@ -159,7 +159,7 @@ func (s *S) TestGetNotFound(c *C) {
 
 // PutObject docs: http://goo.gl/FEBPD
 
-func (s *S) TestPutObject(c *C) {
+func (s *S) TestPutObject(c *gocheck.C) {
 	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
@@ -176,7 +176,7 @@ func (s *S) TestPutObject(c *C) {
 	c.Assert(req.Header["X-Amz-Acl"], DeepEquals, []string{"private"})
 }
 
-func (s *S) TestPutReader(c *C) {
+func (s *S) TestPutReader(c *gocheck.C) {
 	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
@@ -196,7 +196,7 @@ func (s *S) TestPutReader(c *C) {
 
 // DelObject docs: http://goo.gl/APeTt
 
-func (s *S) TestDelObject(c *C) {
+func (s *S) TestDelObject(c *gocheck.C) {
 	testServer.Response(200, nil, "")
 
 	b := s.s3.Bucket("bucket")
@@ -211,7 +211,7 @@ func (s *S) TestDelObject(c *C) {
 
 // Bucket List Objects docs: http://goo.gl/YjQTc
 
-func (s *S) TestList(c *C) {
+func (s *S) TestList(c *gocheck.C) {
 	testServer.Response(200, nil, GetListResultDump1)
 
 	b := s.s3.Bucket("quotes")
@@ -250,7 +250,7 @@ func (s *S) TestList(c *C) {
 	c.Assert(data.Contents[1].Owner.DisplayName, Equals, "webfile")
 }
 
-func (s *S) TestListWithDelimiter(c *C) {
+func (s *S) TestListWithDelimiter(c *gocheck.C) {
 	testServer.Response(200, nil, GetListResultDump2)
 
 	b := s.s3.Bucket("quotes")
