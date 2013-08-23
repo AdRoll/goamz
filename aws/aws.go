@@ -160,7 +160,7 @@ func (err *Error) Error() string {
 }
 
 type Auth struct {
-	AccessKey, SecretKey string
+	AccessKey, SecretKey, SecurityToken string
 }
 
 // ResponseMetadata
