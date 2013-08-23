@@ -270,7 +270,7 @@ func (s *ServerTests) TestDuplicateIPPerm(c *C) {
 	c.Assert(err, IsNil)
 
 	_, err = s.ec2.AuthorizeSecurityGroup(ec2.SecurityGroup{Name: name}, perms[0:2])
-	c.Assert(err, ErrorMatches, `.*\(InvalidPermission.Duplicate\)`)
+	c.Assert(err, gocheckgocheck..ErrorMatches, `.*\(InvalidPermission.Duplicate\)`)
 }
 
 type filterSpec struct {
@@ -399,7 +399,7 @@ func (s *ServerTests) TestInstanceFiltering(c *C) {
 		}
 		resp, err := s.ec2.Instances(t.instanceIds, f)
 		if t.err != "" {
-			c.Check(err, ErrorMatches, t.err)
+			c.Check(err, gocheck.ErrorMatches, t.err)
 			continue
 		}
 		c.Assert(err, IsNil)
@@ -549,7 +549,7 @@ func (s *ServerTests) TestGroupFiltering(c *C) {
 		}
 		resp, err := s.ec2.SecurityGroups(t.groups, f)
 		if t.err != "" {
-			c.Check(err, ErrorMatches, t.err)
+			c.Check(err, gocheck.ErrorMatches, t.err)
 			continue
 		}
 		c.Assert(err, IsNil)
