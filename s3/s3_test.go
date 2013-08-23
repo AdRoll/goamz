@@ -65,6 +65,23 @@ func (s *S) TestPutBucket(c *gocheck.C) {
 	c.Assert(req.URL.Path, gocheck.Equals, "/bucket/")
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 }
+// Head docs: http://bit.ly/17K1ylI
+
+func (s *S) TestHead(c *gocheck.C) {
+	testServer.Response(200, nil, "content")
+
+	b := s.s3.Bucket("bucket")
+	resp, err := b.Head("name", nil)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, gocheck.Equals, "HEAD")
+	c.Assert(req.URL.Path, gocheck.Equals, "/bucket/name")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(resp.ContentLength, gocheck.Equals, int64(-1))
+	c.Assert(resp, gocheck.FitsTypeOf, &http.Response{})
+}
 
 // DeleteBucket docs: http://goo.gl/GoBrY
 
