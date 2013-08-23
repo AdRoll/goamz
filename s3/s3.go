@@ -531,8 +531,8 @@ func (s3 *S3) prepare(req *request) error {
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 	if s3.Auth.SecurityToken != "" {
-        	req.headers["X-Amz-Security-Token"] = []string{s3.Auth.SecurityToken}
-        }
+		req.headers["X-Amz-Security-Token"] = []string{s3.Auth.SecurityToken}
+	}
 	sign(s3.Auth, req.method, reqSignpathSpaceFix, req.params, req.headers)
 	return nil
 }
