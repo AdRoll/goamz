@@ -1,8 +1,8 @@
 package sdb_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/exp/sdb"
+	"github.com/civisanalytics/goamz/aws"
+	"github.com/civisanalytics/goamz/exp/sdb"
 	. "launchpad.net/gocheck"
 )
 

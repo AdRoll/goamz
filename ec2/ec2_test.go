@@ -1,9 +1,9 @@
 package ec2_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
-	"github.com/crowdmob/goamz/testutil"
+	"github.com/civisanalytics/goamz/aws"
+	"github.com/civisanalytics/goamz/ec2"
+	"github.com/civisanalytics/goamz/testutil"
 	. "launchpad.net/gocheck"
 	"testing"
 )

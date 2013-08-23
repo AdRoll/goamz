@@ -15,7 +15,7 @@ import (
 	"encoding/hex"
 	"encoding/xml"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/civisanalytics/goamz/aws"
 	"log"
 	"net/http"
 	"net/http/httputil"

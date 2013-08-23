@@ -2,9 +2,9 @@ package elb_test
 
 import (
 	"flag"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
-	"github.com/crowdmob/goamz/elb"
+	"github.com/civisanalytics/goamz/aws"
+	"github.com/civisanalytics/goamz/ec2"
+	"github.com/civisanalytics/goamz/elb"
 	. "launchpad.net/gocheck"
 )
 

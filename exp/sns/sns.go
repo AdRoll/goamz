@@ -27,7 +27,7 @@ package sns
 import (
 	"encoding/xml"
 	"errors"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/civisanalytics/goamz/aws"
 	"net/http"
 	"net/url"
 	"strconv"

@@ -2,8 +2,8 @@ package dynamodb_test
 
 import (
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/dynamodb"
+	"github.com/civisanalytics/goamz/aws"
+	"github.com/civisanalytics/goamz/dynamodb"
 	"net/http"
 	"testing"
 	"time"
