@@ -527,12 +527,13 @@ func (s3 *S3) prepare(req *request) error {
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
+	reqSignpathSpaceFix := (&url.URL{Path: req.signpath}).String()
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 	if s3.Auth.SecurityToken != "" {
-        	req.headers["X-Amz-Security-Token"] = s3.Auth.SecurityToken
+        	req.headers["X-Amz-Security-Token"] = []string{s3.Auth.SecurityToken}
         }
-	sign(s3.Auth, req.method, req.signpath, req.params, req.headers)
+	sign(s3.Auth, req.method, reqSignpathSpaceFix, req.params, req.headers)
 	return nil
 }
 
