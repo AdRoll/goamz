@@ -1,8 +1,8 @@
 package s3_test
 
 import (
-	"encoding/xml"
 	"../s3"
+	"encoding/xml"
 	"io"
 	"io/ioutil"
 	. "launchpad.net/gocheck"

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/crowdmob/goamz/aws"
 	"../s3"
+	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"net"

@@ -227,6 +227,28 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	return b.S3.query(req, nil)
 }
 
+// PutReader inserts an object into the S3 bucket by consuming data
+// from r until EOF adding meta to the common headers
+func (b *Bucket) PutReaderWithMeta(path string, r io.Reader, length int64, contType string, perm ACL, meta map[string][]string) error {
+	headers := map[string][]string{
+		"Content-Length": {strconv.FormatInt(length, 10)},
+		"Content-Type":   {contType},
+		"x-amz-acl":      {string(perm)},
+	}
+
+	for k, v := range meta {
+		headers["x-amz-meta-"+k] = v
+	}
+	req := &request{
+		method:  "PUT",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+		payload: r,
+	}
+	return b.S3.query(req, nil)
+}
+
 // Del removes an object from the S3 bucket.
 //
 // See http://goo.gl/APeTt for details.
