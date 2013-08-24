@@ -2,7 +2,7 @@ package testutil
 
 import (
 	"flag"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/hailocab/goamz/aws"
 	. "launchpad.net/gocheck"
 )
 

@@ -4,7 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/hailocab/goamz/aws"
 	"sort"
 	"strings"
 )
@@ -18,6 +18,9 @@ func sign(auth aws.Auth, method, path string, params map[string]string, host str
 	params["AWSAccessKeyId"] = auth.AccessKey
 	params["SignatureVersion"] = "2"
 	params["SignatureMethod"] = "HmacSHA256"
+	if auth.Token != "" {
+		params["SecurityToken"] = auth.Token
+	}
 
 	// AWS specifies that the parameters in a signed request must
 	// be provided in the natural order of the keys. This is distinct

@@ -1,10 +1,10 @@
 package sns_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/exp/sns"
-	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"github.com/hailocab/goamz/aws"
+	"../sns"
+	"github.com/hailocab/goamz/testutil"
+	"launchpad.net/gocheck"
 	"testing"
 )
 
@@ -22,7 +22,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
 	s.sns = sns.New(auth, aws.Region{SNSEndpoint: testServer.URL})
 }
 

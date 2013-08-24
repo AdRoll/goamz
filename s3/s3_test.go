@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
-
 	"../s3"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/testutil"
@@ -27,7 +26,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
 	s.s3 = s3.New(auth, aws.Region{Name: "faux-region-1", S3Endpoint: testServer.URL})
 }
 

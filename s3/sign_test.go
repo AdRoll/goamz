@@ -8,7 +8,7 @@ import (
 
 // S3 ReST authentication docs: http://goo.gl/G1LrK
 
-var testAuth = aws.Auth{AccessKey: "0PN5J17HBGZHT7JJ3X82", SecretKey: "uV3F3YluFJax1cknvbcGwgjvx4QpvB+leU8dUj2o"}
+var testAuth = aws.Auth{AccessKey: "0PN5J17HBGZHT7JJ3X82", SecretKey: "uV3F3YluFJax1cknvbcGwgjvx4QpvB+leU8dUj2o", Token: ""}
 
 func (s *S) TestSignExampleObjectGet(c *gocheck.C) {
 	method := "GET"

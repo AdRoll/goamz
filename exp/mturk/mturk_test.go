@@ -1,10 +1,10 @@
 package mturk_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/exp/mturk"
-	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"github.com/hailocab/goamz/aws"
+	"../mturk"
+	"github.com/hailocab/goamz/testutil"
+	"launchpad.net/gocheck"
 	"net/url"
 	"testing"
 )
@@ -23,7 +23,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
 	u, err := url.Parse(testServer.URL)
 	if err != nil {
 		panic(err.Error())

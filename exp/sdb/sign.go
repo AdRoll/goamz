@@ -4,7 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/hailocab/goamz/aws"
 	"net/http"
 	"net/url"
 	"sort"
@@ -30,6 +30,9 @@ func sign(auth aws.Auth, method, path string, params url.Values, headers http.He
 	params["AWSAccessKeyId"] = []string{auth.AccessKey}
 	params["SignatureVersion"] = []string{"2"}
 	params["SignatureMethod"] = []string{"HmacSHA256"}
+	if auth.Token != "" {
+		params["SecurityToken"] = auth.Token
+	}
 
 	// join up all the incoming params
 	var sarray []string

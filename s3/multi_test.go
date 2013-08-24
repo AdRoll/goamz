@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"io"
 	"io/ioutil"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"strings"
 )
 

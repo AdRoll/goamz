@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-
 	"../s3"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/testutil"

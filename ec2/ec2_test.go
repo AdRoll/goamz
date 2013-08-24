@@ -1,10 +1,10 @@
 package ec2_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
-	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"github.com/hailocab/goamz/aws"
+	"../ec2"
+	"github.com/hailocab/goamz/testutil"
+	"launchpad.net/gocheck"
 	"testing"
 )
 
@@ -22,7 +22,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
 	s.ec2 = ec2.New(auth, aws.Region{EC2Endpoint: testServer.URL})
 }
 
@@ -33,7 +33,7 @@ func (s *S) TearDownTest(c *C) {
 func (s *S) TestRunInstancesErrorDump(c *C) {
 	testServer.Response(400, nil, ErrorDump)
 
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		ImageId:      "ami-a6f504cf", // Ubuntu Maverick, i386, instance store
 		InstanceType: "t1.micro",     // Doesn't work with micro, results in 400.
 	}
@@ -57,7 +57,7 @@ func (s *S) TestRunInstancesErrorDump(c *C) {
 
 func (s *S) TestRunInstancesErrorWithoutXML(c *C) {
 	testServer.Response(500, nil, "")
-	options := ec2.RunInstances{ImageId: "image-id"}
+	options := ec2.RunInstancesOptions{ImageId: "image-id"}
 
 	resp, err := s.ec2.RunInstances(&options)
 
@@ -77,7 +77,7 @@ func (s *S) TestRunInstancesErrorWithoutXML(c *C) {
 func (s *S) TestRunInstancesExample(c *C) {
 	testServer.Response(200, nil, RunInstancesExample)
 
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		KeyName:               "my-keys",
 		ImageId:               "image-id",
 		InstanceType:          "inst-type",
@@ -215,6 +215,8 @@ func (s *S) TestDescribeInstancesExample1(c *C) {
 	c.Assert(r0i.PrivateDNSName, Equals, "domU-12-31-39-10-56-34.compute-1.internal")
 	c.Assert(r0i.DNSName, Equals, "ec2-174-129-165-232.compute-1.amazonaws.com")
 	c.Assert(r0i.AvailZone, Equals, "us-east-1b")
+	c.Assert(r0i.IPAddress, Equals, "174.129.165.232")
+	c.Assert(r0i.PrivateIPAddress, Equals, "10.198.85.190")
 }
 
 func (s *S) TestDescribeInstancesExample2(c *C) {
@@ -683,5 +685,5 @@ func (s *S) TestSignatureWithEndpointPath(c *C) {
 	c.Assert(err, IsNil)
 
 	req := testServer.WaitRequest()
-	c.Assert(req.Form["Signature"], DeepEquals, []string{"gdG/vEm+c6ehhhfkrJy3+wuVzw/rzKR42TYelMwti7M="})
+	c.Assert(req.Form["Signature"], DeepEquals, []string{"klxs+VwDa1EKHBsxlDYYN58wbP6An+RVdhETv1Fm/os="})
 }

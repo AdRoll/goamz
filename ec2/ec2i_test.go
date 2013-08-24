@@ -3,9 +3,9 @@ package ec2_test
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
-	"github.com/crowdmob/goamz/testutil"
+	"github.com/hailocab/goamz/aws"
+	"github.com/hailocab/goamz/ec2"
+	"github.com/hailocab/goamz/testutil"
 	. "launchpad.net/gocheck"
 )
 
@@ -50,7 +50,7 @@ var imageId = "ami-ccf405a5" // Ubuntu Maverick, i386, EBS store
 
 // Cost: 0.00 USD
 func (s *ClientTests) TestRunInstancesError(c *C) {
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		ImageId:      "ami-a6f504cf", // Ubuntu Maverick, i386, instance store
 		InstanceType: "t1.micro",     // Doesn't work with micro, results in 400.
 	}
@@ -70,7 +70,7 @@ func (s *ClientTests) TestRunInstancesError(c *C) {
 
 // Cost: 0.02 USD
 func (s *ClientTests) TestRunAndTerminate(c *C) {
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		ImageId:      imageId,
 		InstanceType: "t1.micro",
 	}

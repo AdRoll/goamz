@@ -1,10 +1,10 @@
 package sdb_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/exp/sdb"
-	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"github.com/hailocab/goamz/aws"
+	"../sdb"
+	"github.com/hailocab/goamz/testutil"
+	"launchpad.net/gocheck"
 	"testing"
 )
 
@@ -22,7 +22,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
 	s.sdb = sdb.New(auth, aws.Region{SDBEndpoint: testServer.URL})
 }
 

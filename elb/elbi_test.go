@@ -2,9 +2,9 @@ package elb_test
 
 import (
 	"flag"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
-	"github.com/crowdmob/goamz/elb"
+	"github.com/hailocab/goamz/aws"
+	"github.com/hailocab/goamz/ec2"
+	"github.com/hailocab/goamz/elb"
 	. "launchpad.net/gocheck"
 )
 
@@ -94,7 +94,7 @@ func (s *ClientTests) TestCreateLoadBalancerError(c *C) {
 }
 
 func (s *ClientTests) createInstanceAndLB(c *C) (*elb.CreateLoadBalancer, string) {
-	options := ec2.RunInstances{
+	options := ec2.RunInstancesOptions{
 		ImageId:      "ami-ccf405a5",
 		InstanceType: "t1.micro",
 		AvailZone:    "us-east-1c",

@@ -1,10 +1,10 @@
 package iam_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/iam"
-	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"github.com/hailocab/goamz/aws"
+	"../iam"
+	"github.com/hailocab/goamz/testutil"
+	"launchpad.net/gocheck"
 	"strings"
 	"testing"
 )
@@ -23,7 +23,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
 	s.iam = iam.New(auth, aws.Region{IAMEndpoint: testServer.URL})
 }
 
