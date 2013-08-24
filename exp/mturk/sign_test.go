@@ -1,7 +1,7 @@
 package mturk_test
 
 import (
-	"github.com/hailocab/goamz/aws"
+	"github.com/crowdmob/goamz/aws"
 	"../mturk"
 	"launchpad.net/gocheck"
 )
