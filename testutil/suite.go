@@ -18,7 +18,7 @@ type LiveSuite struct {
 	auth aws.Auth
 }
 
-func (s *LiveSuite) SetUpSuite(c *C) {
+func (s *LiveSuite) SetUpSuite(c *gocheck.C) {
 	if !Amazon {
 		c.Skip("amazon tests not enabled (-amazon flag)")
 	}

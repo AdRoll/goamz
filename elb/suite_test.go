@@ -18,11 +18,11 @@ type HTTPSuite struct{}
 
 var testServer = NewTestHTTPServer("http://localhost:4444", 5*time.Second)
 
-func (s *HTTPSuite) SetUpSuite(c *C) {
+func (s *HTTPSuite) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
 }
 
-func (s *HTTPSuite) TearDownTest(c *C) {
+func (s *HTTPSuite) TearDownTest(c *gocheck.C) {
 	testServer.FlushRequests()
 }
 

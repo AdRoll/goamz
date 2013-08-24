@@ -14,9 +14,9 @@ type LocalServer struct {
 	srv    *iamtest.Server
 }
 
-func (s *LocalServer) SetUp(c *C) {
+func (s *LocalServer) SetUp(c *gocheck.C) {
 	srv, err := iamtest.NewServer()
-	c.Assert(err, IsNil)
+	c.Assert(err,gocheck.IsNil)
 	c.Assert(srv, NotNil)
 
 	s.srv = srv
@@ -33,7 +33,7 @@ type LocalServerSuite struct {
 
 var _ = Suite(&LocalServerSuite{})
 
-func (s *LocalServerSuite) SetUpSuite(c *C) {
+func (s *LocalServerSuite) SetUpSuite(c *gocheck.C) {
 	s.srv.SetUp(c)
 	s.ClientTests.iam = iam.New(s.srv.auth, s.srv.region)
 }

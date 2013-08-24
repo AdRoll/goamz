@@ -10,7 +10,7 @@ import (
 
 var testAuth = aws.Auth{AccessKey: "access-key-id-s8eBOWuU", SecretKey: "secret-access-key-UkQjTLd9"}
 
-func (s *S) TestSignExampleDomainCreate(c *C) {
+func (s *S) TestSignExampleDomainCreate(c *gocheck.C) {
 	method := "GET"
 	params := map[string][]string{
 		"Action":     {"CreateDomain"},
@@ -23,7 +23,7 @@ func (s *S) TestSignExampleDomainCreate(c *C) {
 	}
 	sdb.Sign(testAuth, method, "", params, headers)
 	expected := "ot2JaeeqMRJqgAqW67hkzUlffgxdOz4RykbrECB+tDU="
-	c.Assert(params["Signature"], DeepEquals, []string{expected})
+	c.Assert(params["Signature"], gocheck.DeepEquals, []string{expected})
 }
 
 // Do a few test methods which takes combinations of params

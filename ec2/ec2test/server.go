@@ -969,8 +969,8 @@ func (r *reservation) hasRunningMachine() bool {
 type counter int
 
 func (c *counter) next() (i int) {
-	i = int(*c)
-	(*c)++
+	i = int(*gocheck.C)
+	(*gocheck.C)++
 	return
 }
 

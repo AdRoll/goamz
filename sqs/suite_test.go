@@ -22,7 +22,7 @@ type SuiteI struct {
 	auth aws.Auth
 }
 
-func (s *SuiteI) SetUpSuite(c *C) {
+func (s *SuiteI) SetUpSuite(c *gocheck.C) {
 	if !*integration {
 		c.Skip("Integration tests not enabled (-i flag)")
 	}
@@ -37,11 +37,11 @@ type HTTPSuite struct{}
 
 var testServer = NewTestHTTPServer("http://localhost:4444", 5e9)
 
-func (s *HTTPSuite) SetUpSuite(c *C) {
+func (s *HTTPSuite) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
 }
 
-func (s *HTTPSuite) TearDownTest(c *C) {
+func (s *HTTPSuite) TearDownTest(c *gocheck.C) {
 	testServer.FlushRequests()
 }
 
