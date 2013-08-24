@@ -18,6 +18,8 @@ github.com/crowdmob/goamz/ec2
 github.com/crowdmob/goamz/elb
 github.com/crowdmob/goamz/iam
 github.com/crowdmob/goamz/s3
+github.com/crowdmob/goamz/sqs
+
 
 github.com/crowdmob/goamz/exp/mturk
 github.com/crowdmob/goamz/exp/sdb
@@ -36,14 +38,14 @@ The API documentation is currently available at:
 
 Just use `go get` with any of the available packages. For example:
 
-`$ go get github.com/crowdmob/goamz/ec2`
-`$ go get github.com/crowdmob/goamz/s3`
+* `$ go get github.com/crowdmob/goamz/ec2`
+* `$ go get github.com/crowdmob/goamz/s3`
 
 ## Running tests
 
 To run tests, first install gocheck with:
 
-`$ goinstall launchpad.net/gocheck`
+`$ go get launchpad.net/gocheck`
 
 Then run go test as usual:
 

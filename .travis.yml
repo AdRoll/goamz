@@ -16,3 +16,4 @@ script:
   - go test -v ./elb/
   - go test -v ./iam/
   - go test -v ./s3/
+  - go test -v ./sqs/
