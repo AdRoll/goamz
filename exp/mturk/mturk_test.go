@@ -10,10 +10,10 @@ import (
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
-var _ = Suite(&S{})
+var _ = gocheck.Suite(&S{})
 
 type S struct {
 	mturk *mturk.MTurk

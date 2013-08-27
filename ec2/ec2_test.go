@@ -9,10 +9,10 @@ import (
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
-var _ = Suite(&S{})
+var _ = gocheck.Suite(&S{})
 
 type S struct {
 	ec2 *ec2.EC2
@@ -45,7 +45,7 @@ func (s *S) TestRunInstancesErrorDump(c *gocheck.C) {
 	testServer.WaitRequest()
 
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, ErrorMatches, msg+` \(UnsupportedOperation\)`)
+	c.Assert(err, gocheck.ErrorMatches, msg+` \(UnsupportedOperation\)`)
 
 	ec2err, ok := err.(*ec2.Error)
 	c.Assert(ok, gocheck.Equals, true)
@@ -64,7 +64,7 @@ func (s *S) TestRunInstancesErrorWithoutXML(c *gocheck.C) {
 	testServer.WaitRequest()
 
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, ErrorMatches, "500 Internal Server Error")
+	c.Assert(err, gocheck.ErrorMatches, "500 Internal Server Error")
 
 	ec2err, ok := err.(*ec2.Error)
 	c.Assert(ok, gocheck.Equals, true)

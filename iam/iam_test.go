@@ -10,14 +10,14 @@ import (
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
 type S struct {
 	iam *iam.IAM
 }
 
-var _ = Suite(&S{})
+var _ = gocheck.Suite(&S{})
 
 var testServer = testutil.NewHTTPServer()
 

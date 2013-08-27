@@ -4,7 +4,7 @@ import (
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/iam"
 	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"net/url"
 )
 
@@ -21,7 +21,7 @@ func (s *AmazonServer) SetUp(c *gocheck.C) {
 	s.auth = auth
 }
 
-var _ = Suite(&AmazonClientSuite{})
+var _ = gocheck.Suite(&AmazonClientSuite{})
 
 // AmazonClientSuite tests the client against a live AWS server.
 type AmazonClientSuite struct {

@@ -2,7 +2,7 @@ package elb_test
 
 import (
 	"fmt"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,7 +11,7 @@ import (
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
 type HTTPSuite struct{}

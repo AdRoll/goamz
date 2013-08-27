@@ -6,7 +6,7 @@ import (
 	"github.com/crowdmob/goamz/ec2"
 	"github.com/crowdmob/goamz/ec2/ec2test"
 	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"regexp"
 	"sort"
 )
@@ -38,7 +38,7 @@ type LocalServerSuite struct {
 	clientTests ClientTests
 }
 
-var _ = Suite(&LocalServerSuite{})
+var _ = gocheck.Suite(&LocalServerSuite{})
 
 func (s *LocalServerSuite) SetUpSuite(c *gocheck.C) {
 	s.srv.SetUp(c)
@@ -86,7 +86,7 @@ type AmazonServerSuite struct {
 	ServerTests
 }
 
-var _ = Suite(&AmazonServerSuite{})
+var _ = gocheck.Suite(&AmazonServerSuite{})
 
 func (s *AmazonServerSuite) SetUpSuite(c *gocheck.C) {
 	if !testutil.Amazon {
@@ -270,7 +270,7 @@ func (s *ServerTests) TestDuplicateIPPerm(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 
 	_, err = s.ec2.AuthorizeSecurityGroup(ec2.SecurityGroup{Name: name}, perms[0:2])
-	c.Assert(err, gocheckgocheck..ErrorMatches, `.*\(InvalidPermission.Duplicate\)`)
+	c.Assert(err, gocheckgocheck..gocheck.ErrorMatches, `.*\(InvalidPermission.Duplicate\)`)
 }
 
 type filterSpec struct {
@@ -399,7 +399,7 @@ func (s *ServerTests) TestInstanceFiltering(c *gocheck.C) {
 		}
 		resp, err := s.ec2.Instances(t.instanceIds, f)
 		if t.err != "" {
-			c.Check(err, gocheck.ErrorMatches, t.err)
+			c.Check(err, gocheck.gocheck.ErrorMatches, t.err)
 			continue
 		}
 		c.Assert(err,gocheck.IsNil)
@@ -549,7 +549,7 @@ func (s *ServerTests) TestGroupFiltering(c *gocheck.C) {
 		}
 		resp, err := s.ec2.SecurityGroups(t.groups, f)
 		if t.err != "" {
-			c.Check(err, gocheck.ErrorMatches, t.err)
+			c.Check(err, gocheck.gocheck.ErrorMatches, t.err)
 			continue
 		}
 		c.Assert(err,gocheck.IsNil)

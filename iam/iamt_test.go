@@ -4,7 +4,7 @@ import (
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/iam"
 	"github.com/crowdmob/goamz/iam/iamtest"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 )
 
 // LocalServer represents a local ec2test fake server.
@@ -31,7 +31,7 @@ type LocalServerSuite struct {
 	ClientTests
 }
 
-var _ = Suite(&LocalServerSuite{})
+var _ = gocheck.Suite(&LocalServerSuite{})
 
 func (s *LocalServerSuite) SetUpSuite(c *gocheck.C) {
 	s.srv.SetUp(c)

@@ -5,7 +5,7 @@ import (
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/ec2"
 	"github.com/crowdmob/goamz/elb"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 )
 
 var amazon = flag.Bool("amazon", false, "Enable tests against amazon server")
@@ -23,7 +23,7 @@ func (s *AmazonServer) SetUp(c *gocheck.C) {
 	s.auth = auth
 }
 
-var _ = Suite(&AmazonClientSuite{})
+var _ = gocheck.Suite(&AmazonClientSuite{})
 
 // AmazonClientSuite tests the client against a live AWS server.
 type AmazonClientSuite struct {
@@ -191,7 +191,7 @@ func (s *ClientTests) TestDescribeLoadBalancersBadRequest(c *gocheck.C) {
 	resp, err := s.elb.DescribeLoadBalancers("absentlb")
 	c.Assert(err, NotNil)
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, ErrorMatches, ".*(LoadBalancerNotFound).*")
+	c.Assert(err, gocheck.ErrorMatches, ".*(LoadBalancerNotFound).*")
 }
 
 func (s *ClientTests) TestDescribeInstanceHealth(c *gocheck.C) {
@@ -235,7 +235,7 @@ func (s *ClientTests) TestDescribeInstanceHealthBadRequest(c *gocheck.C) {
 	resp, err := s.elb.DescribeInstanceHealth(createLBReq.Name, "i-foo")
 	c.Assert(resp,gocheck.IsNil)
 	c.Assert(err, NotNil)
-	c.Assert(err, ErrorMatches, ".*i-foo.*(InvalidInstance).*")
+	c.Assert(err, gocheck.ErrorMatches, ".*i-foo.*(InvalidInstance).*")
 }
 
 func (s *ClientTests) TestConfigureHealthCheck(c *gocheck.C) {

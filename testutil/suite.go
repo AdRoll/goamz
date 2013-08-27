@@ -3,7 +3,7 @@ package testutil
 import (
 	"flag"
 	"github.com/crowdmob/goamz/aws"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 )
 
 // Amazon must be used by all tested packages to determine whether to

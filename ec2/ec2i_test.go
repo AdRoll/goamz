@@ -6,7 +6,7 @@ import (
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/ec2"
 	"github.com/crowdmob/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 )
 
 // AmazonServer represents an Amazon EC2 server.
@@ -23,7 +23,7 @@ func (s *AmazonServer) SetUp(c *gocheck.C) {
 }
 
 // Suite cost per run: 0.02 USD
-var _ = Suite(&AmazonClientSuite{})
+var _ = gocheck.Suite(&AmazonClientSuite{})
 
 // AmazonClientSuite tests the client against a live EC2 server.
 type AmazonClientSuite struct {
@@ -58,7 +58,7 @@ func (s *ClientTests) TestRunInstancesError(c *gocheck.C) {
 	resp, err := s.ec2.RunInstances(&options)
 
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, ErrorMatches, "AMI.*root device.*not supported.*")
+	c.Assert(err, gocheck.ErrorMatches, "AMI.*root device.*not supported.*")
 
 	ec2err, ok := err.(*ec2.Error)
 	c.Assert(ok, gocheck.Equals, true)

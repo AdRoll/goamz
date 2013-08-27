@@ -2,7 +2,7 @@ package aws_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"time"
 )
 

@@ -3,7 +3,7 @@ package elb_test
 import (
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/elb"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"time"
 )
 
@@ -12,7 +12,7 @@ type S struct {
 	elb *elb.ELB
 }
 
-var _ = Suite(&S{})
+var _ = gocheck.Suite(&S{})
 
 func (s *S) SetUpSuite(c *gocheck.C) {
 	s.HTTPSuite.SetUpSuite(c)
@@ -244,7 +244,7 @@ func (s *S) TestDescribeLoadBalancersBadRequest(c *gocheck.C) {
 	resp, err := s.elb.DescribeLoadBalancers()
 	c.Assert(resp,gocheck.IsNil)
 	c.Assert(err, NotNil)
-	c.Assert(err, ErrorMatches, `^Cannot find Load Balancer absentlb \(LoadBalancerNotFound\)$`)
+	c.Assert(err, gocheck.ErrorMatches, `^Cannot find Load Balancer absentlb \(LoadBalancerNotFound\)$`)
 }
 
 func (s *S) TestDescribeInstanceHealth(c *gocheck.C) {
@@ -270,7 +270,7 @@ func (s *S) TestDescribeInstanceHealthBadRequest(c *gocheck.C) {
 	resp, err := s.elb.DescribeInstanceHealth("testlb", "i-foooo")
 	c.Assert(err, NotNil)
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, ErrorMatches, ".*i-foooo.*(InvalidInstance).*")
+	c.Assert(err, gocheck.ErrorMatches, ".*i-foooo.*(InvalidInstance).*")
 }
 
 func (s *S) TestConfigureHealthCheck(c *gocheck.C) {
@@ -314,5 +314,5 @@ func (s *S) TestConfigureHealthCheckBadRequest(c *gocheck.C) {
 	resp, err := s.elb.ConfigureHealthCheck("foolb", &hc)
 	c.Assert(resp,gocheck.IsNil)
 	c.Assert(err, NotNil)
-	c.Assert(err, ErrorMatches, ".*foolb.*(LoadBalancerNotFound).*")
+	c.Assert(err, gocheck.ErrorMatches, ".*foolb.*(LoadBalancerNotFound).*")
 }

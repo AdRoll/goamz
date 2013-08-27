@@ -2,17 +2,17 @@ package aws_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"os"
 	"strings"
 	"testing"
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
-var _ = Suite(&S{})
+var _ = gocheck.Suite(&S{})
 
 type S struct {
 	environ []string
@@ -33,14 +33,14 @@ func (s *S) TearDownTest(c *gocheck.C) {
 func (s *S) TestEnvAuthNoSecret(c *gocheck.C) {
 	os.Clearenv()
 	_, err := aws.EnvAuth()
-	c.Assert(err, ErrorMatches, "AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY not found in environment")
+	c.Assert(err, gocheck.ErrorMatches, "AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY not found in environment")
 }
 
 func (s *S) TestEnvAuthNoAccess(c *gocheck.C) {
 	os.Clearenv()
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "foo")
 	_, err := aws.EnvAuth()
-	c.Assert(err, ErrorMatches, "AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY not found in environment")
+	c.Assert(err, gocheck.ErrorMatches, "AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY not found in environment")
 }
 
 func (s *S) TestEnvAuth(c *gocheck.C) {

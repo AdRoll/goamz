@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,7 +13,7 @@ import (
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
 var integration = flag.Bool("i", false, "Enable integration tests")
