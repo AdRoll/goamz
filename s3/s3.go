@@ -493,7 +493,7 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	if err != nil {
 		panic(err)
 	}
-	if b.S3.Auth.SecurityToken != "" {
+	if b.S3.Auth.Token != "" {
 		return u.String() + "&x-amz-security-token=" + url.QueryEscape(req.headers["X-Amz-Security-Token"][0])
 	} else {
 	return u.String()
