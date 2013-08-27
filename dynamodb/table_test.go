@@ -59,7 +59,7 @@ func TestGetItem(t *testing.T) {
 	table := server.NewTable("production_storyarc-accelerator-sites",
 		key)
 
-	item, err := table.GetItem("ac-news.speedup.storytellerhq.com", "")
+	item, err := table.GetItem(&dynamodb.Key{HashKey: "ac-news.speedup.storytellerhq.com"})
 
 	if err != nil {
 		t.Log(err)
@@ -94,7 +94,7 @@ func TestGetItemRange(t *testing.T) {
 	table := server.NewTable("production_storyarc-accelerator-analytics",
 		key)
 
-	item, err := table.GetItem("aee5df14-6961-4baa-bad1-a1150576594f_MISSES", "1348187524")
+	item, err := table.GetItem(&dynamodb.Key{HashKey: "aee5df14-6961-4baa-bad1-a1150576594f_MISSES", RangeKey: "1348187524"})
 
 	if err != nil {
 		t.Log(err)

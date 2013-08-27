@@ -26,7 +26,7 @@ func TestGetItemQuery(t *testing.T) {
 	table := server.NewTable("sites", key)
 
 	q := dynamodb.NewQuery(table)
-	q.AddKey(table, "test", "")
+	q.AddKey(table, &dynamodb.Key{HashKey: "test"})
 
 	queryString := []byte(q.String())
 
@@ -78,7 +78,7 @@ func TestUpdateQuery(t *testing.T) {
 	attributes := []dynamodb.Attribute{*countAttribute}
 
 	q := dynamodb.NewQuery(table)
-	q.AddKey(table, "test", "1234")
+	q.AddKey(table, &dynamodb.Key{HashKey: "test", RangeKey: "1234"})
 	q.AddUpdates(attributes, "ADD")
 
 	queryString := []byte(q.String())
