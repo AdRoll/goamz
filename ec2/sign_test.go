@@ -2,7 +2,7 @@ package ec2_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../ec2"
+	"github.com/crowdmob/goamz/ec2"
 	"launchpad.net/gocheck"
 )
 

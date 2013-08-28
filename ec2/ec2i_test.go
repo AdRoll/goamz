@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
-	"../ec2"
+	"github.com/crowdmob/goamz/ec2"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 )
@@ -57,7 +57,7 @@ func (s *ClientTests) TestRunInstancesError(c *gocheck.C) {
 
 	resp, err := s.ec2.RunInstances(&options)
 
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 	c.Assert(err, gocheck.ErrorMatches, "AMI.*root device.*not supported.*")
 
 	ec2err, ok := err.(*ec2.Error)
@@ -75,7 +75,7 @@ func (s *ClientTests) TestRunAndTerminate(c *gocheck.C) {
 		InstanceType: "t1.micro",
 	}
 	resp1, err := s.ec2.RunInstances(&options)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Check(resp1.ReservationId, gocheck.Matches, "r-[0-9a-f]*")
 	c.Check(resp1.OwnerId, gocheck.Matches, "[0-9]+")
 	c.Check(resp1.Instances, gocheck.HasLen, 1)
@@ -84,14 +84,14 @@ func (s *ClientTests) TestRunAndTerminate(c *gocheck.C) {
 	instId := resp1.Instances[0].InstanceId
 
 	resp2, err := s.ec2.Instances([]string{instId}, nil)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	if c.Check(resp2.Reservations, gocheck.HasLen, 1) && c.Check(len(resp2.Reservations[0].Instances), gocheck.Equals, 1) {
 		inst := resp2.Reservations[0].Instances[0]
 		c.Check(inst.InstanceId, gocheck.Equals, instId)
 	}
 
 	resp3, err := s.ec2.TerminateInstances([]string{instId})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Check(resp3.StateChanges, gocheck.HasLen, 1)
 	c.Check(resp3.StateChanges[0].InstanceId, gocheck.Equals, instId)
 	c.Check(resp3.StateChanges[0].CurrentState.Name, gocheck.Equals, "shutting-down")
@@ -108,14 +108,14 @@ func (s *ClientTests) TestSecurityGroups(c *gocheck.C) {
 	defer s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Name: name})
 
 	resp1, err := s.ec2.CreateSecurityGroup(name, descr)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp1.RequestId, gocheck.Matches, ".+")
 	c.Assert(resp1.Name, gocheck.Equals, name)
 	c.Assert(resp1.Id, gocheck.Matches, ".+")
 
 	resp1, err = s.ec2.CreateSecurityGroup(name, descr)
 	ec2err, _ := err.(*ec2.Error)
-	c.Assert(resp1,gocheck.IsNil)
+	c.Assert(resp1, gocheck.IsNil)
 	c.Assert(ec2err, gocheck.NotNil)
 	c.Assert(ec2err.Code, gocheck.Equals, "InvalidGroup.Duplicate")
 
@@ -127,11 +127,11 @@ func (s *ClientTests) TestSecurityGroups(c *gocheck.C) {
 	}}
 
 	resp2, err := s.ec2.AuthorizeSecurityGroup(ec2.SecurityGroup{Name: name}, perms)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp2.RequestId, gocheck.Matches, ".+")
 
 	resp3, err := s.ec2.SecurityGroups(ec2.SecurityGroupNames(name), nil)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp3.RequestId, gocheck.Matches, ".+")
 	c.Assert(resp3.Groups, gocheck.HasLen, 1)
 
@@ -145,7 +145,7 @@ func (s *ClientTests) TestSecurityGroups(c *gocheck.C) {
 	c.Assert(g0.IPPerms[0].SourceIPs, gocheck.DeepEquals, []string{"127.0.0.1/24"})
 
 	resp2, err = s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Name: name})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp2.RequestId, gocheck.Matches, ".+")
 }
 

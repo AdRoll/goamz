@@ -1,7 +1,7 @@
 package dynamodb_test
 
-import simplejson "github.com/bitly/go-simplejson"
 import (
+	simplejson "github.com/bitly/go-simplejson"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/dynamodb"
 	"testing"

@@ -1,8 +1,8 @@
 package dynamodb_test
 
 import (
-	"../dynamodb"
 	"fmt"
+	"github.com/crowdmob/goamz/dynamodb"
 	"testing"
 )
 
@@ -135,7 +135,7 @@ func TestMarshal(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
-	
+
 	expected := testAttrs()
 	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
 		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))

@@ -2,7 +2,7 @@ package sdb_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../sdb"
+	"github.com/crowdmob/goamz/exp/sdb"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"testing"
@@ -44,7 +44,7 @@ func (s *S) TestCreateDomainOK(c *gocheck.C) {
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "63264005-7a5f-e01a-a224-395c63b89f6d")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0055590279)
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestListDomainsOK(c *gocheck.C) {
@@ -61,7 +61,7 @@ func (s *S) TestListDomainsOK(c *gocheck.C) {
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0000071759)
 	c.Assert(resp.Domains, gocheck.DeepEquals, []string{"Account", "Domain", "Record"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestListDomainsWithNextTokenXmlOK(c *gocheck.C) {
@@ -79,7 +79,7 @@ func (s *S) TestListDomainsWithNextTokenXmlOK(c *gocheck.C) {
 	c.Assert(resp.Domains, gocheck.DeepEquals, []string{"Domain1-200706011651", "Domain2-200706011652"})
 	c.Assert(resp.NextToken, gocheck.Equals, "TWV0ZXJpbmdUZXN0RG9tYWluMS0yMDA3MDYwMTE2NTY=")
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestDeleteDomainOK(c *gocheck.C) {
@@ -96,7 +96,7 @@ func (s *S) TestDeleteDomainOK(c *gocheck.C) {
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "039e1e25-9a64-2a74-93da-2fda36122a97")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0055590278)
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestPutAttrsOK(c *gocheck.C) {
@@ -132,7 +132,7 @@ func (s *S) TestPutAttrsOK(c *gocheck.C) {
 	c.Assert(req.Form["Expected.1.Value"], gocheck.DeepEquals, []string{"john"})
 	c.Assert(req.Form["Expected.1.Exists"], gocheck.DeepEquals, []string{"false"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "490206ce-8292-456c-a00f-61b335eb202b")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0000219907)
 
@@ -162,7 +162,7 @@ func (s *S) TestAttrsOK(c *gocheck.C) {
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "b1e8f1f7-42e9-494c-ad09-2674e557526d")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0000219942)
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestAttrsSelectOK(c *gocheck.C) {
@@ -191,7 +191,7 @@ func (s *S) TestAttrsSelectOK(c *gocheck.C) {
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "b1e8f1f7-42e9-494c-ad09-2674e557526d")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0000219942)
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestSelectOK(c *gocheck.C) {
@@ -214,5 +214,5 @@ func (s *S) TestSelectOK(c *gocheck.C) {
 	c.Assert(resp.Items[0].Attrs[0].Name, gocheck.Equals, "Category")
 	c.Assert(resp.Items[0].Attrs[0].Value, gocheck.Equals, "Clothes")
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }

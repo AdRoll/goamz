@@ -2,7 +2,7 @@ package sns_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../sns"
+	"github.com/crowdmob/goamz/exp/sns"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"testing"
@@ -41,7 +41,7 @@ func (s *S) TestListTopicsOK(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "bd10b26c-e30e-11e0-ba29-93c3aca2f103")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestCreateTopic(c *gocheck.C) {
@@ -56,7 +56,7 @@ func (s *S) TestCreateTopic(c *gocheck.C) {
 
 	c.Assert(resp.Topic.TopicArn, gocheck.Equals, "arn:aws:sns:us-east-1:123456789012:My-Topic")
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "a8dec8b3-33a4-11df-8963-01868b7c937a")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestDeleteTopic(c *gocheck.C) {
@@ -71,7 +71,7 @@ func (s *S) TestDeleteTopic(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "f3aa9ac9-3c3d-11df-8235-9dab105e9c32")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestListSubscriptions(c *gocheck.C) {
@@ -90,7 +90,7 @@ func (s *S) TestListSubscriptions(c *gocheck.C) {
 	c.Assert(resp.Subscriptions[0].SubscriptionArn, gocheck.Equals, "arn:aws:sns:us-east-1:123456789012:My-Topic:80289ba6-0fd4-4079-afb4-ce8c8260f0ca")
 	c.Assert(resp.Subscriptions[0].TopicArn, gocheck.Equals, "arn:aws:sns:us-east-1:698519295917:My-Topic")
 	c.Assert(resp.Subscriptions[0].Owner, gocheck.Equals, "123456789012")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestGetTopicAttributes(c *gocheck.C) {
@@ -109,7 +109,7 @@ func (s *S) TestGetTopicAttributes(c *gocheck.C) {
 	c.Assert(resp.Attributes[1].Key, gocheck.Equals, "Policy")
 	c.Assert(resp.Attributes[1].Value, gocheck.Equals, `{"Version":"2008-10-17","Id":"us-east-1/698519295917/test__default_policy_ID","Statement" : [{"Effect":"Allow","Sid":"us-east-1/698519295917/test__default_statement_ID","Principal" : {"AWS": "*"},"Action":["SNS:GetTopicAttributes","SNS:SetTopicAttributes","SNS:AddPermission","SNS:RemovePermission","SNS:DeleteTopic","SNS:Subscribe","SNS:ListSubscriptionsByTopic","SNS:Publish","SNS:Receive"],"Resource":"arn:aws:sns:us-east-1:698519295917:test","Condition" : {"StringLike" : {"AWS:SourceArn": "arn:aws:*:*:698519295917:*"}}}]}`)
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "057f074c-33a7-11df-9540-99d0768312d3")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestPublish(c *gocheck.C) {
@@ -125,7 +125,7 @@ func (s *S) TestPublish(c *gocheck.C) {
 
 	c.Assert(resp.MessageId, gocheck.Equals, "94f20ce6-13c5-43a0-9a9e-ca52d816e90b")
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "f187a3c1-376f-11df-8963-01868b7c937a")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestSetTopicAttributes(c *gocheck.C) {
@@ -139,7 +139,7 @@ func (s *S) TestSetTopicAttributes(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "a8763b99-33a7-11df-a9b7-05d48da6f042")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestSubscribe(c *gocheck.C) {
@@ -154,7 +154,7 @@ func (s *S) TestSubscribe(c *gocheck.C) {
 
 	c.Assert(resp.SubscriptionArn, gocheck.Equals, "pending confirmation")
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "a169c740-3766-11df-8963-01868b7c937a")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestUnsubscribe(c *gocheck.C) {
@@ -168,7 +168,7 @@ func (s *S) TestUnsubscribe(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "18e0ac39-3776-11df-84c0-b93cc1666b84")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestConfirmSubscription(c *gocheck.C) {
@@ -184,7 +184,7 @@ func (s *S) TestConfirmSubscription(c *gocheck.C) {
 
 	c.Assert(resp.SubscriptionArn, gocheck.Equals, "arn:aws:sns:us-east-1:123456789012:My-Topic:80289ba6-0fd4-4079-afb4-ce8c8260f0ca")
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "7a50221f-3774-11df-a9b7-05d48da6f042")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestAddPermission(c *gocheck.C) {
@@ -203,7 +203,7 @@ func (s *S) TestAddPermission(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.RequestId, gocheck.Equals, "6a213e4e-33a8-11df-9540-99d0768312d3")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestRemovePermission(c *gocheck.C) {
@@ -217,7 +217,7 @@ func (s *S) TestRemovePermission(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.RequestId, gocheck.Equals, "d170b150-33a8-11df-995a-2d6fbe836cc1")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestListSubscriptionByTopic(c *gocheck.C) {
@@ -237,5 +237,5 @@ func (s *S) TestListSubscriptionByTopic(c *gocheck.C) {
 	c.Assert(resp.Subscriptions[0].Owner, gocheck.Equals, "123456789012")
 	c.Assert(resp.Subscriptions[0].Endpoint, gocheck.Equals, "example@amazon.com")
 	c.Assert(resp.Subscriptions[0].Protocol, gocheck.Equals, "email")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
