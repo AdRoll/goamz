@@ -48,7 +48,7 @@ func (s *S) TestEnvAuth(c *gocheck.C) {
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "secret")
 	os.Setenv("AWS_ACCESS_KEY_ID", "access")
 	auth, err := aws.EnvAuth()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
 }
 
@@ -57,13 +57,13 @@ func (s *S) TestEnvAuthAlt(c *gocheck.C) {
 	os.Setenv("AWS_SECRET_KEY", "secret")
 	os.Setenv("AWS_ACCESS_KEY", "access")
 	auth, err := aws.EnvAuth()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
 }
 
 func (s *S) TestGetAuthStatic(c *gocheck.C) {
 	auth, err := aws.GetAuth("access", "secret")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
 }
 
@@ -72,7 +72,7 @@ func (s *S) TestGetAuthEnv(c *gocheck.C) {
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "secret")
 	os.Setenv("AWS_ACCESS_KEY_ID", "access")
 	auth, err := aws.GetAuth("", "")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
 }
 
