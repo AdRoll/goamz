@@ -31,7 +31,7 @@ func sign(auth aws.Auth, method, path string, params url.Values, headers http.He
 	params["SignatureVersion"] = []string{"2"}
 	params["SignatureMethod"] = []string{"HmacSHA256"}
 	if auth.Token != "" {
-		params["SecurityToken"] = auth.Token
+		params["SecurityToken"] = []string{auth.Token}
 	}
 
 	// join up all the incoming params
