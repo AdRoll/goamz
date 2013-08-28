@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
+	"../ec2"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 )
@@ -116,7 +116,7 @@ func (s *ClientTests) TestSecurityGroups(c *gocheck.C) {
 	resp1, err = s.ec2.CreateSecurityGroup(name, descr)
 	ec2err, _ := err.(*ec2.Error)
 	c.Assert(resp1,gocheck.IsNil)
-	c.Assert(ec2err, NotNil)
+	c.Assert(ec2err, gocheck.NotNil)
 	c.Assert(ec2err.Code, gocheck.Equals, "InvalidGroup.Duplicate")
 
 	perms := []ec2.IPPerm{{

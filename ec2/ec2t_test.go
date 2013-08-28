@@ -3,8 +3,8 @@ package ec2_test
 import (
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
-	"github.com/crowdmob/goamz/ec2/ec2test"
+	"../ec2"
+	"../ec2/ec2test"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"regexp"
@@ -21,7 +21,7 @@ type LocalServer struct {
 func (s *LocalServer) SetUp(c *gocheck.C) {
 	srv, err := ec2test.NewServer()
 	c.Assert(err,gocheck.IsNil)
-	c.Assert(srv, NotNil)
+	c.Assert(srv, gocheck.NotNil)
 
 	s.srv = srv
 	s.region = aws.Region{EC2Endpoint: srv.URL()}
@@ -67,7 +67,7 @@ func (s *LocalServerSuite) TestUserData(c *gocheck.C) {
 		UserData:     data,
 	})
 	c.Assert(err,gocheck.IsNil)
-	c.Assert(inst, NotNil)
+	c.Assert(inst, gocheck.NotNil)
 	c.Assert(inst.Instances[0].DNSName, gocheck.Equals, inst.Instances[0].InstanceId+".example.com")
 
 	id := inst.Instances[0].InstanceId
@@ -75,7 +75,7 @@ func (s *LocalServerSuite) TestUserData(c *gocheck.C) {
 	defer s.ec2.TerminateInstances([]string{id})
 
 	tinst := s.srv.srv.Instance(id)
-	c.Assert(tinst, NotNil)
+	c.Assert(tinst, gocheck.NotNil)
 	c.Assert(tinst.UserData, gocheck.DeepEquals, data)
 }
 
@@ -104,7 +104,7 @@ type ServerTests struct {
 	ec2 *ec2.EC2
 }
 
-func terminateInstances(c *C, e *ec2.EC2, insts []*ec2.Instance) {
+func terminateInstances(c *gocheck.C, e *ec2.EC2, insts []*ec2.Instance) {
 	var ids []string
 	for _, inst := range insts {
 		if inst != nil {
@@ -112,10 +112,10 @@ func terminateInstances(c *C, e *ec2.EC2, insts []*ec2.Instance) {
 		}
 	}
 	_, err := e.TerminateInstances(ids)
-	c.Check(err,gocheck.IsNil, Commentf("%d INSTANCES LEFT RUNNING!!!", len(ids)))
+	c.Check(err,gocheck.IsNil, gocheck.Commentf("%d INSTANCES LEFT RUNNING!!!", len(ids)))
 }
 
-func (s *ServerTests) makeTestGroup(c *C, name, descr string) ec2.SecurityGroup {
+func (s *ServerTests) makeTestGroup(c *gocheck.C, name, descr string) ec2.SecurityGroup {
 	// Clean it up if a previous test left it around.
 	_, err := s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Name: name})
 	if err != nil && err.(*ec2.Error).Code != "InvalidGroup.NotFound" {
@@ -151,7 +151,7 @@ func (s *ServerTests) TestIPPerms(c *gocheck.C) {
 		ToPort:    1024,
 		SourceIPs: []string{"z127.0.0.1/24"},
 	}})
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Check(err.(*ec2.Error).Code, gocheck.Equals, "InvalidPermission.Malformed")
 
 	// Check that AuthorizeSecurityGroup adds the correct authorizations.
@@ -198,7 +198,7 @@ func (s *ServerTests) TestIPPerms(c *gocheck.C) {
 
 	// Check that we can't delete g1 (because g0 is using it)
 	_, err = s.ec2.DeleteSecurityGroup(g1)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Check(err.(*ec2.Error).Code, gocheck.Equals, "InvalidGroup.InUse")
 
 	_, err = s.ec2.RevokeSecurityGroup(g0, []ec2.IPPerm{{
@@ -399,7 +399,7 @@ func (s *ServerTests) TestInstanceFiltering(c *gocheck.C) {
 		}
 		resp, err := s.ec2.Instances(t.instanceIds, f)
 		if t.err != "" {
-			c.Check(err, gocheck.gocheck.ErrorMatches, t.err)
+			c.Check(err, gocheck.ErrorMatches, t.err)
 			continue
 		}
 		c.Assert(err,gocheck.IsNil)
@@ -407,15 +407,15 @@ func (s *ServerTests) TestInstanceFiltering(c *gocheck.C) {
 		for _, r := range resp.Reservations {
 			for j := range r.Instances {
 				inst := &r.Instances[j]
-				c.Check(insts[inst.InstanceId],gocheck.IsNil, Commentf("duplicate instance id: %q", inst.InstanceId))
+				c.Check(insts[inst.InstanceId],gocheck.IsNil, gocheck.Commentf("duplicate instance id: %q", inst.InstanceId))
 				insts[inst.InstanceId] = inst
 			}
 		}
 		if !t.allowExtra {
-			c.Check(insts, gocheck.HasLen, len(t.resultIds), Commentf("expected %d instances got %#v", len(t.resultIds), insts))
+			c.Check(insts, gocheck.HasLen, len(t.resultIds), gocheck.Commentf("expected %d instances got %#v", len(t.resultIds), insts))
 		}
 		for j, id := range t.resultIds {
-			c.Check(insts[id], NotNil, Commentf("instance id %d (%q) not found; got %#v", j, id, insts))
+			c.Check(insts[id], gocheck.NotNil, gocheck.Commentf("instance id %d (%q) not found; got %#v", j, id, insts))
 		}
 	}
 }
@@ -549,14 +549,14 @@ func (s *ServerTests) TestGroupFiltering(c *gocheck.C) {
 		}
 		resp, err := s.ec2.SecurityGroups(t.groups, f)
 		if t.err != "" {
-			c.Check(err, gocheck.gocheck.ErrorMatches, t.err)
+			c.Check(err, gocheck.ErrorMatches, t.err)
 			continue
 		}
 		c.Assert(err,gocheck.IsNil)
 		groups := make(map[string]*ec2.SecurityGroup)
 		for j := range resp.Groups {
 			group := &resp.Groups[j].SecurityGroup
-			c.Check(groups[group.Id],gocheck.IsNil, Commentf("duplicate group id: %q", group.Id))
+			c.Check(groups[group.Id],gocheck.IsNil, gocheck.Commentf("duplicate group id: %q", group.Id))
 
 			groups[group.Id] = group
 		}
@@ -573,8 +573,8 @@ func (s *ServerTests) TestGroupFiltering(c *gocheck.C) {
 		c.Check(groups, gocheck.HasLen, len(t.results))
 		for j, g := range t.results {
 			rg := groups[g.Id]
-			c.Assert(rg, NotNil, Commentf("group %d (%v) not found; got %#v", j, g, groups))
-			c.Check(rg.Name, gocheck.Equals, g.Name, Commentf("group %d (%v)", j, g))
+			c.Assert(rg, gocheck.NotNil, gocheck.Commentf("group %d (%v) not found; got %#v", j, g, groups))
+			c.Check(rg.Name, gocheck.Equals, g.Name, gocheck.Commentf("group %d (%v)", j, g))
 		}
 	}
 }
