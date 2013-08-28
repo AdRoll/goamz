@@ -2,8 +2,8 @@ package iam_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../iam"
-	"../iam/iamtest"
+	"github.com/crowdmob/goamz/iam"
+	"github.com/crowdmob/goamz/iam/iamtest"
 	"launchpad.net/gocheck"
 )
 
@@ -16,7 +16,7 @@ type LocalServer struct {
 
 func (s *LocalServer) SetUp(c *gocheck.C) {
 	srv, err := iamtest.NewServer()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(srv, gocheck.NotNil)
 
 	s.srv = srv

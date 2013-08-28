@@ -2,7 +2,7 @@ package iam_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../iam"
+	"github.com/crowdmob/goamz/iam"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"strings"
@@ -38,7 +38,7 @@ func (s *S) TestCreateUser(c *gocheck.C) {
 	c.Assert(values.Get("Action"), gocheck.Equals, "CreateUser")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
 	c.Assert(values.Get("Path"), gocheck.Equals, "/division_abc/subdivision_xyz/")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 	expected := iam.User{
 		Path: "/division_abc/subdivision_xyz/",
@@ -53,7 +53,7 @@ func (s *S) TestCreateUserConflict(c *gocheck.C) {
 	testServer.Response(409, nil, DuplicateUserExample)
 	resp, err := s.iam.CreateUser("Bob", "/division_abc/subdivision_xyz/")
 	testServer.WaitRequest()
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 	c.Assert(err, gocheck.NotNil)
 	e, ok := err.(*iam.Error)
 	c.Assert(ok, gocheck.Equals, true)
@@ -67,7 +67,7 @@ func (s *S) TestGetUser(c *gocheck.C) {
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "GetUser")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 	expected := iam.User{
 		Path: "/division_abc/subdivision_xyz/",
@@ -84,7 +84,7 @@ func (s *S) TestDeleteUser(c *gocheck.C) {
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "DeleteUser")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }
 
@@ -95,7 +95,7 @@ func (s *S) TestCreateGroup(c *gocheck.C) {
 	c.Assert(values.Get("Action"), gocheck.Equals, "CreateGroup")
 	c.Assert(values.Get("GroupName"), gocheck.Equals, "Admins")
 	c.Assert(values.Get("Path"), gocheck.Equals, "/admins/")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.Group.Path, gocheck.Equals, "/admins/")
 	c.Assert(resp.Group.Name, gocheck.Equals, "Admins")
 	c.Assert(resp.Group.Id, gocheck.Equals, "AGPACKCEVSQ6C2EXAMPLE")
@@ -107,7 +107,7 @@ func (s *S) TestCreateGroupWithoutPath(c *gocheck.C) {
 	_, err := s.iam.CreateGroup("Managers", "")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "CreateGroup")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	_, ok := map[string][]string(values)["Path"]
 	c.Assert(ok, gocheck.Equals, false)
 }
@@ -118,7 +118,7 @@ func (s *S) TestDeleteGroup(c *gocheck.C) {
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "DeleteGroup")
 	c.Assert(values.Get("GroupName"), gocheck.Equals, "Admins")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }
 
@@ -128,7 +128,7 @@ func (s *S) TestListGroups(c *gocheck.C) {
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "ListGroups")
 	c.Assert(values.Get("PathPrefix"), gocheck.Equals, "/division_abc/")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 	expected := []iam.Group{
 		{
@@ -158,7 +158,7 @@ func (s *S) TestListGroupsWithoutPathPrefix(c *gocheck.C) {
 	_, err := s.iam.Groups("")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "ListGroups")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	_, ok := map[string][]string(values)["PathPrefix"]
 	c.Assert(ok, gocheck.Equals, false)
 }
@@ -169,7 +169,7 @@ func (s *S) TestCreateAccessKey(c *gocheck.C) {
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "CreateAccessKey")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.AccessKey.UserName, gocheck.Equals, "Bob")
 	c.Assert(resp.AccessKey.Id, gocheck.Equals, "AKIAIOSFODNN7EXAMPLE")
 	c.Assert(resp.AccessKey.Secret, gocheck.Equals, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY")
@@ -183,14 +183,14 @@ func (s *S) TestDeleteAccessKey(c *gocheck.C) {
 	c.Assert(values.Get("Action"), gocheck.Equals, "DeleteAccessKey")
 	c.Assert(values.Get("AccessKeyId"), gocheck.Equals, "ysa8hasdhasdsi")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }
 
 func (s *S) TestDeleteAccessKeyBlankUserName(c *gocheck.C) {
 	testServer.Response(200, nil, RequestIdExample)
 	_, err := s.iam.DeleteAccessKey("ysa8hasdhasdsi", "")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "DeleteAccessKey")
 	c.Assert(values.Get("AccessKeyId"), gocheck.Equals, "ysa8hasdhasdsi")
@@ -204,7 +204,7 @@ func (s *S) TestAccessKeys(c *gocheck.C) {
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "ListAccessKeys")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 	c.Assert(resp.AccessKeys, gocheck.HasLen, 2)
 	c.Assert(resp.AccessKeys[0].Id, gocheck.Equals, "AKIAIOSFODNN7EXAMPLE")
@@ -218,7 +218,7 @@ func (s *S) TestAccessKeys(c *gocheck.C) {
 func (s *S) TestAccessKeysBlankUserName(c *gocheck.C) {
 	testServer.Response(200, nil, ListAccessKeyExample)
 	_, err := s.iam.AccessKeys("")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Action"), gocheck.Equals, "ListAccessKeys")
 	_, ok := map[string][]string(values)["UserName"]
@@ -232,7 +232,7 @@ func (s *S) TestGetUserPolicy(c *gocheck.C) {
 	c.Assert(values.Get("Action"), gocheck.Equals, "GetUserPolicy")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
 	c.Assert(values.Get("PolicyName"), gocheck.Equals, "AllAccessPolicy")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.Policy.UserName, gocheck.Equals, "Bob")
 	c.Assert(resp.Policy.Name, gocheck.Equals, "AllAccessPolicy")
 	c.Assert(strings.TrimSpace(resp.Policy.Document), gocheck.Equals, `{"Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]}`)
@@ -262,7 +262,7 @@ func (s *S) TestPutUserPolicy(c *gocheck.C) {
 	c.Assert(req.FormValue("UserName"), gocheck.Equals, "Bob")
 	c.Assert(req.FormValue("PolicyDocument"), gocheck.Equals, document)
 	c.Assert(req.FormValue("Version"), gocheck.Equals, "2010-05-08")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }
 
@@ -273,6 +273,6 @@ func (s *S) TestDeleteUserPolicy(c *gocheck.C) {
 	c.Assert(values.Get("Action"), gocheck.Equals, "DeleteUserPolicy")
 	c.Assert(values.Get("PolicyName"), gocheck.Equals, "AllAccessPolicy")
 	c.Assert(values.Get("UserName"), gocheck.Equals, "Bob")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
 }

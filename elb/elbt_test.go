@@ -2,8 +2,8 @@ package elb_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../elb"
-	"../elb/elbtest"
+	"github.com/crowdmob/goamz/elb"
+	"github.com/crowdmob/goamz/elb/elbtest"
 	"launchpad.net/gocheck"
 )
 
@@ -16,7 +16,7 @@ type LocalServer struct {
 
 func (s *LocalServer) SetUp(c *gocheck.C) {
 	srv, err := elbtest.NewServer()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(srv, gocheck.NotNil)
 	s.srv = srv
 	s.region = aws.Region{ELBEndpoint: srv.URL()}
@@ -83,7 +83,7 @@ func (s *LocalServerSuite) TestDescribeLoadBalancerListsAddedByNewLoadbalancerFu
 	srv.NewLoadBalancer("wierdlb")
 	defer srv.RemoveLoadBalancer("wierdlb")
 	resp, err := s.clientTests.elb.DescribeLoadBalancers()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	isPresent := false
 	for _, desc := range resp.LoadBalancerDescriptions {
 		if desc.LoadBalancerName == "wierdlb" {
@@ -102,13 +102,13 @@ func (s *LocalServerSuite) TestDescribeLoadBalancerListsInstancesAddedByRegister
 	defer srv.RemoveInstance(instId)
 	srv.RegisterInstance(instId, lbName) // no need to deregister, since we're removing the lb
 	resp, err := s.clientTests.elb.DescribeLoadBalancers()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(len(resp.LoadBalancerDescriptions) > 0, gocheck.Equals, true)
 	c.Assert(len(resp.LoadBalancerDescriptions[0].Instances) > 0, gocheck.Equals, true)
 	c.Assert(resp.LoadBalancerDescriptions[0].Instances, gocheck.DeepEquals, []elb.Instance{{InstanceId: instId}})
 	srv.DeregisterInstance(instId, lbName)
 	resp, err = s.clientTests.elb.DescribeLoadBalancers()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.LoadBalancerDescriptions[0].Instances, gocheck.DeepEquals, []elb.Instance(nil))
 }
 
@@ -123,7 +123,7 @@ func (s *LocalServerSuite) TestRegisterInstanceWithLoadBalancer(c *gocheck.C) {
 	srv.NewLoadBalancer("testlb")
 	defer srv.RemoveLoadBalancer("testlb")
 	resp, err := s.clientTests.elb.RegisterInstancesWithLoadBalancer([]string{instId}, "testlb")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.InstanceIds, gocheck.DeepEquals, []string{instId})
 }
 
@@ -134,7 +134,7 @@ func (s *LocalServerSuite) TestRegisterInstanceWithLoadBalancerWithAbsentInstanc
 	resp, err := s.clientTests.elb.RegisterInstancesWithLoadBalancer([]string{"i-212"}, "testlb")
 	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^InvalidInstance found in \[i-212\]. Invalid id: "i-212" \(InvalidInstance\)$`)
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 }
 
 func (s *LocalServerSuite) TestRegisterInstanceWithLoadBalancerWithAbsentLoadBalancer(c *gocheck.C) {
@@ -143,7 +143,7 @@ func (s *LocalServerSuite) TestRegisterInstanceWithLoadBalancerWithAbsentLoadBal
 	resp, err := s.clientTests.elb.RegisterInstancesWithLoadBalancer([]string{"i-212"}, "absentlb")
 	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^There is no ACTIVE Load Balancer named 'absentlb' \(LoadBalancerNotFound\)$`)
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 }
 
 func (s *LocalServerSuite) TestDeregisterInstanceWithLoadBalancer(c *gocheck.C) {
@@ -155,13 +155,13 @@ func (s *LocalServerSuite) TestDeregisterInstanceWithLoadBalancer(c *gocheck.C) 
 	srv.NewLoadBalancer("testlb")
 	defer srv.RemoveLoadBalancer("testlb")
 	resp, err := s.clientTests.elb.DeregisterInstancesFromLoadBalancer([]string{instId}, "testlb")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Not(gocheck.Equals), "")
 }
 
 func (s *LocalServerSuite) TestDeregisterInstanceWithLoadBalancerWithAbsentLoadBalancer(c *gocheck.C) {
 	resp, err := s.clientTests.elb.DeregisterInstancesFromLoadBalancer([]string{"i-212"}, "absentlb")
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^There is no ACTIVE Load Balancer named 'absentlb' \(LoadBalancerNotFound\)$`)
 }
@@ -171,7 +171,7 @@ func (s *LocalServerSuite) TestDeregisterInstancewithLoadBalancerWithAbsentInsta
 	srv.NewLoadBalancer("testlb")
 	defer srv.RemoveLoadBalancer("testlb")
 	resp, err := s.clientTests.elb.DeregisterInstancesFromLoadBalancer([]string{"i-212"}, "testlb")
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^InvalidInstance found in \[i-212\]. Invalid id: "i-212" \(InvalidInstance\)$`)
 }
@@ -183,7 +183,7 @@ func (s *LocalServerSuite) TestDescribeInstanceHealth(c *gocheck.C) {
 	srv.NewLoadBalancer("testlb")
 	defer srv.RemoveLoadBalancer("testlb")
 	resp, err := s.clientTests.elb.DescribeInstanceHealth("testlb", instId)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(len(resp.InstanceStates) > 0, gocheck.Equals, true)
 	c.Assert(resp.InstanceStates[0].Description, gocheck.Equals, "Instance is in pending state.")
 	c.Assert(resp.InstanceStates[0].InstanceId, gocheck.Equals, instId)
@@ -203,7 +203,7 @@ func (s *LocalServerSuite) TestDescribeInstanceHealthWithoutSpecifyingInstances(
 	defer srv.RemoveLoadBalancer("testlb")
 	srv.RegisterInstance(instId, "testlb")
 	resp, err := s.clientTests.elb.DescribeInstanceHealth("testlb")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(len(resp.InstanceStates) > 0, gocheck.Equals, true)
 	c.Assert(resp.InstanceStates[0].Description, gocheck.Equals, "Instance is in pending state.")
 	c.Assert(resp.InstanceStates[0].InstanceId, gocheck.Equals, instId)
@@ -226,7 +226,7 @@ func (s *LocalServerSuite) TestDescribeInstanceHealthChangingIt(c *gocheck.C) {
 	}
 	srv.ChangeInstanceState("somelb", state)
 	resp, err := s.clientTests.elb.DescribeInstanceHealth("somelb")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(len(resp.InstanceStates) > 0, gocheck.Equals, true)
 	c.Assert(resp.InstanceStates[0].Description, gocheck.Equals, "Instance has failed at least the UnhealthyThreshold number of health checks consecutively")
 	c.Assert(resp.InstanceStates[0].InstanceId, gocheck.Equals, instId)

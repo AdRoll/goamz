@@ -3,8 +3,8 @@ package ec2_test
 import (
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
-	"../ec2"
-	"../ec2/ec2test"
+	"github.com/crowdmob/goamz/ec2"
+	"github.com/crowdmob/goamz/ec2/ec2test"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"regexp"
@@ -20,7 +20,7 @@ type LocalServer struct {
 
 func (s *LocalServer) SetUp(c *gocheck.C) {
 	srv, err := ec2test.NewServer()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(srv, gocheck.NotNil)
 
 	s.srv = srv
@@ -66,7 +66,7 @@ func (s *LocalServerSuite) TestUserData(c *gocheck.C) {
 		InstanceType: "t1.micro",
 		UserData:     data,
 	})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(inst, gocheck.NotNil)
 	c.Assert(inst.Instances[0].DNSName, gocheck.Equals, inst.Instances[0].InstanceId+".example.com")
 
@@ -112,7 +112,7 @@ func terminateInstances(c *gocheck.C, e *ec2.EC2, insts []*ec2.Instance) {
 		}
 	}
 	_, err := e.TerminateInstances(ids)
-	c.Check(err,gocheck.IsNil, gocheck.Commentf("%d INSTANCES LEFT RUNNING!!!", len(ids)))
+	c.Check(err, gocheck.IsNil, gocheck.Commentf("%d INSTANCES LEFT RUNNING!!!", len(ids)))
 }
 
 func (s *ServerTests) makeTestGroup(c *gocheck.C, name, descr string) ec2.SecurityGroup {
@@ -123,7 +123,7 @@ func (s *ServerTests) makeTestGroup(c *gocheck.C, name, descr string) ec2.Securi
 	}
 
 	resp, err := s.ec2.CreateSecurityGroup(name, descr)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.Name, gocheck.Equals, name)
 	return resp.SecurityGroup
 }
@@ -136,7 +136,7 @@ func (s *ServerTests) TestIPPerms(c *gocheck.C) {
 	defer s.ec2.DeleteSecurityGroup(g1)
 
 	resp, err := s.ec2.SecurityGroups([]ec2.SecurityGroup{g0, g1}, nil)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.Groups, gocheck.HasLen, 2)
 	c.Assert(resp.Groups[0].IPPerms, gocheck.HasLen, 0)
 	c.Assert(resp.Groups[1].IPPerms, gocheck.HasLen, 0)
@@ -171,10 +171,10 @@ func (s *ServerTests) TestIPPerms(c *gocheck.C) {
 		ToPort:    2001,
 		SourceIPs: []string{"200.1.1.34/32"},
 	}})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	resp, err = s.ec2.SecurityGroups([]ec2.SecurityGroup{g0}, nil)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.Groups, gocheck.HasLen, 1)
 	c.Assert(resp.Groups[0].IPPerms, gocheck.HasLen, 1)
 
@@ -212,10 +212,10 @@ func (s *ServerTests) TestIPPerms(c *gocheck.C) {
 		ToPort:    2001,
 		SourceIPs: []string{"200.1.1.34/32"},
 	}})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	resp, err = s.ec2.SecurityGroups([]ec2.SecurityGroup{g0}, nil)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.Groups, gocheck.HasLen, 1)
 	c.Assert(resp.Groups[0].IPPerms, gocheck.HasLen, 1)
 
@@ -230,15 +230,15 @@ func (s *ServerTests) TestIPPerms(c *gocheck.C) {
 
 	// We should be able to delete g1 now because we've removed its only use.
 	_, err = s.ec2.DeleteSecurityGroup(g1)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	_, err = s.ec2.DeleteSecurityGroup(g0)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	f := ec2.NewFilter()
 	f.Add("group-id", g0.Id, g1.Id)
 	resp, err = s.ec2.SecurityGroups(nil, f)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.Groups, gocheck.HasLen, 0)
 }
 
@@ -251,7 +251,7 @@ func (s *ServerTests) TestDuplicateIPPerm(c *gocheck.C) {
 	defer s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Name: name})
 
 	resp1, err := s.ec2.CreateSecurityGroup(name, descr)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp1.Name, gocheck.Equals, name)
 
 	perms := []ec2.IPPerm{{
@@ -267,7 +267,7 @@ func (s *ServerTests) TestDuplicateIPPerm(c *gocheck.C) {
 	}}
 
 	_, err = s.ec2.AuthorizeSecurityGroup(ec2.SecurityGroup{Name: name}, perms[0:1])
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	_, err = s.ec2.AuthorizeSecurityGroup(ec2.SecurityGroup{Name: name}, perms[0:2])
 	c.Assert(err, gocheck.ErrorMatches, `.*\(InvalidPermission.Duplicate\)`)
@@ -280,12 +280,12 @@ type filterSpec struct {
 
 func (s *ServerTests) TestInstanceFiltering(c *gocheck.C) {
 	groupResp, err := s.ec2.CreateSecurityGroup(sessionName("testgroup1"), "testgroup one description")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	group1 := groupResp.SecurityGroup
 	defer s.ec2.DeleteSecurityGroup(group1)
 
 	groupResp, err = s.ec2.CreateSecurityGroup(sessionName("testgroup2"), "testgroup two description")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	group2 := groupResp.SecurityGroup
 	defer s.ec2.DeleteSecurityGroup(group2)
 
@@ -296,7 +296,7 @@ func (s *ServerTests) TestInstanceFiltering(c *gocheck.C) {
 		InstanceType:   "t1.micro",
 		SecurityGroups: []ec2.SecurityGroup{group1},
 	})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	insts[0] = &inst.Instances[0]
 	insts[1] = &inst.Instances[1]
 	defer terminateInstances(c, s.ec2, insts)
@@ -307,7 +307,7 @@ func (s *ServerTests) TestInstanceFiltering(c *gocheck.C) {
 		InstanceType:   "t1.micro",
 		SecurityGroups: []ec2.SecurityGroup{group2},
 	})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	insts[2] = &inst.Instances[0]
 
 	ids := func(indices ...int) (instIds []string) {
@@ -402,12 +402,12 @@ func (s *ServerTests) TestInstanceFiltering(c *gocheck.C) {
 			c.Check(err, gocheck.ErrorMatches, t.err)
 			continue
 		}
-		c.Assert(err,gocheck.IsNil)
+		c.Assert(err, gocheck.IsNil)
 		insts := make(map[string]*ec2.Instance)
 		for _, r := range resp.Reservations {
 			for j := range r.Instances {
 				inst := &r.Instances[j]
-				c.Check(insts[inst.InstanceId],gocheck.IsNil, gocheck.Commentf("duplicate instance id: %q", inst.InstanceId))
+				c.Check(insts[inst.InstanceId], gocheck.IsNil, gocheck.Commentf("duplicate instance id: %q", inst.InstanceId))
 				insts[inst.InstanceId] = inst
 			}
 		}
@@ -438,7 +438,7 @@ func (s *ServerTests) TestGroupFiltering(c *gocheck.C) {
 	g := make([]ec2.SecurityGroup, 4)
 	for i := range g {
 		resp, err := s.ec2.CreateSecurityGroup(sessionName(fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
-		c.Assert(err,gocheck.IsNil)
+		c.Assert(err, gocheck.IsNil)
 		g[i] = resp.SecurityGroup
 		c.Logf("group %d: %v", i, g[i])
 		defer s.ec2.DeleteSecurityGroup(g[i])
@@ -466,7 +466,7 @@ func (s *ServerTests) TestGroupFiltering(c *gocheck.C) {
 	}
 	for i, ps := range perms {
 		_, err := s.ec2.AuthorizeSecurityGroup(g[i], ps)
-		c.Assert(err,gocheck.IsNil)
+		c.Assert(err, gocheck.IsNil)
 	}
 
 	groups := func(indices ...int) (gs []ec2.SecurityGroup) {
@@ -552,11 +552,11 @@ func (s *ServerTests) TestGroupFiltering(c *gocheck.C) {
 			c.Check(err, gocheck.ErrorMatches, t.err)
 			continue
 		}
-		c.Assert(err,gocheck.IsNil)
+		c.Assert(err, gocheck.IsNil)
 		groups := make(map[string]*ec2.SecurityGroup)
 		for j := range resp.Groups {
 			group := &resp.Groups[j].SecurityGroup
-			c.Check(groups[group.Id],gocheck.IsNil, gocheck.Commentf("duplicate group id: %q", group.Id))
+			c.Check(groups[group.Id], gocheck.IsNil, gocheck.Commentf("duplicate group id: %q", group.Id))
 
 			groups[group.Id] = group
 		}

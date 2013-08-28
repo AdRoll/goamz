@@ -2,7 +2,7 @@ package mturk_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../mturk"
+	"github.com/crowdmob/goamz/exp/mturk"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"net/url"
@@ -54,7 +54,7 @@ func (s *S) TestCreateHIT(c *gocheck.C) {
 
 	testServer.WaitRequest()
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(hit, gocheck.NotNil)
 
 	c.Assert(hit.HITId, gocheck.Equals, "28J4IXKO2L927XKJTHO34OCDNASCDW")
@@ -66,7 +66,7 @@ func (s *S) TestSearchHITs(c *gocheck.C) {
 
 	hitResult, err := s.mturk.SearchHITs()
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(hitResult, gocheck.NotNil)
 
 	c.Assert(hitResult.NumResults, gocheck.Equals, uint(1))
