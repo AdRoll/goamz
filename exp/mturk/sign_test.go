@@ -2,7 +2,7 @@ package mturk_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../mturk"
+	"github.com/crowdmob/goamz/exp/mturk"
 	"launchpad.net/gocheck"
 )
 

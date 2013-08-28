@@ -2,7 +2,7 @@ package ec2_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../ec2"
+	"github.com/crowdmob/goamz/ec2"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"testing"
@@ -44,7 +44,7 @@ func (s *S) TestRunInstancesErrorDump(c *gocheck.C) {
 
 	testServer.WaitRequest()
 
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 	c.Assert(err, gocheck.ErrorMatches, msg+` \(UnsupportedOperation\)`)
 
 	ec2err, ok := err.(*ec2.Error)
@@ -63,7 +63,7 @@ func (s *S) TestRunInstancesErrorWithoutXML(c *gocheck.C) {
 
 	testServer.WaitRequest()
 
-	c.Assert(resp,gocheck.IsNil)
+	c.Assert(resp, gocheck.IsNil)
 	c.Assert(err, gocheck.ErrorMatches, "500 Internal Server Error")
 
 	ec2err, ok := err.(*ec2.Error)
@@ -117,7 +117,7 @@ func (s *S) TestRunInstancesExample(c *gocheck.C) {
 	c.Assert(req.Form["InstanceInitiatedShutdownBehavior"], gocheck.DeepEquals, []string{"terminate"})
 	c.Assert(req.Form["PrivateIpAddress"], gocheck.DeepEquals, []string{"10.0.0.25"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 	c.Assert(resp.ReservationId, gocheck.Equals, "r-47a5402e")
 	c.Assert(resp.OwnerId, gocheck.Equals, "999988887777")
@@ -164,18 +164,18 @@ func (s *S) TestTerminateInstancesExample(c *gocheck.C) {
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"TerminateInstances"})
 	c.Assert(req.Form["InstanceId.1"], gocheck.DeepEquals, []string{"i-1"})
 	c.Assert(req.Form["InstanceId.2"], gocheck.DeepEquals, []string{"i-2"})
-	c.Assert(req.Form["UserData"],gocheck.IsNil)
-	c.Assert(req.Form["KernelId"],gocheck.IsNil)
-	c.Assert(req.Form["RamdiskId"],gocheck.IsNil)
-	c.Assert(req.Form["Placement.AvailabilityZone"],gocheck.IsNil)
-	c.Assert(req.Form["Placement.GroupName"],gocheck.IsNil)
-	c.Assert(req.Form["Monitoring.Enabled"],gocheck.IsNil)
-	c.Assert(req.Form["SubnetId"],gocheck.IsNil)
-	c.Assert(req.Form["DisableApiTermination"],gocheck.IsNil)
-	c.Assert(req.Form["InstanceInitiatedShutdownBehavior"],gocheck.IsNil)
-	c.Assert(req.Form["PrivateIpAddress"],gocheck.IsNil)
+	c.Assert(req.Form["UserData"], gocheck.IsNil)
+	c.Assert(req.Form["KernelId"], gocheck.IsNil)
+	c.Assert(req.Form["RamdiskId"], gocheck.IsNil)
+	c.Assert(req.Form["Placement.AvailabilityZone"], gocheck.IsNil)
+	c.Assert(req.Form["Placement.GroupName"], gocheck.IsNil)
+	c.Assert(req.Form["Monitoring.Enabled"], gocheck.IsNil)
+	c.Assert(req.Form["SubnetId"], gocheck.IsNil)
+	c.Assert(req.Form["DisableApiTermination"], gocheck.IsNil)
+	c.Assert(req.Form["InstanceInitiatedShutdownBehavior"], gocheck.IsNil)
+	c.Assert(req.Form["PrivateIpAddress"], gocheck.IsNil)
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 	c.Assert(resp.StateChanges, gocheck.HasLen, 1)
 	c.Assert(resp.StateChanges[0].InstanceId, gocheck.Equals, "i-3ea74257")
@@ -199,7 +199,7 @@ func (s *S) TestDescribeInstancesExample1(c *gocheck.C) {
 	c.Assert(req.Form["InstanceId.1"], gocheck.DeepEquals, []string{"i-1"})
 	c.Assert(req.Form["InstanceId.2"], gocheck.DeepEquals, []string{"i-2"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "98e3c9a4-848c-4d6d-8e8a-b1bdEXAMPLE")
 	c.Assert(resp.Reservations, gocheck.HasLen, 2)
 
@@ -234,12 +234,12 @@ func (s *S) TestDescribeInstancesExample2(c *gocheck.C) {
 	c.Assert(req.Form["InstanceId.2"], gocheck.DeepEquals, []string{"i-2"})
 	c.Assert(req.Form["Filter.1.Name"], gocheck.DeepEquals, []string{"key1"})
 	c.Assert(req.Form["Filter.1.Value.1"], gocheck.DeepEquals, []string{"value1"})
-	c.Assert(req.Form["Filter.1.Value.2"],gocheck.IsNil)
+	c.Assert(req.Form["Filter.1.Value.2"], gocheck.IsNil)
 	c.Assert(req.Form["Filter.2.Name"], gocheck.DeepEquals, []string{"key2"})
 	c.Assert(req.Form["Filter.2.Value.1"], gocheck.DeepEquals, []string{"value2"})
 	c.Assert(req.Form["Filter.2.Value.2"], gocheck.DeepEquals, []string{"value3"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 	c.Assert(resp.Reservations, gocheck.HasLen, 1)
 
@@ -271,12 +271,12 @@ func (s *S) TestDescribeImagesExample(c *gocheck.C) {
 	c.Assert(req.Form["ImageId.2"], gocheck.DeepEquals, []string{"ami-2"})
 	c.Assert(req.Form["Filter.1.Name"], gocheck.DeepEquals, []string{"key1"})
 	c.Assert(req.Form["Filter.1.Value.1"], gocheck.DeepEquals, []string{"value1"})
-	c.Assert(req.Form["Filter.1.Value.2"],gocheck.IsNil)
+	c.Assert(req.Form["Filter.1.Value.2"], gocheck.IsNil)
 	c.Assert(req.Form["Filter.2.Name"], gocheck.DeepEquals, []string{"key2"})
 	c.Assert(req.Form["Filter.2.Value.1"], gocheck.DeepEquals, []string{"value2"})
 	c.Assert(req.Form["Filter.2.Value.2"], gocheck.DeepEquals, []string{"value3"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "4a4a27a2-2e7c-475d-b35b-ca822EXAMPLE")
 	c.Assert(resp.Images, gocheck.HasLen, 1)
 
@@ -314,7 +314,7 @@ func (s *S) TestCreateSnapshotExample(c *gocheck.C) {
 	c.Assert(req.Form["VolumeId"], gocheck.DeepEquals, []string{"vol-4d826724"})
 	c.Assert(req.Form["Description"], gocheck.DeepEquals, []string{"Daily Backup"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 	c.Assert(resp.Snapshot.Id, gocheck.Equals, "snap-78a54011")
 	c.Assert(resp.Snapshot.VolumeId, gocheck.Equals, "vol-4d826724")
@@ -335,7 +335,7 @@ func (s *S) TestDeleteSnapshotsExample(c *gocheck.C) {
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DeleteSnapshot"})
 	c.Assert(req.Form["SnapshotId.1"], gocheck.DeepEquals, []string{"snap-78a54011"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
@@ -354,12 +354,12 @@ func (s *S) TestDescribeSnapshotsExample(c *gocheck.C) {
 	c.Assert(req.Form["SnapshotId.2"], gocheck.DeepEquals, []string{"snap-2"})
 	c.Assert(req.Form["Filter.1.Name"], gocheck.DeepEquals, []string{"key1"})
 	c.Assert(req.Form["Filter.1.Value.1"], gocheck.DeepEquals, []string{"value1"})
-	c.Assert(req.Form["Filter.1.Value.2"],gocheck.IsNil)
+	c.Assert(req.Form["Filter.1.Value.2"], gocheck.IsNil)
 	c.Assert(req.Form["Filter.2.Name"], gocheck.DeepEquals, []string{"key2"})
 	c.Assert(req.Form["Filter.2.Value.1"], gocheck.DeepEquals, []string{"value2"})
 	c.Assert(req.Form["Filter.2.Value.2"], gocheck.DeepEquals, []string{"value3"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 	c.Assert(resp.Snapshots, gocheck.HasLen, 1)
 
@@ -388,7 +388,7 @@ func (s *S) TestCreateSecurityGroupExample(c *gocheck.C) {
 	c.Assert(req.Form["GroupName"], gocheck.DeepEquals, []string{"websrv"})
 	c.Assert(req.Form["GroupDescription"], gocheck.DeepEquals, []string{"Web Servers"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 	c.Assert(resp.Name, gocheck.Equals, "websrv")
 	c.Assert(resp.Id, gocheck.Equals, "sg-67ad940e")
@@ -404,7 +404,7 @@ func (s *S) TestDescribeSecurityGroupsExample(c *gocheck.C) {
 	c.Assert(req.Form["GroupName.1"], gocheck.DeepEquals, []string{"WebServers"})
 	c.Assert(req.Form["GroupName.2"], gocheck.DeepEquals, []string{"RangedPortsBySource"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 	c.Assert(resp.Groups, gocheck.HasLen, 2)
 
@@ -432,7 +432,7 @@ func (s *S) TestDescribeSecurityGroupsExample(c *gocheck.C) {
 	c.Assert(g1ipp.Protocol, gocheck.Equals, "tcp")
 	c.Assert(g1ipp.FromPort, gocheck.Equals, 6000)
 	c.Assert(g1ipp.ToPort, gocheck.Equals, 7000)
-	c.Assert(g1ipp.SourceIPs,gocheck.IsNil)
+	c.Assert(g1ipp.SourceIPs, gocheck.IsNil)
 }
 
 func (s *S) TestDescribeSecurityGroupsExampleWithFilter(c *gocheck.C) {
@@ -458,7 +458,7 @@ func (s *S) TestDescribeSecurityGroupsExampleWithFilter(c *gocheck.C) {
 	c.Assert(req.Form["Filter.4.Name"], gocheck.DeepEquals, []string{"ip-permission.to-port"})
 	c.Assert(req.Form["Filter.4.Value.1"], gocheck.DeepEquals, []string{"22"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestDescribeSecurityGroupsDumpWithGroup(c *gocheck.C) {
@@ -468,12 +468,12 @@ func (s *S) TestDescribeSecurityGroupsDumpWithGroup(c *gocheck.C) {
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DescribeSecurityGroups"})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Check(resp.Groups, gocheck.HasLen, 1)
 	c.Check(resp.Groups[0].IPPerms, gocheck.HasLen, 2)
 
 	ipp0 := resp.Groups[0].IPPerms[0]
-	c.Assert(ipp0.SourceIPs,gocheck.IsNil)
+	c.Assert(ipp0.SourceIPs, gocheck.IsNil)
 	c.Check(ipp0.Protocol, gocheck.Equals, "icmp")
 	c.Assert(ipp0.SourceGroups, gocheck.HasLen, 1)
 	c.Check(ipp0.SourceGroups[0].OwnerId, gocheck.Equals, "12345")
@@ -482,7 +482,7 @@ func (s *S) TestDescribeSecurityGroupsDumpWithGroup(c *gocheck.C) {
 
 	ipp1 := resp.Groups[0].IPPerms[1]
 	c.Check(ipp1.Protocol, gocheck.Equals, "tcp")
-	c.Assert(ipp0.SourceIPs,gocheck.IsNil)
+	c.Assert(ipp0.SourceIPs, gocheck.IsNil)
 	c.Assert(ipp0.SourceGroups, gocheck.HasLen, 1)
 	c.Check(ipp1.SourceGroups[0].Id, gocheck.Equals, "sg-76abc467")
 	c.Check(ipp1.SourceGroups[0].OwnerId, gocheck.Equals, "12345")
@@ -497,8 +497,8 @@ func (s *S) TestDeleteSecurityGroupExample(c *gocheck.C) {
 
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DeleteSecurityGroup"})
 	c.Assert(req.Form["GroupName"], gocheck.DeepEquals, []string{"websrv"})
-	c.Assert(req.Form["GroupId"],gocheck.IsNil)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(req.Form["GroupId"], gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
@@ -509,7 +509,7 @@ func (s *S) TestDeleteSecurityGroupExampleWithId(c *gocheck.C) {
 	s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Id: "sg-67ad940e", Name: "ignored"})
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Form["GroupName"],gocheck.IsNil)
+	c.Assert(req.Form["GroupName"], gocheck.IsNil)
 	c.Assert(req.Form["GroupId"], gocheck.DeepEquals, []string{"sg-67ad940e"})
 }
 
@@ -534,7 +534,7 @@ func (s *S) TestAuthorizeSecurityGroupExample1(c *gocheck.C) {
 	c.Assert(req.Form["IpPermissions.1.IpRanges.1.CidrIp"], gocheck.DeepEquals, []string{"205.192.0.0/16"})
 	c.Assert(req.Form["IpPermissions.1.IpRanges.2.CidrIp"], gocheck.DeepEquals, []string{"205.159.0.0/16"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
@@ -552,7 +552,7 @@ func (s *S) TestAuthorizeSecurityGroupExample1WithId(c *gocheck.C) {
 
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Form["GroupName"],gocheck.IsNil)
+	c.Assert(req.Form["GroupName"], gocheck.IsNil)
 	c.Assert(req.Form["GroupId"], gocheck.DeepEquals, []string{"sg-67ad940e"})
 }
 
@@ -579,11 +579,11 @@ func (s *S) TestAuthorizeSecurityGroupExample2(c *gocheck.C) {
 	c.Assert(req.Form["IpPermissions.1.ToPort"], gocheck.DeepEquals, []string{"81"})
 	c.Assert(req.Form["IpPermissions.1.Groups.1.UserId"], gocheck.DeepEquals, []string{"999988887777"})
 	c.Assert(req.Form["IpPermissions.1.Groups.1.GroupName"], gocheck.DeepEquals, []string{"OtherAccountGroup"})
-	c.Assert(req.Form["IpPermissions.1.Groups.2.UserId"],gocheck.IsNil)
-	c.Assert(req.Form["IpPermissions.1.Groups.2.GroupName"],gocheck.IsNil)
+	c.Assert(req.Form["IpPermissions.1.Groups.2.UserId"], gocheck.IsNil)
+	c.Assert(req.Form["IpPermissions.1.Groups.2.GroupName"], gocheck.IsNil)
 	c.Assert(req.Form["IpPermissions.1.Groups.2.GroupId"], gocheck.DeepEquals, []string{"sg-67ad940e"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
@@ -598,7 +598,7 @@ func (s *S) TestRevokeSecurityGroupExample(c *gocheck.C) {
 
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"RevokeSecurityGroupIngress"})
 	c.Assert(req.Form["GroupName"], gocheck.DeepEquals, []string{"websrv"})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
@@ -615,7 +615,7 @@ func (s *S) TestCreateTags(c *gocheck.C) {
 	c.Assert(req.Form["Tag.2.Key"], gocheck.DeepEquals, []string{"stack"})
 	c.Assert(req.Form["Tag.2.Value"], gocheck.DeepEquals, []string{"Production"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
@@ -628,7 +628,7 @@ func (s *S) TestStartInstances(c *gocheck.C) {
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"StartInstances"})
 	c.Assert(req.Form["InstanceId.1"], gocheck.DeepEquals, []string{"i-10a64379"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 
 	s0 := resp.StateChanges[0]
@@ -648,7 +648,7 @@ func (s *S) TestStopInstances(c *gocheck.C) {
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"StopInstances"})
 	c.Assert(req.Form["InstanceId.1"], gocheck.DeepEquals, []string{"i-10a64379"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 
 	s0 := resp.StateChanges[0]
@@ -668,7 +668,7 @@ func (s *S) TestRebootInstances(c *gocheck.C) {
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"RebootInstances"})
 	c.Assert(req.Form["InstanceId.1"], gocheck.DeepEquals, []string{"i-10a64379"})
 
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(resp.RequestId, gocheck.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
@@ -682,7 +682,7 @@ func (s *S) TestSignatureWithEndpointPath(c *gocheck.C) {
 	ec2 := ec2.New(s.ec2.Auth, aws.Region{EC2Endpoint: testServer.URL + "/services/Cloud"})
 
 	_, err := ec2.RebootInstances("i-10a64379")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Signature"], gocheck.DeepEquals, []string{"klxs+VwDa1EKHBsxlDYYN58wbP6An+RVdhETv1Fm/os="})

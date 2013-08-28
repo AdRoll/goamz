@@ -2,13 +2,13 @@ package s3_test
 
 import (
 	"bytes"
+	"github.com/crowdmob/goamz/aws"
+	"github.com/crowdmob/goamz/s3"
+	"github.com/crowdmob/goamz/testutil"
 	"io/ioutil"
+	"launchpad.net/gocheck"
 	"net/http"
 	"testing"
-	"../s3"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/testutil"
-	"launchpad.net/gocheck"
 	"time"
 )
 
@@ -64,6 +64,7 @@ func (s *S) TestPutBucket(c *gocheck.C) {
 	c.Assert(req.URL.Path, gocheck.Equals, "/bucket/")
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 }
+
 // Head docs: http://bit.ly/17K1ylI
 
 func (s *S) TestHead(c *gocheck.C) {

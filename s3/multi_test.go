@@ -1,8 +1,8 @@
 package s3_test
 
 import (
-	"../s3"
 	"encoding/xml"
+	"github.com/crowdmob/goamz/s3"
 	"io"
 	"io/ioutil"
 	"launchpad.net/gocheck"
@@ -15,7 +15,7 @@ func (s *S) TestInitMulti(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Method, gocheck.Equals, "POST")
@@ -37,7 +37,7 @@ func (s *S) TestMultiNoPreviousUpload(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.Multi("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Method, gocheck.Equals, "GET")
@@ -59,7 +59,7 @@ func (s *S) TestMultiReturnOld(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.Multi("multi1", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(multi.Key, gocheck.Equals, "multi1")
 	c.Assert(multi.UploadId, gocheck.Equals, "iUVug89pPvSswrikD")
 
@@ -79,10 +79,10 @@ func (s *S) TestListParts(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	parts, err := multi.ListParts()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(parts, gocheck.HasLen, 3)
 	c.Assert(parts[0].N, gocheck.Equals, 1)
 	c.Assert(parts[0].Size, gocheck.Equals, int64(5))
@@ -119,10 +119,10 @@ func (s *S) TestPutPart(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	part, err := multi.PutPart(1, strings.NewReader("<part 1>"))
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(part.N, gocheck.Equals, 1)
 	c.Assert(part.Size, gocheck.Equals, int64(8))
 	c.Assert(part.ETag, gocheck.Equals, headers["ETag"])
@@ -161,14 +161,14 @@ func (s *S) TestPutAllNoPreviousUpload(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	parts, err := multi.PutAll(strings.NewReader("part1part2last"), 5)
 	c.Assert(parts, gocheck.HasLen, 3)
 	c.Assert(parts[0].ETag, gocheck.Equals, `"etag1"`)
 	c.Assert(parts[1].ETag, gocheck.Equals, `"etag2"`)
 	c.Assert(parts[2].ETag, gocheck.Equals, `"etag3"`)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	// Init
 	testServer.WaitRequest()
@@ -215,13 +215,13 @@ func (s *S) TestPutAllZeroSizeFile(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	// Must send at least one part, so that completing it will work.
 	parts, err := multi.PutAll(strings.NewReader(""), 5)
 	c.Assert(parts, gocheck.HasLen, 1)
 	c.Assert(parts[0].ETag, gocheck.Equals, `"etag1"`)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	// Init
 	testServer.WaitRequest()
@@ -250,7 +250,7 @@ func (s *S) TestPutAllResume(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	// "part1" and "part3" match the checksums in ResultDump1.
 	// The middle one is a mismatch (it refers to "part2").
@@ -265,7 +265,7 @@ func (s *S) TestPutAllResume(c *gocheck.C) {
 	c.Assert(parts[2].N, gocheck.Equals, 3)
 	c.Assert(parts[2].Size, gocheck.Equals, int64(5))
 	c.Assert(parts[2].ETag, gocheck.Equals, `"49dcd91231f801159e893fb5c6674985"`)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	// Init
 	testServer.WaitRequest()
@@ -296,10 +296,10 @@ func (s *S) TestMultiComplete(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	err = multi.Complete([]s3.Part{{2, `"ETag2"`, 32}, {1, `"ETag1"`, 64}})
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	testServer.WaitRequest()
 	req := testServer.WaitRequest()
@@ -317,7 +317,7 @@ func (s *S) TestMultiComplete(c *gocheck.C) {
 
 	dec := xml.NewDecoder(req.Body)
 	err = dec.Decode(&payload)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	c.Assert(payload.XMLName.Local, gocheck.Equals, "CompleteMultipartUpload")
 	c.Assert(len(payload.Part), gocheck.Equals, 2)
@@ -334,10 +334,10 @@ func (s *S) TestMultiAbort(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	err = multi.Abort()
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 
 	testServer.WaitRequest()
 	req := testServer.WaitRequest()
@@ -352,7 +352,7 @@ func (s *S) TestListMulti(c *gocheck.C) {
 	b := s.s3.Bucket("sample")
 
 	multis, prefixes, err := b.ListMulti("", "/")
-	c.Assert(err,gocheck.IsNil)
+	c.Assert(err, gocheck.IsNil)
 	c.Assert(prefixes, gocheck.DeepEquals, []string{"a/", "b/"})
 	c.Assert(multis, gocheck.HasLen, 2)
 	c.Assert(multis[0].Key, gocheck.Equals, "multi1")

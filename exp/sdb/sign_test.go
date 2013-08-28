@@ -2,7 +2,7 @@ package sdb_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"../sdb"
+	"github.com/crowdmob/goamz/exp/sdb"
 	"launchpad.net/gocheck"
 )
 

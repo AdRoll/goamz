@@ -1,10 +1,10 @@
 package sqs_test
 
 import (
-	"../sqs"
 	"crypto/md5"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
+	"github.com/crowdmob/goamz/sqs"
 	"hash"
 	"launchpad.net/gocheck"
 )
