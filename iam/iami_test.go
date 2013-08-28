@@ -2,7 +2,7 @@ package iam_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/iam"
+	"../iam"
 	"github.com/crowdmob/goamz/testutil"
 	"launchpad.net/gocheck"
 	"net/url"
