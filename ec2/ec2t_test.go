@@ -270,7 +270,7 @@ func (s *ServerTests) TestDuplicateIPPerm(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 
 	_, err = s.ec2.AuthorizeSecurityGroup(ec2.SecurityGroup{Name: name}, perms[0:2])
-	c.Assert(err, gocheckgocheck..gocheck.ErrorMatches, `.*\(InvalidPermission.Duplicate\)`)
+	c.Assert(err, gocheck.ErrorMatches, `.*\(InvalidPermission.Duplicate\)`)
 }
 
 type filterSpec struct {
