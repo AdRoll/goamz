@@ -2,7 +2,7 @@ package elb_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/elb"
+	"../elb"
 	"launchpad.net/gocheck"
 	"time"
 )
@@ -40,7 +40,7 @@ func (s *S) TestCreateLoadBalancer(c *gocheck.C) {
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
 	c.Assert(values.Get("Action"), gocheck.Equals, "CreateLoadBalancer")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("LoadBalancerName"), gocheck.Equals, "testlb")
 	c.Assert(values.Get("AvailabilityZones.member.1"), gocheck.Equals, "us-east-1a")
 	c.Assert(values.Get("AvailabilityZones.member.2"), gocheck.Equals, "us-east-1b")
@@ -48,7 +48,7 @@ func (s *S) TestCreateLoadBalancer(c *gocheck.C) {
 	c.Assert(values.Get("Listeners.member.1.InstanceProtocol"), gocheck.Equals, "http")
 	c.Assert(values.Get("Listeners.member.1.Protocol"), gocheck.Equals, "http")
 	c.Assert(values.Get("Listeners.member.1.LoadBalancerPort"), gocheck.Equals, "80")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(resp.DNSName, gocheck.Equals, "testlb-339187009.us-east-1.elb.amazonaws.com")
 }
 
@@ -104,7 +104,7 @@ func (s *S) TestCreateLoadBalancerWithWrongParamsCombination(c *gocheck.C) {
 	}
 	resp, err := s.elb.CreateLoadBalancer(createLB)
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	e, ok := err.(*elb.Error)
 	c.Assert(ok, gocheck.Equals, true)
 	c.Assert(e.Message, gocheck.Equals, "Only one of SubnetIds or AvailabilityZones may be specified")
@@ -117,8 +117,8 @@ func (s *S) TestDeleteLoadBalancer(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("Action"), gocheck.Equals, "DeleteLoadBalancer")
 	c.Assert(values.Get("LoadBalancerName"), gocheck.Equals, "testlb")
 	c.Assert(resp.RequestId, gocheck.Equals, "8d7223db-49d7-11e2-bba9-35ba56032fe1")
@@ -130,8 +130,8 @@ func (s *S) TestRegisterInstancesWithLoadBalancer(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("Action"), gocheck.Equals, "RegisterInstancesWithLoadBalancer")
 	c.Assert(values.Get("LoadBalancerName"), gocheck.Equals, "testlb")
 	c.Assert(values.Get("Instances.member.1.InstanceId"), gocheck.Equals, "i-b44db8ca")
@@ -143,7 +143,7 @@ func (s *S) TestRegisterInstancesWithLoadBalancerBadRequest(c *gocheck.C) {
 	testServer.PrepareResponse(400, nil, RegisterInstancesWithLoadBalancerBadRequest)
 	resp, err := s.elb.RegisterInstancesWithLoadBalancer([]string{"i-b44db8ca", "i-461ecf38"}, "absentLB")
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	e, ok := err.(*elb.Error)
 	c.Assert(ok, gocheck.Equals, true)
 	c.Assert(e.Message, gocheck.Equals, "There is no ACTIVE Load Balancer named 'absentLB'")
@@ -156,8 +156,8 @@ func (s *S) TestDeregisterInstancesFromLoadBalancer(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("Action"), gocheck.Equals, "DeregisterInstancesFromLoadBalancer")
 	c.Assert(values.Get("LoadBalancerName"), gocheck.Equals, "testlb")
 	c.Assert(values.Get("Instances.member.1.InstanceId"), gocheck.Equals, "i-b44db8ca")
@@ -169,7 +169,7 @@ func (s *S) TestDeregisterInstancesFromLoadBalancerBadRequest(c *gocheck.C) {
 	testServer.PrepareResponse(400, nil, DeregisterInstancesFromLoadBalancerBadRequest)
 	resp, err := s.elb.DeregisterInstancesFromLoadBalancer([]string{"i-b44db8ca", "i-461ecf38"}, "testlb")
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	e, ok := err.(*elb.Error)
 	c.Assert(ok, gocheck.Equals, true)
 	c.Assert(e.Message, gocheck.Equals, "There is no ACTIVE Load Balancer named 'absentlb'")
@@ -182,8 +182,8 @@ func (s *S) TestDescribeLoadBalancers(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("Action"), gocheck.Equals, "DescribeLoadBalancers")
 	t, _ := time.Parse(time.RFC3339, "2012-12-27T11:51:52.970Z")
 	expected := &elb.DescribeLoadBalancerResp{
@@ -233,8 +233,8 @@ func (s *S) TestDescribeLoadBalancersByName(c *gocheck.C) {
 	s.elb.DescribeLoadBalancers("somelb")
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("Action"), gocheck.Equals, "DescribeLoadBalancers")
 	c.Assert(values.Get("LoadBalancerNames.member.1"), gocheck.Equals, "somelb")
 }
@@ -243,7 +243,7 @@ func (s *S) TestDescribeLoadBalancersBadRequest(c *gocheck.C) {
 	testServer.PrepareResponse(400, nil, DescribeLoadBalancersBadRequest)
 	resp, err := s.elb.DescribeLoadBalancers()
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^Cannot find Load Balancer absentlb \(LoadBalancerNotFound\)$`)
 }
 
@@ -253,8 +253,8 @@ func (s *S) TestDescribeInstanceHealth(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("Action"), gocheck.Equals, "DescribeInstanceHealth")
 	c.Assert(values.Get("LoadBalancerName"), gocheck.Equals, "testlb")
 	c.Assert(values.Get("Instances.member.1.InstanceId"), gocheck.Equals, "i-b44db8ca")
@@ -268,7 +268,7 @@ func (s *S) TestDescribeInstanceHealth(c *gocheck.C) {
 func (s *S) TestDescribeInstanceHealthBadRequest(c *gocheck.C) {
 	testServer.PrepareResponse(400, nil, DescribeInstanceHealthBadRequest)
 	resp, err := s.elb.DescribeInstanceHealth("testlb", "i-foooo")
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Assert(resp,gocheck.IsNil)
 	c.Assert(err, gocheck.ErrorMatches, ".*i-foooo.*(InvalidInstance).*")
 }
@@ -286,8 +286,8 @@ func (s *S) TestConfigureHealthCheck(c *gocheck.C) {
 	c.Assert(err,gocheck.IsNil)
 	values := testServer.WaitRequest().URL.Query()
 	c.Assert(values.Get("Version"), gocheck.Equals, "2012-06-01")
-	c.Assert(values.Get("Signature"), Not(Equals), "")
-	c.Assert(values.Get("Timestamp"), Not(Equals), "")
+	c.Assert(values.Get("Signature"), gocheck.Not(gocheck.Equals), "")
+	c.Assert(values.Get("Timestamp"), gocheck.Not(gocheck.Equals), "")
 	c.Assert(values.Get("Action"), gocheck.Equals, "ConfigureHealthCheck")
 	c.Assert(values.Get("LoadBalancerName"), gocheck.Equals, "testlb")
 	c.Assert(values.Get("HealthCheck.HealthyThreshold"), gocheck.Equals, "10")
@@ -313,6 +313,6 @@ func (s *S) TestConfigureHealthCheckBadRequest(c *gocheck.C) {
 	}
 	resp, err := s.elb.ConfigureHealthCheck("foolb", &hc)
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, ".*foolb.*(LoadBalancerNotFound).*")
 }

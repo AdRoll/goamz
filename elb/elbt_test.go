@@ -2,8 +2,8 @@ package elb_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/elb"
-	"github.com/crowdmob/goamz/elb/elbtest"
+	"../elb"
+	"../elb/elbtest"
 	"launchpad.net/gocheck"
 )
 
@@ -17,7 +17,7 @@ type LocalServer struct {
 func (s *LocalServer) SetUp(c *gocheck.C) {
 	srv, err := elbtest.NewServer()
 	c.Assert(err,gocheck.IsNil)
-	c.Assert(srv, NotNil)
+	c.Assert(srv, gocheck.NotNil)
 	s.srv = srv
 	s.region = aws.Region{ELBEndpoint: srv.URL()}
 }
@@ -132,7 +132,7 @@ func (s *LocalServerSuite) TestRegisterInstanceWithLoadBalancerWithAbsentInstanc
 	srv.NewLoadBalancer("testlb")
 	defer srv.RemoveLoadBalancer("testlb")
 	resp, err := s.clientTests.elb.RegisterInstancesWithLoadBalancer([]string{"i-212"}, "testlb")
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^InvalidInstance found in \[i-212\]. Invalid id: "i-212" \(InvalidInstance\)$`)
 	c.Assert(resp,gocheck.IsNil)
 }
@@ -141,7 +141,7 @@ func (s *LocalServerSuite) TestRegisterInstanceWithLoadBalancerWithAbsentLoadBal
 	// the verification if the lb exists is done before the instances, so there is no need to create
 	// fixture instances for this test, it'll never get that far
 	resp, err := s.clientTests.elb.RegisterInstancesWithLoadBalancer([]string{"i-212"}, "absentlb")
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^There is no ACTIVE Load Balancer named 'absentlb' \(LoadBalancerNotFound\)$`)
 	c.Assert(resp,gocheck.IsNil)
 }
@@ -156,13 +156,13 @@ func (s *LocalServerSuite) TestDeregisterInstanceWithLoadBalancer(c *gocheck.C) 
 	defer srv.RemoveLoadBalancer("testlb")
 	resp, err := s.clientTests.elb.DeregisterInstancesFromLoadBalancer([]string{instId}, "testlb")
 	c.Assert(err,gocheck.IsNil)
-	c.Assert(resp.RequestId, Not(Equals), "")
+	c.Assert(resp.RequestId, gocheck.Not(gocheck.Equals), "")
 }
 
 func (s *LocalServerSuite) TestDeregisterInstanceWithLoadBalancerWithAbsentLoadBalancer(c *gocheck.C) {
 	resp, err := s.clientTests.elb.DeregisterInstancesFromLoadBalancer([]string{"i-212"}, "absentlb")
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^There is no ACTIVE Load Balancer named 'absentlb' \(LoadBalancerNotFound\)$`)
 }
 
@@ -172,7 +172,7 @@ func (s *LocalServerSuite) TestDeregisterInstancewithLoadBalancerWithAbsentInsta
 	defer srv.RemoveLoadBalancer("testlb")
 	resp, err := s.clientTests.elb.DeregisterInstancesFromLoadBalancer([]string{"i-212"}, "testlb")
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	c.Assert(err, gocheck.ErrorMatches, `^InvalidInstance found in \[i-212\]. Invalid id: "i-212" \(InvalidInstance\)$`)
 }
 

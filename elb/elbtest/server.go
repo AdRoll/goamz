@@ -6,7 +6,7 @@ package elbtest
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/crowdmob/goamz/elb"
+	"../../elb"
 	"net"
 	"net/http"
 	"net/url"

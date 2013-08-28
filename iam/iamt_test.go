@@ -17,7 +17,7 @@ type LocalServer struct {
 func (s *LocalServer) SetUp(c *gocheck.C) {
 	srv, err := iamtest.NewServer()
 	c.Assert(err,gocheck.IsNil)
-	c.Assert(srv, NotNil)
+	c.Assert(srv, gocheck.NotNil)
 
 	s.srv = srv
 	s.region = aws.Region{IAMEndpoint: srv.URL()}

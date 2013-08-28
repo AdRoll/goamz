@@ -101,7 +101,7 @@ func (s *ClientTests) TestCreateListAndDeleteAccessKey(c *gocheck.C) {
 
 func (s *ClientTests) TestCreateAccessKeyError(c *gocheck.C) {
 	_, err := s.iam.CreateAccessKey("unknowngopher")
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	iamErr, ok := err.(*iam.Error)
 	c.Assert(ok, gocheck.Equals, true)
 	c.Assert(iamErr.StatusCode, gocheck.Equals, 404)
@@ -111,7 +111,7 @@ func (s *ClientTests) TestCreateAccessKeyError(c *gocheck.C) {
 
 func (s *ClientTests) TestListAccessKeysUserNotFound(c *gocheck.C) {
 	_, err := s.iam.AccessKeys("unknowngopher")
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	iamErr, ok := err.(*iam.Error)
 	c.Assert(ok, gocheck.Equals, true)
 	c.Assert(iamErr.StatusCode, gocheck.Equals, 404)
@@ -204,5 +204,5 @@ func (s *ClientTests) TestPutGetAndDeleteUserPolicy(c *gocheck.C) {
 	_, err = s.iam.DeleteUserPolicy(userResp.User.Name, "EverythingS3")
 	c.Assert(err,gocheck.IsNil)
 	_, err = s.iam.GetUserPolicy(userResp.User.Name, "EverythingS3")
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 }

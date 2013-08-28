@@ -54,7 +54,7 @@ func (s *S) TestCreateUserConflict(c *gocheck.C) {
 	resp, err := s.iam.CreateUser("Bob", "/division_abc/subdivision_xyz/")
 	testServer.WaitRequest()
 	c.Assert(resp,gocheck.IsNil)
-	c.Assert(err, NotNil)
+	c.Assert(err, gocheck.NotNil)
 	e, ok := err.(*iam.Error)
 	c.Assert(ok, gocheck.Equals, true)
 	c.Assert(e.Message, gocheck.Equals, "User with name Bob already exists.")

@@ -39,7 +39,7 @@ func (s *S) TestCreateDomainOK(c *gocheck.C) {
 
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
-	c.Assert(req.Header["Date"], Not(Equals), "")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "63264005-7a5f-e01a-a224-395c63b89f6d")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0055590279)
@@ -55,7 +55,7 @@ func (s *S) TestListDomainsOK(c *gocheck.C) {
 
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
-	c.Assert(req.Header["Date"], Not(Equals), "")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "15fcaf55-9914-63c2-21f3-951e31193790")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0000071759)
@@ -72,7 +72,7 @@ func (s *S) TestListDomainsWithNextTokenXmlOK(c *gocheck.C) {
 
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
-	c.Assert(req.Header["Date"], Not(Equals), "")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "eb13162f-1b95-4511-8b12-489b86acfd28")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0000219907)
@@ -91,7 +91,7 @@ func (s *S) TestDeleteDomainOK(c *gocheck.C) {
 
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
-	c.Assert(req.Header["Date"], Not(Equals), "")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "039e1e25-9a64-2a74-93da-2fda36122a97")
 	c.Assert(resp.ResponseMetadata.BoxUsage, gocheck.Equals, 0.0055590278)
@@ -149,7 +149,7 @@ func (s *S) TestAttrsOK(c *gocheck.C) {
 
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
-	c.Assert(req.Header["Date"], Not(Equals), "")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"GetAttributes"})
 	c.Assert(req.Form["ItemName"], gocheck.DeepEquals, []string{"Item123"})
 	c.Assert(req.Form["DomainName"], gocheck.DeepEquals, []string{"MyDomain"})
@@ -176,7 +176,7 @@ func (s *S) TestAttrsSelectOK(c *gocheck.C) {
 
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
-	c.Assert(req.Header["Date"], Not(Equals), "")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"GetAttributes"})
 	c.Assert(req.Form["ItemName"], gocheck.DeepEquals, []string{"Item123"})
 	c.Assert(req.Form["DomainName"], gocheck.DeepEquals, []string{"MyDomain"})
@@ -202,7 +202,7 @@ func (s *S) TestSelectOK(c *gocheck.C) {
 
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
-	c.Assert(req.Header["Date"], Not(Equals), "")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"Select"})
 	c.Assert(req.Form["ConsistentRead"], gocheck.DeepEquals, []string{"true"})
 

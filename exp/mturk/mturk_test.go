@@ -55,7 +55,7 @@ func (s *S) TestCreateHIT(c *gocheck.C) {
 	testServer.WaitRequest()
 
 	c.Assert(err,gocheck.IsNil)
-	c.Assert(hit, NotNil)
+	c.Assert(hit, gocheck.NotNil)
 
 	c.Assert(hit.HITId, gocheck.Equals, "28J4IXKO2L927XKJTHO34OCDNASCDW")
 	c.Assert(hit.HITTypeId, gocheck.Equals, "2XZ7D1X3V0FKQVW7LU51S7PKKGFKDF")
@@ -67,7 +67,7 @@ func (s *S) TestSearchHITs(c *gocheck.C) {
 	hitResult, err := s.mturk.SearchHITs()
 
 	c.Assert(err,gocheck.IsNil)
-	c.Assert(hitResult, NotNil)
+	c.Assert(hitResult, gocheck.NotNil)
 
 	c.Assert(hitResult.NumResults, gocheck.Equals, uint(1))
 	c.Assert(hitResult.PageNumber, gocheck.Equals, uint(1))
