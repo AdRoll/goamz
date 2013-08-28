@@ -66,7 +66,7 @@ func testAttrs() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "SS", Name: "TestStringArray", Value: "", SetValues: []string{"test1", "test2", "test3", "test4"}},
 		dynamodb.Attribute{Type: "NS", Name: "TestIntArray", Value: "", SetValues: []string{"0", "1", "12", "123", "1234", "12345"}},
 		dynamodb.Attribute{Type: "NS", Name: "TestFloatArray", Value: "", SetValues: []string{"0.1", "1.1", "1.2", "1.23", "1.234", "1.2345"}},
-		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: "{\"SubBool\":true,\"SubInt\":2,\"SubString\":\"subtest\",\"SubStringArray\":[\"sub1\",\"sub2\",\"sub3\"]}", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
 	}
 }
 
@@ -125,7 +125,7 @@ func testAttrsWithNilSets() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "N", Name: "TestFloat64", Value: "99.999999", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestString", Value: "test", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
-		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: "{\"SubBool\":true,\"SubInt\":2,\"SubString\":\"subtest\",\"SubStringArray\":[\"sub1\",\"sub2\",\"sub3\"]}", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
 	}
 }
 
@@ -135,10 +135,10 @@ func TestMarshal(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
-
+	
 	expected := testAttrs()
 	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", expected), fmt.Sprintf("%#v", attrs))
+		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
 	}
 }
 
@@ -158,7 +158,7 @@ func TestUnmarshal(t *testing.T) {
 
 	expected := testObject()
 	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
-		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", expected), fmt.Sprintf("%#v", testObj))
+		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
 	}
 }
 
@@ -171,7 +171,7 @@ func TestMarshalNilSets(t *testing.T) {
 
 	expected := testAttrsWithNilSets()
 	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", expected), fmt.Sprintf("%#v", attrs))
+		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
 	}
 }
 
@@ -184,7 +184,7 @@ func TestMarshalEmptySets(t *testing.T) {
 
 	expected := testAttrsWithNilSets()
 	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", expected), fmt.Sprintf("%#v", attrs))
+		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
 	}
 }
 
@@ -204,6 +204,6 @@ func TestUnmarshalEmptySets(t *testing.T) {
 
 	expected := testObjectWithNilSets()
 	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
-		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", expected), fmt.Sprintf("%#v", testObj))
+		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
 	}
 }

@@ -258,7 +258,7 @@ func (e *attributeBuilder) reflectToDynamoDBAttribute(name string, v reflect.Val
 		if err != nil {
 			return err
 		}
-		escapedJson := strconv.Quote(string(jsonVersion))
+		escapedJson := `"`+string(jsonVersion)+`"` // strconv.Quote not required because the entire string is escaped from json Marshall
 		e.Push(NewStringAttribute(name, escapedJson[1:len(escapedJson)-1]))
 
 	default:
