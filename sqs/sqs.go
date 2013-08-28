@@ -35,7 +35,7 @@ type SQS struct {
 // region must be one of "us.east, us.west, eu.west"
 func NewFrom(accessKey, secretKey, region string) (*SQS, error) {
 
-	auth := aws.Auth{accessKey, secretKey}
+	auth := aws.Auth{AccessKey: accessKey, SecretKey: secretKey}
 	aws_region := aws.USEast
 
 	switch region {
