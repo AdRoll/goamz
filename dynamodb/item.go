@@ -124,7 +124,7 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 		return false, err
 	}
 
-	units := json.Get("ConsumedCapacityUnits")
+	units, _ := json.CheckGet("ConsumedCapacityUnits")
 
 	if units == nil {
 		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
@@ -156,7 +156,7 @@ func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
 		return false, err
 	}
 
-	units := json.Get("ConsumedCapacityUnits")
+	units, _ := json.CheckGet("ConsumedCapacityUnits")
 
 	if units == nil {
 		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
