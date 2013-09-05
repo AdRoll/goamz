@@ -35,46 +35,30 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 		return nil, err
 	}
 
-	hreq.Header.Set("Date", requestDate())
 	hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
+	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
 	hreq.Header.Set("X-Amz-Target", target)
 
-	service := Service{
-		"dynamodb",
-		s.Region.Name,
+	signer := aws.NewV4Signer(s.Auth, "dynamodb", s.Region)
+	signer.Sign(hreq)
+
+	resp, err := http.DefaultClient.Do(hreq)
+
+	if err != nil {
+		fmt.Printf("Error calling Amazon")
+		return nil, err
 	}
 
-	err = service.Sign(&s.Auth, hreq)
+	defer resp.Body.Close()
 
-	if err == nil {
+	body, err := ioutil.ReadAll(resp.Body)
 
-		resp, err := http.DefaultClient.Do(hreq)
-
-		if err != nil {
-			fmt.Printf("Error calling Amazon")
-			return nil, err
-		}
-
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-
-		if err != nil {
-			fmt.Printf("Could not read response body")
-			return nil, err
-		}
-
-		return body, nil
-
+	if err != nil {
+		fmt.Printf("Could not read response body")
+		return nil, err
 	}
 
-	return nil, err
-
-}
-
-func requestDate() string {
-	now := time.Now().UTC()
-	return now.Format(http.TimeFormat)
+	return body, nil
 }
 
 func target(name string) string {
