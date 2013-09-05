@@ -135,6 +135,14 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 }
 
 func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyItem(key, attributes, "ADD")
+}
+
+func (t *Table) UpdateItem(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyItem(key, attributes, "PUT")
+}
+
+func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (bool, error) {
 
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
@@ -142,7 +150,7 @@ func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
 
 	q := NewQuery(t)
 	q.AddKey(t, key)
-	q.AddUpdates(attributes, "ADD")
+	q.AddUpdates(attributes, action)
 
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
 
