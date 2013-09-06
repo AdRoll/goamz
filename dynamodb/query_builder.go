@@ -189,6 +189,14 @@ func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
 	b.WriteString("}")
 }
 
+func (q *Query) AddParallelScanConfiguration(segment int, totalSegments int) {
+    b := q.buffer
+        addComma(b)
+        b.WriteString(fmt.Sprintf("\"Segment\":%d", segment))
+        addComma(b)
+        b.WriteString(fmt.Sprintf("\"TotalSegments\":%d", totalSegments))
+}
+
 func (q *Query) addComparisons(comparisons []AttributeComparison) {
 	b := q.buffer
 	for i, c := range comparisons {
