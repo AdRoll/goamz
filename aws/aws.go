@@ -10,9 +10,13 @@
 package aws
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -161,6 +165,63 @@ func (err *Error) Error() string {
 
 type Auth struct {
 	AccessKey, SecretKey, SecurityToken, Expiration string
+}
+
+func dialTimeout(network, addr string) (net.Conn, error) {
+	return net.DialTimeout(network, addr, time.Duration(2*time.Second))
+}
+
+func (auth *Auth) IAMAuth() (err error) {
+	transport := http.Transport{Dial: dialTimeout}
+	client := http.Client{
+		Transport: &transport,
+	}
+	resp, err := client.Get("http://169.254.169.254/latest/meta-data/iam/security-credentials/CSsewingmachine")
+	if err != nil {
+		s := fmt.Sprintf("CANNOT TALK TO METADATA SERVER, ARE YOU SURE WE ARE ON EC2? err: %s", err)
+		log.Println(s)
+		return errors.New(s)
+	}
+	defer resp.Body.Close()
+	r := make(map[string]string)
+	body, err := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		s := fmt.Sprintf("CANNOT PARSE THE AUTH INFO: %s\n", err)
+		log.Print(s)
+		return errors.New(s)
+	}
+	auth.AccessKey = r["AccessKeyId"]
+	auth.SecretKey = r["SecretAccessKey"]
+	auth.Expiration = r["Expiration"]
+	auth.SecurityToken = r["Token"]
+	if auth.AccessKey == "" {
+		err = errors.New("AccessKeyId not found")
+	} else if auth.SecretKey == "" {
+		err = errors.New("SecretAccessKey not found")
+	}
+	if err != nil {
+		log.Printf("Error: %s\n", err.Error())
+		log.Printf("Body: %s\n", body)
+		log.Printf("r: %s\n", r)
+		log.Printf("Auth: %s\n", auth)
+	}
+
+	//AUTO UPDATE to prevent expiration
+	go func() {
+		tc := time.Tick(1 * time.Hour)
+		for _ = range tc {
+			log.Print("Updating temporary credentials")
+			err := auth.IAMAuth()
+			if err != nil {
+				log.Println("ERROR updating temporary credentials")
+			} else {
+				log.Println("Successfully updated the temporary credentials")
+			}
+		}
+	}() // the trailing () is not to be forgotten
+
+	return err
 }
 
 // ResponseMetadata

@@ -28,8 +28,70 @@ func NewQuery(queryParts []string) *Query {
 }
 */
 
+// ALI
+// func (s *Server) QueryServer(target string, query *Query) ([]byte, error) {
+// 	return s.queryServer(target, query)
+// }
+
 func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	data := strings.NewReader(query.String())
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// 	// 	s := "{
+	// 	//     \"TableName\": \"CSUsersEmail\",
+	// 	//     \"IndexName\": \"LastPostIndex\",
+	// 	//     \"Select\": \"ALL_ATTRIBUTES\",
+	// 	//     \"Limit\":3,
+	// 	//     \"ConsistentRead\": true,
+	// 	//     \"KeyConditions\": {
+	// 	//         \"LastPostDateTime\": {
+	// 	//             \"AttributeValueList\": [
+	// 	//                 {
+	// 	//                     \"S\": \"20130101\"
+	// 	//                 },
+	// 	//                 {
+	// 	//                     \"S\": \"20130115\"
+	// 	//                 }
+	// 	//             ],
+	// 	//             \"ComparisonOperator\": \"BETWEEN\"
+	// 	//         },
+	// 	//         \"ForumName\": {
+	// 	//             \"AttributeValueList\": [
+	// 	//                 {
+	// 	//                     \"S\": \"Amazon DynamoDB\"
+	// 	//                 }
+	// 	//             ],
+	// 	//             \"ComparisonOperator\": \"EQ\"
+	// 	//         }
+	// 	//     },
+	// 	//     \"ReturnConsumedCapacity\": \"TOTAL\"
+	// 	// }"
+
+	// 	sdata := `{
+	//     "TableName": "CSUsersEmail",
+	//     "Select": "ALL_ATTRIBUTES",
+	//     "Limit": 3,
+	//     "ConsistentRead": true,
+	//     "KeyConditions": {
+	//         "PK_EMAIL": {
+	//             "AttributeValueList": [
+	//                 {
+	//                     "S": "a"
+	//                 },
+	//                 {
+	//                     "S": "z"
+	//                 }
+	//             ],
+	//             "ComparisonOperator": "BETWEEN"
+	//         }
+	//     },
+	//     "ReturnConsumedCapacity": "TOTAL"
+	// }`
+
+	// 	data = strings.NewReader(sdata)
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
 	if err != nil {
 		return nil, err
@@ -37,6 +99,9 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 
 	hreq.Header.Set("Date", requestDate())
 	hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
+
+	//Ali
+	//hreq.Header.Set("X-Amz-Target", "DynamoDB_20120810.Query")
 	hreq.Header.Set("X-Amz-Target", target)
 
 	//ALI

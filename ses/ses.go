@@ -80,7 +80,8 @@ func (s *Server) SendHTMLEmail(from, to, cc, subject, body string) (string, erro
 	data.Add("Source", from)
 	data.Add("Destination.ToAddresses.member.1", to)
 	data.Add("Message.Subject.Data", subject)
-	data.Add("Message.Body.Text.Data", body)
+	//data.Add("Message.Body.Text.Data", body)
+	data.Add("Message.Body.Html.Data", body)
 	data.Add("AWSAccessKeyId", s.Auth.AccessKey)
 
 	return s.sesGet(data)
@@ -116,6 +117,11 @@ func (s *Server) sesGet(data url.Values) (string, error) {
 		return "", err
 	}
 	req.Header = headers
+
+	if s.Auth.SecurityToken != "" {
+		req.Header.Set("X-Amz-Security-Token", s.Auth.SecurityToken)
+		//fmt.Printf("Ali: SecToken = %s \n", s.Auth.SecurityToken)
+	}
 
 	//c.Debugf("%+v", req)
 

@@ -2,8 +2,11 @@ package dynamodb
 
 import simplejson "github.com/bitly/go-simplejson"
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"strings"
 )
 
 func (t *Table) GetItem(hashKey string, rangeKey string) (map[string]*Attribute, error) {
@@ -48,6 +51,18 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 
 	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
 
+	//ALI
+	fmt.Printf("AMZ response: %s\n", string(jsonResponse))
+	if strings.Index(strings.ToLower(string(jsonResponse)), "exception") > -1 {
+		resp := make(map[string]string)
+		err := json.Unmarshal(jsonResponse, &resp)
+		if err != nil {
+			return false, err
+		}
+		log.Printf("An exception happened: %s - %s \n", resp["__type"], resp["message"])
+		return false, errors.New(resp["message"])
+	}
+
 	if err != nil {
 		return false, err
 	}
@@ -79,6 +94,9 @@ func (t *Table) AddItem(hashKey string, rangeKey string, attributes []Attribute)
 	q.AddUpdates(attributes, "ADD")
 
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
+
+	//ALI
+	fmt.Println("AMZ response: %s\n", string(jsonResponse))
 
 	if err != nil {
 		return false, err
