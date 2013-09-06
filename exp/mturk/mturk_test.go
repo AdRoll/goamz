@@ -4,16 +4,16 @@ import (
 	"github.com/alimoeeny/goamz/aws"
 	"github.com/alimoeeny/goamz/exp/mturk"
 	"github.com/alimoeeny/goamz/testutil"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 	"net/url"
 	"testing"
 )
 
 func Test(t *testing.T) {
-	TestingT(t)
+	gocheck.TestingT(t)
 }
 
-var _ = Suite(&S{})
+var _ = gocheck.Suite(&S{})
 
 type S struct {
 	mturk *mturk.MTurk
@@ -21,9 +21,9 @@ type S struct {
 
 var testServer = testutil.NewHTTPServer()
 
-func (s *S) SetUpSuite(c *C) {
+func (s *S) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
-	auth := aws.Auth{"abc", "123"}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
 	u, err := url.Parse(testServer.URL)
 	if err != nil {
 		panic(err.Error())
@@ -35,11 +35,11 @@ func (s *S) SetUpSuite(c *C) {
 	}
 }
 
-func (s *S) TearDownTest(c *C) {
+func (s *S) TearDownTest(c *gocheck.C) {
 	testServer.Flush()
 }
 
-func (s *S) TestCreateHIT(c *C) {
+func (s *S) TestCreateHIT(c *gocheck.C) {
 	testServer.Response(200, nil, BasicHitResponse)
 
 	question := mturk.ExternalQuestion{
@@ -54,38 +54,38 @@ func (s *S) TestCreateHIT(c *C) {
 
 	testServer.WaitRequest()
 
-	c.Assert(err, IsNil)
-	c.Assert(hit, NotNil)
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(hit, gocheck.NotNil)
 
-	c.Assert(hit.HITId, Equals, "28J4IXKO2L927XKJTHO34OCDNASCDW")
-	c.Assert(hit.HITTypeId, Equals, "2XZ7D1X3V0FKQVW7LU51S7PKKGFKDF")
+	c.Assert(hit.HITId, gocheck.Equals, "28J4IXKO2L927XKJTHO34OCDNASCDW")
+	c.Assert(hit.HITTypeId, gocheck.Equals, "2XZ7D1X3V0FKQVW7LU51S7PKKGFKDF")
 }
 
-func (s *S) TestSearchHITs(c *C) {
+func (s *S) TestSearchHITs(c *gocheck.C) {
 	testServer.Response(200, nil, SearchHITResponse)
 
 	hitResult, err := s.mturk.SearchHITs()
 
-	c.Assert(err, IsNil)
-	c.Assert(hitResult, NotNil)
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(hitResult, gocheck.NotNil)
 
-	c.Assert(hitResult.NumResults, Equals, uint(1))
-	c.Assert(hitResult.PageNumber, Equals, uint(1))
-	c.Assert(hitResult.TotalNumResults, Equals, uint(1))
+	c.Assert(hitResult.NumResults, gocheck.Equals, uint(1))
+	c.Assert(hitResult.PageNumber, gocheck.Equals, uint(1))
+	c.Assert(hitResult.TotalNumResults, gocheck.Equals, uint(1))
 
-	c.Assert(len(hitResult.HITs), Equals, 1)
-	c.Assert(hitResult.HITs[0].HITId, Equals, "2BU26DG67D1XTE823B3OQ2JF2XWF83")
-	c.Assert(hitResult.HITs[0].HITTypeId, Equals, "22OWJ5OPB0YV6IGL5727KP9U38P5XR")
-	c.Assert(hitResult.HITs[0].CreationTime, Equals, "2011-12-28T19:56:20Z")
-	c.Assert(hitResult.HITs[0].Title, Equals, "test hit")
-	c.Assert(hitResult.HITs[0].Description, Equals, "please disregard, testing only")
-	c.Assert(hitResult.HITs[0].HITStatus, Equals, "Reviewable")
-	c.Assert(hitResult.HITs[0].MaxAssignments, Equals, uint(1))
-	c.Assert(hitResult.HITs[0].Reward.Amount, Equals, "0.01")
-	c.Assert(hitResult.HITs[0].Reward.CurrencyCode, Equals, "USD")
-	c.Assert(hitResult.HITs[0].AutoApprovalDelayInSeconds, Equals, uint(2592000))
-	c.Assert(hitResult.HITs[0].AssignmentDurationInSeconds, Equals, uint(30))
-	c.Assert(hitResult.HITs[0].NumberOfAssignmentsPending, Equals, uint(0))
-	c.Assert(hitResult.HITs[0].NumberOfAssignmentsAvailable, Equals, uint(1))
-	c.Assert(hitResult.HITs[0].NumberOfAssignmentsCompleted, Equals, uint(0))
+	c.Assert(len(hitResult.HITs), gocheck.Equals, 1)
+	c.Assert(hitResult.HITs[0].HITId, gocheck.Equals, "2BU26DG67D1XTE823B3OQ2JF2XWF83")
+	c.Assert(hitResult.HITs[0].HITTypeId, gocheck.Equals, "22OWJ5OPB0YV6IGL5727KP9U38P5XR")
+	c.Assert(hitResult.HITs[0].CreationTime, gocheck.Equals, "2011-12-28T19:56:20Z")
+	c.Assert(hitResult.HITs[0].Title, gocheck.Equals, "test hit")
+	c.Assert(hitResult.HITs[0].Description, gocheck.Equals, "please disregard, testing only")
+	c.Assert(hitResult.HITs[0].HITStatus, gocheck.Equals, "Reviewable")
+	c.Assert(hitResult.HITs[0].MaxAssignments, gocheck.Equals, uint(1))
+	c.Assert(hitResult.HITs[0].Reward.Amount, gocheck.Equals, "0.01")
+	c.Assert(hitResult.HITs[0].Reward.CurrencyCode, gocheck.Equals, "USD")
+	c.Assert(hitResult.HITs[0].AutoApprovalDelayInSeconds, gocheck.Equals, uint(2592000))
+	c.Assert(hitResult.HITs[0].AssignmentDurationInSeconds, gocheck.Equals, uint(30))
+	c.Assert(hitResult.HITs[0].NumberOfAssignmentsPending, gocheck.Equals, uint(0))
+	c.Assert(hitResult.HITs[0].NumberOfAssignmentsAvailable, gocheck.Equals, uint(1))
+	c.Assert(hitResult.HITs[0].NumberOfAssignmentsCompleted, gocheck.Equals, uint(0))
 }

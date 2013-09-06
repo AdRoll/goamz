@@ -48,6 +48,20 @@ type Owner struct {
 	DisplayName string
 }
 
+// Fold options into an Options struct
+//
+type Options struct {
+	SSE  bool
+	Meta map[string][]string
+	// What else?
+	// Cache-Control string
+	// Content-Disposition string
+	// Content-Encoding ???
+	//// The following become headers so they are []strings rather than strings... I think
+	// x-amz-website-redirect-location: []string
+	// x-amz-storage-class []string
+}
+
 var attempts = aws.AttemptStrategy{
 	Min:   5,
 	Total: 5 * time.Second,
@@ -198,24 +212,57 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 		}
 		return exists, err
 	}
-	panic("unreachable")
+	return false, fmt.Errorf("S3 Currently Unreachable")
+}
+
+// Head HEADs an object in the S3 bucket, returns the response with
+// no body see http://bit.ly/17K1ylI
+func (b *Bucket) Head(path string, headers map[string][]string) (*http.Response, error) {
+	req := &request{
+		method:  "HEAD",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+	}
+	err := b.S3.prepare(req)
+	if err != nil {
+		return nil, err
+	}
+
+	for attempt := attempts.Start(); attempt.Next(); {
+		resp, err := b.S3.run(req, nil)
+		if shouldRetry(err) && attempt.HasNext() {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return resp, err
+	}
+	return nil, fmt.Errorf("S3 Currently Unreachable")
 }
 
 // Put inserts an object into the S3 bucket.
 //
 // See http://goo.gl/FEBPD for details.
-func (b *Bucket) Put(path string, data []byte, contType string, perm ACL) error {
+func (b *Bucket) Put(path string, data []byte, contType string, perm ACL, options Options) error {
 	body := bytes.NewBuffer(data)
-	return b.PutReader(path, body, int64(len(data)), contType, perm)
+	return b.PutReader(path, body, int64(len(data)), contType, perm, options)
 }
 
 // PutReader inserts an object into the S3 bucket by consuming data
 // from r until EOF.
-func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL) error {
+func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL, options Options) error {
 	headers := map[string][]string{
 		"Content-Length": {strconv.FormatInt(length, 10)},
 		"Content-Type":   {contType},
 		"x-amz-acl":      {string(perm)},
+	}
+	if options.SSE {
+		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	}
+	for k, v := range options.Meta {
+		headers["x-amz-meta-"+k] = v
 	}
 	req := &request{
 		method:  "PUT",
@@ -446,7 +493,6 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	if err != nil {
 		panic(err)
 	}
-	//ALI
 	if b.S3.Auth.SecurityToken != "" {
 		return u.String() + "&x-amz-security-token=" + url.QueryEscape(req.headers["X-Amz-Security-Token"][0])
 	} else {
@@ -532,14 +578,13 @@ func (s3 *S3) prepare(req *request) error {
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
+	reqSignpathSpaceFix := (&url.URL{Path: req.signpath}).String()
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-	//ALI
 	if s3.Auth.SecurityToken != "" {
 		req.headers["X-Amz-Security-Token"] = []string{s3.Auth.SecurityToken}
-		//log.Printf("Ali: SecToken = %s \n", s3.Auth.SecurityToken)
 	}
-	sign(s3.Auth, req.method, req.signpath, req.params, req.headers)
+	sign(s3.Auth, req.method, reqSignpathSpaceFix, req.params, req.headers)
 	return nil
 }
 

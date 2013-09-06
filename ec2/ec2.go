@@ -119,7 +119,7 @@ type xmlErrors struct {
 var timeNow = time.Now
 
 func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
-	params["Version"] = "2011-12-15"
+	params["Version"] = "2013-02-01"
 	params["Timestamp"] = timeNow().In(time.UTC).Format(time.RFC3339)
 	endpoint, err := url.Parse(ec2.Region.EC2Endpoint)
 	if err != nil {
@@ -192,23 +192,25 @@ func addParamsList(params map[string]string, label string, ids []string) {
 // The RunInstances type encapsulates options for the respective request in EC2.
 //
 // See http://goo.gl/Mcm3b for more details.
-type RunInstances struct {
-	ImageId               string
-	MinCount              int
-	MaxCount              int
-	KeyName               string
-	InstanceType          string
-	SecurityGroups        []SecurityGroup
-	KernelId              string
-	RamdiskId             string
-	UserData              []byte
-	AvailZone             string
-	PlacementGroupName    string
-	Monitoring            bool
-	SubnetId              string
-	DisableAPITermination bool
-	ShutdownBehavior      string
-	PrivateIPAddress      string
+type RunInstancesOptions struct {
+	ImageId                string
+	MinCount               int
+	MaxCount               int
+	KeyName                string
+	InstanceType           string
+	SecurityGroups         []SecurityGroup
+	KernelId               string
+	RamdiskId              string
+	UserData               []byte
+	AvailZone              string
+	PlacementGroupName     string
+	Monitoring             bool
+	SubnetId               string
+	DisableAPITermination  bool
+	ShutdownBehavior       string
+	PrivateIPAddress       string
+	IamInstanceProfileArn  string
+	IamInstanceProfileName string
 }
 
 // Response to a RunInstances request.
@@ -231,8 +233,8 @@ type Instance struct {
 	ImageId            string        `xml:"imageId"`
 	PrivateDNSName     string        `xml:"privateDnsName"`
 	DNSName            string        `xml:"dnsName"`
-	IpAddress          string        `xml:"ipAddress"`
-	PrivateIpAddress   string        `xml:"privateIpAddress"`
+	IPAddress          string        `xml:"ipAddress"`
+	PrivateIPAddress   string        `xml:"privateIpAddress"`
 	KeyName            string        `xml:"keyName"`
 	AMILaunchIndex     int           `xml:"amiLaunchIndex"`
 	Hypervisor         string        `xml:"hypervisor"`
@@ -242,6 +244,7 @@ type Instance struct {
 	PlacementGroupName string        `xml:"placement>groupName"`
 	State              InstanceState `xml:"instanceState"`
 	Tags               []Tag         `xml:"tagSet>item"`
+	IamInstanceProfile string        `xml:"iamInstanceProfile"`
 }
 
 // RunInstances starts new instances in EC2.
@@ -250,7 +253,7 @@ type Instance struct {
 // will be used insteead.
 //
 // See http://goo.gl/Mcm3b for more details.
-func (ec2 *EC2) RunInstances(options *RunInstances) (resp *RunInstancesResp, err error) {
+func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesResp, err error) {
 	params := makeParams("RunInstances")
 	params["ImageId"] = options.ImageId
 	params["InstanceType"] = options.InstanceType
@@ -317,6 +320,12 @@ func (ec2 *EC2) RunInstances(options *RunInstances) (resp *RunInstancesResp, err
 	}
 	if options.PrivateIPAddress != "" {
 		params["PrivateIpAddress"] = options.PrivateIPAddress
+	}
+	if options.IamInstanceProfileArn != "" {
+		params["IamInstanceProfile.Arn"] = options.IamInstanceProfileArn
+	}
+	if options.IamInstanceProfileName != "" {
+		params["IamInstanceProfile.Name"] = options.IamInstanceProfileName
 	}
 
 	resp = &RunInstancesResp{}

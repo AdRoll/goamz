@@ -3,7 +3,7 @@ package testutil
 import (
 	"flag"
 	"github.com/alimoeeny/goamz/aws"
-	. "launchpad.net/gocheck"
+	"launchpad.net/gocheck"
 )
 
 // Amazon must be used by all tested packages to determine whether to
@@ -18,7 +18,7 @@ type LiveSuite struct {
 	auth aws.Auth
 }
 
-func (s *LiveSuite) SetUpSuite(c *C) {
+func (s *LiveSuite) SetUpSuite(c *gocheck.C) {
 	if !Amazon {
 		c.Skip("amazon tests not enabled (-amazon flag)")
 	}

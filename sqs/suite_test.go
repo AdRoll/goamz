@@ -1,7 +1,9 @@
-package elb_test
+package sqs_test
 
 import (
+	"flag"
 	"fmt"
+	"github.com/crowdmob/goamz/aws"
 	"launchpad.net/gocheck"
 	"net/http"
 	"net/url"
@@ -14,9 +16,26 @@ func Test(t *testing.T) {
 	gocheck.TestingT(t)
 }
 
+var integration = flag.Bool("i", false, "Enable integration tests")
+
+type SuiteI struct {
+	auth aws.Auth
+}
+
+func (s *SuiteI) SetUpSuite(c *gocheck.C) {
+	if !*integration {
+		c.Skip("Integration tests not enabled (-i flag)")
+	}
+	auth, err := aws.EnvAuth()
+	if err != nil {
+		c.Fatal(err.Error())
+	}
+	s.auth = auth
+}
+
 type HTTPSuite struct{}
 
-var testServer = NewTestHTTPServer("http://localhost:4444", 5*time.Second)
+var testServer = NewTestHTTPServer("http://localhost:4444", 5e9)
 
 func (s *HTTPSuite) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
@@ -65,8 +84,10 @@ func (s *TestHTTPServer) Start() {
 		if err == nil && resp.StatusCode == 202 {
 			break
 		}
+		fmt.Fprintf(os.Stderr, "\nWaiting for fake server to be up... ")
 		time.Sleep(1e8)
 	}
+	fmt.Fprintf(os.Stderr, "done\n\n")
 	s.WaitRequest() // Consume dummy request.
 }
 

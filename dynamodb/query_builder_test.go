@@ -1,9 +1,9 @@
 package dynamodb_test
 
-import simplejson "github.com/bitly/go-simplejson"
 import (
 	"github.com/alimoeeny/goamz/aws"
 	"github.com/alimoeeny/goamz/dynamodb"
+	simplejson "github.com/bitly/go-simplejson"
 	"testing"
 )
 
@@ -19,14 +19,14 @@ func TestEmptyQuery(t *testing.T) {
 }
 
 func TestGetItemQuery(t *testing.T) {
-	auth := &aws.Auth{"", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	server := dynamodb.Server{*auth, aws.USEast}
 	primary := dynamodb.NewStringAttribute("domain", "")
 	key := dynamodb.PrimaryKey{primary, nil}
 	table := server.NewTable("sites", key)
 
 	q := dynamodb.NewQuery(table)
-	q.AddKey(table, "test", "")
+	q.AddKey(table, &dynamodb.Key{HashKey: "test"})
 
 	queryString := []byte(q.String())
 
@@ -67,7 +67,7 @@ func TestGetItemQuery(t *testing.T) {
 }
 
 func TestUpdateQuery(t *testing.T) {
-	auth := &aws.Auth{"", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	server := dynamodb.Server{*auth, aws.USEast}
 	primary := dynamodb.NewStringAttribute("domain", "")
 	rangek := dynamodb.NewNumericAttribute("time", "")
@@ -78,7 +78,7 @@ func TestUpdateQuery(t *testing.T) {
 	attributes := []dynamodb.Attribute{*countAttribute}
 
 	q := dynamodb.NewQuery(table)
-	q.AddKey(table, "test", "1234")
+	q.AddKey(table, &dynamodb.Key{HashKey: "test", RangeKey: "1234"})
 	q.AddUpdates(attributes, "ADD")
 
 	queryString := []byte(q.String())
