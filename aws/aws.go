@@ -164,7 +164,7 @@ func (err *Error) Error() string {
 }
 
 type Auth struct {
-	AccessKey, SecretKey, SecurityToken, Expiration string
+	AccessKey, SecretKey, Token, Expiration string
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
@@ -194,7 +194,7 @@ func (auth *Auth) IAMAuth() (err error) {
 	auth.AccessKey = r["AccessKeyId"]
 	auth.SecretKey = r["SecretAccessKey"]
 	auth.Expiration = r["Expiration"]
-	auth.SecurityToken = r["Token"]
+	auth.Token = r["Token"]
 	if auth.AccessKey == "" {
 		err = errors.New("AccessKeyId not found")
 	} else if auth.SecretKey == "" {
@@ -258,7 +258,7 @@ type credentials struct {
 	Type            string
 	AccessKeyId     string
 	SecretAccessKey string
-	SecurityToken   string
+	Token           string
 	Expiration      string
 }
 
@@ -337,7 +337,7 @@ func GetAuth(accessKey string, secretKey string) (auth Auth, err error) {
 		// Found auth, return
 		auth.AccessKey = cred.AccessKeyId
 		auth.SecretKey = cred.SecretAccessKey
-		auth.SecurityToken = cred.SecurityToken
+		auth.Token = cred.Token
 		return
 	}
 	err = errors.New("No valid AWS authentication found")

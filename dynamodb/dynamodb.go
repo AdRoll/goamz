@@ -100,9 +100,9 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
 
 	//ALI
-	if s.Auth.SecurityToken != "" {
-		hreq.Header.Set("X-Amz-Security-Token", s.Auth.SecurityToken)
-		//fmt.Printf("Ali: SecToken = %s \n", s.Auth.SecurityToken)
+	if s.Auth.Token != "" {
+		hreq.Header.Set("X-Amz-Security-Token", s.Auth.Token)
+		//fmt.Printf("Ali: SecToken = %s \n", s.Auth.Token)
 	}
 
 	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
