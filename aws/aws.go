@@ -318,10 +318,10 @@ func getInstanceCredentials() (cred credentials, err error) {
 
 // GetAuth creates an Auth based on either passed in credentials,
 // environment information or instance based role credentials.
-func GetAuth(accessKey string, secretKey string) (auth Auth, err error) {
+func GetAuth(accessKey string, secretKey, token string) (auth Auth, err error) {
 	// First try passed in credentials
 	if accessKey != "" && secretKey != "" {
-		return Auth{accessKey, secretKey, "", ""}, nil
+		return Auth{accessKey, secretKey, token, ""}, nil
 	}
 
 	// Next try to get auth from the environment
