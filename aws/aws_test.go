@@ -62,18 +62,18 @@ func (s *S) TestEnvAuthAlt(c *gocheck.C) {
 }
 
 func (s *S) TestGetAuthStatic(c *gocheck.C) {
-	auth, err := aws.GetAuth("access", "secret")
+	auth, err := aws.GetAuth("access", "secret", "token")
 	c.Assert(err, gocheck.IsNil)
-	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
+	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access", Token:"token"})
 }
 
 func (s *S) TestGetAuthEnv(c *gocheck.C) {
 	os.Clearenv()
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "secret")
 	os.Setenv("AWS_ACCESS_KEY_ID", "access")
-	auth, err := aws.GetAuth("", "")
+	auth, err := aws.GetAuth("", "", "")
 	c.Assert(err, gocheck.IsNil)
-	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
+	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access", Token:""})
 }
 
 func (s *S) TestEncode(c *gocheck.C) {
