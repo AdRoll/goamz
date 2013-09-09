@@ -68,27 +68,27 @@ func NewEqualStringAttributeComparison(attributeName string, equalToValue string
 }
 
 func NewStringAttributeComparison(attributeName string, comparisonOperator string, value string) *AttributeComparison {
-    valueToCompare := NewStringAttribute(attributeName, value)
-    return &AttributeComparison {attributeName,
-        comparisonOperator,
-        []Attribute{*valueToCompare},
-    }
+	valueToCompare := NewStringAttribute(attributeName, value)
+	return &AttributeComparison{attributeName,
+		comparisonOperator,
+		[]Attribute{*valueToCompare},
+	}
 }
 
 func NewNumericAttributeComparison(attributeName string, comparisonOperator string, value int64) *AttributeComparison {
-    valueToCompare := NewNumericAttribute(attributeName, strconv.FormatInt(value, 10))
-    return &AttributeComparison {attributeName,
-        comparisonOperator,
-        []Attribute{*valueToCompare},
-    }
+	valueToCompare := NewNumericAttribute(attributeName, strconv.FormatInt(value, 10))
+	return &AttributeComparison{attributeName,
+		comparisonOperator,
+		[]Attribute{*valueToCompare},
+	}
 }
 
 func NewBinaryAttributeComparison(attributeName string, comparisonOperator string, value bool) *AttributeComparison {
-    valueToCompare := NewBinaryAttribute(attributeName, strconv.FormatBool(value))
-    return &AttributeComparison {attributeName,
-        comparisonOperator,
-        []Attribute{*valueToCompare},
-    }
+	valueToCompare := NewBinaryAttribute(attributeName, strconv.FormatBool(value))
+	return &AttributeComparison{attributeName,
+		comparisonOperator,
+		[]Attribute{*valueToCompare},
+	}
 }
 
 func NewStringAttribute(name string, value string) *Attribute {
