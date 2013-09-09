@@ -62,5 +62,5 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 }
 
 func target(name string) string {
-	return "DynamoDB_20111205." + name
+	return "DynamoDB_20120810." + name
 }
