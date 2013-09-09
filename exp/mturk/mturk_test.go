@@ -23,7 +23,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
 	u, err := url.Parse(testServer.URL)
 	if err != nil {
 		panic(err.Error())

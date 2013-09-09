@@ -8,7 +8,7 @@ import (
 
 // EC2 ReST authentication docs: http://goo.gl/fQmAN
 
-var testAuth = aws.Auth{AccessKey: "user", SecretKey: "secret", Token: ""}
+var testAuth = aws.Auth{AccessKey: "user", SecretKey: "secret"}
 
 func (s *S) TestBasicSignature(c *gocheck.C) {
 	params := map[string]string{}
@@ -62,7 +62,7 @@ func (s *S) TestSignatureExample1(c *gocheck.C) {
 		"Version":   "2007-11-07",
 		"Action":    "ListDomains",
 	}
-	ec2.Sign(aws.Auth{AccessKey: "access", SecretKey: "secret", Token: ""}, "GET", "/", params, "sdb.amazonaws.com")
+	ec2.Sign(aws.Auth{AccessKey: "access", SecretKey: "secret"}, "GET", "/", params, "sdb.amazonaws.com")
 	expected := "okj96/5ucWBSc1uR2zXVfm6mDHtgfNv657rRtt/aunQ="
 	c.Assert(params["Signature"], gocheck.Equals, expected)
 }
