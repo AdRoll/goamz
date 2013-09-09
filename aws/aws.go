@@ -163,7 +163,23 @@ func (err *Error) Error() string {
 }
 
 type Auth struct {
-	AccessKey, SecretKey, Token string
+	AccessKey, SecretKey string
+	token                string
+	expiration           time.Time
+}
+
+func (a *Auth) Token() string {
+	if a.token == "" {
+		return ""
+	}
+	if time.Since(a.expiration) >= -30*time.Second { //in an ideal world this should be zero assuming the instance is synching it's clock
+		*a, _ = GetAuth("", "", "", time.Time{})
+	}
+	return a.token
+}
+
+func (a *Auth) Expiration() time.Time {
+	return a.expiration
 }
 
 // ResponseMetadata
@@ -260,10 +276,10 @@ func getInstanceCredentials() (cred credentials, err error) {
 
 // GetAuth creates an Auth based on either passed in credentials,
 // environment information or instance based role credentials.
-func GetAuth(accessKey string, secretKey, token string) (auth Auth, err error) {
+func GetAuth(accessKey string, secretKey, token string, expiration time.Time) (auth Auth, err error) {
 	// First try passed in credentials
 	if accessKey != "" && secretKey != "" {
-		return Auth{accessKey, secretKey, token}, nil
+		return Auth{accessKey, secretKey, token, expiration}, nil
 	}
 
 	// Next try to get auth from the environment
@@ -279,11 +295,16 @@ func GetAuth(accessKey string, secretKey, token string) (auth Auth, err error) {
 		// Found auth, return
 		auth.AccessKey = cred.AccessKeyId
 		auth.SecretKey = cred.SecretAccessKey
-		auth.Token = cred.Token
-		return
+		auth.token = cred.Token
+		exptdate, err := time.Parse("2006-01-02T15:04:05Z", cred.Expiration)
+		if err != nil {
+			log.Printf("Error Parseing expiration date: cred.Expiration :%s , error: %s \n", cred.Expiration, err)
+		}
+		auth.expiration = exptdate
+		return auth, err
 	}
 	err = errors.New("No valid AWS authentication found")
-	return
+	return auth, err
 }
 
 // EnvAuth creates an Auth based on environment information.
