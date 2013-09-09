@@ -35,7 +35,7 @@ type V4SignerSuiteCaseRequest struct {
 }
 
 func (s *V4SignerSuite) SetUpSuite(c *gocheck.C) {
-	s.auth = aws.Auth{AccessKey: "AKIDEXAMPLE", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY", Token: ""}
+	s.auth = aws.Auth{AccessKey: "AKIDEXAMPLE", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	s.region = aws.USEast
 
 	// Test cases from the Signature Version 4 Test Suite (http://goo.gl/nguvs0)
