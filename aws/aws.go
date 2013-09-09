@@ -298,7 +298,7 @@ func GetAuth(accessKey string, secretKey, token string, expiration time.Time) (a
 		auth.token = cred.Token
 		exptdate, err := time.Parse("2006-01-02T15:04:05Z", cred.Expiration)
 		if err != nil {
-			log.Printf("Error Parseing expiration date: cred.Expiration :%s , error: %s \n", cred.Expiration, err)
+			err = fmt.Errorf("Error Parseing expiration date: cred.Expiration :%s , error: %s \n", cred.Expiration, err)
 		}
 		auth.expiration = exptdate
 		return auth, err

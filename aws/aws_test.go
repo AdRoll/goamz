@@ -78,7 +78,7 @@ func (s *S) TestGetAuthEnv(c *gocheck.C) {
 	os.Setenv("AWS_ACCESS_KEY_ID", "access")
 	auth, err := aws.GetAuth("", "", "", time.Time{})
 	c.Assert(err, gocheck.IsNil)
-	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access", Token:""})
+	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
 }
 
 func (s *S) TestEncode(c *gocheck.C) {
