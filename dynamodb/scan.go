@@ -6,10 +6,8 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 )
 
-func (t *Table) Scan(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
-	q := NewQuery(t)
-	q.AddScanFilter(attributeComparisons)
-	jsonResponse, err := t.Server.queryServer(target("Scan"), q)
+func (t *Table) FetchResults(query *Query) ([]map[string]*Attribute, error) {
+	jsonResponse, err := t.Server.queryServer(target("Scan"), query)
 	if err != nil {
 		return nil, err
 	}
@@ -36,4 +34,18 @@ func (t *Table) Scan(attributeComparisons []AttributeComparison) ([]map[string]*
 		results[i] = parseAttributes(item)
 	}
 	return results, nil
+
+}
+
+func (t *Table) Scan(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
+	q := NewQuery(t)
+	q.AddScanFilter(attributeComparisons)
+	return t.FetchResults(q)
+}
+
+func (t *Table) ParallelScan(attributeComparisons []AttributeComparison, segment int, totalSegments int) ([]map[string]*Attribute, error) {
+	q := NewQuery(t)
+	q.AddScanFilter(attributeComparisons)
+	q.AddParallelScanConfiguration(segment, totalSegments)
+	return t.FetchResults(q)
 }
