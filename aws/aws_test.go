@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func Test(t *testing.T) {
@@ -62,16 +63,20 @@ func (s *S) TestEnvAuthAlt(c *gocheck.C) {
 }
 
 func (s *S) TestGetAuthStatic(c *gocheck.C) {
-	auth, err := aws.GetAuth("access", "secret")
+	exptdate := time.Now().Add(time.Hour)
+	auth, err := aws.GetAuth("access", "secret", "token", exptdate)
 	c.Assert(err, gocheck.IsNil)
-	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
+	c.Assert(auth.AccessKey, gocheck.Equals, "access")
+	c.Assert(auth.SecretKey, gocheck.Equals, "secret")
+	c.Assert(auth.Token(), gocheck.Equals, "token")
+	c.Assert(auth.Expiration(), gocheck.Equals, exptdate)
 }
 
 func (s *S) TestGetAuthEnv(c *gocheck.C) {
 	os.Clearenv()
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "secret")
 	os.Setenv("AWS_ACCESS_KEY_ID", "access")
-	auth, err := aws.GetAuth("", "")
+	auth, err := aws.GetAuth("", "", "", time.Time{})
 	c.Assert(err, gocheck.IsNil)
 	c.Assert(auth, gocheck.Equals, aws.Auth{SecretKey: "secret", AccessKey: "access"})
 }

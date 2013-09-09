@@ -164,64 +164,23 @@ func (err *Error) Error() string {
 }
 
 type Auth struct {
-	AccessKey, SecretKey, Token, Expiration string
+	AccessKey, SecretKey string
+	token                string
+	expiration           time.Time
 }
 
-func dialTimeout(network, addr string) (net.Conn, error) {
-	return net.DialTimeout(network, addr, time.Duration(2*time.Second))
+func (a *Auth) Token() string {
+	if a.token == "" {
+		return ""
+	}
+	if time.Since(a.expiration) >= -30*time.Second { //in an ideal world this should be zero assuming the instance is synching it's clock
+		*a, _ = GetAuth("", "", "", time.Time{})
+	}
+	return a.token
 }
 
-func (auth *Auth) IAMAuth() (err error) {
-	transport := http.Transport{Dial: dialTimeout}
-	client := http.Client{
-		Transport: &transport,
-	}
-	resp, err := client.Get("http://169.254.169.254/latest/meta-data/iam/security-credentials/CSsewingmachine")
-	if err != nil {
-		s := fmt.Sprintf("CANNOT TALK TO METADATA SERVER, ARE YOU SURE WE ARE ON EC2? err: %s", err)
-		log.Println(s)
-		return errors.New(s)
-	}
-	defer resp.Body.Close()
-	r := make(map[string]string)
-	body, err := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &r)
-	if err != nil {
-		s := fmt.Sprintf("CANNOT PARSE THE AUTH INFO: %s\n", err)
-		log.Print(s)
-		return errors.New(s)
-	}
-	auth.AccessKey = r["AccessKeyId"]
-	auth.SecretKey = r["SecretAccessKey"]
-	auth.Expiration = r["Expiration"]
-	auth.Token = r["Token"]
-	if auth.AccessKey == "" {
-		err = errors.New("AccessKeyId not found")
-	} else if auth.SecretKey == "" {
-		err = errors.New("SecretAccessKey not found")
-	}
-	if err != nil {
-		log.Printf("Error: %s\n", err.Error())
-		log.Printf("Body: %s\n", body)
-		log.Printf("r: %s\n", r)
-		log.Printf("Auth: %s\n", auth)
-	}
-
-	//AUTO UPDATE to prevent expiration
-	go func() {
-		tc := time.Tick(1 * time.Hour)
-		for _ = range tc {
-			log.Print("Updating temporary credentials")
-			err := auth.IAMAuth()
-			if err != nil {
-				log.Println("ERROR updating temporary credentials")
-			} else {
-				log.Println("Successfully updated the temporary credentials")
-			}
-		}
-	}() // the trailing () is not to be forgotten
-
-	return err
+func (a *Auth) Expiration() time.Time {
+	return a.expiration
 }
 
 // ResponseMetadata
@@ -318,10 +277,10 @@ func getInstanceCredentials() (cred credentials, err error) {
 
 // GetAuth creates an Auth based on either passed in credentials,
 // environment information or instance based role credentials.
-func GetAuth(accessKey string, secretKey, token string) (auth Auth, err error) {
+func GetAuth(accessKey string, secretKey, token string, expiration time.Time) (auth Auth, err error) {
 	// First try passed in credentials
 	if accessKey != "" && secretKey != "" {
-		return Auth{accessKey, secretKey, token, ""}, nil
+		return Auth{accessKey, secretKey, token, expiration}, nil
 	}
 
 	// Next try to get auth from the environment
@@ -337,11 +296,16 @@ func GetAuth(accessKey string, secretKey, token string) (auth Auth, err error) {
 		// Found auth, return
 		auth.AccessKey = cred.AccessKeyId
 		auth.SecretKey = cred.SecretAccessKey
-		auth.Token = cred.Token
-		return
+		auth.token = cred.Token
+		exptdate, err := time.Parse("2006-01-02T15:04:05Z", cred.Expiration)
+		if err != nil {
+			log.Printf("Error Parseing expiration date: cred.Expiration :%s , error: %s \n", cred.Expiration, err)
+		}
+		auth.expiration = exptdate
+		return auth, err
 	}
 	err = errors.New("No valid AWS authentication found")
-	return
+	return auth, err
 }
 
 // EnvAuth creates an Auth based on environment information.

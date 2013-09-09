@@ -118,8 +118,8 @@ func (s *Server) sesGet(data url.Values) (string, error) {
 	}
 	req.Header = headers
 
-	if s.Auth.Token != "" {
-		req.Header.Set("X-Amz-Security-Token", s.Auth.Token)
+	if s.Auth.Token() != "" {
+		req.Header.Set("X-Amz-Security-Token", s.Auth.Token())
 		//fmt.Printf("Ali: SecToken = %s \n", s.Auth.Token)
 	}
 
