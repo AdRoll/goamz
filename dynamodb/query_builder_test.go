@@ -49,7 +49,7 @@ func TestGetItemQuery(t *testing.T) {
 		t.Fatalf("Expected a Key")
 	}
 
-	hashRangeKey := keyMap["HashKeyElement"]
+	hashRangeKey := keyMap["domain"]
 
 	if hashRangeKey == nil {
 		t.Fatalf("Expected a HashKeyElement found : %s", keyMap)
@@ -102,13 +102,13 @@ func TestUpdateQuery(t *testing.T) {
 		t.Fatalf("Expected a Key")
 	}
 
-	hashRangeKey := keyMap["HashKeyElement"]
+	hashRangeKey := keyMap["domain"]
 
 	if hashRangeKey == nil {
 		t.Fatalf("Expected a HashKeyElement found : %s", keyMap)
 	}
 
-	rangeKey := keyMap["RangeKeyElement"]
+	rangeKey := keyMap["time"]
 
 	if rangeKey == nil {
 		t.Fatalf("Expected a RangeKeyElement found : %s", keyMap)

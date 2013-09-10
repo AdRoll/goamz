@@ -34,7 +34,7 @@ func (q *Query) AddKey(t *Table, key *Key) {
 	b.WriteString(":")
 
 	b.WriteString("{")
-	b.WriteString(quote("HashKeyElement")) // old api
+	b.WriteString(quote(k.KeyAttribute.Name))
 	b.WriteString(":")
 
 	b.WriteString("{")
@@ -46,7 +46,7 @@ func (q *Query) AddKey(t *Table, key *Key) {
 
 	if k.HasRange() {
 		b.WriteString(",")
-		b.WriteString(quote("RangeKeyElement"))
+		b.WriteString(quote(k.RangeAttribute.Name))
 		b.WriteString(":")
 
 		b.WriteString("{")
