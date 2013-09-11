@@ -138,6 +138,10 @@ func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
 	return t.modifyItem(key, attributes, "ADD")
 }
 
+func (t *Table) DeleteItem(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyItem(key, attributes, "DELETE")
+}
+
 func (t *Table) UpdateItem(key *Key, attributes []Attribute) (bool, error) {
 	return t.modifyItem(key, attributes, "PUT")
 }
