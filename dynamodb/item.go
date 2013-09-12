@@ -162,21 +162,12 @@ func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (boo
 		return false, err
 	}
 
-	json, err := simplejson.NewJson(jsonResponse)
-
+	_, err = simplejson.NewJson(jsonResponse)
 	if err != nil {
 		return false, err
 	}
 
-	units, _ := json.CheckGet("ConsumedCapacityUnits")
-
-	if units == nil {
-		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
-		return false, errors.New(message)
-	}
-
 	return true, nil
-
 }
 
 func parseAttributes(s map[string]interface{}) map[string]*Attribute {
