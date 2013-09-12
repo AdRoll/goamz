@@ -52,7 +52,6 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		fmt.Printf("Could not read response body")
 		return nil, err

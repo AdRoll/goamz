@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/crowdmob/goamz/dynamodb"
 	"testing"
+	"time"
 )
 
 type TestSubStruct struct {
@@ -25,11 +26,15 @@ type TestStruct struct {
 	TestByteArray   []byte
 	TestStringArray []string
 	TestIntArray    []int
+	TestInt8Array   []int8
 	TestFloatArray  []float64
 	TestSub         TestSubStruct
+	TestTime        time.Time
 }
 
 func testObject() *TestStruct {
+  t, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Mar 3, 2003 at 5:03pm (PST)")
+	
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -42,6 +47,7 @@ func testObject() *TestStruct {
 		TestByteArray:   []byte("bytes"),
 		TestStringArray: []string{"test1", "test2", "test3", "test4"},
 		TestIntArray:    []int{0, 1, 12, 123, 1234, 12345},
+		TestInt8Array:   []int8{0, 1, 12, 123},
 		TestFloatArray:  []float64{0.1, 1.1, 1.2, 1.23, 1.234, 1.2345},
 		TestSub: TestSubStruct{
 			SubBool:        true,
@@ -49,6 +55,7 @@ func testObject() *TestStruct {
 			SubString:      "subtest",
 			SubStringArray: []string{"sub1", "sub2", "sub3"},
 		},
+		TestTime: t,
 	}
 }
 
@@ -65,12 +72,15 @@ func testAttrs() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "SS", Name: "TestStringArray", Value: "", SetValues: []string{"test1", "test2", "test3", "test4"}},
 		dynamodb.Attribute{Type: "NS", Name: "TestIntArray", Value: "", SetValues: []string{"0", "1", "12", "123", "1234", "12345"}},
+		dynamodb.Attribute{Type: "NS", Name: "TestInt8Array", Value: "", SetValues: []string{"0", "1", "12", "123"}},
 		dynamodb.Attribute{Type: "NS", Name: "TestFloatArray", Value: "", SetValues: []string{"0.1", "1.1", "1.2", "1.23", "1.234", "1.2345"}},
 		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00-08:00\"", SetValues: []string(nil)},
 	}
 }
 
 func testObjectWithNilSets() *TestStruct {
+	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Mar 3, 2003 at 5:03pm (PST)")
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -90,9 +100,11 @@ func testObjectWithNilSets() *TestStruct {
 			SubString:      "subtest",
 			SubStringArray: []string{"sub1", "sub2", "sub3"},
 		},
+		TestTime: t,
 	}
 }
 func testObjectWithEmptySets() *TestStruct {
+	t, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Mar 3, 2003 at 5:03pm (PST)")
 	return &TestStruct{
 		TestBool:        true,
 		TestInt:         -99,
@@ -112,6 +124,7 @@ func testObjectWithEmptySets() *TestStruct {
 			SubString:      "subtest",
 			SubStringArray: []string{"sub1", "sub2", "sub3"},
 		},
+		TestTime: t,
 	}
 }
 func testAttrsWithNilSets() []dynamodb.Attribute {
@@ -126,6 +139,7 @@ func testAttrsWithNilSets() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "S", Name: "TestString", Value: "test", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
 		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00-08:00\"", SetValues: []string(nil)},
 	}
 }
 

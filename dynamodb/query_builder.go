@@ -347,7 +347,7 @@ func attributeList(b *bytes.Buffer, attributes []Attribute) {
 			}
 			b.WriteString("]")
 		} else {
-			b.WriteString(quote(a.Value))
+			b.WriteString(strconv.Quote(a.Value)) // this needs to be quote escaped
 		}
 
 		b.WriteString("}")
