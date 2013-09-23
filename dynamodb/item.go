@@ -122,16 +122,12 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	if err != nil {
 		return false, err
 	}
-	
+
 	return true, nil
 }
 
 func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
 	return t.modifyItem(key, attributes, "ADD")
-}
-
-func (t *Table) DeleteItem(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyItem(key, attributes, "DELETE")
 }
 
 func (t *Table) UpdateItem(key *Key, attributes []Attribute) (bool, error) {
@@ -149,6 +145,25 @@ func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (boo
 	q.AddUpdates(attributes, action)
 
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
+
+	if err != nil {
+		return false, err
+	}
+
+	_, err = simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (t *Table) DeleteItem(key *Key) (bool, error) {
+
+	q := NewQuery(t)
+	q.AddKey(t, key)
+
+	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
 
 	if err != nil {
 		return false, err
