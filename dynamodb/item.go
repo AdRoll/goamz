@@ -94,7 +94,7 @@ func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 		// We got an empty from amz. The item doesn't exist.
 		return nil, ErrNotFound
 	}
-	
+
 	item, err := itemJson.Map()
 	if err != nil {
 		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
@@ -220,6 +220,25 @@ func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (boo
 
 	return true, nil
 
+}
+
+func (t *Table) DeleteItem(key *Key) (bool, error) {
+
+	q := NewQuery(t)
+	q.AddKey(t, key)
+
+	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
+
+	if err != nil {
+		return false, err
+	}
+
+	_, err = simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func parseAttributes(s map[string]interface{}) map[string]*Attribute {
