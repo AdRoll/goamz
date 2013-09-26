@@ -122,23 +122,42 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	if err != nil {
 		return false, err
 	}
-	
+
 	return true, nil
 }
 
-func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyItem(key, attributes, "ADD")
+func (t *Table) DeleteItem(key *Key) (bool, error) {
+
+	q := NewQuery(t)
+	q.AddKey(t, key)
+
+	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
+
+	if err != nil {
+		return false, err
+	}
+
+	_, err = simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
-func (t *Table) DeleteItem(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyItem(key, attributes, "DELETE")
+func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyAttributes(key, attributes, "ADD")
 }
 
-func (t *Table) UpdateItem(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyItem(key, attributes, "PUT")
+func (t *Table) UpdateAttributes(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyAttributes(key, attributes, "PUT")
 }
 
-func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (bool, error) {
+func (t *Table) DeleteAttributes(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyAttributes(key, attributes, "DELETE")
+}
+
+func (t *Table) modifyAttributes(key *Key, attributes []Attribute, action string) (bool, error) {
 
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
