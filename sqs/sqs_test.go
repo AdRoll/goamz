@@ -145,7 +145,24 @@ func (s *S) TestReceiveMessage(c *gocheck.C) {
 	c.Assert(resp.Messages[0].MD5OfBody, gocheck.Equals, "fafb00f5732ab283681e124bf8747ed1")
 	c.Assert(resp.Messages[0].ReceiptHandle, gocheck.Equals, "MbZj6wDWli+JvwwJaBV+3dcjk2YW2vA3+STFFljTM8tJJg6HRG6PYSasuWXPJB+CwLj1FjgXUv1uSj1gUPAWV66FU/WeR4mq2OKpEGYWbnLmpRCJVAyeMjeU5ZBdtcQ+QEauMZc8ZRv37sIW2iJKq3M9MFx1YvV11A2x/KSbkJ0=")
 	c.Assert(resp.Messages[0].Body, gocheck.Equals, "This is a test message")
+
 	c.Assert(len(resp.Messages[0].Attribute), gocheck.Not(gocheck.Equals), 0)
+
+	expectedAttributeResults := []struct {
+		Name  string
+		Value string
+	}{
+		{Name: "SenderId", Value: "195004372649"},
+		{Name: "SentTimestamp", Value: "1238099229000"},
+		{Name: "ApproximateReceiveCount", Value: "5"},
+		{Name: "ApproximateFirstReceiveTimestamp", Value: "1250700979248"},
+	}
+
+	for i, expected := range expectedAttributeResults {
+		c.Assert(resp.Messages[0].Attribute[i].Name, gocheck.Equals, expected.Name)
+		c.Assert(resp.Messages[0].Attribute[i].Value, gocheck.Equals, expected.Value)
+	}
+
 	c.Assert(err, gocheck.IsNil)
 }
 
@@ -167,5 +184,43 @@ func (s *S) TestChangeMessageVisibility(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "6a7a282a-d013-4a59-aba9-335b0fa48bed")
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestGetQueueAttributes(c *gocheck.C) {
+	testServer.PrepareResponse(200, nil, TestGetQueueAttributesXmlOK)
+
+	q := &sqs.Queue{s.sqs, testServer.URL + "/123456789012/testQueue/"}
+
+	resp, err := q.GetQueueAttributes("All")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/123456789012/testQueue/")
+
+	c.Assert(resp.ResponseMetadata.RequestId, gocheck.Equals, "1ea71be5-b5a2-4f9d-b85a-945d8d08cd0b")
+
+	c.Assert(len(resp.Attributes), gocheck.Equals, 9)
+
+	expectedResults := []struct {
+		Name  string
+		Value string
+	}{
+		{Name: "ReceiveMessageWaitTimeSeconds", Value: "2"},
+		{Name: "VisibilityTimeout", Value: "30"},
+		{Name: "ApproximateNumberOfMessages", Value: "0"},
+		{Name: "ApproximateNumberOfMessagesNotVisible", Value: "0"},
+		{Name: "CreatedTimestamp", Value: "1286771522"},
+		{Name: "LastModifiedTimestamp", Value: "1286771522"},
+		{Name: "QueueArn", Value: "arn:aws:sqs:us-east-1:123456789012:qfoo"},
+		{Name: "MaximumMessageSize", Value: "8192"},
+		{Name: "MessageRetentionPeriod", Value: "345600"},
+	}
+
+	for i, expected := range expectedResults {
+		c.Assert(resp.Attributes[i].Name, gocheck.Equals, expected.Name)
+		c.Assert(resp.Attributes[i].Value, gocheck.Equals, expected.Value)
+	}
+
 	c.Assert(err, gocheck.IsNil)
 }
