@@ -107,8 +107,8 @@ type Message struct {
 }
 
 type Attribute struct {
-	Name  string `xml:"ReceiveMessageResult>Message>Attribute>Name"`
-	Value string `xml:"ReceiveMessageResult>Message>Attribute>Value"`
+	Name  string `xml:"Name"`
+	Value string `xml:"Value"`
 }
 
 type ChangeMessageVisibilityResponse struct {
