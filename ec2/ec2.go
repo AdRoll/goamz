@@ -385,6 +385,36 @@ func (ec2 *EC2) TerminateInstances(instIds []string) (resp *TerminateInstancesRe
 	return
 }
 
+// Response to a DescribeAddresses request.
+//
+// See http://goo.gl/mLbmw for more details.
+type AddressesResp struct {
+	RequestId string    `xml:"requestId"`
+	Addresses []Address `xml:"addressesSet>item"`
+}
+
+type Address struct {
+	PublicIp   string `xml:"publicIp"`
+	Domain     string `xml:"domain"`
+	InstanceID string `xml:"instanceId"`
+}
+
+// Instances returns details about instances in EC2.  Both parameters
+// are optional, and if provided will limit the instances returned to those
+// matching the given instance ids or filtering rules.
+//
+// See http://goo.gl/4No7c for more details.
+func (ec2 *EC2) Addresses(instIds []string, filter *Filter) (resp *AddressesResp, err error) {
+	params := makeParams("DescribeAddresses")
+	addParamsList(params, "InstanceId", instIds)
+	filter.addParams(params)
+	resp = &AddressesResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
 // Response to a DescribeInstances request.
 //
 // See http://goo.gl/mLbmw for more details.
