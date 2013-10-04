@@ -171,6 +171,13 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 		return nil, err
 	}
 
+	// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html
+	// "A response code of 200 indicates the operation was successful."
+	if resp.StatusCode != 200 {
+		ddbErr := buildError(resp, body)
+		return nil, ddbErr
+	}
+
 	return body, nil
 }
 
