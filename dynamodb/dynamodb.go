@@ -1,12 +1,12 @@
 package dynamodb
 
 import (
-	"fmt"
 	"github.com/civisanalytics/goamz/aws"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+	"log"
 )
 
 type Server struct {
@@ -51,7 +51,7 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 		resp, err := http.DefaultClient.Do(hreq)
 
 		if err != nil {
-			fmt.Printf("Error calling Amazon")
+			log.Printf("Error calling Amazon")
 			return nil, err
 		}
 
@@ -60,7 +60,7 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 		body, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			fmt.Printf("Could not read response body")
+			log.Printf("Could not read response body")
 			return nil, err
 		}
 

@@ -3,6 +3,7 @@ package dynamodb
 import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
+	"log"
 	"fmt"
 )
 
@@ -162,7 +163,7 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 				}
 			}
 		} else {
-			fmt.Printf("type assertion to map[string] interface{} failed for : %s\n ", value)
+			log.Printf("type assertion to map[string] interface{} failed for : %s\n ", value)
 		}
 
 	}
