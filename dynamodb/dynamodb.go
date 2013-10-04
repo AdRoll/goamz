@@ -1,14 +1,14 @@
 package dynamodb
 
 import (
+	"errors"
 	"fmt"
 	"github.com/alimoeeny/goamz/aws"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
-	"log"
-	"errors"
 )
 
 type Server struct {
@@ -40,10 +40,10 @@ var ErrNotFound = errors.New("Item not found")
 
 // Error represents an error in an operation with Dynamodb (following goamz/s3)
 type Error struct {
-	StatusCode	int    // HTTP status code (200, 403, ...)
-	Status		string
-	Code		string // Dynamodb error code ("MalformedQueryString", ...)
-	Message		string // The human-oriented error message
+	StatusCode int // HTTP status code (200, 403, ...)
+	Status     string
+	Code       string // Dynamodb error code ("MalformedQueryString", ...)
+	Message    string // The human-oriented error message
 }
 
 func (e *Error) Error() string {
@@ -53,8 +53,8 @@ func (e *Error) Error() string {
 func buildError(r *http.Response, jsonBody []byte) error {
 
 	ddbError := Error{
-		StatusCode:	r.StatusCode,
-		Status:		r.Status,
+		StatusCode: r.StatusCode,
+		Status:     r.Status,
 	}
 	// TODO return error if Unmarshal fails?
 
@@ -167,7 +167,7 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		fmt.Printf("Could not read response body")
+		log.Printf("Could not read response body")
 		return nil, err
 	}
 
