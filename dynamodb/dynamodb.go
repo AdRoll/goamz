@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 	"log"
+	"errors"
 )
 
 type Server struct {
@@ -28,6 +29,9 @@ func NewQuery(queryParts []string) *Query {
 	}
 }
 */
+
+// Specific error constants
+var ErrNotFound = errors.New("Item not found")
 
 // Error represents an error in an operation with Dynamodb (following goamz/s3)
 type Error struct {

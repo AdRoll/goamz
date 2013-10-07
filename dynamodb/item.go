@@ -78,19 +78,22 @@ func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 	q.AddKey(t, key)
 
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
-
 	if err != nil {
 		return nil, err
 	}
 
 	json, err := simplejson.NewJson(jsonResponse)
-
 	if err != nil {
 		return nil, err
 	}
 
-	item, err := json.Get("Item").Map()
-
+	itemJson, ok := json.CheckGet("Item")
+	if !ok {
+		// We got an empty from amz. The item doesn't exist.
+		return nil, ErrNotFound
+	}
+	
+	item, err := itemJson.Map()
 	if err != nil {
 		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
 		return nil, errors.New(message)
