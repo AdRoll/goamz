@@ -122,7 +122,7 @@ func (q *Query) ConsistentRead(c bool) {
 	}
 }
 
-func (q *Query) AddRequestItems(tableKeys map[*Table][]Key) {
+func (q *Query) AddGetRequestItems(tableKeys map[*Table][]Key) {
 	b := q.buffer
 
 	b.WriteString(quote("RequestItems"))
@@ -155,6 +155,60 @@ func (q *Query) AddRequestItems(tableKeys map[*Table][]Key) {
 		b.WriteString("}")
 	}
 	b.WriteString("}")
+}
+
+func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attribute) {
+	b := q.buffer
+
+	b.WriteString(quote("RequestItems"))
+	b.WriteString(":")
+	b.WriteString("{")
+
+	countTable := 0
+	for table, itemActions := range tableItems {
+		if countTable != 0 {
+			b.WriteString(",")
+		}
+		countTable++
+
+		b.WriteString(quote(table.Name))
+		b.WriteString(":")
+		b.WriteString("[")
+
+		countAction := 0
+		for action, items := range itemActions {
+			if countAction != 0 {
+				b.WriteString(",")
+			}
+			countAction++
+			for index, attributes := range items {
+				if index != 0 {
+					b.WriteString(",")
+				}
+
+				b.WriteString("{")
+				b.WriteString(quote(action+"Request"))
+				b.WriteString(":")
+				b.WriteString("{")
+
+				if action == "Put" {
+					b.WriteString(quote("Item"))
+				} else {
+					b.WriteString(quote("Key"))
+				}
+				b.WriteString(":")
+				attributeList(b, attributes)
+
+				b.WriteString("}")
+				b.WriteString("}")
+			}
+		}
+
+		b.WriteString("]")
+	}
+	b.WriteString("}")
+
+	fmt.Println(b.String())
 }
 
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {

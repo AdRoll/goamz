@@ -4,11 +4,17 @@ import (
 	"github.com/alimoeeny/goamz/aws"
 	"github.com/alimoeeny/goamz/dynamodb"
 	simplejson "github.com/bitly/go-simplejson"
+	"os"
 	"testing"
 )
 
+var (
+	AWS_KEY    = os.Getenv("AWS_ACCESS_KEY_ID")
+	AWS_SECRET = os.Getenv("AWS_SECRET_ACCESS_KEY")
+)
+
 func TestEmptyQuery(t *testing.T) {
-	q := dynamodb.NewEmptyQuery()
+	q := NewEmptyQuery()
 	queryString := q.String()
 	expectedString := "{}"
 
@@ -18,15 +24,69 @@ func TestEmptyQuery(t *testing.T) {
 
 }
 
-func TestGetItemQuery(t *testing.T) {
-	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-	server := dynamodb.Server{*auth, aws.USEast}
-	primary := dynamodb.NewStringAttribute("domain", "")
-	key := dynamodb.PrimaryKey{primary, nil}
-	table := server.NewTable("sites", key)
+func TestAddWriteRequestItems(t *testing.T) {
+	auth := &aws.Auth{AccessKey: AWS_KEY, SecretKey: AWS_SECRET}
+	server := Server{*auth, aws.USEast}
+	primary := NewStringAttribute("WidgetFoo", "")
+	secondary := NewNumericAttribute("Created", "")
+	key := PrimaryKey{primary, secondary}
+	table := server.NewTable("FooData", key)
 
-	q := dynamodb.NewQuery(table)
-	q.AddKey(table, &dynamodb.Key{HashKey: "test"})
+	primary2 := NewStringAttribute("TestHashKey", "")
+	secondary2 := NewNumericAttribute("TestRangeKey", "")
+	key2 := PrimaryKey{primary2, secondary2}
+	table2 := server.NewTable("TestTable", key2)
+
+	q := NewEmptyQuery()
+
+	attribute1 := NewNumericAttribute("testing", "4")
+	attribute2 := NewNumericAttribute("testingbatch", "2111")
+	attribute3 := NewStringAttribute("testingstrbatch", "mystr")
+	item1 := []Attribute{*attribute1, *attribute2, *attribute3}
+
+	attribute4 := NewNumericAttribute("testing", "444")
+	attribute5 := NewNumericAttribute("testingbatch", "93748249272")
+	attribute6 := NewStringAttribute("testingstrbatch", "myotherstr")
+	item2 := []Attribute{*attribute4, *attribute5, *attribute6}
+
+	attributeDel1 := NewStringAttribute("TestHashKeyDel", "DelKey")
+	attributeDel2 := NewNumericAttribute("TestRangeKeyDel", "7777777")
+	itemDel := []Attribute{*attributeDel1, *attributeDel2}
+
+	attributeTest1 := NewStringAttribute("TestHashKey", "MyKey")
+	attributeTest2 := NewNumericAttribute("TestRangeKey", "0193820384293")
+	itemTest := []Attribute{*attributeTest1, *attributeTest2}
+
+	tableItems := map[*Table]map[string][][]Attribute{}
+	actionItems := make(map[string][][]Attribute)
+	actionItems["Put"] = [][]Attribute{item1, item2}
+	actionItems["Delete"] = [][]Attribute{itemDel}
+	tableItems[table] = actionItems
+
+	actionItems2 := make(map[string][][]Attribute)
+	actionItems2["Put"] = [][]Attribute{itemTest}
+	tableItems[table2] = actionItems2
+
+	q.AddWriteRequestItems(tableItems)
+
+	desiredString := "\"RequestItems\":{\"FooData\":[{\"PutRequest\":{\"Item\":{\"testing\":{\"N\":\"4\"},\"testingbatch\":{\"N\":\"2111\"},\"testingstrbatch\":{\"S\":\"mystr\"}}}},{\"PutRequest\":{\"Item\":{\"testing\":{\"N\":\"444\"},\"testingbatch\":{\"N\":\"93748249272\"},\"testingstrbatch\":{\"S\":\"myotherstr\"}}}},{\"DeleteRequest\":{\"Key\":{\"TestHashKeyDel\":{\"S\":\"DelKey\"},\"TestRangeKeyDel\":{\"N\":\"7777777\"}}}}],\"TestTable\":[{\"PutRequest\":{\"Item\":{\"TestHashKey\":{\"S\":\"MyKey\"},\"TestRangeKey\":{\"N\":\"0193820384293\"}}}}]}"
+	queryString := q.buffer.String()
+
+	if queryString != desiredString {
+		t.Fatalf("Unexpected Query String : %s\n", queryString)
+	}
+}
+
+func TestGetItemQuery(t *testing.T) {
+	auth := &aws.Auth{AccessKey: AWS_KEY, SecretKey: AWS_SECRET}
+	server := Server{*auth, aws.USEast}
+	primary := NewStringAttribute("WidgetFoo", "")
+	secondary := NewNumericAttribute("Created", "")
+	key := PrimaryKey{primary, secondary}
+	table := server.NewTable("FooData", key)
+
+	q := NewQuery(table)
+	q.AddKey(table, &Key{HashKey: "test"})
 
 	queryString := []byte(q.String())
 
@@ -39,7 +99,7 @@ func TestGetItemQuery(t *testing.T) {
 
 	tableName := json.Get("TableName").MustString()
 
-	if tableName != "sites" {
+	if tableName != "FooData" {
 		t.Fatalf("Expected tableName to be sites was : %s", tableName)
 	}
 
@@ -49,7 +109,7 @@ func TestGetItemQuery(t *testing.T) {
 		t.Fatalf("Expected a Key")
 	}
 
-	hashRangeKey := keyMap["HashKeyElement"]
+	hashRangeKey := keyMap["Created"]
 
 	if hashRangeKey == nil {
 		t.Fatalf("Expected a HashKeyElement found : %s", keyMap)
@@ -66,19 +126,19 @@ func TestGetItemQuery(t *testing.T) {
 	}
 }
 
-func TestUpdateQuery(t *testing.T) {
-	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-	server := dynamodb.Server{*auth, aws.USEast}
-	primary := dynamodb.NewStringAttribute("domain", "")
-	rangek := dynamodb.NewNumericAttribute("time", "")
-	key := dynamodb.PrimaryKey{primary, rangek}
-	table := server.NewTable("sites", key)
+/*func TestUpdateQuery(t *testing.T) {
+	auth := &aws.Auth{AccessKey: AWS_KEY, SecretKey: AWS_SECRET}
+	server := Server{*auth, aws.USEast}
+	primary := NewStringAttribute("WidgetFoo", "")
+	secondary := NewNumericAttribute("Created", "")
+	key := PrimaryKey{primary, secondary}
+	table := server.NewTable("FooData", key)
 
-	countAttribute := dynamodb.NewNumericAttribute("count", "4")
-	attributes := []dynamodb.Attribute{*countAttribute}
+	countAttribute := NewNumericAttribute("count", "4")
+	attributes := []Attribute{*countAttribute}
 
-	q := dynamodb.NewQuery(table)
-	q.AddKey(table, &dynamodb.Key{HashKey: "test", RangeKey: "1234"})
+	q := NewQuery(table)
+	q.AddKey(table, &Key{HashKey: "1:test", RangeKey: "1234374638364"})
 	q.AddUpdates(attributes, "ADD")
 
 	queryString := []byte(q.String())
@@ -114,4 +174,4 @@ func TestUpdateQuery(t *testing.T) {
 		t.Fatalf("Expected a RangeKeyElement found : %s", keyMap)
 	}
 
-}
+}*/
