@@ -40,6 +40,49 @@ func TestListTables(t *testing.T) {
 
 }
 
+func TestCreateTable(t *testing.T) {
+	if !*amazon {
+		t.Log("Amazon tests not enabled")
+		return
+	}
+
+	auth, err := aws.EnvAuth()
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	server := dynamodb.Server{auth, aws.USEast}
+
+
+	attr1 := dynamodb.AttributeDefinitionT{"TestHashKey", "S"}
+	attr2 := dynamodb.AttributeDefinitionT{"TestRangeKey", "N"}
+
+	tableName := "MyTestTable"
+
+	keySch1 := dynamodb.KeySchemaT{"TestHashKey", "HASH"}
+	keySch2 := dynamodb.KeySchemaT{"TestRangeKey", "RANGE"}
+
+	provTPut := dynamodb.ProvisionedThroughputT{ReadCapacityUnits:1, WriteCapacityUnits:1}
+
+	tdesc := dynamodb.TableDescriptionT{
+		AttributeDefinitions: []dynamodb.AttributeDefinitionT{attr1, attr2},
+		TableName: tableName, 
+		KeySchema: []dynamodb.KeySchemaT{keySch1, keySch2},
+		ProvisionedThroughput: provTPut,
+	}
+
+	status, err := server.CreateTable(tdesc)
+
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	fmt.Println("Status:", status)
+
+}
+
 func TestGetItem(t *testing.T) {
 	if !*amazon {
 		t.Log("Amazon tests not enabled")

@@ -44,7 +44,7 @@ type TableDescriptionT struct {
 	AttributeDefinitions  []AttributeDefinitionT
 	CreationDateTime      float64
 	ItemCount             int64
-	KeySchema             KeySchemaT
+	KeySchema             []KeySchemaT
 	LocalSecondaryIndexes []LocalSecondaryIndexT
 	ProvisionedThroughput ProvisionedThroughputT
 	TableName             string
@@ -87,6 +87,25 @@ func (s *Server) ListTables() ([]string, error) {
 	}
 
 	return tables, nil
+}
+
+func (s *Server) CreateTable(tableDescription TableDescriptionT) (string, error) {
+	query := NewEmptyQuery()
+	query.AddCreateRequestTable(tableDescription)
+
+	jsonResponse, err := s.queryServer(target("CreateTable"), query)
+
+	if err != nil {
+		return "unknown", err
+	}
+
+	json, err := simplejson.NewJson(jsonResponse)
+
+	if err != nil {
+		return "unknown", err
+	}
+
+	return json.Get("TableStatus").String()
 }
 
 func keyParam(k *PrimaryKey, hashKey string, rangeKey string) string {
