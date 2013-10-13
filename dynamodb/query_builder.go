@@ -211,6 +211,71 @@ func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attrib
 	fmt.Println(b.String())
 }
 
+func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
+	b := q.buffer
+
+	b.WriteString(quote("AttributeDefinitions"))
+	b.WriteString(":")
+	b.WriteString("[")
+	for i, attr := range description.AttributeDefinitions {
+		if i != 0 {
+			b.WriteString(",")
+		}
+
+		b.WriteString("{")
+		b.WriteString(quote("AttributeName"))
+		b.WriteString(":")
+		b.WriteString(quote(attr.Name))
+		b.WriteString(",")
+		b.WriteString(quote("AttributeType"))
+		b.WriteString(":")
+		b.WriteString(quote(attr.Type))
+		b.WriteString("}")
+	}
+	b.WriteString("]")
+	b.WriteString(",")
+
+	b.WriteString(quote("KeySchema"))
+	b.WriteString(":")
+	b.WriteString("[")
+	for i, keyS := range description.KeySchema {
+		if i != 0 {
+			b.WriteString(",")
+		}
+
+		b.WriteString("{")
+		b.WriteString(quote("AttributeName"))
+		b.WriteString(":")
+		b.WriteString(quote(keyS.AttributeName))
+		b.WriteString(",")
+		b.WriteString(quote("KeyType"))
+		b.WriteString(":")
+		b.WriteString(quote(keyS.KeyType))
+		b.WriteString("}")
+	}
+	b.WriteString("]")
+	b.WriteString(",")
+
+	b.WriteString(quote("TableName"))
+	b.WriteString(":")
+	b.WriteString(quote(description.TableName))
+	b.WriteString(",")
+
+	b.WriteString(quote("ProvisionedThroughput"))
+	b.WriteString(":")
+	b.WriteString("{")
+	b.WriteString(quote("ReadCapacityUnits"))
+	b.WriteString(":")
+	b.WriteString(strconv.Itoa(int(description.ProvisionedThroughput.ReadCapacityUnits)))
+	b.WriteString(",")
+	b.WriteString(quote("WriteCapacityUnits"))
+	b.WriteString(":")
+	b.WriteString(strconv.Itoa(int(description.ProvisionedThroughput.WriteCapacityUnits)))
+	b.WriteString("}")
+
+	// Todo: Implement LocalSecondayIndexes
+}
+
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
 	b := q.buffer
 	addComma(b)
