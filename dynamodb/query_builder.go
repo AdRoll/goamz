@@ -207,8 +207,6 @@ func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attrib
 		b.WriteString("]")
 	}
 	b.WriteString("}")
-
-	fmt.Println(b.String())
 }
 
 func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
@@ -408,6 +406,16 @@ func (q *Query) AddExpected(attributes []Attribute) {
 		b.WriteString(":")
 
 		b.WriteString("{")
+
+		if a.Exists != "" {
+			b.WriteString(quote("Exists"))
+			b.WriteString(":")
+			b.WriteString("{")
+			b.WriteString(quote(a.Exists))
+			b.WriteString("}")
+			b.WriteString(",")
+		}
+
 		b.WriteString(quote("Value"))
 		b.WriteString(":")
 		b.WriteString("{")

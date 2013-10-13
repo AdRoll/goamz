@@ -43,6 +43,7 @@ type Attribute struct {
 	Name      string
 	Value     string
 	SetValues []string
+	Exists    string // exists on dynamodb? Values: "true", "false", or ""
 }
 
 type AttributeComparison struct {
