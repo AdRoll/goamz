@@ -18,6 +18,59 @@ func TestEmptyQuery(t *testing.T) {
 
 }
 
+func TestAddWriteRequestItems(t *testing.T) {
+	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	server := dynamodb.Server{*auth, aws.USEast}
+	primary := dynamodb.NewStringAttribute("WidgetFoo", "")
+	secondary := dynamodb.NewNumericAttribute("Created", "")
+	key := dynamodb.PrimaryKey{primary, secondary}
+	table := server.NewTable("FooData", key)
+
+	primary2 := dynamodb.NewStringAttribute("TestHashKey", "")
+	secondary2 := dynamodb.NewNumericAttribute("TestRangeKey", "")
+	key2 := dynamodb.PrimaryKey{primary2, secondary2}
+	table2 := server.NewTable("TestTable", key2)
+
+	q := dynamodb.NewEmptyQuery()
+
+	attribute1 := dynamodb.NewNumericAttribute("testing", "4")
+	attribute2 := dynamodb.NewNumericAttribute("testingbatch", "2111")
+	attribute3 := dynamodb.NewStringAttribute("testingstrbatch", "mystr")
+	item1 := []dynamodb.Attribute{*attribute1, *attribute2, *attribute3}
+
+	attribute4 := dynamodb.NewNumericAttribute("testing", "444")
+	attribute5 := dynamodb.NewNumericAttribute("testingbatch", "93748249272")
+	attribute6 := dynamodb.NewStringAttribute("testingstrbatch", "myotherstr")
+	item2 := []dynamodb.Attribute{*attribute4, *attribute5, *attribute6}
+
+	attributeDel1 := dynamodb.NewStringAttribute("TestHashKeyDel", "DelKey")
+	attributeDel2 := dynamodb.NewNumericAttribute("TestRangeKeyDel", "7777777")
+	itemDel := []dynamodb.Attribute{*attributeDel1, *attributeDel2}
+
+	attributeTest1 := dynamodb.NewStringAttribute("TestHashKey", "MyKey")
+	attributeTest2 := dynamodb.NewNumericAttribute("TestRangeKey", "0193820384293")
+	itemTest := []dynamodb.Attribute{*attributeTest1, *attributeTest2}
+
+	tableItems := map[*dynamodb.Table]map[string][][]dynamodb.Attribute{}
+	actionItems := make(map[string][][]dynamodb.Attribute)
+	actionItems["Put"] = [][]dynamodb.Attribute{item1, item2}
+	actionItems["Delete"] = [][]dynamodb.Attribute{itemDel}
+	tableItems[table] = actionItems
+
+	actionItems2 := make(map[string][][]dynamodb.Attribute)
+	actionItems2["Put"] = [][]dynamodb.Attribute{itemTest}
+	tableItems[table2] = actionItems2
+
+	q.AddWriteRequestItems(tableItems)
+
+	desiredString := "{\"RequestItems\":{\"FooData\":[{\"PutRequest\":{\"Item\":{\"testing\":{\"N\":\"4\"},\"testingbatch\":{\"N\":\"2111\"},\"testingstrbatch\":{\"S\":\"mystr\"}}}},{\"PutRequest\":{\"Item\":{\"testing\":{\"N\":\"444\"},\"testingbatch\":{\"N\":\"93748249272\"},\"testingstrbatch\":{\"S\":\"myotherstr\"}}}},{\"DeleteRequest\":{\"Key\":{\"TestHashKeyDel\":{\"S\":\"DelKey\"},\"TestRangeKeyDel\":{\"N\":\"7777777\"}}}}],\"TestTable\":[{\"PutRequest\":{\"Item\":{\"TestHashKey\":{\"S\":\"MyKey\"},\"TestRangeKey\":{\"N\":\"0193820384293\"}}}}]}}"
+	queryString := q.String()
+
+	if (queryString != desiredString) {
+		t.Fatalf("Unexpected Query String : %s\n", queryString)
+	}
+}
+
 func TestGetItemQuery(t *testing.T) {
 	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	server := dynamodb.Server{*auth, aws.USEast}
