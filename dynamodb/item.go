@@ -12,6 +12,11 @@ type BatchGetItem struct {
 	Keys   map[*Table][]Key
 }
 
+type BatchWriteItem struct {
+	Server  *Server
+	ItemActions   map[*Table]map[string][][]Attribute
+}
+
 func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
 	batchGetItem := &BatchGetItem{t.Server, make(map[*Table][]Key)}
 
@@ -19,14 +24,26 @@ func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
 	return batchGetItem
 }
 
+func (t *Table) BatchWriteItems(itemActions map[string][][]Attribute) *BatchWriteItem {
+	batchWriteItem := &BatchWriteItem{t.Server, make(map[*Table]map[string][][]Attribute)}
+
+	batchWriteItem.ItemActions[t] = itemActions
+	return batchWriteItem
+}
+
 func (batchGetItem *BatchGetItem) AddTable(t *Table, keys *[]Key) *BatchGetItem {
 	batchGetItem.Keys[t] = *keys
 	return batchGetItem
 }
 
+func (batchWriteItem *BatchWriteItem) AddTable(t *Table, itemActions *map[string][][]Attribute) *BatchWriteItem {
+	batchWriteItem.ItemActions[t] = *itemActions
+	return batchWriteItem
+}
+
 func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute, error) {
 	q := NewEmptyQuery()
-	q.AddRequestItems(batchGetItem.Keys)
+	q.AddGetRequestItems(batchGetItem.Keys)
 
 	jsonResponse, err := batchGetItem.Server.queryServer("DynamoDB_20120810.BatchGetItem", q)
 	if err != nil {
@@ -71,6 +88,36 @@ func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute,
 	}
 
 	return results, nil
+}
+
+func (batchWriteItem *BatchWriteItem) Execute() (map[string]interface{}, error) {
+	q := NewEmptyQuery()
+	q.AddWriteRequestItems(batchWriteItem.ItemActions)
+
+	jsonResponse, err := batchWriteItem.Server.queryServer("DynamoDB_20120810.BatchWriteItem", q)
+
+	if err != nil {
+		return nil, err
+	}
+
+	json, err := simplejson.NewJson(jsonResponse)
+
+	if err != nil {
+		return nil, err
+	}
+
+	unprocessed, err := json.Get("UnprocessedItems").Map()
+	if err != nil {
+		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+		return nil, errors.New(message)
+	}
+
+	if len(unprocessed) == 0 {
+		return nil, nil
+	} else {
+		return unprocessed, errors.New("One or more unprocessed items.")
+	}
+
 }
 
 func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
