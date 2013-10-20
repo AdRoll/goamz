@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/alimoeeny/goamz/aws"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -283,7 +284,22 @@ func (elb *ELB) query(params map[string]string, resp interface{}) error {
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", endpoint.String(), nil)
+
+	req.Header.Set("Content-Type", "application/x-amz-json-1.0")
+
+	//ALI
+	if elb.Auth.Token() != "" {
+		req.Header.Set("X-Amz-Security-Token", elb.Auth.Token())
+	}
+
+	req.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
+	//req.Header.Set("X-Amz-Target", target)
+
+	signer := aws.NewV4Signer(elb.Auth, "elasticloadbalancing", elb.Region)
+	signer.Sign(req)
+
 	if err != nil {
+		log.Println("ERROR creating the request", err)
 		return err
 	}
 	if elb.Auth.Token() != "" {
@@ -291,8 +307,11 @@ func (elb *ELB) query(params map[string]string, resp interface{}) error {
 	}
 	r, err := client.Do(req)
 	if err != nil {
+		log.Println("ERROR DOing the request:", err)
 		return err
 	}
+	//log.Println("DEBUG Q:", req)
+	//log.Println("DEBUG R:", r)
 	defer r.Body.Close()
 	if r.StatusCode != 200 {
 		return buildError(r)
