@@ -16,11 +16,6 @@ func sign(auth aws.Auth, method, path string, params map[string]string, host str
 	params["SignatureVersion"] = "2"
 	params["SignatureMethod"] = "HmacSHA256"
 
-	//ALI
-	if auth.Token() != "" {
-		params["X-Amz-Security-Token"] = auth.Token()
-	}
-
 	var keys, sarray []string
 	for k := range params {
 		keys = append(keys, k)

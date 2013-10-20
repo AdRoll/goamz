@@ -159,10 +159,6 @@ func (elb *ELB) DescribeLoadBalancers(names ...string) (*DescribeLoadBalancerRes
 		index := fmt.Sprintf("LoadBalancerNames.member.%d", i+1)
 		params[index] = name
 	}
-
-	//ali
-	fmt.Println("PARAMS:", params)
-
 	resp := new(DescribeLoadBalancerResp)
 	if err := elb.query(params, resp); err != nil {
 		return nil, err
@@ -284,7 +280,16 @@ func (elb *ELB) query(params map[string]string, resp interface{}) error {
 	}
 	sign(elb.Auth, "GET", endpoint.Path, params, endpoint.Host)
 	endpoint.RawQuery = multimap(params).Encode()
-	r, err := http.Get(endpoint.String())
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", endpoint.String(), nil)
+	if err != nil {
+		return err
+	}
+	if elb.Auth.Token() != "" {
+		req.Header.Add("X-Amz-Security-Token", elb.Auth.Token())
+	}
+	r, err := client.Do(req)
 	if err != nil {
 		return err
 	}
