@@ -10,8 +10,9 @@ import (
 )
 
 type Server struct {
-	Auth   aws.Auth
-	Region aws.Region
+	Auth            aws.Auth
+	Region          aws.Region
+	CapacityChannel chan map[string]float64
 }
 
 /*
@@ -113,7 +114,8 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	resp, err := http.DefaultClient.Do(hreq)
 
 	if err != nil {
-		fmt.Printf("Error calling Amazon")
+		fmt.Printf("Error calling Amazon:%v\n", err)
+		fmt.Println("hreq is:", hreq)
 		return nil, err
 	}
 

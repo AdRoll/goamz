@@ -114,11 +114,27 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	attributes = append(attributes, keys...)
 
 	q.AddItem(attributes)
+	//Ali - debug
+	fmt.Println("++++++++++++++++++++++++++++++++++++++")
+	fmt.Println("q:", q)
+	fmt.Println("q-attributes:", attributes)
+	fmt.Println("++++++++++++++++++++++++++++++++++++++")
 
 	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
 
 	//ALI
 	fmt.Printf("AMZ response: %s\n", string(jsonResponse))
+	var amzResponse map[string]interface{}
+	err = json.Unmarshal(jsonResponse, &amzResponse)
+	if err != nil {
+		log.Println("Error Processing Amazon response as JSON:", err)
+	} else {
+		if amzResponse["ConsumedCapacityUnits"] != "" {
+			r := map[string]float64{t.Name: amzResponse["ConsumedCapacityUnits"].(float64)}
+			t.Server.CapacityChannel <- r
+			fmt.Printf("Reported AMZ response: %v\n", r)
+		}
+	}
 	if strings.Index(strings.ToLower(string(jsonResponse)), "exception") > -1 {
 		resp := make(map[string]string)
 		err := json.Unmarshal(jsonResponse, &resp)
@@ -126,6 +142,10 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 			return false, err
 		}
 		log.Printf("An exception happened: %s - %s \n", resp["__type"], resp["message"])
+		log.Println("resp:", resp)
+		log.Println("hashkey:", hashKey)
+		log.Println("rangekey:", rangeKey)
+		log.Println("attributes:", attributes)
 		return false, errors.New(resp["message"])
 	}
 
@@ -166,6 +186,12 @@ func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (boo
 	q := NewQuery(t)
 	q.AddKey(t, key)
 	q.AddUpdates(attributes, action)
+
+	//Ali - debug
+	fmt.Println("++++++++++++++++++++++++++++++++++++++")
+	fmt.Println("q:", q)
+	fmt.Println("q-attributes:", attributes)
+	fmt.Println("++++++++++++++++++++++++++++++++++++++")
 
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
 
