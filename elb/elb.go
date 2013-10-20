@@ -159,6 +159,10 @@ func (elb *ELB) DescribeLoadBalancers(names ...string) (*DescribeLoadBalancerRes
 		index := fmt.Sprintf("LoadBalancerNames.member.%d", i+1)
 		params[index] = name
 	}
+
+	//ali
+	fmt.Println("PARAMS:", params)
+
 	resp := new(DescribeLoadBalancerResp)
 	if err := elb.query(params, resp); err != nil {
 		return nil, err
