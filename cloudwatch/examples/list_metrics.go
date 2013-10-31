@@ -8,18 +8,11 @@ import (
     "github.com/crowdmob/goamz/cloudwatch"
 )
 
-type credentials struct {
-    AccessKeyId string
-    SecretAccessKey string
-    Region string
-}
-
 func main() {
-    params := &credentials{AccessKeyId: "an access key id", SecretAccessKey: "a secret key", Region: "eu-west-1"}
-    region := aws.Regions[params.Region]
+    region := aws.Regions["us-east-1"]  // Any region here
     now := time.Now()
 
-    auth, err := aws.GetAuth(params.AccessKeyId, params.SecretAccessKey, "", now)
+    auth, err := aws.GetAuth("an AccessKeyId", "a SecretAccessKey", "", now)
     if err != nil {
        fmt.Printf("Error: %+v\n", err)
        os.Exit(1)
