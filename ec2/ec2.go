@@ -541,19 +541,22 @@ type AddressesResp struct {
 }
 
 type Address struct {
-	PublicIp   string `xml:"publicIp"`
-	Domain     string `xml:"domain"`
-	InstanceID string `xml:"instanceId"`
+	PublicIp                string `xml:"publicIp"`
+	AllocationId            string `xml:"allocationId"`
+	Domain                  string `xml:"domain"`
+	InstanceId              string `xml:"instanceId"`
+	AssociationId           string `xml:"associationId"`
+	NetworkInterfaceId      string `xml:"networkInterfaceId"`
+	NetworkInterfaceOwnerId string `xml:"networkInterfaceOwnerId"`
 }
 
-// Instances returns details about instances in EC2.  Both parameters
-// are optional, and if provided will limit the instances returned to those
-// matching the given instance ids or filtering rules.
+// Addresses returns details about the allocated VPC and EC2
+// ip addresses
 //
-// See http://goo.gl/4No7c for more details.
-func (ec2 *EC2) Addresses(instIds []string, filter *Filter) (resp *AddressesResp, err error) {
+// See http://goo.gl/zW7J4p for more details.
+func (ec2 *EC2) Addresses(publicIps []string, filter *Filter) (resp *AddressesResp, err error) {
 	params := makeParams("DescribeAddresses")
-	addParamsList(params, "InstanceId", instIds)
+	addParamsList(params, "PublicIp", publicIps)
 	filter.addParams(params)
 	resp = &AddressesResp{}
 	err = ec2.query(params, resp)
