@@ -318,6 +318,41 @@ var DescribeInstancesExample2 = `
 </DescribeInstancesResponse>
 `
 
+//http://goo.gl/aLPmbm
+var AllocateAddressExample = `
+<AllocateAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <publicIp>198.51.100.1</publicIp>
+   <domain>vpc</domain>
+   <allocationId>eipalloc-5723d13e</allocationId>
+</AllocateAddressResponse>
+`
+
+//http://goo.gl/Ciw2Z8
+var ReleaseAddressExample = `
+<ReleaseAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <return>true</return>
+</ReleaseAddressResponse>
+`
+
+//http://goo.gl/hhj4z7
+var AssociateAddressExample = `
+<AssociateAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+   <return>true</return>
+   <associationId>eipassoc-fc5ca095</associationId>
+</AssociateAddressResponse>
+`
+
+//http://goo.gl/Dapkuz
+var DiassociateAddressExample = `
+<ReleaseAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <return>true</return>
+</ReleaseAddressResponse>
+`
+
 // http://goo.gl/V0U25
 var DescribeImagesExample = `
 <DescribeImagesResponse xmlns="http://ec2.amazonaws.com/doc/2012-08-15/">
