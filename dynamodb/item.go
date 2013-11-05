@@ -4,7 +4,6 @@ import simplejson "github.com/bitly/go-simplejson"
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"fmt"
 	"log"
 	"strings"
@@ -16,8 +15,8 @@ type BatchGetItem struct {
 }
 
 type BatchWriteItem struct {
-	Server  *Server
-	ItemActions   map[*Table]map[string][][]Attribute
+	Server      *Server
+	ItemActions map[*Table]map[string][][]Attribute
 }
 
 func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
@@ -228,7 +227,6 @@ func (t *Table) DeleteItem(key *Key) (bool, error) {
 	//Ali - debug
 	fmt.Println("++++++++++++++++++++++++++++++++++++++")
 	fmt.Println("q:", q)
-	fmt.Println("q-attributes:", attributes)
 	fmt.Println("++++++++++++++++++++++++++++++++++++++")
 
 	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)

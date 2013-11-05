@@ -1,6 +1,7 @@
 package dynamodb
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/alimoeeny/goamz/aws"
@@ -58,16 +59,17 @@ func buildError(r *http.Response, jsonBody []byte) error {
 	}
 	// TODO return error if Unmarshal fails?
 
-	json, err := simplejson.NewJson(jsonBody)
+	var js map[string]string
+	err := json.Unmarshal(jsonBody, &js)
 	if err != nil {
 		log.Printf("Failed to parse body as JSON")
 		return err
 	}
-	ddbError.Message = json.Get("message").MustString()
+	ddbError.Message = js["message"]
 
 	// Of the form: com.amazon.coral.validate#ValidationException
 	// We only want the last part
-	codeStr := json.Get("__type").MustString()
+	codeStr := js["__type"]
 	hashIndex := strings.Index(codeStr, "#")
 	if hashIndex > 0 {
 		codeStr = codeStr[hashIndex+1:]
