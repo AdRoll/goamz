@@ -530,6 +530,9 @@ func (b *Bucket) UploadSignedURL(path, content_type string, expires time.Time) s
 	params.Add("AWSAccessKeyId", accessId)
 	params.Add("Expires", strconv.FormatInt(expire_date, 10))
 	params.Add("Signature", signature)
+	if a.Token() != "" {
+		params.Add("token", a.Token())
+	}
 
 	signedurl.RawQuery = params.Encode()
 	return signedurl.String()
