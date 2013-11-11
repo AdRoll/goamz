@@ -196,7 +196,7 @@ func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (boo
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
 
 	//ALI
-	fmt.Println("AMZ response: %s\n", string(jsonResponse))
+	fmt.Printf("AMZ response: %s\n", string(jsonResponse))
 
 	if err != nil {
 		return false, err

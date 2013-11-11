@@ -171,7 +171,7 @@ func (m *Multi) putPart(n int, r io.ReadSeeker, partSize int64, md5b64 string) (
 			params:  params,
 			payload: r,
 		}
-		err = m.Bucket.S3.prepare(req)
+		err = m.Bucket.S3.prepare(req, "GET")
 		if err != nil {
 			return Part{}, err
 		}

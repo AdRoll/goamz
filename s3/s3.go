@@ -12,6 +12,9 @@ package s3
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"encoding/xml"
 	"fmt"
 	"github.com/alimoeeny/goamz/aws"
@@ -165,7 +168,7 @@ func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
 		bucket: b.Name,
 		path:   path,
 	}
-	err = b.S3.prepare(req)
+	err = b.S3.prepare(req, "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +192,7 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 		bucket: b.Name,
 		path:   path,
 	}
-	err = b.S3.prepare(req)
+	err = b.S3.prepare(req, "GET")
 	if err != nil {
 		return
 	}
@@ -224,7 +227,7 @@ func (b *Bucket) Head(path string, headers map[string][]string) (*http.Response,
 		path:    path,
 		headers: headers,
 	}
-	err := b.S3.prepare(req)
+	err := b.S3.prepare(req, "GET")
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +468,7 @@ func (b *Bucket) URL(path string) string {
 		bucket: b.Name,
 		path:   path,
 	}
-	err := b.S3.prepare(req)
+	err := b.S3.prepare(req, "GET")
 	if err != nil {
 		panic(err)
 	}
@@ -485,7 +488,7 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 		path:   path,
 		params: url.Values{"Expires": {strconv.FormatInt(expires.Unix(), 10)}},
 	}
-	err := b.S3.prepare(req)
+	err := b.S3.prepare(req, "GET")
 	if err != nil {
 		panic(err)
 	}
@@ -498,6 +501,38 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	} else {
 		return u.String()
 	}
+}
+
+// UploadSignedURL returns a signed URL that allows anyone holding the URL
+// to upload the object at path. The signature is valid until expires.
+// contenttype is a string like image/png
+// path is the resource name in s3 terminalogy like images/ali.png [obviously exclusing the bucket name itself]
+func (b *Bucket) UploadSignedURL(path, content_type string, expires time.Time) string {
+	expire_date := expires.Unix()
+	stringToSign := "POST\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
+	fmt.Println("String to sign:\n", stringToSign)
+	a := b.S3.Auth
+	secretKey := a.SecretKey
+	accessId := a.AccessKey
+	mac := hmac.New(sha1.New, []byte(secretKey))
+	mac.Write([]byte(stringToSign))
+	macsum := mac.Sum(nil)
+	signature := base64.StdEncoding.EncodeToString([]byte(macsum))
+	signature = strings.TrimSpace(signature)
+
+	signedurl, err := url.Parse("https://" + b.Name + ".s3.amazonaws.com/")
+	if err != nil {
+		log.Println("ERROR sining url for S3 upload", err)
+		return ""
+	}
+	signedurl.Path += path
+	params := url.Values{}
+	params.Add("AWSAccessKeyId", accessId)
+	params.Add("Expires", strconv.FormatInt(expire_date, 10))
+	params.Add("Signature", signature)
+
+	signedurl.RawQuery = params.Encode()
+	return signedurl.String()
 }
 
 type request struct {
@@ -526,7 +561,7 @@ func (req *request) url() (*url.URL, error) {
 // If resp is not nil, the XML data contained in the response
 // body will be unmarshalled on it.
 func (s3 *S3) query(req *request, resp interface{}) error {
-	err := s3.prepare(req)
+	err := s3.prepare(req, "GET")
 	if err == nil {
 		_, err = s3.run(req, resp)
 	}
@@ -534,11 +569,16 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 }
 
 // prepare sets up req to be delivered to S3.
-func (s3 *S3) prepare(req *request) error {
+func (s3 *S3) prepare(req *request, method string) error {
+	//Ali
+	if method == "" {
+		method = "GET"
+	}
+
 	if !req.prepared {
 		req.prepared = true
 		if req.method == "" {
-			req.method = "GET"
+			req.method = method
 		}
 		// Copy so they can be mutated without affecting on retries.
 		params := make(url.Values)
