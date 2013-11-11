@@ -509,7 +509,7 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 // path is the resource name in s3 terminalogy like images/ali.png [obviously exclusing the bucket name itself]
 func (b *Bucket) UploadSignedURL(path, content_type string, expires time.Time) string {
 	expire_date := expires.Unix()
-	stringToSign := "POST\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
+	stringToSign := "PUT\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
 	fmt.Println("String to sign:\n", stringToSign)
 	a := b.S3.Auth
 	secretKey := a.SecretKey
