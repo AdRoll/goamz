@@ -29,6 +29,10 @@ type TestStruct struct {
 	TestSub         TestSubStruct
 }
 
+type TestStructTime struct {
+	TestTime time.Time
+}
+
 func testObject() *TestStruct {
 	return &TestStruct{
 		TestBool:        true,
@@ -67,6 +71,13 @@ func testAttrs() []dynamodb.Attribute {
 		dynamodb.Attribute{Type: "NS", Name: "TestIntArray", Value: "", SetValues: []string{"0", "1", "12", "123", "1234", "12345"}},
 		dynamodb.Attribute{Type: "NS", Name: "TestFloatArray", Value: "", SetValues: []string{"0.1", "1.1", "1.2", "1.23", "1.234", "1.2345"}},
 		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
+	}
+}
+
+func testObjectTime() *TestStructTime {
+	t, _ := time.Parse("Jan 2, 2006 at 3:04pm", "Mar 3, 2003 at 5:03pm")
+	return &TestStructTime{
+		TestTime: t,
 	}
 }
 
@@ -114,6 +125,32 @@ func testObjectWithEmptySets() *TestStruct {
 		},
 	}
 }
+
+func testAttrs() []dynamodb.Attribute {
+	return []dynamodb.Attribute{
+		dynamodb.Attribute{Type: "N", Name: "TestBool", Value: "1", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt", Value: "-99", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt32", Value: "999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestInt64", Value: "9999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestUint", Value: "99", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestFloat32", Value: "9.9999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "N", Name: "TestFloat64", Value: "99.999999", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestString", Value: "test", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "S", Name: "TestByteArray", Value: "Ynl0ZXM=", SetValues: []string(nil)},
+		dynamodb.Attribute{Type: "SS", Name: "TestStringArray", Value: "", SetValues: []string{"test1", "test2", "test3", "test4"}},
+		dynamodb.Attribute{Type: "NS", Name: "TestIntArray", Value: "", SetValues: []string{"0", "1", "12", "123", "1234", "12345"}},
+		dynamodb.Attribute{Type: "NS", Name: "TestInt8Array", Value: "", SetValues: []string{"0", "1", "12", "123"}},
+		dynamodb.Attribute{Type: "NS", Name: "TestFloatArray", Value: "", SetValues: []string{"0.1", "1.1", "1.2", "1.23", "1.234", "1.2345"}},
+		dynamodb.Attribute{Type: "S", Name: "TestSub", Value: `{"SubBool":true,"SubInt":2,"SubString":"subtest","SubStringArray":["sub1","sub2","sub3"]}`, SetValues: []string(nil)},
+	}
+}
+
+func testAttrsTime() []dynamodb.Attribute {
+	return []dynamodb.Attribute{
+		dynamodb.Attribute{Type: "S", Name: "TestTime", Value: "\"2003-03-03T17:03:00Z\"", SetValues: []string(nil)},
+	}
+}
+
 func testAttrsWithNilSets() []dynamodb.Attribute {
 	return []dynamodb.Attribute{
 		dynamodb.Attribute{Type: "N", Name: "TestBool", Value: "1", SetValues: []string(nil)},
@@ -157,6 +194,39 @@ func TestUnmarshal(t *testing.T) {
 	}
 
 	expected := testObject()
+	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
+		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
+	}
+}
+
+func TestMarshalTime(t *testing.T) {
+	testObj := testObjectTime()
+	attrs, err := dynamodb.MarshalAttributes(testObj)
+	if err != nil {
+		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+	}
+
+	expected := testAttrsTime()
+	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
+		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
+	}
+}
+
+func TestUnmarshalTime(t *testing.T) {
+	testObj := &TestStructTime{}
+
+	attrMap := map[string]*dynamodb.Attribute{}
+	attrs := testAttrsTime()
+	for i, _ := range attrs {
+		attrMap[attrs[i].Name] = &attrs[i]
+	}
+
+	err := dynamodb.UnmarshalAttributes(&attrMap, testObj)
+	if err != nil {
+		t.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
+	}
+
+	expected := testObjectTime()
 	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
 		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
 	}

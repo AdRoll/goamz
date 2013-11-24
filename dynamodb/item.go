@@ -14,6 +14,11 @@ type BatchGetItem struct {
 	Keys   map[*Table][]Key
 }
 
+type BatchWriteItem struct {
+	Server      *Server
+	ItemActions map[*Table]map[string][][]Attribute
+}
+
 func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
 	batchGetItem := &BatchGetItem{t.Server, make(map[*Table][]Key)}
 
@@ -21,14 +26,26 @@ func (t *Table) BatchGetItems(keys []Key) *BatchGetItem {
 	return batchGetItem
 }
 
+func (t *Table) BatchWriteItems(itemActions map[string][][]Attribute) *BatchWriteItem {
+	batchWriteItem := &BatchWriteItem{t.Server, make(map[*Table]map[string][][]Attribute)}
+
+	batchWriteItem.ItemActions[t] = itemActions
+	return batchWriteItem
+}
+
 func (batchGetItem *BatchGetItem) AddTable(t *Table, keys *[]Key) *BatchGetItem {
 	batchGetItem.Keys[t] = *keys
 	return batchGetItem
 }
 
+func (batchWriteItem *BatchWriteItem) AddTable(t *Table, itemActions *map[string][][]Attribute) *BatchWriteItem {
+	batchWriteItem.ItemActions[t] = *itemActions
+	return batchWriteItem
+}
+
 func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute, error) {
 	q := NewEmptyQuery()
-	q.AddRequestItems(batchGetItem.Keys)
+	q.AddGetRequestItems(batchGetItem.Keys)
 
 	jsonResponse, err := batchGetItem.Server.queryServer("DynamoDB_20120810.BatchGetItem", q)
 	if err != nil {
@@ -75,11 +92,11 @@ func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute,
 	return results, nil
 }
 
-func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
-	q := NewQuery(t)
-	q.AddKey(t, key)
+func (batchWriteItem *BatchWriteItem) Execute() (map[string]interface{}, error) {
+	q := NewEmptyQuery()
+	q.AddWriteRequestItems(batchWriteItem.ItemActions)
 
-	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
+	jsonResponse, err := batchWriteItem.Server.queryServer("DynamoDB_20120810.BatchWriteItem", q)
 
 	if err != nil {
 		return nil, err
@@ -91,8 +108,41 @@ func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 		return nil, err
 	}
 
-	item, err := json.Get("Item").Map()
+	unprocessed, err := json.Get("UnprocessedItems").Map()
+	if err != nil {
+		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+		return nil, errors.New(message)
+	}
 
+	if len(unprocessed) == 0 {
+		return nil, nil
+	} else {
+		return unprocessed, errors.New("One or more unprocessed items.")
+	}
+
+}
+
+func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
+	q := NewQuery(t)
+	q.AddKey(t, key)
+
+	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
+	if err != nil {
+		return nil, err
+	}
+
+	json, err := simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	itemJson, ok := json.CheckGet("Item")
+	if !ok {
+		// We got an empty from amz. The item doesn't exist.
+		return nil, ErrNotFound
+	}
+
+	item, err := itemJson.Map()
 	if err != nil {
 		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
 		return nil, errors.New(message)
@@ -169,31 +219,17 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	return true, nil
 }
 
-func (t *Table) AddItem(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyItem(key, attributes, "ADD")
-}
-
-func (t *Table) UpdateItem(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyItem(key, attributes, "PUT")
-}
-
-func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (bool, error) {
-
-	if len(attributes) == 0 {
-		return false, errors.New("At least one attribute is required.")
-	}
+func (t *Table) DeleteItem(key *Key) (bool, error) {
 
 	q := NewQuery(t)
 	q.AddKey(t, key)
-	q.AddUpdates(attributes, action)
 
 	//Ali - debug
 	fmt.Println("++++++++++++++++++++++++++++++++++++++")
 	fmt.Println("q:", q)
-	fmt.Println("q-attributes:", attributes)
 	fmt.Println("++++++++++++++++++++++++++++++++++++++")
 
-	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
+	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
 
 	//ALI
 	fmt.Printf("AMZ response: %s\n", string(jsonResponse))
@@ -217,6 +253,42 @@ func (t *Table) modifyItem(key *Key, attributes []Attribute, action string) (boo
 
 	return true, nil
 
+}
+
+func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyAttributes(key, attributes, "ADD")
+}
+
+func (t *Table) UpdateAttributes(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyAttributes(key, attributes, "PUT")
+}
+
+func (t *Table) DeleteAttributes(key *Key, attributes []Attribute) (bool, error) {
+	return t.modifyAttributes(key, attributes, "DELETE")
+}
+
+func (t *Table) modifyAttributes(key *Key, attributes []Attribute, action string) (bool, error) {
+
+	if len(attributes) == 0 {
+		return false, errors.New("At least one attribute is required.")
+	}
+
+	q := NewQuery(t)
+	q.AddKey(t, key)
+	q.AddUpdates(attributes, action)
+
+	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
+
+	if err != nil {
+		return false, err
+	}
+
+	_, err = simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func parseAttributes(s map[string]interface{}) map[string]*Attribute {
@@ -280,7 +352,7 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 				}
 			}
 		} else {
-			fmt.Printf("type assertion to map[string] interface{} failed for : %s\n ", value)
+			log.Printf("type assertion to map[string] interface{} failed for : %s\n ", value)
 		}
 
 	}

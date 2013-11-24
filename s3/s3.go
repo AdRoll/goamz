@@ -56,10 +56,10 @@ type Owner struct {
 type Options struct {
 	SSE  bool
 	Meta map[string][]string
+	ContentEncoding string
 	// What else?
 	// Cache-Control string
 	// Content-Disposition string
-	// Content-Encoding ???
 	//// The following become headers so they are []strings rather than strings... I think
 	// x-amz-website-redirect-location: []string
 	// x-amz-storage-class []string
@@ -84,8 +84,8 @@ func (s3 *S3) Bucket(name string) *Bucket {
 	return &Bucket{s3, name}
 }
 
-var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> 
-  <LocationConstraint>%s</LocationConstraint> 
+var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <LocationConstraint>%s</LocationConstraint>
 </CreateBucketConfiguration>`
 
 // locationConstraint returns an io.Reader specifying a LocationConstraint if
@@ -263,6 +263,9 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	}
 	if options.SSE {
 		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	}
+	if len(options.ContentEncoding) != 0 {
+		headers["Content-Encoding"] = []string{options.ContentEncoding}
 	}
 	for k, v := range options.Meta {
 		headers["x-amz-meta-"+k] = v
