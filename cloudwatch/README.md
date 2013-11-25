@@ -1,12 +1,5 @@
 #GoLang AWS Cloudwatch
 
-## Installation:
-1. Getting the code
-2. Configure / Start a MongoDB replica set
-2. Check the web service configuration
-3. Install
-4. Run
-
 ## Installation
 Please refer to the project's main page at [https://github.com/crowdmob/goamz](https://github.com/crowdmob/goamz) for instructions about how to install.
 
@@ -28,3 +21,85 @@ Please refer to the project's main page at [https://github.com/crowdmob/goamz](h
  </table>
 
 [Please refer to AWS Cloudwatch's documentation for more info](http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Operations.html)
+
+##Examples
+####Get Metric Statistics
+
+```
+import (
+    "fmt"
+    "time"
+    "os"
+    "github.com/crowdmob/goamz/aws"
+    "github.com/crowdmob/goamz/cloudwatch"
+)
+
+func test_get_metric_statistics() {
+    region := aws.Regions["a_region"]
+    namespace:= "AWS/ELB"
+    dimension  := &cloudwatch.Dimension{
+                                         Name: "LoadBalancerName", 
+                                         Value: "your_value",
+                                       }
+    metricName := "RequestCount"
+    now := time.Now()
+    prev := now.Add(time.Duration(600)*time.Second*-1) // 600 secs = 10 minutes
+
+    auth, err := aws.GetAuth("your_AccessKeyId", "your_SecretAccessKey", "", now)
+    if err != nil {
+       fmt.Printf("Error: %+v\n", err)
+       os.Exit(1)
+    }
+
+    cw, err := cloudwatch.NewCloudWatch(auth, region.CloudWatchServicepoint)
+    request := &cloudwatch.GetMetricStatisticsRequest {
+                Dimensions: []cloudwatch.Dimension{*dimension},
+                EndTime: now,
+                StartTime: prev,
+                MetricName: metricName,
+                Unit: "Count", // Not mandatory
+                Period: 60,
+                Statistics: []string{"Sum"},
+                Namespace: namespace,
+            }
+
+    response, err := cw.GetMetricStatistics(request)
+    if err == nil {
+        fmt.Printf("%+v\n", response)
+    } else {
+        fmt.Printf("Error: %+v\n", err)
+    }
+}
+
+```
+####List Metrics
+
+```
+import (
+    "fmt"
+    "time"
+    "os"
+    "github.com/crowdmob/goamz/aws"
+    "github.com/crowdmob/goamz/cloudwatch"
+)
+
+func test_list_metrics() {
+    region := aws.Regions["us-east-1"]  // Any region here
+    now := time.Now()
+
+    auth, err := aws.GetAuth("an AccessKeyId", "a SecretAccessKey", "", now)
+    if err != nil {
+       fmt.Printf("Error: %+v\n", err)
+       os.Exit(1)
+    }
+    cw, err := cloudwatch.NewCloudWatch(auth, region.CloudWatchServicepoint)
+    request := &cloudwatch.ListMetricsRequest{Namespace: "AWS/EC2"}
+
+    response, err := cw.ListMetrics(request)
+    if err == nil {
+        fmt.Printf("%+v\n", response)
+    } else {
+        fmt.Printf("Error: %+v\n", err)
+    }
+}
+```
