@@ -129,9 +129,6 @@ func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 	log.Printf("here ----------------- q is : %#v\n", q)
 
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
-
-	log.Printf("here ----------------- jsonrespons is : %#v\n ------------------ ERROR: %#v\n", string(jsonResponse), err)
-
 	if err != nil {
 		return nil, err
 	}
@@ -183,12 +180,6 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	err = json.Unmarshal(jsonResponse, &amzResponse)
 	if err != nil {
 		log.Println("Error Processing Amazon response as JSON:", err)
-	} else {
-		if amzResponse["ConsumedCapacityUnits"] != "" {
-			r := map[string]float64{t.Name: amzResponse["ConsumedCapacityUnits"].(float64)}
-			t.Server.CapacityChannel <- r
-			fmt.Printf("Reported AMZ response: %v\n", r)
-		}
 	}
 	if strings.Index(strings.ToLower(string(jsonResponse)), "exception") > -1 {
 		resp := make(map[string]string)
@@ -208,17 +199,9 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 		return false, err
 	}
 
-	json, err := simplejson.NewJson(jsonResponse)
-
+	_, err = simplejson.NewJson(jsonResponse)
 	if err != nil {
 		return false, err
-	}
-
-	units, _ := json.CheckGet("ConsumedCapacityUnits")
-
-	if units == nil {
-		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
-		return false, errors.New(message)
 	}
 
 	return true, nil
@@ -229,35 +212,18 @@ func (t *Table) DeleteItem(key *Key) (bool, error) {
 	q := NewQuery(t)
 	q.AddKey(t, key)
 
-	//Ali - debug
-	fmt.Println("++++++++++++++++++++++++++++++++++++++")
-	fmt.Println("q:", q)
-	fmt.Println("++++++++++++++++++++++++++++++++++++++")
-
 	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
 
-	//ALI
-	fmt.Printf("AMZ response: %s\n", string(jsonResponse))
-
 	if err != nil {
 		return false, err
 	}
 
-	json, err := simplejson.NewJson(jsonResponse)
-
+	_, err = simplejson.NewJson(jsonResponse)
 	if err != nil {
 		return false, err
-	}
-
-	units, _ := json.CheckGet("ConsumedCapacityUnits")
-
-	if units == nil {
-		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
-		return false, errors.New(message)
 	}
 
 	return true, nil
-
 }
 
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {

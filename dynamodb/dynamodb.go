@@ -1,9 +1,8 @@
 package dynamodb
 
+import simplejson "github.com/bitly/go-simplejson"
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/alimoeeny/goamz/aws"
 	"io/ioutil"
 	"log"
@@ -13,9 +12,8 @@ import (
 )
 
 type Server struct {
-	Auth            aws.Auth
-	Region          aws.Region
-	CapacityChannel chan map[string]float64
+	Auth   aws.Auth
+	Region aws.Region
 }
 
 /*
@@ -32,10 +30,6 @@ func NewQuery(queryParts []string) *Query {
 }
 */
 
-// ALI
-// func (s *Server) QueryServer(target string, query *Query) ([]byte, error) {
-// 	return s.queryServer(target, query)
-// }
 // Specific error constants
 var ErrNotFound = errors.New("Item not found")
 
@@ -59,17 +53,16 @@ func buildError(r *http.Response, jsonBody []byte) error {
 	}
 	// TODO return error if Unmarshal fails?
 
-	var js map[string]string
-	err := json.Unmarshal(jsonBody, &js)
+	json, err := simplejson.NewJson(jsonBody)
 	if err != nil {
 		log.Printf("Failed to parse body as JSON")
 		return err
 	}
-	ddbError.Message = js["message"]
+	ddbError.Message = json.Get("message").MustString()
 
 	// Of the form: com.amazon.coral.validate#ValidationException
 	// We only want the last part
-	codeStr := js["__type"]
+	codeStr := json.Get("__type").MustString()
 	hashIndex := strings.Index(codeStr, "#")
 	if hashIndex > 0 {
 		codeStr = codeStr[hashIndex+1:]
@@ -159,15 +152,13 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	resp, err := http.DefaultClient.Do(hreq)
 
 	if err != nil {
-		fmt.Printf("Error calling Amazon:%v\n", err)
-		fmt.Println("hreq is:", hreq)
+		log.Printf("Error calling Amazon")
 		return nil, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		log.Printf("Could not read response body")
 		return nil, err
@@ -184,5 +175,5 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 }
 
 func target(name string) string {
-	return "DynamoDB_20111205." + name
+	return "DynamoDB_20120810." + name
 }

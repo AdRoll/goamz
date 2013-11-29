@@ -22,7 +22,7 @@ var testServer = testutil.NewHTTPServer()
 
 func (s *S) SetUpSuite(c *gocheck.C) {
 	testServer.Start()
-	auth := aws.Auth{AccessKey: "abc", SecretKey: "123", Token: ""}
+	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
 	s.ec2 = ec2.New(auth, aws.Region{EC2Endpoint: testServer.URL})
 }
 

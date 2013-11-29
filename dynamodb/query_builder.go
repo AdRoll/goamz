@@ -24,42 +24,12 @@ func NewQuery(t *Table) *Query {
 // If rangeKey is "", it is assumed to not want to be used
 func (q *Query) AddKey(t *Table, key *Key) {
 	k := t.Key
-	// <<<<<<< HEAD
-
-	// 	addComma(b)
-
-	// 	b.WriteString(quote("Key"))
-	// 	b.WriteString(":")
-
-	// 	b.WriteString("{")
-	// 	b.WriteString(quote("HashKeyElement")) // old api
-	// 	b.WriteString(":")
-
-	// 	b.WriteString("{")
-	// 	b.WriteString(quote(k.KeyAttribute.Type))
-	// 	b.WriteString(":")
-	// 	b.WriteString(quote(key.HashKey))
-
-	// 	b.WriteString("}")
-
-	// 	if k.HasRange() {
-	// 		b.WriteString(",")
-	// 		b.WriteString(quote("RangeKeyElement"))
-	// 		b.WriteString(":")
-
-	// 		b.WriteString("{")
-	// 		b.WriteString(quote(k.RangeAttribute.Type))
-	// 		b.WriteString(":")
-	// 		b.WriteString(quote(key.RangeKey))
-	// 		b.WriteString("}")
-	// =======
 	keymap := msi{
 		k.KeyAttribute.Name: msi{
 			k.KeyAttribute.Type: key.HashKey},
 	}
 	if k.HasRange() {
 		keymap[k.RangeAttribute.Name] = msi{k.RangeAttribute.Type: key.RangeKey}
-		//>>>>>>> 9efe369... rework query_builder to use golang json marshaller, fixes bugs relating to quoting (e.g. attribute value with double-quote character - work done by Mark Boyd
 	}
 
 	q.buffer["Key"] = keymap
@@ -165,14 +135,6 @@ func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
 	q.buffer["ScanFilter"] = buildComparisons(comparisons)
 }
 
-// <<<<<<< HEAD
-// func (q *Query) addComparisons(comparisons []AttributeComparison) {
-// 	b := q.buffer
-// 	for i, c := range comparisons {
-// 		if i > 0 {
-// 			b.WriteString(",")
-// 		}
-// =======
 func (q *Query) AddParallelScanConfiguration(segment int, totalSegments int) {
 	q.buffer["Segment"] = segment
 	q.buffer["TotalSegments"] = totalSegments
@@ -180,8 +142,6 @@ func (q *Query) AddParallelScanConfiguration(segment int, totalSegments int) {
 
 func buildComparisons(comparisons []AttributeComparison) msi {
 	out := msi{}
-	//>>>>>>> 9efe369... rework query_builder to use golang json marshaller, fixes bugs relating to quoting (e.g. attribute value with double-quote character - work done by Mark Boyd
-
 	for _, c := range comparisons {
 		avlist := []interface{}{}
 		for _, attributeValue := range c.AttributeValueList {
@@ -203,8 +163,12 @@ func (q *Query) AddUpdates(attributes []Attribute, action string) {
 	updates := msi{}
 	for _, a := range attributes {
 		//UGH!!  (I miss the query operator)
-		updates[a.Name] = msi{a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()]}
-		updates["Action"] = action
+		updates[a.Name] = msi{
+			"Value": msi{
+				a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()],
+			},
+			"Action": action,
+		}
 	}
 
 	q.buffer["AttributeUpdates"] = updates
@@ -224,42 +188,11 @@ func (q *Query) AddExpected(attributes []Attribute) {
 	q.buffer["Expected"] = expected
 }
 
-// <<<<<<< HEAD
-// func attributeList(b *bytes.Buffer, attributes []Attribute) {
-// 	b.WriteString("{")
-// 	for index, a := range attributes {
-// 		if index > 0 {
-// 			b.WriteString(",")
-// 		}
-
-// 		b.WriteString(quote(a.Name))
-// 		b.WriteString(":")
-
-// 		b.WriteString("{")
-// 		b.WriteString(quote(a.Type))
-// 		b.WriteString(":")
-
-// 		if a.SetType() {
-// 			b.WriteString("[")
-// 			for i, aval := range a.SetValues {
-// 				if i > 0 {
-// 					b.WriteString(",")
-// 				}
-// 				b.WriteString(quote(aval))
-// 			}
-// 			b.WriteString("]")
-// 		} else {
-// 			b.WriteString(quote(a.Value))
-// 		}
-
-// 		b.WriteString("}")
-// =======
 func attributeList(attributes []Attribute) msi {
 	b := msi{}
 	for _, a := range attributes {
 		//UGH!!  (I miss the query operator)
 		b[a.Name] = msi{a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()]}
-		//>>>>>>> 9efe369... rework query_builder to use golang json marshaller, fixes bugs relating to quoting (e.g. attribute value with double-quote character - work done by Mark Boyd
 	}
 	return b
 }

@@ -3,8 +3,7 @@ package elb_test
 import (
 	"github.com/alimoeeny/goamz/aws"
 	"github.com/alimoeeny/goamz/elb"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/elb"
+	"launchpad.net/gocheck"
 )
 
 var testAuth = aws.Auth{AccessKey: "user", SecretKey: "secret"}

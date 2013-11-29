@@ -32,4 +32,4 @@ func (t *Table) DescribeTable() (*TableDescriptionT, error) {
 	tableDescription.TableStatus, _ = json.Get("Table").Get("TableStatus").String()
 
 	return &tableDescription, nil
-} 
+}
