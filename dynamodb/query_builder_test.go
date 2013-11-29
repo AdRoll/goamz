@@ -26,7 +26,7 @@ func TestEmptyQuery(t *testing.T) {
 
 func TestAddWriteRequestItems(t *testing.T) {
 	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-	server := dynamodb.Server{*auth, aws.USEast}
+	server := dynamodb.Server{*auth, aws.USEast, nil}
 	primary := dynamodb.NewStringAttribute("WidgetFoo", "")
 	secondary := dynamodb.NewNumericAttribute("Created", "")
 	key := dynamodb.PrimaryKey{primary, secondary}
@@ -79,7 +79,7 @@ func TestAddWriteRequestItems(t *testing.T) {
 
 func TestGetItemQuery(t *testing.T) {
 	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-	server := dynamodb.Server{*auth, aws.USEast}
+	server := dynamodb.Server{*auth, aws.USEast, nil}
 	primary := dynamodb.NewStringAttribute("domain", "")
 	key := dynamodb.PrimaryKey{primary, nil}
 	table := server.NewTable("sites", key)
@@ -127,7 +127,7 @@ func TestGetItemQuery(t *testing.T) {
 
 func TestUpdateQuery(t *testing.T) {
 	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-	server := dynamodb.Server{*auth, aws.USEast}
+	server := dynamodb.Server{*auth, aws.USEast, nil}
 	primary := dynamodb.NewStringAttribute("domain", "")
 	rangek := dynamodb.NewNumericAttribute("time", "")
 	key := dynamodb.PrimaryKey{primary, rangek}
@@ -141,7 +141,7 @@ func TestUpdateQuery(t *testing.T) {
 	q.AddUpdates(attributes, "ADD")
 
 	queryString := []byte(q.String())
-
+	t.Log(q)
 	json, err := simplejson.NewJson(queryString)
 
 	if err != nil {

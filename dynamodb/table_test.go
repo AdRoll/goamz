@@ -23,7 +23,7 @@ func TestListTables(t *testing.T) {
 		t.FailNow()
 	}
 
-	server := dynamodb.Server{auth, aws.USEast}
+	server := dynamodb.Server{auth, aws.USEast, nil}
 
 	tables, err := server.ListTables()
 
@@ -53,7 +53,7 @@ func TestCreateTable(t *testing.T) {
 		t.FailNow()
 	}
 
-	server := dynamodb.Server{auth, aws.USEast}
+	server := dynamodb.Server{auth, aws.USEast, nil}
 
 	attr1 := dynamodb.AttributeDefinitionT{"TestHashKey", "S"}
 	attr2 := dynamodb.AttributeDefinitionT{"TestRangeKey", "N"}
@@ -96,7 +96,7 @@ func TestGetItem(t *testing.T) {
 		t.FailNow()
 	}
 
-	server := dynamodb.Server{auth, aws.USEast}
+	server := dynamodb.Server{auth, aws.USEast, nil}
 	primary := dynamodb.NewStringAttribute("domain", "")
 	key := dynamodb.PrimaryKey{primary, nil}
 	table := server.NewTable("production_storyarc-accelerator-sites",
@@ -130,7 +130,7 @@ func TestGetItemRange(t *testing.T) {
 		t.FailNow()
 	}
 
-	server := dynamodb.Server{auth, aws.USEast}
+	server := dynamodb.Server{auth, aws.USEast, nil}
 	primary := dynamodb.NewStringAttribute("uuid_type", "")
 	rangeK := dynamodb.NewNumericAttribute("time", "")
 	key := dynamodb.PrimaryKey{primary, rangeK}

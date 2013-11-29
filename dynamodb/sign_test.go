@@ -12,7 +12,7 @@ import (
 func TestError(t *testing.T) {
 	r, _ := http.NewRequest("POST", "http://example.com", nil)
 
-	auth := &aws.Auth{"", ""}
+	auth := &aws.Auth{AccessKey: "", SecretKey: ""}
 
 	sv := &dynamodb.Service{"dynamodb", aws.USEast.Name}
 	err := sv.Sign(auth, r)
@@ -24,7 +24,7 @@ func TestError(t *testing.T) {
 }
 
 func TestDerivedKey(t *testing.T) {
-	auth := &aws.Auth{"", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	ti, _ := time.Parse("20060102", "20120215")
 	sv := &dynamodb.Service{"iam", "us-east-1"}
 	k := sv.DerivedKey(auth, ti)
@@ -42,7 +42,7 @@ func TestDerivedKey(t *testing.T) {
 
 func TestSign(t *testing.T) {
 	r, _ := http.NewRequest("GET", "http://host.foo.com/", nil)
-	auth := &aws.Auth{"AKIDEXAMPLE", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	auth := &aws.Auth{AccessKey: "AKIDEXAMPLE", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
 	sv := &dynamodb.Service{"host", "us-east-1"}
 
 	r.Header.Set("Date", "Mon, 09 Sep 2011 23:36:00 GMT")

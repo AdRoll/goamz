@@ -126,7 +126,12 @@ func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKey(t, key)
 
+	log.Printf("here ----------------- q is : %#v\n", q)
+
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
+
+	log.Printf("here ----------------- jsonrespons is : %#v\n ------------------ ERROR: %#v\n", string(jsonResponse), err)
+
 	if err != nil {
 		return nil, err
 	}
