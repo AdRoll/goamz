@@ -173,13 +173,16 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	fmt.Println("++++++++++++++++++++++++++++++++++++++")
 
 	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
+	if err != nil {
+		log.Printf("Error requesting from Amazon, response is:%#v\n and error is: %#v\n", string(jsonResponse), err)
+	}
 
 	//ALI
 	fmt.Printf("AMZ response: %s\n", string(jsonResponse))
 	var amzResponse map[string]interface{}
 	err = json.Unmarshal(jsonResponse, &amzResponse)
 	if err != nil {
-		log.Println("Error Processing Amazon response as JSON:", err)
+		log.Printf("Error Processing Amazon response as JSON:%#v\n and error is: %#v\n", string(jsonResponse), err)
 	}
 	if strings.Index(strings.ToLower(string(jsonResponse)), "exception") > -1 {
 		resp := make(map[string]string)
