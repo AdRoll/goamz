@@ -157,13 +157,36 @@ func (b *Bucket) Get(path string) (data []byte, err error) {
 	return data, err
 }
 
-// GetReader retrieves an object from an S3 bucket.
+// GetReader retrieves an object from an S3 bucket,
+// returning the body of the HTTP response.
 // It is the caller's responsibility to call Close on rc when
 // finished reading.
 func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
+	resp, err := b.GetResponse(path)
+	if resp != nil {
+		return resp.Body, err
+	}
+	return nil, err
+}
+
+// GetResponse retrieves an object from an S3 bucket,
+// returning the HTTP response.
+// It is the caller's responsibility to call Close on rc when
+// finished reading
+func (b *Bucket) GetResponse(path string) (resp *http.Response, err error) {
+	return b.GetResponseWithHeaders(path, make(http.Header))
+}
+
+// GetReaderWithHeaders retrieves an object from an S3 bucket
+// Accepts custom headers to be sent as the second parameter
+// returning the body of the HTTP response.
+// It is the caller's responsibility to call Close on rc when
+// finished reading
+func (b *Bucket) GetResponseWithHeaders(path string, headers map[string][]string) (resp *http.Response, err error) {
 	req := &request{
-		bucket: b.Name,
-		path:   path,
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
 	}
 	err = b.S3.prepare(req)
 	if err != nil {
@@ -177,7 +200,7 @@ func (b *Bucket) GetReader(path string) (rc io.ReadCloser, err error) {
 		if err != nil {
 			return nil, err
 		}
-		return resp.Body, nil
+		return resp, nil
 	}
 	panic("unreachable")
 }
