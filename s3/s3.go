@@ -532,7 +532,6 @@ type request struct {
 	method   string
 	bucket   string
 	path     string
-	signpath string
 	params   url.Values
 	headers  http.Header
 	baseurl  string
@@ -563,6 +562,8 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
+	var signpath = req.path
+
 	if !req.prepared {
 		req.prepared = true
 		if req.method == "" {
@@ -582,7 +583,7 @@ func (s3 *S3) prepare(req *request) error {
 		if !strings.HasPrefix(req.path, "/") {
 			req.path = "/" + req.path
 		}
-		req.signpath = req.path
+		signpath = req.path
 		if req.bucket != "" {
 			req.baseurl = s3.Region.S3BucketEndpoint
 			if req.baseurl == "" {
@@ -596,7 +597,7 @@ func (s3 *S3) prepare(req *request) error {
 				}
 				req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
 			}
-			req.signpath = "/" + req.bucket + req.signpath
+			signpath = "/" + req.bucket + signpath
 		}
 	}
 
@@ -606,7 +607,7 @@ func (s3 *S3) prepare(req *request) error {
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
-	reqSignpathSpaceFix := (&url.URL{Path: req.signpath}).String()
+	reqSignpathSpaceFix := (&url.URL{Path: signpath}).String()
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 	if s3.Auth.Token() != "" {
