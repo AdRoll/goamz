@@ -302,6 +302,49 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	return b.S3.query(req, nil)
 }
 
+type RoutingRule struct {
+	ConditionKeyPrefixEquals     string `xml:"Condition>KeyPrefixEquals"`
+	RedirectReplaceKeyPrefixWith string `xml:"Redirect>ReplaceKeyPrefixWith,omitempty"`
+	RedirectReplaceKeyWith       string `xml:"Redirect>ReplaceKeyWith,omitempty"`
+}
+
+type WebsiteConfiguration struct {
+	XMLName             xml.Name       `xml:"http://s3.amazonaws.com/doc/2006-03-01/ WebsiteConfiguration"`
+	IndexDocumentSuffix string         `xml:"IndexDocument>Suffix"`
+	ErrorDocumentKey    string         `xml:"ErrorDocument>Key"`
+	RoutingRules        *[]RoutingRule `xml:"RoutingRules>RoutingRule,omitempty"`
+}
+
+func (b *Bucket) PutBucketWebsite(configuration WebsiteConfiguration) error {
+
+	doc, err := xml.Marshal(configuration)
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	buf.WriteString(xml.Header)
+	buf.Write(doc)
+
+	return b.PutBucketSubresource("website", buf, int64(buf.Len()))
+}
+
+func (b *Bucket) PutBucketSubresource(subresource string, r io.Reader, length int64) error {
+	headers := map[string][]string{
+		"Content-Length": {strconv.FormatInt(length, 10)},
+	}
+	req := &request{
+		path:    "/",
+		method:  "PUT",
+		bucket:  b.Name,
+		headers: headers,
+		payload: r,
+		params:  url.Values{subresource: {""}},
+	}
+
+	return b.S3.query(req, nil)
+}
+
 // Del removes an object from the S3 bucket.
 //
 // See http://goo.gl/APeTt for details.
