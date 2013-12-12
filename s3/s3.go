@@ -54,8 +54,8 @@ type Owner struct {
 // Fold options into an Options struct
 //
 type Options struct {
-	SSE  bool
-	Meta map[string][]string
+	SSE             bool
+	Meta            map[string][]string
 	ContentEncoding string
 	// What else?
 	// Cache-Control string
@@ -510,12 +510,12 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 // to upload the object at path. The signature is valid until expires.
 // contenttype is a string like image/png
 // path is the resource name in s3 terminalogy like images/ali.png [obviously exclusing the bucket name itself]
-func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time.Time) string {
+func (b *Bucket) UploadSignedURL(path, method, additionalString, content_type string, expires time.Time) string {
 	expire_date := expires.Unix()
 	if method != "POST" {
 		method = "PUT"
 	}
-	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
+	stringToSign := method + "\n" + additionalString + "\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
 	fmt.Println("String to sign:\n", stringToSign)
 	a := b.S3.Auth
 	secretKey := a.SecretKey
