@@ -302,6 +302,49 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	return b.S3.query(req, nil)
 }
 
+type RoutingRule struct {
+	ConditionKeyPrefixEquals     string `xml:"Condition>KeyPrefixEquals"`
+	RedirectReplaceKeyPrefixWith string `xml:"Redirect>ReplaceKeyPrefixWith,omitempty"`
+	RedirectReplaceKeyWith       string `xml:"Redirect>ReplaceKeyWith,omitempty"`
+}
+
+type WebsiteConfiguration struct {
+	XMLName             xml.Name       `xml:"http://s3.amazonaws.com/doc/2006-03-01/ WebsiteConfiguration"`
+	IndexDocumentSuffix string         `xml:"IndexDocument>Suffix"`
+	ErrorDocumentKey    string         `xml:"ErrorDocument>Key"`
+	RoutingRules        *[]RoutingRule `xml:"RoutingRules>RoutingRule,omitempty"`
+}
+
+func (b *Bucket) PutBucketWebsite(configuration WebsiteConfiguration) error {
+
+	doc, err := xml.Marshal(configuration)
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	buf.WriteString(xml.Header)
+	buf.Write(doc)
+
+	return b.PutBucketSubresource("website", buf, int64(buf.Len()))
+}
+
+func (b *Bucket) PutBucketSubresource(subresource string, r io.Reader, length int64) error {
+	headers := map[string][]string{
+		"Content-Length": {strconv.FormatInt(length, 10)},
+	}
+	req := &request{
+		path:    "/",
+		method:  "PUT",
+		bucket:  b.Name,
+		headers: headers,
+		payload: r,
+		params:  url.Values{subresource: {""}},
+	}
+
+	return b.S3.query(req, nil)
+}
+
 // Del removes an object from the S3 bucket.
 //
 // See http://goo.gl/APeTt for details.
@@ -532,7 +575,6 @@ type request struct {
 	method   string
 	bucket   string
 	path     string
-	signpath string
 	params   url.Values
 	headers  http.Header
 	baseurl  string
@@ -563,6 +605,8 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
+	var signpath = req.path
+
 	if !req.prepared {
 		req.prepared = true
 		if req.method == "" {
@@ -582,7 +626,7 @@ func (s3 *S3) prepare(req *request) error {
 		if !strings.HasPrefix(req.path, "/") {
 			req.path = "/" + req.path
 		}
-		req.signpath = req.path
+		signpath = req.path
 		if req.bucket != "" {
 			req.baseurl = s3.Region.S3BucketEndpoint
 			if req.baseurl == "" {
@@ -596,7 +640,7 @@ func (s3 *S3) prepare(req *request) error {
 				}
 				req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
 			}
-			req.signpath = "/" + req.bucket + req.signpath
+			signpath = "/" + req.bucket + signpath
 		}
 	}
 
@@ -606,7 +650,7 @@ func (s3 *S3) prepare(req *request) error {
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
-	reqSignpathSpaceFix := (&url.URL{Path: req.signpath}).String()
+	reqSignpathSpaceFix := (&url.URL{Path: signpath}).String()
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 	if s3.Auth.Token() != "" {
