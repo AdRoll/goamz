@@ -148,8 +148,10 @@ func buildComparisons(comparisons []AttributeComparison) msi {
 		for _, attributeValue := range c.AttributeValueList {
 			avlist = append(avlist, msi{attributeValue.Type: attributeValue.Value})
 		}
-		out[c.AttributeName] = msi{"AttributeValueList": avlist}
-		out["ComparisonOperator"] = c.ComparisonOperator
+		out[c.AttributeName] = msi{
+			"AttributeValueList": avlist,
+			"ComparisonOperator": c.ComparisonOperator,
+		}
 	}
 
 	return out
