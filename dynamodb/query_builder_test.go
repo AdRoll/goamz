@@ -4,6 +4,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/dynamodb"
+	"reflect"
 	"testing"
 )
 
@@ -226,5 +227,59 @@ func TestAddUpdates(t *testing.T) {
 		if v != "str" && v != "str2" {
 			t.Fatalf("Expected a string to be str OR str2 was : %s", v)
 		}
+	}
+}
+
+func TestAddKeyConditions(t *testing.T) {
+	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
+	server := dynamodb.Server{*auth, aws.USEast}
+	primary := dynamodb.NewStringAttribute("domain", "")
+	key := dynamodb.PrimaryKey{primary, nil}
+	table := server.NewTable("sites", key)
+
+	q := dynamodb.NewQuery(table)
+	acs := []dynamodb.AttributeComparison{
+		*dynamodb.NewStringAttributeComparison("domain", "EQ", "example.com"),
+		*dynamodb.NewStringAttributeComparison("path", "EQ", "/"),
+	}
+	q.AddKeyConditions(acs)
+	queryString := []byte(q.String())
+	json, err := simplejson.NewJson(queryString)
+
+	if err != nil {
+		t.Logf("JSON err : %s\n", err)
+		t.Fatalf("Invalid JSON : %s\n", queryString)
+	}
+
+	expected_json, err := simplejson.NewJson([]byte(`
+{
+  "KeyConditions": {
+    "domain": {
+      "AttributeValueList": [
+        {
+          "S": "example.com"
+        }
+      ],
+      "ComparisonOperator": "EQ"
+    },
+    "path": {
+      "AttributeValueList": [
+        {
+          "S": "/"
+        }
+      ],
+      "ComparisonOperator": "EQ"
+    }
+  },
+  "TableName": "sites"
+}
+	`))
+	if err != nil {
+		t.Logf("JSON err : %s\n", err)
+		t.Fatalf("Invalid JSON : %s\n", expected_json)
+	}
+
+	if !reflect.DeepEqual(json, expected_json) {
+		t.Fatalf("Unexpected KeyConditions structure")
 	}
 }
