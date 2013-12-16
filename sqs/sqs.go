@@ -224,7 +224,7 @@ func (q *Queue) SendMessageWithDelay(MessageBody string, DelaySeconds int64) (re
 	params := makeParams("SendMessage")
 
 	params["MessageBody"] = MessageBody
-	params["DelaySeconds"] = string(DelaySeconds)
+	params["DelaySeconds"] = strconv.Itoa(int(DelaySeconds))
 
 	err = q.SQS.query(q.Url, params, resp)
 	return
