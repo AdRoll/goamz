@@ -105,7 +105,7 @@ func (s *Server) CreateTable(tableDescription TableDescriptionT) (string, error)
 		return "unknown", err
 	}
 
-	return json.Get("TableStatus").MustString(), nil
+	return json.Get("TableDescription").Get("TableStatus").MustString(), nil
 }
 
 func keyParam(k *PrimaryKey, hashKey string, rangeKey string) string {
