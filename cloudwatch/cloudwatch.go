@@ -231,7 +231,7 @@ func (c *CloudWatch) PutMetricData(metrics []MetricDatum) (result *aws.BaseRespo
 			params[dimprefix+".Value"] = dim.Value
 		}
 		for j, stat := range metric.StatisticValues {
-			statprefix := prefix + "StatisticValues.member." + strconv.Itoa(j+1)
+			statprefix := prefix + ".StatisticValues.member." + strconv.Itoa(j+1)
 			params[statprefix+".Maximum"] = strconv.FormatFloat(stat.Maximum, 'E', 10, 64)
 			params[statprefix+".Minimum"] = strconv.FormatFloat(stat.Minimum, 'E', 10, 64)
 			params[statprefix+".SampleCount"] = strconv.FormatFloat(stat.SampleCount, 'E', 10, 64)
