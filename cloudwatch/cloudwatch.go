@@ -226,7 +226,7 @@ func (c *CloudWatch) PutMetricData(metrics []MetricDatum) (result *aws.BaseRespo
 			params[prefix+".Timestamp"] = metric.Timestamp.UTC().Format(time.RFC3339)
 		}
 		for j, dim := range metric.Dimensions {
-			dimprefix := prefix + "Dimensions.member." + strconv.Itoa(j+1)
+			dimprefix := prefix + ".Dimensions.member." + strconv.Itoa(j+1)
 			params[dimprefix+".Name"] = dim.Name
 			params[dimprefix+".Value"] = dim.Value
 		}
