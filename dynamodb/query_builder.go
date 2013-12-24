@@ -114,6 +114,11 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 	// Todo: Implement LocalSecondayIndexes
 }
 
+func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {
+        b := q.buffer
+        b["TableName"] = description.TableName
+}
+
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
 	q.buffer["KeyConditions"] = buildComparisons(comparisons)
 }
