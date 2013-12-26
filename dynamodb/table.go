@@ -52,6 +52,50 @@ type TableDescriptionT struct {
 	TableStatus           string
 }
 
+func findAttributeDefinitionByName(ads []AttributeDefinitionT, name string) *AttributeDefinitionT {
+	for _, a := range ads {
+		if a.Name == name {
+			return &a
+		}
+	}
+	return nil
+}
+
+func (a *AttributeDefinitionT) GetEmptyAttribute() *Attribute {
+	switch a.Type {
+	case "S":
+		return NewStringAttribute(a.Name, "")
+	case "N":
+		return NewNumericAttribute(a.Name, "")
+	case "B":
+		return NewBinaryAttribute(a.Name, "")
+	default:
+		return nil
+	}
+}
+
+func (t *TableDescriptionT) BuildPrimaryKey() (pk PrimaryKey, err error) {
+	for _, k := range t.KeySchema {
+		var attr *Attribute
+		ad := findAttributeDefinitionByName(t.AttributeDefinitions, k.AttributeName)
+		if ad == nil {
+			return pk, errors.New("An inconsistency found in TableDescriptionT")
+		}
+		attr = ad.GetEmptyAttribute()
+		if attr == nil {
+			return pk, errors.New("An inconsistency found in TableDescriptionT")
+		}
+
+		switch k.KeyType {
+		case "HASH":
+			pk.KeyAttribute = attr
+		case "RANGE":
+			pk.RangeAttribute = attr
+		}
+	}
+	return
+}
+
 func (s *Server) NewTable(name string, key PrimaryKey) *Table {
 	return &Table{s, name, key}
 }
