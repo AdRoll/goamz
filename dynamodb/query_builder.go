@@ -170,13 +170,17 @@ func (q *Query) AddItem(attributes []Attribute) {
 func (q *Query) AddUpdates(attributes []Attribute, action string) {
 	updates := msi{}
 	for _, a := range attributes {
-		//UGH!!  (I miss the query operator)
-		updates[a.Name] = msi{
+		au := msi{
 			"Value": msi{
 				a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()],
 			},
 			"Action": action,
 		}
+		// Delete 'Value' from AttributeUpdates if Type is not Set
+		if action == "DELETE" && !a.SetType() {
+			delete(au, "Value")
+		}
+		updates[a.Name] = au
 	}
 
 	q.buffer["AttributeUpdates"] = updates
