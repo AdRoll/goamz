@@ -109,22 +109,22 @@ func (s *Server) CreateTable(tableDescription TableDescriptionT) (string, error)
 }
 
 func (s *Server) DeleteTable(tableDescription TableDescriptionT) (string, error) {
-        query := NewEmptyQuery()
-        query.AddDeleteRequestTable(tableDescription)
+	query := NewEmptyQuery()
+	query.AddDeleteRequestTable(tableDescription)
 
-        jsonResponse, err := s.queryServer(target("DeleteTable"), query)
+	jsonResponse, err := s.queryServer(target("DeleteTable"), query)
 
-        if err != nil {
-                return "unknown", err
-        }
+	if err != nil {
+		return "unknown", err
+	}
 
-        json, err := simplejson.NewJson(jsonResponse)
+	json, err := simplejson.NewJson(jsonResponse)
 
-        if err != nil {
-                return "unknown", err
-        }
+	if err != nil {
+		return "unknown", err
+	}
 
-        return json.Get("TableDescription").Get("TableStatus").MustString(), nil
+	return json.Get("TableDescription").Get("TableStatus").MustString(), nil
 }
 
 func keyParam(k *PrimaryKey, hashKey string, rangeKey string) string {

@@ -115,8 +115,8 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 }
 
 func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {
-        b := q.buffer
-        b["TableName"] = description.TableName
+	b := q.buffer
+	b["TableName"] = description.TableName
 }
 
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
