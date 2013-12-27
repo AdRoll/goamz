@@ -2,7 +2,6 @@ package dynamodb
 
 import (
 	"encoding/json"
-	"strconv"
 )
 
 type msi map[string]interface{}
@@ -115,8 +114,8 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 }
 
 func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {
-        b := q.buffer
-        b["TableName"] = description.TableName
+	b := q.buffer
+	b["TableName"] = description.TableName
 }
 
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
@@ -124,11 +123,14 @@ func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
 }
 
 func (q *Query) AddLimit(limit int64) {
-	//TODO: check this ... really add a string containing an int?
-	q.buffer["Limit"] = strconv.FormatInt(limit, 10)
+	q.buffer["Limit"] = limit
 }
 func (q *Query) AddSelect(value string) {
 	q.buffer["Select"] = value
+}
+
+func (q *Query) AddIndex(value string) {
+	q.buffer["IndexName"] = value
 }
 
 /*
