@@ -122,6 +122,37 @@ func (batchWriteItem *BatchWriteItem) Execute() (map[string]interface{}, error) 
 
 }
 
+func (t *Table) GetItemConsistent(key *Key, consistentRead bool) (map[string]*Attribute, error) {
+	q := NewQuery(t)
+	q.AddKey(t, key)
+
+	q.ConsistentRead(consistentRead)
+
+	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
+	if err != nil {
+		return nil, err
+	}
+
+	json, err := simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	itemJson, ok := json.CheckGet("Item")
+	if !ok {
+		// We got an empty from amz. The item doesn't exist.
+		return nil, ErrNotFound
+	}
+
+	item, err := itemJson.Map()
+	if err != nil {
+		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+		return nil, errors.New(message)
+	}
+
+	return parseAttributes(item), nil
+}
+
 func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKey(t, key)
@@ -167,10 +198,10 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 
 	q.AddItem(attributes)
 	//Ali - debug
-	fmt.Println("++++++++++++++++++++++++++++++++++++++")
-	fmt.Println("q:", q)
-	fmt.Println("q-attributes:", attributes)
-	fmt.Println("++++++++++++++++++++++++++++++++++++++")
+	//fmt.Println("++++++++++++++++++++++++++++++++++++++")
+	//fmt.Println("q:", q)
+	//fmt.Println("q-attributes:", attributes)
+	//fmt.Println("++++++++++++++++++++++++++++++++++++++")
 
 	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
 	if err != nil {
