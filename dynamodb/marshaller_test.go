@@ -1,9 +1,8 @@
 package dynamodb_test
 
 import (
-	"fmt"
 	"github.com/crowdmob/goamz/dynamodb"
-	"testing"
+	"launchpad.net/gocheck"
 	"time"
 )
 
@@ -151,20 +150,23 @@ func testAttrsWithNilSets() []dynamodb.Attribute {
 	}
 }
 
-func TestMarshal(t *testing.T) {
+type MarshallerSuite struct {
+}
+
+var _ = gocheck.Suite(&MarshallerSuite{})
+
+func (s *MarshallerSuite) TestMarshal(c *gocheck.C) {
 	testObj := testObject()
 	attrs, err := dynamodb.MarshalAttributes(testObj)
 	if err != nil {
-		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
 
 	expected := testAttrs()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(attrs, gocheck.DeepEquals, expected)
 }
 
-func TestUnmarshal(t *testing.T) {
+func (s *MarshallerSuite) TestUnmarshal(c *gocheck.C) {
 	testObj := &TestStruct{}
 
 	attrMap := map[string]*dynamodb.Attribute{}
@@ -175,29 +177,25 @@ func TestUnmarshal(t *testing.T) {
 
 	err := dynamodb.UnmarshalAttributes(&attrMap, testObj)
 	if err != nil {
-		t.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
+		c.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
 	}
 
 	expected := testObject()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
-		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(testObj, gocheck.DeepEquals, expected)
 }
 
-func TestMarshalTime(t *testing.T) {
+func (s *MarshallerSuite) TestMarshalTime(c *gocheck.C) {
 	testObj := testObjectTime()
 	attrs, err := dynamodb.MarshalAttributes(testObj)
 	if err != nil {
-		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
 
 	expected := testAttrsTime()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(attrs, gocheck.DeepEquals, expected)
 }
 
-func TestUnmarshalTime(t *testing.T) {
+func (s *MarshallerSuite) TestUnmarshalTime(c *gocheck.C) {
 	testObj := &TestStructTime{}
 
 	attrMap := map[string]*dynamodb.Attribute{}
@@ -208,42 +206,36 @@ func TestUnmarshalTime(t *testing.T) {
 
 	err := dynamodb.UnmarshalAttributes(&attrMap, testObj)
 	if err != nil {
-		t.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
+		c.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
 	}
 
 	expected := testObjectTime()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
-		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(testObj, gocheck.DeepEquals, expected)
 }
 
-func TestMarshalNilSets(t *testing.T) {
+func (s *MarshallerSuite) TestMarshalNilSets(c *gocheck.C) {
 	testObj := testObjectWithNilSets()
 	attrs, err := dynamodb.MarshalAttributes(testObj)
 	if err != nil {
-		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
 
 	expected := testAttrsWithNilSets()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(attrs, gocheck.DeepEquals, expected)
 }
 
-func TestMarshalEmptySets(t *testing.T) {
+func (s *MarshallerSuite) TestMarshalEmptySets(c *gocheck.C) {
 	testObj := testObjectWithEmptySets()
 	attrs, err := dynamodb.MarshalAttributes(testObj)
 	if err != nil {
-		t.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
+		c.Errorf("Error from dynamodb.MarshalAttributes: %#v", err)
 	}
 
 	expected := testAttrsWithNilSets()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", attrs) {
-		t.Errorf("Unexpected result for Marshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", attrs), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(attrs, gocheck.DeepEquals, expected)
 }
 
-func TestUnmarshalEmptySets(t *testing.T) {
+func (s *MarshallerSuite) TestUnmarshalEmptySets(c *gocheck.C) {
 	testObj := &TestStruct{}
 
 	attrMap := map[string]*dynamodb.Attribute{}
@@ -254,11 +246,9 @@ func TestUnmarshalEmptySets(t *testing.T) {
 
 	err := dynamodb.UnmarshalAttributes(&attrMap, testObj)
 	if err != nil {
-		t.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
+		c.Fatalf("Error from dynamodb.UnmarshalAttributes: %#v (Built: %#v)", err, testObj)
 	}
 
 	expected := testObjectWithNilSets()
-	if fmt.Sprintf("%#v", expected) != fmt.Sprintf("%#v", testObj) {
-		t.Errorf("Unexpected result for UnMarshal: was: `%s` but expected: `%s`", fmt.Sprintf("%#v", testObj), fmt.Sprintf("%#v", expected))
-	}
+	c.Check(testObj, gocheck.DeepEquals, expected)
 }
