@@ -30,10 +30,14 @@ type MTurk struct {
 	URL *url.URL
 }
 
-func New(auth aws.Auth) *MTurk {
+func New(auth aws.Auth, sandbox bool) *MTurk {
 	mt := &MTurk{Auth: auth}
 	var err error
-	mt.URL, err = url.Parse("http://mechanicalturk.amazonaws.com/")
+	if sandbox {
+		mt.URL, err = url.Parse("https://mechanicalturk.sandbox.amazonaws.com/")
+	} else {
+		mt.URL, err = url.Parse("https://mechanicalturk.amazonaws.com/")
+	}
 	if err != nil {
 		panic(err.Error())
 	}
