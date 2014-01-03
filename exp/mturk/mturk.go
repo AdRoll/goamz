@@ -98,6 +98,20 @@ type ExternalQuestion struct {
 	FrameHeight int
 }
 
+// Holds the html content of the HTMLQuestion.
+type HTMLContent struct {
+	Content string `xml:",innerxml"`
+}
+
+// Data structure holding the contents of an "html"
+// question. http://goo.gl/hQn5An
+type HTMLQuestion struct {
+	XMLName     xml.Name `xml:"http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2011-11-11/HTMLQuestion.xsd HTMLQuestion"`
+	HTMLContent HTMLContent
+
+	FrameHeight int
+}
+
 // The data structure representing a "human interface task" (HIT)
 // Currently only supports "external" questions, because Go
 // structs don't support union types.  http://goo.gl/NP8Aa
@@ -119,7 +133,7 @@ type HIT struct {
 	MaxAssignments               uint
 	AutoApprovalDelayInSeconds   uint
 	QualificationRequirement     QualificationRequirement
-	Question                     ExternalQuestion
+	Question                     interface{}
 	RequesterAnnotation          string
 	NumberofSimilarHITs          uint
 	HITReviewStatus              string
@@ -156,7 +170,17 @@ type CreateHITResponse struct {
 // questions (see "HIT" struct above).  If "keywords", "maxAssignments",
 // "qualificationRequirement" or "requesterAnnotation" are the zero
 // value for their types, they will not be included in the request.
-func (mt *MTurk) CreateHIT(title, description string, question ExternalQuestion, reward Price, assignmentDurationInSeconds, lifetimeInSeconds uint, keywords string, maxAssignments uint, qualificationRequirement *QualificationRequirement, requesterAnnotation string) (h *HIT, err error) {
+func (mt *MTurk) CreateHIT(
+	title, description string,
+	question interface{},
+	reward Price,
+	assignmentDurationInSeconds,
+	lifetimeInSeconds uint,
+	keywords string,
+	maxAssignments uint,
+	qualificationRequirement *QualificationRequirement,
+	requesterAnnotation string) (h *HIT, err error) {
+
 	params := make(map[string]string)
 	params["Title"] = title
 	params["Description"] = description
