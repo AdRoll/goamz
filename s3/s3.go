@@ -11,11 +11,10 @@
 package s3
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
-
-	"bytes"
 	"encoding/xml"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
@@ -581,7 +580,7 @@ func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (
 	conditions := make([]string, 0)
 	fields = map[string]string{
 		"AWSAccessKeyId": b.Auth.AccessKey,
-		"key": path,
+		"key":            path,
 	}
 
 	conditions = append(conditions, fmt.Sprintf("{\"key\": \"%s\"}", path))
