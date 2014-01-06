@@ -11,6 +11,10 @@
 package s3
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
+
 	"bytes"
 	"encoding/xml"
 	"fmt"
@@ -569,6 +573,36 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	} else {
 		return u.String()
 	}
+}
+
+// PostFormArgs returns the action and input fields needed to allow anonymous
+// uploads to a bucket within the expiration limit
+func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (action string, fields map[string]string) {
+	conditions := make([]string, 0)
+	fields = map[string]string{
+		"AWSAccessKeyId": b.Auth.AccessKey,
+		"key": path,
+	}
+
+	conditions = append(conditions, fmt.Sprintf("{\"key\": \"%s\"}", path))
+	conditions = append(conditions, fmt.Sprintf("{\"bucket\": \"%s\"}", b.Name))
+	if redirect != "" {
+		conditions = append(conditions, fmt.Sprintf("{\"success_action_redirect\": \"%s\"}", redirect))
+		fields["success_action_redirect"] = redirect
+	}
+
+	vExpiration := expires.Format("2006-01-02T15:04:05Z")
+	vConditions := strings.Join(conditions, ",")
+	policy := fmt.Sprintf("{\"expiration\": \"%s\", \"conditions\": [%s]}", vExpiration, vConditions)
+	policy64 := base64.StdEncoding.EncodeToString([]byte(policy))
+	fields["policy"] = policy64
+
+	signer := hmac.New(sha1.New, []byte(b.Auth.SecretKey))
+	signer.Write([]byte(policy64))
+	fields["signature"] = base64.StdEncoding.EncodeToString(signer.Sum(nil))
+
+	action = fmt.Sprintf("%s/%s/", b.S3.Region.S3Endpoint, b.Name)
+	return
 }
 
 type request struct {
