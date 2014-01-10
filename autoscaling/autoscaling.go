@@ -174,8 +174,21 @@ type LaunchConfigurationResp struct {
 // information is returned about all the groups in the region.
 func (as *AutoScaling) AutoScalingGroups(groupnames []string) (resp *AutoScalingGroupsResp, err error) {
 	params := makeParams("DescribeAutoScalingGroups")
-	addParamsList(params, "AutoScalingGroupNames", groupnames)
+	addParamsList(params, "AutoScalingGroupNames.member", groupnames)
 	resp = &AutoScalingGroupsResp{}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Method LaunchConfigurations returns details about the launch configurations supplied in the list.
+// If the list is nil, information is return about all launch configurations in the region.
+func (as *AutoScaling) LaunchConfigurations(confnames []string) (resp *LaunchConfigurationResp, err error) {
+	params := makeParams("DescribeLaunchConfigurations")
+	addParamsList(params, "LaunchConfigurationNames.member", confnames)
+	resp = &LaunchConfigurationResp{}
 	err = as.query(params, resp)
 	if err != nil {
 		return nil, err
