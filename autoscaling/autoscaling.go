@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const debug = false
+const debug = true
 
 var timeNow = time.Now
 
@@ -143,10 +143,31 @@ type Instance struct {
 	LifecycleState          string `xml:"LifecycleState"`
 }
 
+type LaunchConfiguration struct {
+	AssociatePublicIpAddress bool     `xml:"AssociatePublicIpAddress"`
+	CreatedTime              string   `xml:"CreatedTime"`
+	EbsOptimized             bool     `xml:"EbsOptimized"`
+	LaunchConfigurationARN   string   `xml:"LaunchConfigurationARN"`
+	LaunchConfigurationName  string   `xml:"LaunchConfigurationName"`
+	ImageId                  string   `xml:"ImageId"`
+	InstanceType             string   `xml:"InstanceType"`
+	KernelId                 string   `xml:"KernelId"`
+	SecurityGroups           []string `xml:"SecurityGroups>member"`
+	KeyName                  string   `xml:"KeyName"`
+	UserData                 string   `xml:"UserData"`
+}
+
 // Type AutoScalingGroupsResp defines the basic response structure.
 type AutoScalingGroupsResp struct {
 	RequestId         string             `xml:"ResponseMetadata>RequestId"`
 	AutoScalingGroups []AutoScalingGroup `xml:"DescribeAutoScalingGroupsResult>AutoScalingGroups>member"`
+}
+
+// Type LaunchConfigurationResp defines the basic response structure for launch configuration
+// requests
+type LaunchConfigurationResp struct {
+	RequestId            string                `xml:"ResponseMetadata>RequestId"`
+	LaunchConfigurations []LaunchConfiguration `xml:"DescribeLaunchConfigurationsResult>LaunchConfigurations>member"`
 }
 
 // Method AutoScalingGroups returns details about the groups provided in the list. If the list is nil
