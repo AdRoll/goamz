@@ -155,6 +155,7 @@ type LaunchConfiguration struct {
 	SecurityGroups           []string `xml:"SecurityGroups>member"`
 	KeyName                  string   `xml:"KeyName"`
 	UserData                 string   `xml:"UserData"`
+	InstanceMonitoring       bool     `xml:"InstanceMonitoring"`
 }
 
 // Type AutoScalingGroupsResp defines the basic response structure.
@@ -168,6 +169,18 @@ type AutoScalingGroupsResp struct {
 type LaunchConfigurationResp struct {
 	RequestId            string                `xml:"ResponseMetadata>RequestId"`
 	LaunchConfigurations []LaunchConfiguration `xml:"DescribeLaunchConfigurationsResult>LaunchConfigurations>member"`
+}
+
+// Type SimpleResp is the basic response from most actions.
+type SimpleResp struct {
+	XMLName   xml.Name
+	RequestId string `xml:"ResponseMetadata>RequestId"`
+}
+
+// Type CreateLaunchConfigurationResp is returned from the CreateLaunchConfiguration request.
+type CreateLaunchConfigurationResp struct {
+	LaunchConfiguration
+	RequestId string `xml:"ResponseMetadata>RequestId"`
 }
 
 // Method AutoScalingGroups returns details about the groups provided in the list. If the list is nil
@@ -192,6 +205,38 @@ func (as *AutoScaling) LaunchConfigurations(confnames []string) (resp *LaunchCon
 	err = as.query(params, resp)
 	if err != nil {
 		return nil, err
+	}
+	return resp, nil
+}
+
+// Method CreateLaunchConfiguration creates a new launch configuration.
+func (as *AutoScaling) CreateLaunchConfiguration(lc LaunchConfiguration) (
+	resp *CreateLaunchConfigurationResp, err error) {
+	resp = &CreateLaunchConfigurationResp{}
+	params := makeParams("CreateLaunchConfiguration")
+	params["LaunchConfigurationName"] = lc.LaunchConfigurationName
+	if len(lc.ImageId) > 0 {
+		params["ImageId"] = lc.ImageId
+		params["InstanceType"] = lc.InstanceType
+	}
+	if lc.AssociatePublicIpAddress {
+		params["AssociatePublicIpAddress"] = "true"
+	}
+	if len(lc.SecurityGroups) > 0 {
+		addParamsList(params, "SecurityGroups.member", lc.SecurityGroups)
+	}
+	if len(lc.KeyName) > 0 {
+		params["KeyName"] = lc.KeyName
+	}
+	if len(lc.KernelId) > 0 {
+		params["KernelId"] = lc.KernelId
+	}
+	if !lc.InstanceMonitoring {
+		params["InstanceMonitoring.Enabled"] = "false"
+	}
+	err = as.query(params, resp)
+	if err != nil {
+		return resp, err
 	}
 	return resp, nil
 }
