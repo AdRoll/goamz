@@ -270,8 +270,15 @@ func (c *CloudWatch) ListMetrics(req *ListMetricsRequest) (result *ListMetricsRe
 }
 
 func (c *CloudWatch) PutMetricData(metrics []MetricDatum) (result *aws.BaseResponse, err error) {
+	return c.PutMetricDataNamespace (metrics, "")
+}
+
+func (c *CloudWatch) PutMetricDataNamespace (metrics []MetricDatum, namespace string) (result *aws.BaseResponse, err error) {
 	// Serialize the params
 	params := aws.MakeParams("PutMetricData")
+	if namespace != "" {
+		params ["Namespace"] = namespace
+	}
 	for i, metric := range metrics {
 		prefix := "MetricData.member." + strconv.Itoa(i+1)
 		if metric.MetricName == "" {
