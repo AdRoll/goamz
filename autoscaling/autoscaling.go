@@ -133,6 +133,7 @@ type AutoScalingGroup struct {
 	MinSize                 int        `xml:"MinSize"`
 	TerminationPolicies     []string   `xml:"TerminationPolicies>member"`
 	VPCZoneIdentifier       string     `xml:"VPCZoneIdentifier"`
+	Tags                    []Tag      `xml:"Tags"`
 }
 
 type Instance struct {
@@ -156,6 +157,14 @@ type LaunchConfiguration struct {
 	KeyName                  string   `xml:"KeyName"`
 	UserData                 string   `xml:"UserData"`
 	InstanceMonitoring       bool     `xml:"InstanceMonitoring"`
+}
+
+type Tag struct {
+	Key               string `xml:"Key"`
+	PropagateAtLaunch bool   `xml:"PropagateAtLaunch"`
+	ResourceId        string `xml:"ResourceId"`
+	ResourceType      string `xml:"ResourceType"`
+	Value             string `xml:"Value"`
 }
 
 // Type AutoScalingGroupsResp defines the basic response structure.
@@ -183,9 +192,9 @@ type CreateLaunchConfigurationResp struct {
 	RequestId string `xml:"ResponseMetadata>RequestId"`
 }
 
-// Method AutoScalingGroups returns details about the groups provided in the list. If the list is nil
+// Method DescribeAutoScalingGroups returns details about the groups provided in the list. If the list is nil
 // information is returned about all the groups in the region.
-func (as *AutoScaling) AutoScalingGroups(groupnames []string) (resp *AutoScalingGroupsResp, err error) {
+func (as *AutoScaling) DescribeAutoScalingGroups(groupnames []string) (resp *AutoScalingGroupsResp, err error) {
 	params := makeParams("DescribeAutoScalingGroups")
 	addParamsList(params, "AutoScalingGroupNames.member", groupnames)
 	resp = &AutoScalingGroupsResp{}
@@ -196,9 +205,50 @@ func (as *AutoScaling) AutoScalingGroups(groupnames []string) (resp *AutoScaling
 	return resp, nil
 }
 
-// Method LaunchConfigurations returns details about the launch configurations supplied in the list.
+// Method CreateAutoScalingGroup creates a new autoscaling group.
+func (as *AutoScaling) CreateAutoScalingGroup(ag AutoScalingGroup) (resp *AutoScalingGroupsResp, err error) {
+	resp = &AutoScalingGroupsResp{}
+	params := makeParams("CreateAutoScalingGroup")
+	params["AutoScalingGroupName"] = ag.AutoScalingGroupName
+	params["MaxSize"] = strconv.FormatInt(int64(ag.MaxSize), 10)
+	params["MinSize"] = strconv.FormatInt(int64(ag.MinSize), 10)
+	params["LaunchConfigurationName"] = ag.LaunchConfigurationName
+	addParamsList(params, "AvailabilityZones.member", ag.AvailabilityZones)
+	if len(ag.LoadBalancerNames) > 0 {
+		addParamsList(params, "LoadBalancerNames.member", ag.LoadBalancerNames)
+	}
+	if ag.DefaultCooldown > 0 {
+		params["DefaultCooldown"] = strconv.FormatInt(int64(ag.DefaultCooldown), 10)
+	}
+	if ag.DesiredCapacity > 0 {
+		params["DesiredCapacity"] = strconv.FormatInt(int64(ag.DesiredCapacity), 10)
+	}
+	if ag.HealthCheckGracePeriod > 0 {
+		params["HealthCheckGracePeriod"] = strconv.FormatInt(int64(ag.HealthCheckGracePeriod), 10)
+	}
+	if ag.HealthCheckType == "ELB" {
+		params["HealthCheckType"] = ag.HealthCheckType
+	}
+	if len(ag.VPCZoneIdentifier) > 0 {
+		params["VPCZoneIdentifier"] = ag.VPCZoneIdentifier
+	}
+	if len(ag.TerminationPolicies) > 0 {
+		addParamsList(params, "TerminationPolicies.member", ag.TerminationPolicies)
+	}
+	//if len(ag.Tags) > 0 {
+	//	addParamsList(params, "Tags", ag.Tags)
+	//}
+
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Method DescribeLaunchConfigurations returns details about the launch configurations supplied in the list.
 // If the list is nil, information is return about all launch configurations in the region.
-func (as *AutoScaling) LaunchConfigurations(confnames []string) (resp *LaunchConfigurationResp, err error) {
+func (as *AutoScaling) DescribeLaunchConfigurations(confnames []string) (resp *LaunchConfigurationResp, err error) {
 	params := makeParams("DescribeLaunchConfigurations")
 	addParamsList(params, "LaunchConfigurationNames.member", confnames)
 	resp = &LaunchConfigurationResp{}
