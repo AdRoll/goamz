@@ -232,6 +232,7 @@ type Instance struct {
 	InstanceId   string `xml:"instanceId"`
 	InstanceType string `xml:"instanceType"`
 	ImageId      string `xml:"imageId"`
+	Architecture string `xml:"architecture"`
 
 	PrivateDNSName   string          `xml:"privateDnsName"`
 	DNSName          string          `xml:"dnsName"`
