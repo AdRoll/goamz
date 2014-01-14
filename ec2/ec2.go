@@ -233,7 +233,7 @@ type Instance struct {
 	// General instance information
 	InstanceId         string              `xml:"instanceId"`
 	InstanceType       string              `xml:"instanceType"`
-	AvailZone          string              `xml:"placement>availabilityZone"`
+	AvailabilityZone   string              `xml:"placement>availabilityZone"`
 	Tags               []Tag               `xml:"tagSet>item"`
 	State              InstanceState       `xml:"instanceState"`
 	StateReason        InstanceStateReason `xml:"stateReason"`
@@ -245,7 +245,7 @@ type Instance struct {
 	// More specific information
 	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
 	Hypervisor            string `xml:"hypervisor"`            // Valid values: ovm | xen
-	VirtType              string `xml:"virtualizationType"`    // Valid values: paravirtual | hvm
+	VirtualizationType    string `xml:"virtualizationType"`    // Valid values: paravirtual | hvm
 	AMILaunchIndex        int    `xml:"amiLaunchIndex"`        // The AMI launch index, which can be used to find this instance in the launch group.
 	PlacementGroupName    string `xml:"placement>groupName"`   // The name of the placement group the instance is in (for cluster compute instances)
 	Tenancy               string `xml:"placement>tenancy"`     // (VPC only) Valid values: default | dedicated
