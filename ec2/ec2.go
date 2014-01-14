@@ -236,6 +236,8 @@ type Instance struct {
 	DNSName            string        `xml:"dnsName"`
 	IPAddress          string        `xml:"ipAddress"`
 	PrivateIPAddress   string        `xml:"privateIpAddress"`
+	SubnetId           string        `xml:"subnetId"`
+	VpcId              string        `xml:"vpcId"`
 	KeyName            string        `xml:"keyName"`
 	AMILaunchIndex     int           `xml:"amiLaunchIndex"`
 	Hypervisor         string        `xml:"hypervisor"`
