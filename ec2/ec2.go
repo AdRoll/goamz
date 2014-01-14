@@ -242,6 +242,7 @@ type Instance struct {
 	VpcId            string          `xml:"vpcId"`
 	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`
 	SourceDestCheck  bool            `xml:"sourceDestCheck"`
+	SriovNetSupport  string          `xml:"sriovNetSupport"`
 
 	KeyName            string              `xml:"keyName"`
 	AMILaunchIndex     int                 `xml:"amiLaunchIndex"`
