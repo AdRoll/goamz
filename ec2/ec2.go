@@ -229,10 +229,12 @@ type RunInstancesResp struct {
 //
 // See http://goo.gl/OCH8a for more details.
 type Instance struct {
-	InstanceId   string `xml:"instanceId"`
-	InstanceType string `xml:"instanceType"`
-	ImageId      string `xml:"imageId"`
-	Architecture string `xml:"architecture"`
+	InstanceId            string `xml:"instanceId"`
+	InstanceType          string `xml:"instanceType"`
+	ImageId               string `xml:"imageId"`
+	Architecture          string `xml:"architecture"`
+	InstanceLifecycle     string `xml:"instanceLifecycle"`
+	SpotInstanceRequestId string `xml:"spotInstanceRequestId"`
 
 	PrivateDNSName   string          `xml:"privateDnsName"`
 	DNSName          string          `xml:"dnsName"`
