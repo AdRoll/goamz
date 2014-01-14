@@ -229,15 +229,35 @@ type RunInstancesResp struct {
 //
 // See http://goo.gl/OCH8a for more details.
 type Instance struct {
-	InstanceId            string `xml:"instanceId"`
-	InstanceType          string `xml:"instanceType"`
-	ImageId               string `xml:"imageId"`
-	Architecture          string `xml:"architecture"`
-	InstanceLifecycle     string `xml:"instanceLifecycle"`
-	SpotInstanceRequestId string `xml:"spotInstanceRequestId"`
 
-	PrivateDNSName   string          `xml:"privateDnsName"`
+	// General instance information
+	InstanceId         string              `xml:"instanceId"`
+	InstanceType       string              `xml:"instanceType"`
+	AvailZone          string              `xml:"placement>availabilityZone"`
+	Tags               []Tag               `xml:"tagSet>item"`
+	State              InstanceState       `xml:"instanceState"`
+	StateReason        InstanceStateReason `xml:"stateReason"`
+	ImageId            string              `xml:"imageId"`
+	KeyName            string              `xml:"keyName"`
+	Monitoring         string              `xml:"monitoring>state"`
+	IamInstanceProfile string              `xml:"iamInstanceProfile"`
+
+	// More specific information
+	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
+	Hypervisor            string `xml:"hypervisor"`            // Valid values: ovm | xen
+	VirtType              string `xml:"virtualizationType"`    // Valid values: paravirtual | hvm
+	AMILaunchIndex        int    `xml:"amiLaunchIndex"`        // The AMI launch index, which can be used to find this instance in the launch group.
+	PlacementGroupName    string `xml:"placement>groupName"`   // The name of the placement group the instance is in (for cluster compute instances)
+	Tenancy               string `xml:"placement>tenancy"`     // (VPC only) Valid values: default | dedicated
+	InstanceLifecycle     string `xml:"instanceLifecycle"`     // Spot instance? Valid values: "spot" or blank
+	SpotInstanceRequestId string `xml:"spotInstanceRequestId"` // The ID of the Spot Instance request
+
+	// Storage
+	BlockDevices []BlockDevice `xml:"blockDeviceMapping>item"`
+
+	// Network
 	DNSName          string          `xml:"dnsName"`
+	PrivateDNSName   string          `xml:"privateDnsName"`
 	IPAddress        string          `xml:"ipAddress"`
 	PrivateIPAddress string          `xml:"privateIpAddress"`
 	SubnetId         string          `xml:"subnetId"`
@@ -245,20 +265,6 @@ type Instance struct {
 	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`
 	SourceDestCheck  bool            `xml:"sourceDestCheck"`
 	SriovNetSupport  string          `xml:"sriovNetSupport"`
-
-	KeyName            string              `xml:"keyName"`
-	AMILaunchIndex     int                 `xml:"amiLaunchIndex"`
-	Hypervisor         string              `xml:"hypervisor"`
-	VirtType           string              `xml:"virtualizationType"`
-	Monitoring         string              `xml:"monitoring>state"`
-	AvailZone          string              `xml:"placement>availabilityZone"`
-	PlacementGroupName string              `xml:"placement>groupName"`
-	Tenancy            string              `xml:"placement>tenancy"`
-	State              InstanceState       `xml:"instanceState"`
-	StateReason        InstanceStateReason `xml:"stateReason"`
-	Tags               []Tag               `xml:"tagSet>item"`
-	IamInstanceProfile string              `xml:"iamInstanceProfile"`
-	BlockDevices       []BlockDevice       `xml:"blockDeviceMapping>item"`
 }
 
 type BlockDevice struct {
