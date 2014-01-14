@@ -243,18 +243,18 @@ type Instance struct {
 	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`
 	SourceDestCheck  bool            `xml:"sourceDestCheck"`
 
-	KeyName            string        `xml:"keyName"`
-	AMILaunchIndex     int           `xml:"amiLaunchIndex"`
-	Hypervisor         string        `xml:"hypervisor"`
-	VirtType           string        `xml:"virtualizationType"`
-	Monitoring         string        `xml:"monitoring>state"`
-	AvailZone          string        `xml:"placement>availabilityZone"`
-	PlacementGroupName string        `xml:"placement>groupName"`
-	State              InstanceState `xml:"instanceState"`
-	StateReasonCode    string        `xml:"stateReason>code"`
-	Tags               []Tag         `xml:"tagSet>item"`
-	IamInstanceProfile string        `xml:"iamInstanceProfile"`
-	BlockDevices       []BlockDevice `xml:"blockDeviceMapping>item"`
+	KeyName            string              `xml:"keyName"`
+	AMILaunchIndex     int                 `xml:"amiLaunchIndex"`
+	Hypervisor         string              `xml:"hypervisor"`
+	VirtType           string              `xml:"virtualizationType"`
+	Monitoring         string              `xml:"monitoring>state"`
+	AvailZone          string              `xml:"placement>availabilityZone"`
+	PlacementGroupName string              `xml:"placement>groupName"`
+	State              InstanceState       `xml:"instanceState"`
+	StateReason        InstanceStateReason `xml:"stateReason"`
+	Tags               []Tag               `xml:"tagSet>item"`
+	IamInstanceProfile string              `xml:"iamInstanceProfile"`
+	BlockDevices       []BlockDevice       `xml:"blockDeviceMapping>item"`
 }
 
 type BlockDevice struct {
@@ -416,6 +416,14 @@ type InstanceStateChange struct {
 	InstanceId    string        `xml:"instanceId"`
 	CurrentState  InstanceState `xml:"currentState"`
 	PreviousState InstanceState `xml:"previousState"`
+}
+
+// InstanceStateReason describes a state change for an instance in EC2
+//
+// See http://goo.gl/KZkbXi for more details
+type InstanceStateReason struct {
+	Code    string `xml:"code"`
+	Message string `xml:"message"`
 }
 
 // TerminateInstances requests the termination of instances when the given ids.
