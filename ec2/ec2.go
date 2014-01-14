@@ -254,6 +254,7 @@ type Instance struct {
 
 	// Storage
 	BlockDevices []BlockDevice `xml:"blockDeviceMapping>item"`
+	EbsOptimized bool          `xml:"ebsOptimized"`
 
 	// Network
 	DNSName          string          `xml:"dnsName"`
