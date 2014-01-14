@@ -240,7 +240,7 @@ type Instance struct {
 	ImageId            string              `xml:"imageId"`
 	KeyName            string              `xml:"keyName"`
 	Monitoring         string              `xml:"monitoring>state"`
-	IamInstanceProfile string              `xml:"iamInstanceProfile"`
+	IamInstanceProfile IamInstanceProfile  `xml:"iamInstanceProfile"`
 
 	// More specific information
 	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
@@ -278,6 +278,13 @@ type EBS struct {
 	Status              string `xml:"status"`
 	AttachTime          string `xml:"attachTime"`
 	DeleteOnTermination bool   `xml:"deleteOnTermination"`
+}
+
+// IamInstanceProfile
+// See http://goo.gl/PjyijL for more details
+type IamInstanceProfile struct {
+	ARN string `xml:"arn"`
+	Id  string `xml:"id"`
 }
 
 // RunInstances starts new instances in EC2.
