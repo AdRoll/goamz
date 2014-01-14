@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path/filepath"
+	"path"
 	"sort"
 	"strings"
 	"time"
@@ -166,16 +166,16 @@ func (s *V4Signer) canonicalRequest(req *http.Request) string {
 }
 
 func (s *V4Signer) canonicalURI(u *url.URL) string {
-	path := u.RequestURI()
+	canonicalPath := u.RequestURI()
 	if u.RawQuery != "" {
-		path = path[:len(path)-len(u.RawQuery)-1]
+		canonicalPath = canonicalPath[:len(canonicalPath)-len(u.RawQuery)-1]
 	}
-	slash := strings.HasSuffix(path, "/")
-	path = filepath.Clean(path)
-	if path != "/" && slash {
-		path += "/"
+	slash := strings.HasSuffix(canonicalPath, "/")
+	canonicalPath = path.Clean(canonicalPath)
+	if canonicalPath != "/" && slash {
+		canonicalPath += "/"
 	}
-	return path
+	return canonicalPath
 }
 
 func (s *V4Signer) canonicalQueryString(u *url.URL) string {
