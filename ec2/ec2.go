@@ -229,15 +229,19 @@ type RunInstancesResp struct {
 //
 // See http://goo.gl/OCH8a for more details.
 type Instance struct {
-	InstanceId         string        `xml:"instanceId"`
-	InstanceType       string        `xml:"instanceType"`
-	ImageId            string        `xml:"imageId"`
-	PrivateDNSName     string        `xml:"privateDnsName"`
-	DNSName            string        `xml:"dnsName"`
-	IPAddress          string        `xml:"ipAddress"`
-	PrivateIPAddress   string        `xml:"privateIpAddress"`
-	SubnetId           string        `xml:"subnetId"`
-	VpcId              string        `xml:"vpcId"`
+	InstanceId   string `xml:"instanceId"`
+	InstanceType string `xml:"instanceType"`
+	ImageId      string `xml:"imageId"`
+
+	PrivateDNSName   string          `xml:"privateDnsName"`
+	DNSName          string          `xml:"dnsName"`
+	IPAddress        string          `xml:"ipAddress"`
+	PrivateIPAddress string          `xml:"privateIpAddress"`
+	SubnetId         string          `xml:"subnetId"`
+	VpcId            string          `xml:"vpcId"`
+	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`
+	SourceDestCheck  bool            `xml:"sourceDestCheck"`
+
 	KeyName            string        `xml:"keyName"`
 	AMILaunchIndex     int           `xml:"amiLaunchIndex"`
 	Hypervisor         string        `xml:"hypervisor"`
