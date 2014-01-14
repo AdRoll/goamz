@@ -250,6 +250,7 @@ type Instance struct {
 	AvailZone          string        `xml:"placement>availabilityZone"`
 	PlacementGroupName string        `xml:"placement>groupName"`
 	State              InstanceState `xml:"instanceState"`
+	StateReasonCode    string        `xml:"stateReason>code"`
 	Tags               []Tag         `xml:"tagSet>item"`
 	IamInstanceProfile string        `xml:"iamInstanceProfile"`
 	BlockDevices       []BlockDevice `xml:"blockDeviceMapping>item"`
