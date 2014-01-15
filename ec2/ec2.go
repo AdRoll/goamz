@@ -265,8 +265,11 @@ type Instance struct {
 	SubnetId         string          `xml:"subnetId"`
 	VpcId            string          `xml:"vpcId"`
 	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`
-	SourceDestCheck  bool            `xml:"sourceDestCheck"`
-	SriovNetSupport  string          `xml:"sriovNetSupport"`
+
+	// Advanced Networking
+	NetworkInterfaces []InstanceNetworkInterface `xml:"networkInterfaceSet>item"`
+	SourceDestCheck   bool                       `xml:"sourceDestCheck"`
+	SriovNetSupport   string                     `xml:"sriovNetSupport"`
 }
 
 type BlockDevice struct {
@@ -279,6 +282,52 @@ type EBS struct {
 	Status              string `xml:"status"`
 	AttachTime          string `xml:"attachTime"`
 	DeleteOnTermination bool   `xml:"deleteOnTermination"`
+}
+
+// InstanceNetworkInterface represents a network interface attached to an instance
+// See http://goo.gl/9eW02N for more details.
+type InstanceNetworkInterface struct {
+	Id                 string                              `xml:"networkInterfaceId"`
+	Description        string                              `xml:"description"`
+	SubnetId           string                              `xml:"subnetId"`
+	VpcId              string                              `xml:"vpcId"`
+	OwnerId            string                              `xml:"ownerId"` // The ID of the AWS account that created the network interface.
+	Status             string                              `xml:"status"`  // Valid values: available | attaching | in-use | detaching
+	MacAddress         string                              `xml:"macAddress"`
+	PrivateIPAddress   string                              `xml:"privateIpAddress"`
+	PrivateDNSName     string                              `xml:"privateDnsName"`
+	SourceDestCheck    bool                                `xml:"sourceDestCheck"`
+	SecurityGroups     []SecurityGroup                     `xml:"groupSet>item"`
+	Attachment         InstanceNetworkInterfaceAttachment  `xml:"attachment"`
+	Association        InstanceNetworkInterfaceAssociation `xml:"association"`
+	PrivateIPAddresses []InstancePrivateIpAddress          `xml:"privateIpAddressesSet>item"`
+}
+
+// InstanceNetworkInterfaceAttachment describes a network interface attachment to an instance
+// See http://goo.gl/0ql0Cg for more details
+type InstanceNetworkInterfaceAttachment struct {
+	AttachmentID        string `xml:"attachmentID"`        // The ID of the network interface attachment.
+	DeviceIndex         int32  `xml:"deviceIndex"`         // The index of the device on the instance for the network interface attachment.
+	Status              string `xml:"status"`              // Valid values: attaching | attached | detaching | detached
+	AttachTime          string `xml:"attachTime"`          // Time attached, as a Datetime
+	DeleteOnTermination bool   `xml:"deleteOnTermination"` // Indicates whether the network interface is deleted when the instance is terminated.
+}
+
+// Describes association information for an Elastic IP address.
+// See http://goo.gl/YCDdMe for more details
+type InstanceNetworkInterfaceAssociation struct {
+	PublicIP      string `xml:"publicIp"`      // The address of the Elastic IP address bound to the network interface
+	PublicDNSName string `xml:"publicDnsName"` // The public DNS name
+	IPOwnerId     string `xml:"ipOwnerId"`     // The ID of the owner of the Elastic IP address
+}
+
+// InstancePrivateIpAddress describes a private IP address
+// See http://goo.gl/irN646 for more details
+type InstancePrivateIpAddress struct {
+	PrivateIPAddress string                              `xml:"privateIpAddress"` // The private IP address of the network interface
+	PrivateDNSName   string                              `xml:"privateDnsName"`   // The private DNS name
+	Primary          bool                                `xml:"primary"`          // Indicates whether this IP address is the primary private IP address of the network interface
+	Association      InstanceNetworkInterfaceAssociation `xml:"association"`      // The association information for an Elastic IP address for the network interface
 }
 
 // IamInstanceProfile
