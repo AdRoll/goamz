@@ -85,7 +85,7 @@ func (s *S) TestRunInstancesExample(c *gocheck.C) {
 		UserData:              []byte("1234"),
 		KernelId:              "kernel-id",
 		RamdiskId:             "ramdisk-id",
-		AvailZone:             "zone",
+		AvailabilityZone:      "zone",
 		PlacementGroupName:    "group",
 		Monitoring:            true,
 		SubnetId:              "subnet-id",
@@ -131,7 +131,7 @@ func (s *S) TestRunInstancesExample(c *gocheck.C) {
 	c.Assert(i0.Monitoring, gocheck.Equals, "enabled")
 	c.Assert(i0.KeyName, gocheck.Equals, "example-key-name")
 	c.Assert(i0.AMILaunchIndex, gocheck.Equals, 0)
-	c.Assert(i0.VirtType, gocheck.Equals, "paravirtual")
+	c.Assert(i0.VirtualizationType, gocheck.Equals, "paravirtual")
 	c.Assert(i0.Hypervisor, gocheck.Equals, "xen")
 
 	i1 := resp.Instances[1]
@@ -141,7 +141,7 @@ func (s *S) TestRunInstancesExample(c *gocheck.C) {
 	c.Assert(i1.Monitoring, gocheck.Equals, "enabled")
 	c.Assert(i1.KeyName, gocheck.Equals, "example-key-name")
 	c.Assert(i1.AMILaunchIndex, gocheck.Equals, 1)
-	c.Assert(i1.VirtType, gocheck.Equals, "paravirtual")
+	c.Assert(i1.VirtualizationType, gocheck.Equals, "paravirtual")
 	c.Assert(i1.Hypervisor, gocheck.Equals, "xen")
 
 	i2 := resp.Instances[2]
@@ -151,7 +151,7 @@ func (s *S) TestRunInstancesExample(c *gocheck.C) {
 	c.Assert(i2.Monitoring, gocheck.Equals, "enabled")
 	c.Assert(i2.KeyName, gocheck.Equals, "example-key-name")
 	c.Assert(i2.AMILaunchIndex, gocheck.Equals, 2)
-	c.Assert(i2.VirtType, gocheck.Equals, "paravirtual")
+	c.Assert(i2.VirtualizationType, gocheck.Equals, "paravirtual")
 	c.Assert(i2.Hypervisor, gocheck.Equals, "xen")
 }
 
@@ -214,7 +214,7 @@ func (s *S) TestDescribeInstancesExample1(c *gocheck.C) {
 	c.Assert(r0i.InstanceId, gocheck.Equals, "i-c5cd56af")
 	c.Assert(r0i.PrivateDNSName, gocheck.Equals, "domU-12-31-39-10-56-34.compute-1.internal")
 	c.Assert(r0i.DNSName, gocheck.Equals, "ec2-174-129-165-232.compute-1.amazonaws.com")
-	c.Assert(r0i.AvailZone, gocheck.Equals, "us-east-1b")
+	c.Assert(r0i.AvailabilityZone, gocheck.Equals, "us-east-1b")
 	c.Assert(r0i.IPAddress, gocheck.Equals, "174.129.165.232")
 	c.Assert(r0i.PrivateIPAddress, gocheck.Equals, "10.198.85.190")
 }

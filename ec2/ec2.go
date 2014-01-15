@@ -202,7 +202,7 @@ type RunInstancesOptions struct {
 	KernelId               string
 	RamdiskId              string
 	UserData               []byte
-	AvailZone              string
+	AvailabilityZone       string
 	PlacementGroupName     string
 	Monitoring             bool
 	SubnetId               string
@@ -423,8 +423,8 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 		b64.Encode(userData, options.UserData)
 		params["UserData"] = string(userData)
 	}
-	if options.AvailZone != "" {
-		params["Placement.AvailabilityZone"] = options.AvailZone
+	if options.AvailabilityZone != "" {
+		params["Placement.AvailabilityZone"] = options.AvailabilityZone
 	}
 	if options.PlacementGroupName != "" {
 		params["Placement.GroupName"] = options.PlacementGroupName
