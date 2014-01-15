@@ -241,6 +241,7 @@ type Instance struct {
 	KeyName            string              `xml:"keyName"`
 	Monitoring         string              `xml:"monitoring>state"`
 	IamInstanceProfile IamInstanceProfile  `xml:"iamInstanceProfile"`
+	LaunchTime         string              `xml:"launchTime"`
 
 	// More specific information
 	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
