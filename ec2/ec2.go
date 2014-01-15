@@ -272,6 +272,14 @@ type Instance struct {
 	SriovNetSupport   string                     `xml:"sriovNetSupport"`
 }
 
+// isSpotInstance returns if the instance is a spot instance
+func (i Instance) isSpotInstance() bool {
+	if i.InstanceLifecycle == "spot" {
+		return true
+	}
+	return false
+}
+
 type BlockDevice struct {
 	DeviceName string `xml:"deviceName"`
 	EBS        EBS    `xml:"ebs"`
