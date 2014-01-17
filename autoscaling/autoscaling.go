@@ -115,25 +115,26 @@ func buildError(r *http.Response) error {
 }
 
 // ----------------------------------------------------------------------------
-// Auto Scaling types and related functions.
+// Auto Scaling base types and related functions.
 
 type AutoScalingGroup struct {
 	AutoScalingGroupARN     string     `xml:"AutoScalingGroupARN"`
 	AutoScalingGroupName    string     `xml:"AutoScalingGroupName"`
 	AvailabilityZones       []string   `xml:"AvailabilityZones>member"`
 	CreatedTime             string     `xml:"CreatedTime"`
-	DefaultCooldown         int        `xml:"DefaultCooldown"`
-	DesiredCapacity         int        `xml:"DesiredCapacity"`
-	HealthCheckGracePeriod  int        `xml:"HealthCheckGracePeriod"`
+	DefaultCooldown         int64      `xml:"DefaultCooldown"`
+	DesiredCapacity         int64      `xml:"DesiredCapacity"`
+	HealthCheckGracePeriod  int64      `xml:"HealthCheckGracePeriod"`
 	HealthCheckType         string     `xml:"HealthCheckType"`
 	Instances               []Instance `xml:"Instances>member"`
 	LaunchConfigurationName string     `xml:"LaunchConfigurationName"`
 	LoadBalancerNames       []string   `xml:"LoadBalancerNames>member"`
-	MaxSize                 int        `xml:"MaxSize"`
-	MinSize                 int        `xml:"MinSize"`
+	MaxSize                 int64      `xml:"MaxSize"`
+	MinSize                 int64      `xml:"MinSize"`
 	TerminationPolicies     []string   `xml:"TerminationPolicies>member"`
 	VPCZoneIdentifier       string     `xml:"VPCZoneIdentifier"`
 	Tags                    []Tag      `xml:"Tags"`
+	SuspendedProcesses      []string   `xml:"SuspendedProcesses>member"`
 }
 
 type Instance struct {
@@ -194,7 +195,8 @@ type CreateLaunchConfigurationResp struct {
 
 // Method DescribeAutoScalingGroups returns details about the groups provided in the list. If the list is nil
 // information is returned about all the groups in the region.
-func (as *AutoScaling) DescribeAutoScalingGroups(groupnames []string) (resp *AutoScalingGroupsResp, err error) {
+func (as *AutoScaling) DescribeAutoScalingGroups(groupnames []string) (
+	resp *AutoScalingGroupsResp, err error) {
 	params := makeParams("DescribeAutoScalingGroups")
 	addParamsList(params, "AutoScalingGroupNames.member", groupnames)
 	resp = &AutoScalingGroupsResp{}
@@ -206,25 +208,26 @@ func (as *AutoScaling) DescribeAutoScalingGroups(groupnames []string) (resp *Aut
 }
 
 // Method CreateAutoScalingGroup creates a new autoscaling group.
-func (as *AutoScaling) CreateAutoScalingGroup(ag AutoScalingGroup) (resp *AutoScalingGroupsResp, err error) {
+func (as *AutoScaling) CreateAutoScalingGroup(ag AutoScalingGroup) (
+	resp *AutoScalingGroupsResp, err error) {
 	resp = &AutoScalingGroupsResp{}
 	params := makeParams("CreateAutoScalingGroup")
 	params["AutoScalingGroupName"] = ag.AutoScalingGroupName
-	params["MaxSize"] = strconv.FormatInt(int64(ag.MaxSize), 10)
-	params["MinSize"] = strconv.FormatInt(int64(ag.MinSize), 10)
+	params["MaxSize"] = strconv.FormatInt(ag.MaxSize, 10)
+	params["MinSize"] = strconv.FormatInt(ag.MinSize, 10)
 	params["LaunchConfigurationName"] = ag.LaunchConfigurationName
 	addParamsList(params, "AvailabilityZones.member", ag.AvailabilityZones)
 	if len(ag.LoadBalancerNames) > 0 {
 		addParamsList(params, "LoadBalancerNames.member", ag.LoadBalancerNames)
 	}
 	if ag.DefaultCooldown > 0 {
-		params["DefaultCooldown"] = strconv.FormatInt(int64(ag.DefaultCooldown), 10)
+		params["DefaultCooldown"] = strconv.FormatInt(ag.DefaultCooldown, 10)
 	}
 	if ag.DesiredCapacity > 0 {
-		params["DesiredCapacity"] = strconv.FormatInt(int64(ag.DesiredCapacity), 10)
+		params["DesiredCapacity"] = strconv.FormatInt(ag.DesiredCapacity, 10)
 	}
 	if ag.HealthCheckGracePeriod > 0 {
-		params["HealthCheckGracePeriod"] = strconv.FormatInt(int64(ag.HealthCheckGracePeriod), 10)
+		params["HealthCheckGracePeriod"] = strconv.FormatInt(ag.HealthCheckGracePeriod, 10)
 	}
 	if ag.HealthCheckType == "ELB" {
 		params["HealthCheckType"] = ag.HealthCheckType
@@ -235,6 +238,7 @@ func (as *AutoScaling) CreateAutoScalingGroup(ag AutoScalingGroup) (resp *AutoSc
 	if len(ag.TerminationPolicies) > 0 {
 		addParamsList(params, "TerminationPolicies.member", ag.TerminationPolicies)
 	}
+	// TODO(JP) : Implement Tags
 	//if len(ag.Tags) > 0 {
 	//	addParamsList(params, "Tags", ag.Tags)
 	//}
@@ -246,9 +250,11 @@ func (as *AutoScaling) CreateAutoScalingGroup(ag AutoScalingGroup) (resp *AutoSc
 	return resp, nil
 }
 
-// Method DescribeLaunchConfigurations returns details about the launch configurations supplied in the list.
-// If the list is nil, information is return about all launch configurations in the region.
-func (as *AutoScaling) DescribeLaunchConfigurations(confnames []string) (resp *LaunchConfigurationResp, err error) {
+// Method DescribeLaunchConfigurations returns details about the launch configurations supplied in
+// the list. If the list is nil, information is returned about all launch configurations in the
+// region.
+func (as *AutoScaling) DescribeLaunchConfigurations(confnames []string) (
+	resp *LaunchConfigurationResp, err error) {
 	params := makeParams("DescribeLaunchConfigurations")
 	addParamsList(params, "LaunchConfigurationNames.member", confnames)
 	resp = &LaunchConfigurationResp{}
@@ -287,6 +293,196 @@ func (as *AutoScaling) CreateLaunchConfiguration(lc LaunchConfiguration) (
 	err = as.query(params, resp)
 	if err != nil {
 		return resp, err
+	}
+	return resp, nil
+}
+
+// Method SuspendProcesses suspends the processes for the autoscaling group. If no processes are
+// provided, all processes are suspended.
+//
+// If you suspend either of the two primary processes (Launch or Terminate), this can prevent other
+// process types from functioning properly.
+func (as *AutoScaling) SuspendProcesses(ag AutoScalingGroup, processes []string) (
+	resp *SimpleResp, err error) {
+	resp = &SimpleResp{}
+	params := makeParams("SuspendProcesses")
+	params["AutoScalingGroupName"] = ag.AutoScalingGroupName
+	if len(processes) > 0 {
+		addParamsList(params, "ScalingProcesses.member", processes)
+	}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Method ResumeProcesses resumes the scaling processes for the scaling group. If no processes are
+// provided, all processes are resumed.
+func (as *AutoScaling) ResumeProcesses(ag AutoScalingGroup, processes []string) (
+	resp *SimpleResp, err error) {
+	resp = &SimpleResp{}
+	params := makeParams("ResumeProcesses")
+	params["AutoScalingGroupName"] = ag.AutoScalingGroupName
+	if len(processes) > 0 {
+		addParamsList(params, "ScalingProcesses.member", processes)
+	}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Method UpdateAutoScalingGroup updates the scaling group.
+//
+// To update an auto scaling group with a launch configuration that has the InstanceMonitoring
+// flag set to False, you must first ensure that collection of group metrics is disabled.
+// Otherwise calls to UpdateAutoScalingGroup will fail.
+// TODO(JP) - Test UpdateAutoScalingGroup
+func (as *AutoScaling) UpdateAutoScalingGroup(ag AutoScalingGroup) (resp *SimpleResp, err error) {
+	resp = &SimpleResp{}
+	params := makeParams("UpdateAutoScalingGroup")
+	params["AutoScalingGroupName"] = ag.AutoScalingGroupName
+	addParamsList(params, "AvailabilityZones.member", ag.AvailabilityZones)
+	if ag.DefaultCooldown > 0 {
+		params["DefaultCooldown"] = strconv.FormatInt(ag.DefaultCooldown, 10)
+	}
+	params["DesiredCapacity"] = strconv.FormatInt(ag.DesiredCapacity, 10)
+	if ag.HealthCheckGracePeriod > 0 {
+		params["HealthCheckGracePeriod"] = strconv.FormatInt(ag.HealthCheckGracePeriod, 10)
+	}
+	if ag.HealthCheckType == "ELB" {
+		params["HealthCheckType"] = ag.HealthCheckType
+	}
+	params["LaunchConfigurationName"] = ag.LaunchConfigurationName
+	if ag.MaxSize > 0 {
+		params["MaxSize"] = strconv.FormatInt(ag.MaxSize, 10)
+	}
+	if ag.MinSize > 0 {
+		params["MinSize"] = strconv.FormatInt(ag.MinSize, 10)
+	}
+	if len(ag.TerminationPolicies) > 0 {
+		addParamsList(params, "TerminationPolicies.member", ag.TerminationPolicies)
+	}
+	if len(ag.VPCZoneIdentifier) > 0 {
+		params["VPCZoneIdentifier"] = ag.VPCZoneIdentifier
+	}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// ----------------------------------------------------------------------------
+// Autoscaling scheduled actions types and methods
+
+// Type ScheduledUpdateGroupAction contains the information to be used in a scheduled update to an
+// AutoScalingGroup
+type ScheduledUpdateGroupAction struct {
+	AutoScalingGroupName string `xml:"AutoScalingGroupName"`
+	DesiredCapacity      int64  `xml:"DesiredCapacity"`
+	EndTime              string `xml:"EndTime"`
+	MaxSize              int64  `xml:"MaxSize"`
+	MinSize              int64  `xml:"MinSize"`
+	Recurrence           string `xml:"Recurrence"`
+	ScheduledActionARN   string `xml:"ScheduledActionARN"`
+	ScheduledActionName  string `xml:"ScheduledActionName"`
+	StartTime            string `xml:"StartTime"`
+}
+
+// Type DescribeScheduledActionsResult contains the response from a DescribeScheduledActions.
+type DescribeScheduledActionsResult struct {
+	NextToken                   string                       `xml:"NextToken"`
+	ScheduledUpdateGroupActions []ScheduledUpdateGroupAction `xml:"DescribeScheduledActions>ScheduledUpdateGroups>member"`
+}
+
+// Type ScheduledActionsRequestParams contains the items that can be specified when making
+// a ScheduledActions request
+type ScheduledActionsRequestParams struct {
+	AutoScalingGroupName string
+	EndTime              string
+	MaxRecords           int64
+	ScheduledActionNames []string
+	StartTime            string
+}
+
+// Type PutScheduledActionRequestParams contains the details of the ScheduledAction to be added.
+type PutScheduledActionRequestParams struct {
+	AutoScalingGroupName string
+	DesiredCapacity      int64
+	EndTime              string
+	MaxSize              int64
+	MinSize              int64
+	Recurrence           string
+	ScheduledActionName  string
+	StartTime            string
+}
+
+// Method DescribeScheduledActions returns a list of the current scheduled actions. If the
+// AutoScalingGroup name is provided it will list all the scheduled actions for that group.
+//
+// TODO(JP) - Test DescribeScheduledActions
+func (as *AutoScaling) DescribeScheduledActions(rp ScheduledActionsRequestParams) (
+	resp *DescribeScheduledActionsResult, err error) {
+	resp = &DescribeScheduledActionsResult{}
+	params := makeParams("DescribeScheduledActions")
+	if rp.AutoScalingGroupName != "" {
+		params["AutoScalingGroupName"] = rp.AutoScalingGroupName
+	}
+	if rp.StartTime != "" {
+		params["StartTime"] = rp.StartTime
+	}
+	if rp.EndTime != "" {
+		params["EndTime"] = rp.EndTime
+	}
+	if rp.MaxRecords > 0 {
+		params["MaxRecords"] = strconv.FormatInt(rp.MaxRecords, 10)
+	}
+	if len(rp.ScheduledActionNames) > 0 {
+		addParamsList(params, "ScheduledActionNames.member", rp.ScheduledActionNames)
+	}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Method PutScheduledUpdateGroupAction creates or updates a scheduled scaling action for an
+// AutoScaling group. Scheduled actions can be made up to thirty days in advance. When updating
+// a scheduled scaling action, if you leave a parameter unspecified, the corresponding value
+// remains unchanged in the affected AutoScaling group.
+//
+// Auto Scaling supports the date and time expressed in "YYYY-MM-DDThh:mm:ssZ" format in UTC/GMT
+// only.
+//
+// TODO(JP) - Test PutScheduledUpdateGroupAction
+func (as *AutoScaling) PutScheduledUpdateGroupAction(rp PutScheduledActionRequestParams) (
+	resp *SimpleResp, err error) {
+	resp = &SimpleResp{}
+	params := makeParams("PutScheduledUpdateGroupAction")
+	params["AutoScalingGroupName"] = rp.AutoScalingGroupName
+	params["ScheduledActionName"] = rp.ScheduledActionName
+	if len(rp.EndTime) > 0 {
+		params["EndTime"] = rp.EndTime
+	}
+	if len(rp.StartTime) > 0 {
+		params["StartTime"] = rp.StartTime
+	}
+	if rp.MaxSize > 0 {
+		params["MaxSize"] = strconv.FormatInt(rp.MaxSize, 10)
+	}
+	if rp.MinSize > 0 {
+		params["MinSize"] = strconv.FormatInt(rp.MinSize, 10)
+	}
+	if len(rp.Recurrence) > 0 {
+		params["Recurrence"] = rp.Recurrence
+	}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
 	}
 	return resp, nil
 }
