@@ -1,4 +1,4 @@
-package sqs_test
+package sqs
 
 import (
 	"flag"
