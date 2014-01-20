@@ -155,8 +155,15 @@ func (s *SQS) CreateQueue(queueName string) (*Queue, error) {
 }
 
 // CreateQueue create a queue with a specific name and a timeout
-func (s *SQS) CreateQueueWithTimeout(queueName string, timeout int) (q *Queue, err error) {
-	resp, err := s.newQueue(queueName, timeout)
+func (s *SQS) CreateQueueWithTimeout(queueName string, timeout int) (*Queue, error) {
+	params := map[string]string{
+		"DefaultVisibilityTimeout": strconv.Itoa(timeout),
+	}
+	return s.CreateQueueWithParams(queueName, params)
+}
+
+func (s *SQS) CreateQueueWithParams(queueName string, params map[string]string) (q *Queue, err error) {
+	resp, err := s.newQueue(queueName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -188,12 +195,11 @@ func (s *SQS) getQueueUrl(queueName string) (resp *GetQueueUrlResponse, err erro
 	return resp, err
 }
 
-func (s *SQS) newQueue(queueName string, timeout int) (resp *CreateQueueResponse, err error) {
+func (s *SQS) newQueue(queueName string, params map[string]string) (resp *CreateQueueResponse, err error) {
 	resp = &CreateQueueResponse{}
-	params := makeParams("CreateQueue")
 
+	params["Action"] = "CreateQueue"
 	params["QueueName"] = queueName
-	params["DefaultVisibilityTimeout"] = strconv.Itoa(timeout)
 
 	err = s.query("", params, resp)
 	return

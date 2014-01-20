@@ -30,9 +30,33 @@ func (s *S) TestCreateQueue(c *gocheck.C) {
 	c.Assert(req.Method, gocheck.Equals, "GET")
 	c.Assert(req.URL.Path, gocheck.Equals, "/")
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"CreateQueue"})
+	c.Assert(req.Form["DefaultVisibilityTimeout"], gocheck.DeepEquals, []string{"30"})
 
 	c.Assert(resp.Url, gocheck.Equals, "http://sqs.us-east-1.amazonaws.com/123456789012/testQueue")
 	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestCreateQueueWithTimeout(c *gocheck.C) {
+	testServer.PrepareResponse(200, nil, TestCreateQueueXmlOK)
+
+	s.sqs.CreateQueueWithTimeout("testQueue", 180)
+	req := testServer.WaitRequest()
+
+	// TestCreateQueue() tests the core functionality, just check the timeout in this test
+	c.Assert(req.Form["DefaultVisibilityTimeout"], gocheck.DeepEquals, []string{"180"})
+}
+
+func (s *S) TestCreateQueueWithParams(c *gocheck.C) {
+	testServer.PrepareResponse(200, nil, TestCreateQueueXmlOK)
+
+	s.sqs.CreateQueueWithParams("testQueue", map[string]string{
+		"WaitTimeSeconds": "20",
+	})
+	req := testServer.WaitRequest()
+
+	// TestCreateQueue() tests the core functionality, just check the timeout in this test
+	c.Assert(req.Form["WaitTimeSeconds"], gocheck.DeepEquals, []string{"20"})
 }
 
 func (s *S) TestListQueues(c *gocheck.C) {
