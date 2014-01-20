@@ -193,6 +193,13 @@ type CreateLaunchConfigurationResp struct {
 	RequestId string `xml:"ResponseMetadata>RequestId"`
 }
 
+// Type SetDesiredCapacityRequestParams contains the details for the SetDesiredCapacity action.
+type SetDesiredCapacityRequestParams struct {
+	AutoScalingGroupName string
+	DesiredCapacity      int64
+	HonorCooldown        bool
+}
+
 // Method DescribeAutoScalingGroups returns details about the groups provided in the list. If the list is nil
 // information is returned about all the groups in the region.
 func (as *AutoScaling) DescribeAutoScalingGroups(groupnames []string) (
@@ -375,6 +382,24 @@ func (as *AutoScaling) UpdateAutoScalingGroup(ag AutoScalingGroup) (resp *Simple
 	return resp, nil
 }
 
+// Method SetDesiredCapacity changes the DesiredCapacity of an AutoScaling group.
+//
+// TODO(JP) - Test SetDesiredCapacity
+func (as *AutoScaling) SetDesiredCapacity(rp SetDesiredCapacityRequestParams) (resp *SimpleResp, err error) {
+	resp = &SimpleResp{}
+	params := makeParams("SetDesiredCapacity")
+	params["AutoScalingGroupName"] = rp.AutoScalingGroupName
+	params["DesiredCapacity"] = strconv.FormatInt(rp.DesiredCapacity, 10)
+	if rp.HonorCooldown {
+		params["HonorCooldown"] = "true"
+	}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 // ----------------------------------------------------------------------------
 // Autoscaling scheduled actions types and methods
 
@@ -418,6 +443,12 @@ type PutScheduledActionRequestParams struct {
 	Recurrence           string
 	ScheduledActionName  string
 	StartTime            string
+}
+
+// Type DeleteScheduledActionRequestParams contains the details of the scheduled action to delete.
+type DeleteScheduledActionRequestParams struct {
+	AutoScalingGroupName string
+	ScheduledActionName  string
 }
 
 // Method DescribeScheduledActions returns a list of the current scheduled actions. If the
@@ -480,6 +511,22 @@ func (as *AutoScaling) PutScheduledUpdateGroupAction(rp PutScheduledActionReques
 	if len(rp.Recurrence) > 0 {
 		params["Recurrence"] = rp.Recurrence
 	}
+	err = as.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Method DeleteScheduledAction deletes a scheduled action.
+//
+// TODO(JP) - Test DeleteScheduledAction
+func (as *AutoScaling) DeleteScheduledAction(rp DeleteScheduledActionRequestParams) (
+	resp *SimpleResp, err error) {
+	resp = &SimpleResp{}
+	params := makeParams("DeleteScheduledAction")
+	params["AutoScalingGroupName"] = rp.AutoScalingGroupName
+	params["ScheduledActionName"] = rp.ScheduledActionName
 	err = as.query(params, resp)
 	if err != nil {
 		return nil, err
