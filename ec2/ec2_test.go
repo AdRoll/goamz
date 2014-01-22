@@ -192,7 +192,7 @@ func (s *S) TestDescribeInstancesExample1(c *gocheck.C) {
 	filter.Add("key1", "value1")
 	filter.Add("key2", "value2", "value3")
 
-	resp, err := s.ec2.Instances([]string{"i-1", "i-2"}, nil)
+	resp, err := s.ec2.DescribeInstances([]string{"i-1", "i-2"}, nil)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DescribeInstances"})
@@ -226,7 +226,7 @@ func (s *S) TestDescribeInstancesExample2(c *gocheck.C) {
 	filter.Add("key1", "value1")
 	filter.Add("key2", "value2", "value3")
 
-	resp, err := s.ec2.Instances([]string{"i-1", "i-2"}, filter)
+	resp, err := s.ec2.DescribeInstances([]string{"i-1", "i-2"}, filter)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DescribeInstances"})

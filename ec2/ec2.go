@@ -571,7 +571,7 @@ type Reservation struct {
 // matching the given instance ids or filtering rules.
 //
 // See http://goo.gl/4No7c for more details.
-func (ec2 *EC2) Instances(instIds []string, filter *Filter) (resp *InstancesResp, err error) {
+func (ec2 *EC2) DescribeInstances(instIds []string, filter *Filter) (resp *InstancesResp, err error) {
 	params := makeParams("DescribeInstances")
 	addParamsList(params, "InstanceId", instIds)
 	filter.addParams(params)
