@@ -52,6 +52,7 @@ type Region struct {
 	ELBEndpoint            string
 	DynamoDBEndpoint       string
 	CloudWatchServicepoint ServiceInfo
+	AutoScalingEndpoint    string
 }
 
 var Regions = map[string]Region{
