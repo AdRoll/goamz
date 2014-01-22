@@ -12,10 +12,11 @@ import (
 	"time"
 )
 
-const debug = true
+const debug = false
 
 var timeNow = time.Now
 
+// AutoScaling contains the details of the AWS region to perform operations against.
 type AutoScaling struct {
 	aws.Auth
 	aws.Region
@@ -26,6 +27,7 @@ type xmlErrors struct {
 	Errors    []Error `xml:"Errors>Error"`
 }
 
+// Error contains pertinent information from the failed operation.
 type Error struct {
 	// HTTP status code (200, 403, ...)
 	StatusCode int
@@ -44,7 +46,7 @@ func (err *Error) Error() string {
 	return fmt.Sprintf("%s (%s)", err.Message, err.Code)
 }
 
-// Function New creates a new AutoScaling
+// New creates a new AutoScaling
 func New(auth aws.Auth, region aws.Region) *AutoScaling {
 	return &AutoScaling{auth, region}
 }
@@ -157,7 +159,7 @@ type LaunchConfiguration struct {
 	SecurityGroups           []string `xml:"SecurityGroups>member"`
 	KeyName                  string   `xml:"KeyName"`
 	UserData                 string   `xml:"UserData"`
-	InstanceMonitoring       bool     `xml:"InstanceMonitoring"`
+	InstanceMonitoring       string   `xml:"InstanceMonitoring"`
 }
 
 type Tag struct {
@@ -168,39 +170,39 @@ type Tag struct {
 	Value             string `xml:"Value"`
 }
 
-// Type AutoScalingGroupsResp defines the basic response structure.
+// AutoScalingGroupsResp defines the basic response structure.
 type AutoScalingGroupsResp struct {
 	RequestId         string             `xml:"ResponseMetadata>RequestId"`
 	AutoScalingGroups []AutoScalingGroup `xml:"DescribeAutoScalingGroupsResult>AutoScalingGroups>member"`
 }
 
-// Type LaunchConfigurationResp defines the basic response structure for launch configuration
+// LaunchConfigurationResp defines the basic response structure for launch configuration
 // requests
 type LaunchConfigurationResp struct {
 	RequestId            string                `xml:"ResponseMetadata>RequestId"`
 	LaunchConfigurations []LaunchConfiguration `xml:"DescribeLaunchConfigurationsResult>LaunchConfigurations>member"`
 }
 
-// Type SimpleResp is the basic response from most actions.
+// SimpleResp is the basic response from most actions.
 type SimpleResp struct {
 	XMLName   xml.Name
 	RequestId string `xml:"ResponseMetadata>RequestId"`
 }
 
-// Type CreateLaunchConfigurationResp is returned from the CreateLaunchConfiguration request.
+// CreateLaunchConfigurationResp is returned from the CreateLaunchConfiguration request.
 type CreateLaunchConfigurationResp struct {
 	LaunchConfiguration
 	RequestId string `xml:"ResponseMetadata>RequestId"`
 }
 
-// Type SetDesiredCapacityRequestParams contains the details for the SetDesiredCapacity action.
+// SetDesiredCapacityRequestParams contains the details for the SetDesiredCapacity action.
 type SetDesiredCapacityRequestParams struct {
 	AutoScalingGroupName string
 	DesiredCapacity      int64
 	HonorCooldown        bool
 }
 
-// Method DescribeAutoScalingGroups returns details about the groups provided in the list. If the list is nil
+// DescribeAutoScalingGroups returns details about the groups provided in the list. If the list is nil
 // information is returned about all the groups in the region.
 func (as *AutoScaling) DescribeAutoScalingGroups(groupnames []string) (
 	resp *AutoScalingGroupsResp, err error) {
@@ -214,7 +216,7 @@ func (as *AutoScaling) DescribeAutoScalingGroups(groupnames []string) (
 	return resp, nil
 }
 
-// Method CreateAutoScalingGroup creates a new autoscaling group.
+// CreateAutoScalingGroup creates a new autoscaling group.
 func (as *AutoScaling) CreateAutoScalingGroup(ag AutoScalingGroup) (
 	resp *AutoScalingGroupsResp, err error) {
 	resp = &AutoScalingGroupsResp{}
@@ -257,7 +259,7 @@ func (as *AutoScaling) CreateAutoScalingGroup(ag AutoScalingGroup) (
 	return resp, nil
 }
 
-// Method DescribeLaunchConfigurations returns details about the launch configurations supplied in
+// DescribeLaunchConfigurations returns details about the launch configurations supplied in
 // the list. If the list is nil, information is returned about all launch configurations in the
 // region.
 func (as *AutoScaling) DescribeLaunchConfigurations(confnames []string) (
@@ -272,7 +274,7 @@ func (as *AutoScaling) DescribeLaunchConfigurations(confnames []string) (
 	return resp, nil
 }
 
-// Method CreateLaunchConfiguration creates a new launch configuration.
+// CreateLaunchConfiguration creates a new launch configuration.
 func (as *AutoScaling) CreateLaunchConfiguration(lc LaunchConfiguration) (
 	resp *CreateLaunchConfigurationResp, err error) {
 	resp = &CreateLaunchConfigurationResp{}
@@ -294,7 +296,7 @@ func (as *AutoScaling) CreateLaunchConfiguration(lc LaunchConfiguration) (
 	if len(lc.KernelId) > 0 {
 		params["KernelId"] = lc.KernelId
 	}
-	if !lc.InstanceMonitoring {
+	if lc.InstanceMonitoring == "false" {
 		params["InstanceMonitoring.Enabled"] = "false"
 	}
 	err = as.query(params, resp)
@@ -304,7 +306,7 @@ func (as *AutoScaling) CreateLaunchConfiguration(lc LaunchConfiguration) (
 	return resp, nil
 }
 
-// Method SuspendProcesses suspends the processes for the autoscaling group. If no processes are
+// SuspendProcesses suspends the processes for the autoscaling group. If no processes are
 // provided, all processes are suspended.
 //
 // If you suspend either of the two primary processes (Launch or Terminate), this can prevent other
@@ -324,7 +326,7 @@ func (as *AutoScaling) SuspendProcesses(ag AutoScalingGroup, processes []string)
 	return resp, nil
 }
 
-// Method ResumeProcesses resumes the scaling processes for the scaling group. If no processes are
+// ResumeProcesses resumes the scaling processes for the scaling group. If no processes are
 // provided, all processes are resumed.
 func (as *AutoScaling) ResumeProcesses(ag AutoScalingGroup, processes []string) (
 	resp *SimpleResp, err error) {
@@ -341,12 +343,11 @@ func (as *AutoScaling) ResumeProcesses(ag AutoScalingGroup, processes []string) 
 	return resp, nil
 }
 
-// Method UpdateAutoScalingGroup updates the scaling group.
+// UpdateAutoScalingGroup updates the scaling group.
 //
 // To update an auto scaling group with a launch configuration that has the InstanceMonitoring
 // flag set to False, you must first ensure that collection of group metrics is disabled.
 // Otherwise calls to UpdateAutoScalingGroup will fail.
-// TODO(JP) - Test UpdateAutoScalingGroup
 func (as *AutoScaling) UpdateAutoScalingGroup(ag AutoScalingGroup) (resp *SimpleResp, err error) {
 	resp = &SimpleResp{}
 	params := makeParams("UpdateAutoScalingGroup")
@@ -382,9 +383,7 @@ func (as *AutoScaling) UpdateAutoScalingGroup(ag AutoScalingGroup) (resp *Simple
 	return resp, nil
 }
 
-// Method SetDesiredCapacity changes the DesiredCapacity of an AutoScaling group.
-//
-// TODO(JP) - Test SetDesiredCapacity
+// SetDesiredCapacity changes the DesiredCapacity of an AutoScaling group.
 func (as *AutoScaling) SetDesiredCapacity(rp SetDesiredCapacityRequestParams) (resp *SimpleResp, err error) {
 	resp = &SimpleResp{}
 	params := makeParams("SetDesiredCapacity")
@@ -403,7 +402,7 @@ func (as *AutoScaling) SetDesiredCapacity(rp SetDesiredCapacityRequestParams) (r
 // ----------------------------------------------------------------------------
 // Autoscaling scheduled actions types and methods
 
-// Type ScheduledUpdateGroupAction contains the information to be used in a scheduled update to an
+// ScheduledUpdateGroupAction contains the information to be used in a scheduled update to an
 // AutoScalingGroup
 type ScheduledUpdateGroupAction struct {
 	AutoScalingGroupName string `xml:"AutoScalingGroupName"`
@@ -417,13 +416,13 @@ type ScheduledUpdateGroupAction struct {
 	StartTime            string `xml:"StartTime"`
 }
 
-// Type DescribeScheduledActionsResult contains the response from a DescribeScheduledActions.
+// DescribeScheduledActionsResult contains the response from a DescribeScheduledActions.
 type DescribeScheduledActionsResult struct {
 	NextToken                   string                       `xml:"NextToken"`
 	ScheduledUpdateGroupActions []ScheduledUpdateGroupAction `xml:"DescribeScheduledActions>ScheduledUpdateGroups>member"`
 }
 
-// Type ScheduledActionsRequestParams contains the items that can be specified when making
+// ScheduledActionsRequestParams contains the items that can be specified when making
 // a ScheduledActions request
 type ScheduledActionsRequestParams struct {
 	AutoScalingGroupName string
@@ -433,7 +432,7 @@ type ScheduledActionsRequestParams struct {
 	StartTime            string
 }
 
-// Type PutScheduledActionRequestParams contains the details of the ScheduledAction to be added.
+// PutScheduledActionRequestParams contains the details of the ScheduledAction to be added.
 type PutScheduledActionRequestParams struct {
 	AutoScalingGroupName string
 	DesiredCapacity      int64
@@ -445,16 +444,14 @@ type PutScheduledActionRequestParams struct {
 	StartTime            string
 }
 
-// Type DeleteScheduledActionRequestParams contains the details of the scheduled action to delete.
+// DeleteScheduledActionRequestParams contains the details of the scheduled action to delete.
 type DeleteScheduledActionRequestParams struct {
 	AutoScalingGroupName string
 	ScheduledActionName  string
 }
 
-// Method DescribeScheduledActions returns a list of the current scheduled actions. If the
+// DescribeScheduledActions returns a list of the current scheduled actions. If the
 // AutoScalingGroup name is provided it will list all the scheduled actions for that group.
-//
-// TODO(JP) - Test DescribeScheduledActions
 func (as *AutoScaling) DescribeScheduledActions(rp ScheduledActionsRequestParams) (
 	resp *DescribeScheduledActionsResult, err error) {
 	resp = &DescribeScheduledActionsResult{}
@@ -481,15 +478,13 @@ func (as *AutoScaling) DescribeScheduledActions(rp ScheduledActionsRequestParams
 	return resp, nil
 }
 
-// Method PutScheduledUpdateGroupAction creates or updates a scheduled scaling action for an
+// PutScheduledUpdateGroupAction creates or updates a scheduled scaling action for an
 // AutoScaling group. Scheduled actions can be made up to thirty days in advance. When updating
 // a scheduled scaling action, if you leave a parameter unspecified, the corresponding value
 // remains unchanged in the affected AutoScaling group.
 //
 // Auto Scaling supports the date and time expressed in "YYYY-MM-DDThh:mm:ssZ" format in UTC/GMT
 // only.
-//
-// TODO(JP) - Test PutScheduledUpdateGroupAction
 func (as *AutoScaling) PutScheduledUpdateGroupAction(rp PutScheduledActionRequestParams) (
 	resp *SimpleResp, err error) {
 	resp = &SimpleResp{}
@@ -518,9 +513,7 @@ func (as *AutoScaling) PutScheduledUpdateGroupAction(rp PutScheduledActionReques
 	return resp, nil
 }
 
-// Method DeleteScheduledAction deletes a scheduled action.
-//
-// TODO(JP) - Test DeleteScheduledAction
+// DeleteScheduledAction deletes a scheduled action.
 func (as *AutoScaling) DeleteScheduledAction(rp DeleteScheduledActionRequestParams) (
 	resp *SimpleResp, err error) {
 	resp = &SimpleResp{}
