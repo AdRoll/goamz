@@ -61,7 +61,6 @@ type Options struct {
 	ContentEncoding  string
 	CacheControl     string
 	RedirectLocation string
-
 	// What else?
 	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
@@ -295,14 +294,14 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	if len(options.ContentEncoding) != 0 {
 		headers["Content-Encoding"] = []string{options.ContentEncoding}
 	}
-	for k, v := range options.Meta {
-		headers["x-amz-meta-"+k] = v
-	}
 	if len(options.CacheControl) != 0 {
 		headers["Cache-Control"] = []string{options.CacheControl}
 	}
 	if len(options.RedirectLocation) != 0 {
 		headers["x-amz-website-redirect-location"] = []string{options.RedirectLocation}
+	}
+	for k, v := range options.Meta {
+		headers["x-amz-meta-"+k] = v
 	}
 	req := &request{
 		method:  "PUT",
