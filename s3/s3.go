@@ -56,14 +56,14 @@ type Owner struct {
 // Fold options into an Options struct
 //
 type Options struct {
-	SSE             bool
-	Meta            map[string][]string
-	ContentEncoding string
+	SSE              bool
+	Meta             map[string][]string
+	ContentEncoding  string
+	CacheControl     string
+	RedirectLocation string
 	// What else?
-	// Cache-Control string
 	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
-	// x-amz-website-redirect-location: []string
 	// x-amz-storage-class []string
 }
 
@@ -293,6 +293,12 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 	}
 	if len(options.ContentEncoding) != 0 {
 		headers["Content-Encoding"] = []string{options.ContentEncoding}
+	}
+	if len(options.CacheControl) != 0 {
+		headers["Cache-Control"] = []string{options.CacheControl}
+	}
+	if len(options.RedirectLocation) != 0 {
+		headers["x-amz-website-redirect-location"] = []string{options.RedirectLocation}
 	}
 	for k, v := range options.Meta {
 		headers["x-amz-meta-"+k] = v
