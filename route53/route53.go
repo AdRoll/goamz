@@ -95,6 +95,12 @@ type NameServers struct {
 	NameServer string
 }
 
+type GetHostedZoneResponse struct {
+	XMLName       xml.Name `xml:"GetHostedZoneResponse"`
+	HostedZone    HostedZone
+	DelegationSet DelegationSet
+}
+
 // query sends the specified HTTP request to the path and signs the request
 // with the required authentication and headers based on the Auth.
 //
@@ -123,9 +129,7 @@ func (r *Route53) query(method string, path string, body io.Reader, result inter
 	}
 
 	err = xml.NewDecoder(res.Body).Decode(result)
-
 	return err
-
 }
 
 // CreateHostedZone send a creation request to the AWS Route53 API
@@ -137,16 +141,21 @@ func (r *Route53) CreateHostedZone(hostedZoneReq *CreateHostedZoneRequest) (*Cre
 
 	result := new(CreateHostedZoneResponse)
 	err = r.query("POST", r.Endpoint, bytes.NewBuffer(xmlBytes), result)
-
 	return result, err
 }
 
 // ListedHostedZones fetches a collection of HostedZones through the AWS Route53 API
-func (r *Route53) ListHostedZones(id string, maxItems int) (result *ListHostedZonesResponse, err error) {
-	path := fmt.Sprintf("%s?id=%v&maxitems=%d", r.Endpoint, id, maxItems)
+func (r *Route53) ListHostedZones(marker string, maxItems int) (result *ListHostedZonesResponse, err error) {
+	path := fmt.Sprintf("%s?marker=%v&maxitems=%d", r.Endpoint, marker, maxItems)
 
 	result = new(ListHostedZonesResponse)
 	err = r.query("GET", path, nil, result)
+	return
+}
 
+// GetHostedZone fetches a particular hostedzones DelegationSet by id
+func (r *Route53) GetHostedZone(id string) (result *GetHostedZoneResponse, err error) {
+	result = new(GetHostedZoneResponse)
+	err = r.query("GET", fmt.Sprintf("%s/%v", r.Endpoint, id), nil, result)
 	return
 }
