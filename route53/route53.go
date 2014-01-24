@@ -88,11 +88,13 @@ type ChangeInfo struct {
 }
 
 type DelegationSet struct {
-	NameServers []NameServers
+	XMLName     xml.Name `xml:"DelegationSet`
+	NameServers NameServers
 }
 
 type NameServers struct {
-	NameServer string
+	XMLName    xml.Name `xml:"NameServers`
+	NameServer []string
 }
 
 type GetHostedZoneResponse struct {
@@ -129,6 +131,7 @@ func (r *Route53) query(method string, path string, body io.Reader, result inter
 	}
 
 	err = xml.NewDecoder(res.Body).Decode(result)
+
 	return err
 }
 
@@ -141,6 +144,7 @@ func (r *Route53) CreateHostedZone(hostedZoneReq *CreateHostedZoneRequest) (*Cre
 
 	result := new(CreateHostedZoneResponse)
 	err = r.query("POST", r.Endpoint, bytes.NewBuffer(xmlBytes), result)
+
 	return result, err
 }
 
@@ -150,6 +154,7 @@ func (r *Route53) ListHostedZones(marker string, maxItems int) (result *ListHost
 
 	result = new(ListHostedZonesResponse)
 	err = r.query("GET", path, nil, result)
+
 	return
 }
 
@@ -157,5 +162,6 @@ func (r *Route53) ListHostedZones(marker string, maxItems int) (result *ListHost
 func (r *Route53) GetHostedZone(id string) (result *GetHostedZoneResponse, err error) {
 	result = new(GetHostedZoneResponse)
 	err = r.query("GET", fmt.Sprintf("%s/%v", r.Endpoint, id), nil, result)
+
 	return
 }
