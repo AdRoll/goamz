@@ -44,7 +44,7 @@ type StatisticSet struct {
 type MetricDatum struct {
 	Dimensions      []Dimension
 	MetricName      string
-	StatisticValues []StatisticSet
+	StatisticValues *StatisticSet
 	Timestamp       time.Time
 	Unit            string
 	Value           float64
@@ -270,8 +270,15 @@ func (c *CloudWatch) ListMetrics(req *ListMetricsRequest) (result *ListMetricsRe
 }
 
 func (c *CloudWatch) PutMetricData(metrics []MetricDatum) (result *aws.BaseResponse, err error) {
+	return c.PutMetricDataNamespace (metrics, "")
+}
+
+func (c *CloudWatch) PutMetricDataNamespace (metrics []MetricDatum, namespace string) (result *aws.BaseResponse, err error) {
 	// Serialize the params
 	params := aws.MakeParams("PutMetricData")
+	if namespace != "" {
+		params ["Namespace"] = namespace
+	}
 	for i, metric := range metrics {
 		prefix := "MetricData.member." + strconv.Itoa(i+1)
 		if metric.MetricName == "" {
@@ -293,12 +300,12 @@ func (c *CloudWatch) PutMetricData(metrics []MetricDatum) (result *aws.BaseRespo
 			params[dimprefix+".Name"] = dim.Name
 			params[dimprefix+".Value"] = dim.Value
 		}
-		for j, stat := range metric.StatisticValues {
-			statprefix := prefix + ".StatisticValues.member." + strconv.Itoa(j+1)
-			params[statprefix+".Maximum"] = strconv.FormatFloat(stat.Maximum, 'E', 10, 64)
-			params[statprefix+".Minimum"] = strconv.FormatFloat(stat.Minimum, 'E', 10, 64)
-			params[statprefix+".SampleCount"] = strconv.FormatFloat(stat.SampleCount, 'E', 10, 64)
-			params[statprefix+".Sum"] = strconv.FormatFloat(stat.Sum, 'E', 10, 64)
+		if metric.StatisticValues != nil {
+			statprefix := prefix + ".StatisticValues"
+			params[statprefix+".Maximum"] = strconv.FormatFloat(metric.StatisticValues.Maximum, 'E', 10, 64)
+			params[statprefix+".Minimum"] = strconv.FormatFloat(metric.StatisticValues.Minimum, 'E', 10, 64)
+			params[statprefix+".SampleCount"] = strconv.FormatFloat(metric.StatisticValues.SampleCount, 'E', 10, 64)
+			params[statprefix+".Sum"] = strconv.FormatFloat(metric.StatisticValues.Sum, 'E', 10, 64)
 		}
 	}
 	result = new(aws.BaseResponse)

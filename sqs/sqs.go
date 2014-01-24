@@ -155,8 +155,15 @@ func (s *SQS) CreateQueue(queueName string) (*Queue, error) {
 }
 
 // CreateQueue create a queue with a specific name and a timeout
-func (s *SQS) CreateQueueWithTimeout(queueName string, timeout int) (q *Queue, err error) {
-	resp, err := s.newQueue(queueName, timeout)
+func (s *SQS) CreateQueueWithTimeout(queueName string, timeout int) (*Queue, error) {
+	params := map[string]string{
+		"VisibilityTimeout": strconv.Itoa(timeout),
+	}
+	return s.CreateQueueWithAttributes(queueName, params)
+}
+
+func (s *SQS) CreateQueueWithAttributes(queueName string, attrs map[string]string) (q *Queue, err error) {
+	resp, err := s.newQueue(queueName, attrs)
 	if err != nil {
 		return nil, err
 	}
@@ -191,12 +198,19 @@ func (s *SQS) getQueueUrl(queueName string) (resp *GetQueueUrlResponse, err erro
 	return resp, err
 }
 
-func (s *SQS) newQueue(queueName string, timeout int) (resp *CreateQueueResponse, err error) {
+func (s *SQS) newQueue(queueName string, attrs map[string]string) (resp *CreateQueueResponse, err error) {
 	resp = &CreateQueueResponse{}
 	params := makeParams("CreateQueue")
-
 	params["QueueName"] = queueName
-	params["DefaultVisibilityTimeout"] = strconv.Itoa(timeout)
+
+	i := 1
+	for k, v := range attrs {
+		nameParam := fmt.Sprintf("Attribute.%d.Name", i)
+		valParam := fmt.Sprintf("Attribute.%d.Value", 1)
+		params[nameParam] = k
+		params[valParam] = v
+		i++
+	}
 
 	err = s.query("", params, resp)
 	return

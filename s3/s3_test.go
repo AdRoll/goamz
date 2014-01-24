@@ -79,7 +79,7 @@ func (s *S) TestHead(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 
 	c.Assert(err, gocheck.IsNil)
-	c.Assert(resp.ContentLength, gocheck.Equals, int64(-1))
+	c.Assert(resp.ContentLength, gocheck.FitsTypeOf, int64(0))
 	c.Assert(resp, gocheck.FitsTypeOf, &http.Response{})
 }
 
@@ -191,6 +191,31 @@ func (s *S) TestPutObject(c *gocheck.C) {
 	c.Assert(req.Header["Content-Length"], gocheck.DeepEquals, []string{"7"})
 	//c.Assert(req.Header["Content-MD5"], gocheck.DeepEquals, "...")
 	c.Assert(req.Header["X-Amz-Acl"], gocheck.DeepEquals, []string{"private"})
+}
+
+func (s *S) TestPutObjectReadTimeout(c *gocheck.C) {
+	s.s3.ReadTimeout = 50 * time.Millisecond
+	defer func() {
+		s.s3.ReadTimeout = 0
+	}()
+
+	b := s.s3.Bucket("bucket")
+	err := b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{})
+
+	// Make sure that we get a timeout error.
+	c.Assert(err, gocheck.NotNil)
+
+	// Set the response after the request times out so that the next request will work.
+	testServer.Response(200, nil, "")
+
+	// This time set the response within our timeout period so that we expect the call
+	// to return successfully.
+	go func() {
+		time.Sleep(25 * time.Millisecond)
+		testServer.Response(200, nil, "")
+	}()
+	err = b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{})
+	c.Assert(err, gocheck.IsNil)
 }
 
 func (s *S) TestPutReader(c *gocheck.C) {
