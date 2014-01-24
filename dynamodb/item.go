@@ -166,6 +166,10 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	return t.putItem(hashKey, rangeKey, attributes, nil)
 }
 
+func (t *Table) ConditionalPutItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
+	return t.putItem(hashKey, rangeKey, attributes, expected)
+}
+
 func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
@@ -219,6 +223,10 @@ func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {
 
 func (t *Table) DeleteItem(key *Key) (bool, error) {
 	return t.deleteItem(key, nil)
+}
+
+func (t *Table) ConditionalDeleteItem(key *Key, expected []Attribute) (bool, error) {
+	return t.deleteItem(key, expected)
 }
 
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
