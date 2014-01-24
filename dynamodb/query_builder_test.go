@@ -155,25 +155,52 @@ func (s *QueryBuilderSuite) TestGetItemQuery(c *gocheck.C) {
 	q := dynamodb.NewQuery(table)
 	q.AddKey(table, &dynamodb.Key{HashKey: "test"})
 
-	queryJson, err := simplejson.NewJson([]byte(q.String()))
-	if err != nil {
-		c.Fatal(err)
+	{
+		queryJson, err := simplejson.NewJson([]byte(q.String()))
+		if err != nil {
+			c.Fatal(err)
+		}
+
+		expectedJson, err := simplejson.NewJson([]byte(`
+		{
+			"Key": {
+				"domain": {
+					"S": "test"
+				}
+			},
+			"TableName": "sites"
+		}
+		`))
+		if err != nil {
+			c.Fatal(err)
+		}
+		c.Check(queryJson, gocheck.DeepEquals, expectedJson)
 	}
 
-	expectedJson, err := simplejson.NewJson([]byte(`
-{
-	"Key": {
-		"domain": {
-			"S": "test"
+	// Use ConsistentRead
+	{
+		q.ConsistentRead(true)
+		queryJson, err := simplejson.NewJson([]byte(q.String()))
+		if err != nil {
+			c.Fatal(err)
 		}
-	},
-	"TableName": "sites"
-}
-	`))
-	if err != nil {
-		c.Fatal(err)
+
+		expectedJson, err := simplejson.NewJson([]byte(`
+		{
+			"ConsistentRead": "true",
+			"Key": {
+				"domain": {
+					"S": "test"
+				}
+			},
+			"TableName": "sites"
+		}
+		`))
+		if err != nil {
+			c.Fatal(err)
+		}
+		c.Check(queryJson, gocheck.DeepEquals, expectedJson)
 	}
-	c.Check(queryJson, gocheck.DeepEquals, expectedJson)
 }
 
 func (s *QueryBuilderSuite) TestUpdateQuery(c *gocheck.C) {

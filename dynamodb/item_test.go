@@ -139,7 +139,7 @@ func (s *ItemSuite) TestUpdateItem(c *gocheck.C) {
 	}
 
 	// Get to verify Add operation
-	if item, err := s.table.GetItem(pk); err != nil {
+	if item, err := s.table.GetItemConsistent(pk, true); err != nil {
 		c.Error(err)
 	} else {
 		if val, ok := item["count"]; ok {

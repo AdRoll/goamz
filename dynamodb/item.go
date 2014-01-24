@@ -121,40 +121,20 @@ func (batchWriteItem *BatchWriteItem) Execute() (map[string]interface{}, error) 
 }
 
 func (t *Table) GetItem(key *Key) (map[string]*Attribute, error) {
-	q := NewQuery(t)
-	q.AddKey(t, key)
-
-	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
-	if err != nil {
-		return nil, err
-	}
-
-	json, err := simplejson.NewJson(jsonResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	itemJson, ok := json.CheckGet("Item")
-	if !ok {
-		// We got an empty from amz. The item doesn't exist.
-		return nil, ErrNotFound
-	}
-
-	item, err := itemJson.Map()
-	if err != nil {
-		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
-		return nil, errors.New(message)
-	}
-
-	return parseAttributes(item), nil
-
+	return t.getItem(key, false)
 }
 
 func (t *Table) GetItemConsistent(key *Key, consistentRead bool) (map[string]*Attribute, error) {
+	return t.getItem(key, consistentRead)
+}
+
+func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKey(t, key)
 
-	q.ConsistentRead(consistentRead)
+	if consistentRead {
+		q.ConsistentRead(consistentRead)
+	}
 
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
 	if err != nil {
@@ -179,8 +159,8 @@ func (t *Table) GetItemConsistent(key *Key, consistentRead bool) (map[string]*At
 	}
 
 	return parseAttributes(item), nil
-}
 
+}
 
 func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
 
