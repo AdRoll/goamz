@@ -163,7 +163,10 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 }
 
 func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
+	return t.putItem(hashKey, rangeKey, attributes, nil)
+}
 
+func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
 	}
@@ -174,6 +177,9 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	attributes = append(attributes, keys...)
 
 	q.AddItem(attributes)
+	if expected != nil {
+		q.AddExpected(expected)
+	}
 
 	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
 
@@ -189,10 +195,13 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 	return true, nil
 }
 
-func (t *Table) DeleteItem(key *Key) (bool, error) {
-
+func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {
 	q := NewQuery(t)
 	q.AddKey(t, key)
+
+	if expected != nil {
+		q.AddExpected(expected)
+	}
 
 	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
 
@@ -206,6 +215,10 @@ func (t *Table) DeleteItem(key *Key) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (t *Table) DeleteItem(key *Key) (bool, error) {
+	return t.deleteItem(key, nil)
 }
 
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
