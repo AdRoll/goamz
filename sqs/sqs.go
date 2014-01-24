@@ -13,7 +13,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/alimoeeny/goamz/aws"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -168,10 +168,13 @@ func (s *SQS) CreateQueueWithTimeout(queueName string, timeout int) (q *Queue, e
 func (s *SQS) GetQueue(queueName string) (*Queue, error) {
 	var q *Queue
 	resp, err := s.getQueueUrl(queueName)
+	//Ali
+	log.Printf("queue name: %#v url: %v err: %#v \n", queueName, resp, err)
 	if err != nil {
 		return q, err
 	}
 	q = &Queue{s, resp.QueueUrl}
+
 	return q, nil
 }
 
