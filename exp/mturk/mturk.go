@@ -22,6 +22,7 @@ import (
 	//"net/http/httputil"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -165,6 +166,56 @@ type CreateHITResponse struct {
 	HIT       HIT
 }
 
+type Assignment struct {
+	AssignmentId     string
+	WorkerId         string
+	HITId            string
+	AssignmentStatus string
+	AutoApprovalTime string
+	AcceptTime       string
+	SubmitTime       string
+	ApprovalTime     string
+	Answer           string
+}
+
+func (a Assignment) Answers() (answers map[string]string) {
+	answers = make(map[string]string)
+
+	decoder := xml.NewDecoder(strings.NewReader(a.Answer))
+
+	for {
+		token, _ := decoder.Token()
+		if token == nil {
+			break
+		}
+		switch startElement := token.(type) {
+		case xml.StartElement:
+			if startElement.Name.Local == "Answer" {
+				var answer struct {
+					QuestionIdentifier string
+					FreeText           string
+				}
+
+				decoder.DecodeElement(&answer, &startElement)
+				answers[answer.QuestionIdentifier] = answer.FreeText
+			}
+		}
+	}
+
+	return
+}
+
+type GetAssignmentsForHITResponse struct {
+	RequestId                  string `xml:"OperationRequest>RequestId"`
+	GetAssignmentsForHITResult struct {
+		Request         xmlRequest
+		NumResults      uint
+		TotalNumResults uint
+		PageNumber      uint
+		Assignment      Assignment
+	}
+}
+
 // Corresponds to the "CreateHIT" operation of the Mechanical Turk
 // API.  http://goo.gl/cDBRc Currently only supports "external"
 // questions (see "HIT" struct above).  If "keywords", "maxAssignments",
@@ -241,6 +292,18 @@ func (mt *MTurk) CreateHITOfType(hitTypeId string, q ExternalQuestion, lifetimeI
 	err = mt.query(params, "CreateHIT", &response)
 	if err == nil {
 		h = &response.HIT
+	}
+	return
+}
+
+// Get the Assignments for a HIT.
+func (mt *MTurk) GetAssignmentsForHIT(hitId string) (r *Assignment, err error) {
+	params := make(map[string]string)
+	params["HITId"] = hitId
+	var response GetAssignmentsForHITResponse
+	err = mt.query(params, "GetAssignmentsForHIT", &response)
+	if err == nil {
+		r = &response.GetAssignmentsForHITResult.Assignment
 	}
 	return
 }

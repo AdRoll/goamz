@@ -127,3 +127,43 @@ func (s *S) TestSearchHITs(c *gocheck.C) {
 	c.Assert(hitResult.HITs[0].NumberOfAssignmentsAvailable, gocheck.Equals, uint(1))
 	c.Assert(hitResult.HITs[0].NumberOfAssignmentsCompleted, gocheck.Equals, uint(0))
 }
+
+func (s *S) TestGetAssignmentsForHIT_NoAnswer(c *gocheck.C) {
+	testServer.Response(200, nil, GetAssignmentsForHITNoAnswerResponse)
+
+	assignment, err := s.mturk.GetAssignmentsForHIT("emptyassignment")
+
+	testServer.WaitRequest()
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(assignment, gocheck.NotNil)
+
+	c.Assert(assignment.HITId, gocheck.Equals, "")
+}
+
+func (s *S) TestGetAssignmentsForHIT_Answer(c *gocheck.C) {
+	testServer.Response(200, nil, GetAssignmentsForHITAnswerResponse)
+
+	assignment, err := s.mturk.GetAssignmentsForHIT("emptyassignment")
+
+	testServer.WaitRequest()
+
+	c.Assert(err, gocheck.IsNil)
+	c.Assert(assignment, gocheck.NotNil)
+
+	c.Assert(assignment.AssignmentId, gocheck.Equals, "2QKNTL0XULRGFAQWUWDD05FP94V2O3")
+	c.Assert(assignment.WorkerId, gocheck.Equals, "A1ZUQ2YDM61713")
+	c.Assert(assignment.HITId, gocheck.Equals, "2W36VCPWZ9RN5DX1MBJ7VN3D6WEPAM")
+	c.Assert(assignment.AssignmentStatus, gocheck.Equals, "Submitted")
+	c.Assert(assignment.AutoApprovalTime, gocheck.Equals, "2014-02-26T09:39:48Z")
+	c.Assert(assignment.AcceptTime, gocheck.Equals, "2014-01-27T09:39:38Z")
+	c.Assert(assignment.SubmitTime, gocheck.Equals, "2014-01-27T09:39:48Z")
+	c.Assert(assignment.ApprovalTime, gocheck.Equals, "")
+
+	answers := assignment.Answers()
+	c.Assert(len(answers), gocheck.Equals, 4)
+	c.Assert(answers["tags"], gocheck.Equals, "asd")
+	c.Assert(answers["text_in_image"], gocheck.Equals, "asd")
+	c.Assert(answers["is_pattern"], gocheck.Equals, "yes")
+	c.Assert(answers["is_map"], gocheck.Equals, "yes")
+}
