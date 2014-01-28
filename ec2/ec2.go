@@ -282,7 +282,7 @@ type Instance struct {
 }
 
 // isSpotInstance returns if the instance is a spot instance
-func (i Instance) isSpotInstance() bool {
+func (i Instance) IsSpotInstance() bool {
 	if i.InstanceLifecycle == "spot" {
 		return true
 	}
