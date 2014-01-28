@@ -261,8 +261,10 @@ type Instance struct {
 	ClientToken           string `xml:"clientToken"`           // The idempotency token you provided when you launched the instance.
 
 	// Storage
-	BlockDevices []BlockDevice `xml:"blockDeviceMapping>item"`
-	EbsOptimized bool          `xml:"ebsOptimized"`
+	RootDeviceType string        `xml:"rootDeviceType"`          // Valid values: ebs | instance-store
+	RootDeviceName string        `xml:"rootDeviceName"`          // The root device name (for example, /dev/sda1)
+	BlockDevices   []BlockDevice `xml:"blockDeviceMapping>item"` // Any block device mapping entries for the instance
+	EbsOptimized   bool          `xml:"ebsOptimized"`            // Indicates whether the instance is optimized for Amazon EBS I/O
 
 	// Network
 	DNSName          string          `xml:"dnsName"`
