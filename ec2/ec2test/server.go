@@ -422,7 +422,7 @@ func (srv *Server) runInstances(w http.ResponseWriter, req *http.Request, reqId 
 	//    InstanceType              ?
 	//    KernelId                  ?
 	//    RamdiskId                 ?
-	//    AvailZone                 ?
+	//    AvailabilityZone          ?
 	//    GroupName                 tag
 	//    Monitoring                ignore?
 	//    SubnetId                  ?
