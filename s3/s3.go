@@ -67,6 +67,12 @@ type Options struct {
 	// x-amz-storage-class []string
 }
 
+// CopyObjectResult is the output from a Copy request
+type CopyObjectResult struct {
+	ETag         string
+	LastModified string
+}
+
 var attempts = aws.AttemptStrategy{
 	Min:   5,
 	Total: 5 * time.Second,
