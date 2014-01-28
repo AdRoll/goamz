@@ -596,6 +596,16 @@ func (ec2 *EC2) DescribeInstances(instIds []string, filter *Filter) (resp *Descr
 	if err != nil {
 		return nil, err
 	}
+
+	// Add additional parameters to instances which aren't available in the response
+	for i, rsv := range resp.Reservations {
+		ownerId := rsv.OwnerId
+		for j, inst := range rsv.Instances {
+			inst.OwnerId = ownerId
+			resp.Reservations[i].Instances[j] = inst
+		}
+	}
+
 	return
 }
 
@@ -719,15 +729,6 @@ func (ec2 *EC2) DeleteSnapshots(ids []string) (resp *SimpleResp, err error) {
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
-	}
-
-	// Add additional parameters to instances which aren't available in the response
-	for i, rsv := range resp.Reservations {
-		ownerId := rsv.OwnerId
-		for j, inst := range rsv.Instances {
-			inst.OwnerId = ownerId
-			resp.Reservations[i].Instances[j] = inst
-		}
 	}
 
 	return
