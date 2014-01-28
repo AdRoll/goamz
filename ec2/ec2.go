@@ -566,7 +566,7 @@ func (ec2 *EC2) Addresses(instIds []string, filter *Filter) (resp *AddressesResp
 // Response to a DescribeInstances request.
 //
 // See http://goo.gl/mLbmw for more details.
-type InstancesResp struct {
+type DescribeInstancesResp struct {
 	RequestId    string        `xml:"requestId"`
 	Reservations []Reservation `xml:"reservationSet>item"`
 }
@@ -587,11 +587,11 @@ type Reservation struct {
 // matching the given instance ids or filtering rules.
 //
 // See http://goo.gl/4No7c for more details.
-func (ec2 *EC2) DescribeInstances(instIds []string, filter *Filter) (resp *InstancesResp, err error) {
+func (ec2 *EC2) DescribeInstances(instIds []string, filter *Filter) (resp *DescribeInstancesResp, err error) {
 	params := makeParams("DescribeInstances")
 	addParamsList(params, "InstanceId", instIds)
 	filter.addParams(params)
-	resp = &InstancesResp{}
+	resp = &DescribeInstancesResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
