@@ -249,12 +249,16 @@ type Instance struct {
 	// More specific information
 	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
 	Hypervisor            string `xml:"hypervisor"`            // Valid values: ovm | xen
+	KernelId              string `xml:"kernelId"`              // The kernel associated with this instance
+	RamDiskId             string `xml:"ramdiskId"`             // The RAM disk associated with this instance
+	Platform              string `xml:"platform"`              // The value is Windows for Windows AMIs; otherwise blank
 	VirtualizationType    string `xml:"virtualizationType"`    // Valid values: paravirtual | hvm
 	AMILaunchIndex        int    `xml:"amiLaunchIndex"`        // The AMI launch index, which can be used to find this instance in the launch group.
 	PlacementGroupName    string `xml:"placement>groupName"`   // The name of the placement group the instance is in (for cluster compute instances)
 	Tenancy               string `xml:"placement>tenancy"`     // (VPC only) Valid values: default | dedicated
 	InstanceLifecycle     string `xml:"instanceLifecycle"`     // Spot instance? Valid values: "spot" or blank
 	SpotInstanceRequestId string `xml:"spotInstanceRequestId"` // The ID of the Spot Instance request
+	ClientToken           string `xml:"clientToken"`           // The idempotency token you provided when you launched the instance.
 
 	// Storage
 	BlockDevices []BlockDevice `xml:"blockDeviceMapping>item"`
