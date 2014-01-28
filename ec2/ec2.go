@@ -250,15 +250,15 @@ type Instance struct {
 }
 
 type BlockDevice struct {
-	DeviceName         string        `xml:"deviceName"`
-	EBS EBS `xml:"ebs"`
+	DeviceName string `xml:"deviceName"`
+	EBS        EBS    `xml:"ebs"`
 }
 
 type EBS struct {
-	VolumeId string `xml:"volumeId"`
-	Status string `xml:"status"`
-	AttachTime string `xml:"attachTime"`
-	DeleteOnTermination bool `xml:"deleteOnTermination"`
+	VolumeId            string `xml:"volumeId"`
+	Status              string `xml:"status"`
+	AttachTime          string `xml:"attachTime"`
+	DeleteOnTermination bool   `xml:"deleteOnTermination"`
 }
 
 // RunInstances starts new instances in EC2.
@@ -454,6 +454,7 @@ func (ec2 *EC2) Addresses(instIds []string, filter *Filter) (resp *AddressesResp
 	}
 	return
 }
+
 // Response to a DescribeInstances request.
 //
 // See http://goo.gl/mLbmw for more details.
