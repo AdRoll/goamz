@@ -236,13 +236,15 @@ type Instance struct {
 	AvailabilityZone   string              `xml:"placement>availabilityZone"`
 	Tags               []Tag               `xml:"tagSet>item"`
 	State              InstanceState       `xml:"instanceState"`
+	Reason             string              `xml:"reason"` // The reason for the most recent state transition. This might be an empty string.
 	StateReason        InstanceStateReason `xml:"stateReason"`
 	ImageId            string              `xml:"imageId"`
 	KeyName            string              `xml:"keyName"`
-	Monitoring         string              `xml:"monitoring>state"`
+	Monitoring         string              `xml:"monitoring>state"` // Valid values: disabled | enabled | pending
 	IamInstanceProfile IamInstanceProfile  `xml:"iamInstanceProfile"`
 	LaunchTime         string              `xml:"launchTime"`
 	OwnerId            string              // This isn't currently returned in the response, and is taken from the parent reservation
+	ProductCodes       []ProductCode       `xml:"productCodes>item"`
 
 	// More specific information
 	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
@@ -291,6 +293,13 @@ type EBS struct {
 	Status              string `xml:"status"`
 	AttachTime          string `xml:"attachTime"`
 	DeleteOnTermination bool   `xml:"deleteOnTermination"`
+}
+
+// ProductCode represents a product code
+// See http://goo.gl/hswmQm for more details.
+type ProductCode struct {
+	ProductCode string `xml:"productCode"` // The product code
+	Type        string `xml:"type"`        // Valid values: devpay | marketplace
 }
 
 // InstanceNetworkInterface represents a network interface attached to an instance
