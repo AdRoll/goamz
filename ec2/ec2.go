@@ -267,18 +267,18 @@ type Instance struct {
 	EbsOptimized   bool          `xml:"ebsOptimized"`            // Indicates whether the instance is optimized for Amazon EBS I/O
 
 	// Network
-	DNSName          string          `xml:"dnsName"`
-	PrivateDNSName   string          `xml:"privateDnsName"`
-	IPAddress        string          `xml:"ipAddress"`
-	PrivateIPAddress string          `xml:"privateIpAddress"`
-	SubnetId         string          `xml:"subnetId"`
-	VpcId            string          `xml:"vpcId"`
-	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`
+	DNSName          string          `xml:"dnsName"`          // The public DNS name assigned to the instance. This element remains empty until the instance enters the running state
+	PrivateDNSName   string          `xml:"privateDnsName"`   // The private DNS name assigned to the instance. This DNS name can only be used inside the Amazon EC2 network. This element remains empty until the instance enters the running state
+	IPAddress        string          `xml:"ipAddress"`        // The public IP address assigned to the instance
+	PrivateIPAddress string          `xml:"privateIpAddress"` // The private IP address assigned to the instance
+	SubnetId         string          `xml:"subnetId"`         // The ID of the subnet in which the instance is running
+	VpcId            string          `xml:"vpcId"`            // The ID of the VPC in which the instance is running
+	SecurityGroups   []SecurityGroup `xml:"groupSet>item"`    // A list of the security groups for the instance
 
 	// Advanced Networking
-	NetworkInterfaces []InstanceNetworkInterface `xml:"networkInterfaceSet>item"`
-	SourceDestCheck   bool                       `xml:"sourceDestCheck"`
-	SriovNetSupport   string                     `xml:"sriovNetSupport"`
+	NetworkInterfaces []InstanceNetworkInterface `xml:"networkInterfaceSet>item"` // (VPC) One or more network interfaces for the instance
+	SourceDestCheck   bool                       `xml:"sourceDestCheck"`          // Controls whether source/destination checking is enabled on the instance
+	SriovNetSupport   string                     `xml:"sriovNetSupport"`          // Specifies whether enhanced networking is enabled. Valid values: simple
 }
 
 // isSpotInstance returns if the instance is a spot instance
