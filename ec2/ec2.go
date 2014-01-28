@@ -534,12 +534,14 @@ func (ec2 *EC2) TerminateInstances(instIds []string) (resp *TerminateInstancesRe
 
 // Response to a DescribeAddresses request.
 //
-// See http://goo.gl/mLbmw for more details.
-type AddressesResp struct {
+// See http://goo.gl/zW7J4p for more details.
+type DescribeAddressesResp struct {
 	RequestId string    `xml:"requestId"`
 	Addresses []Address `xml:"addressesSet>item"`
 }
 
+// Address represents an Elastic IP Address
+// See http://goo.gl/uxCjp7 for more details
 type Address struct {
 	PublicIp                string `xml:"publicIp"`
 	AllocationId            string `xml:"allocationId"`
@@ -550,15 +552,15 @@ type Address struct {
 	NetworkInterfaceOwnerId string `xml:"networkInterfaceOwnerId"`
 }
 
-// Addresses returns details about the allocated VPC and EC2
-// ip addresses
+// DescribeAddresses returns details about one or more
+// of your Elastic IP Addresses
 //
 // See http://goo.gl/zW7J4p for more details.
-func (ec2 *EC2) Addresses(publicIps []string, filter *Filter) (resp *AddressesResp, err error) {
+func (ec2 *EC2) DescribeAddresses(publicIps []string, filter *Filter) (resp *DescribeAddressesResp, err error) {
 	params := makeParams("DescribeAddresses")
 	addParamsList(params, "PublicIp", publicIps)
 	filter.addParams(params)
-	resp = &AddressesResp{}
+	resp = &DescribeAddressesResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
