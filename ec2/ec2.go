@@ -231,34 +231,34 @@ type RunInstancesResp struct {
 type Instance struct {
 
 	// General instance information
-	InstanceId         string              `xml:"instanceId"`
-	InstanceType       string              `xml:"instanceType"`
-	AvailabilityZone   string              `xml:"placement>availabilityZone"`
-	Tags               []Tag               `xml:"tagSet>item"`
-	State              InstanceState       `xml:"instanceState"`
-	Reason             string              `xml:"reason"` // The reason for the most recent state transition. This might be an empty string.
-	StateReason        InstanceStateReason `xml:"stateReason"`
-	ImageId            string              `xml:"imageId"`
-	KeyName            string              `xml:"keyName"`
-	Monitoring         string              `xml:"monitoring>state"` // Valid values: disabled | enabled | pending
-	IamInstanceProfile IamInstanceProfile  `xml:"iamInstanceProfile"`
-	LaunchTime         string              `xml:"launchTime"`
+	InstanceId         string              `xml:"instanceId"`                 // The ID of the instance launched
+	InstanceType       string              `xml:"instanceType"`               // The instance type eg. m1.small | m1.medium | m1.large etc
+	AvailabilityZone   string              `xml:"placement>availabilityZone"` // The Availability Zone the instance is located in
+	Tags               []Tag               `xml:"tagSet>item"`                // Any tags assigned to the resource
+	State              InstanceState       `xml:"instanceState"`              // The current state of the instance
+	Reason             string              `xml:"reason"`                     // The reason for the most recent state transition. This might be an empty string
+	StateReason        InstanceStateReason `xml:"stateReason"`                // The reason for the most recent state transition
+	ImageId            string              `xml:"imageId"`                    // The ID of the AMI used to launch the instance
+	KeyName            string              `xml:"keyName"`                    // The key pair name, if this instance was launched with an associated key pair
+	Monitoring         string              `xml:"monitoring>state"`           // Valid values: disabled | enabled | pending
+	IamInstanceProfile IamInstanceProfile  `xml:"iamInstanceProfile"`         // The IAM instance profile associated with the instance
+	LaunchTime         string              `xml:"launchTime"`                 // The time the instance was launched
 	OwnerId            string              // This isn't currently returned in the response, and is taken from the parent reservation
-	ProductCodes       []ProductCode       `xml:"productCodes>item"`
 
 	// More specific information
-	Architecture          string `xml:"architecture"`          // Valid values: i386 | x86_64
-	Hypervisor            string `xml:"hypervisor"`            // Valid values: ovm | xen
-	KernelId              string `xml:"kernelId"`              // The kernel associated with this instance
-	RamDiskId             string `xml:"ramdiskId"`             // The RAM disk associated with this instance
-	Platform              string `xml:"platform"`              // The value is Windows for Windows AMIs; otherwise blank
-	VirtualizationType    string `xml:"virtualizationType"`    // Valid values: paravirtual | hvm
-	AMILaunchIndex        int    `xml:"amiLaunchIndex"`        // The AMI launch index, which can be used to find this instance in the launch group.
-	PlacementGroupName    string `xml:"placement>groupName"`   // The name of the placement group the instance is in (for cluster compute instances)
-	Tenancy               string `xml:"placement>tenancy"`     // (VPC only) Valid values: default | dedicated
-	InstanceLifecycle     string `xml:"instanceLifecycle"`     // Spot instance? Valid values: "spot" or blank
-	SpotInstanceRequestId string `xml:"spotInstanceRequestId"` // The ID of the Spot Instance request
-	ClientToken           string `xml:"clientToken"`           // The idempotency token you provided when you launched the instance.
+	Architecture          string        `xml:"architecture"`          // Valid values: i386 | x86_64
+	Hypervisor            string        `xml:"hypervisor"`            // Valid values: ovm | xen
+	KernelId              string        `xml:"kernelId"`              // The kernel associated with this instance
+	RamDiskId             string        `xml:"ramdiskId"`             // The RAM disk associated with this instance
+	Platform              string        `xml:"platform"`              // The value is Windows for Windows AMIs; otherwise blank
+	VirtualizationType    string        `xml:"virtualizationType"`    // Valid values: paravirtual | hvm
+	AMILaunchIndex        int           `xml:"amiLaunchIndex"`        // The AMI launch index, which can be used to find this instance in the launch group
+	PlacementGroupName    string        `xml:"placement>groupName"`   // The name of the placement group the instance is in (for cluster compute instances)
+	Tenancy               string        `xml:"placement>tenancy"`     // (VPC only) Valid values: default | dedicated
+	InstanceLifecycle     string        `xml:"instanceLifecycle"`     // Spot instance? Valid values: "spot" or blank
+	SpotInstanceRequestId string        `xml:"spotInstanceRequestId"` // The ID of the Spot Instance request
+	ClientToken           string        `xml:"clientToken"`           // The idempotency token you provided when you launched the instance
+	ProductCodes          []ProductCode `xml:"productCodes>item"`     // The product codes attached to this instance
 
 	// Storage
 	RootDeviceType string        `xml:"rootDeviceType"`          // Valid values: ebs | instance-store
