@@ -280,6 +280,35 @@ func (b *Bucket) Put(path string, data []byte, contType string, perm ACL, option
 	return b.PutReader(path, body, int64(len(data)), contType, perm, options)
 }
 
+// PutCopy puts a copy of an object given by the key path into bucket b using b.Path as the target key
+func (b *Bucket) PutCopy(path string, perm ACL, options Options, source string) (*CopyObjectResult, error) {
+	headers := map[string][]string{
+		"x-amz-acl":         {string(perm)},
+		"x-amz-copy-source": {source},
+	}
+	if options.SSE {
+		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	}
+	if len(options.ContentEncoding) != 0 {
+		headers["Content-Encoding"] = []string{options.ContentEncoding}
+	}
+	for k, v := range options.Meta {
+		headers["x-amz-meta-"+k] = v
+	}
+	req := &request{
+		method:  "PUT",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+	}
+	resp := &CopyObjectResult{}
+	err := b.S3.query(req, resp)
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
 // PutReader inserts an object into the S3 bucket by consuming data
 // from r until EOF.
 func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL, options Options) error {
