@@ -550,6 +550,7 @@ type Address struct {
 	AssociationId           string `xml:"associationId"`
 	NetworkInterfaceId      string `xml:"networkInterfaceId"`
 	NetworkInterfaceOwnerId string `xml:"networkInterfaceOwnerId"`
+	PrivateIpAddress        string `xml:"privateIpAddress"`
 }
 
 // DescribeAddresses returns details about one or more

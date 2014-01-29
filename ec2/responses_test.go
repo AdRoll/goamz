@@ -9,9 +9,9 @@ var ErrorDump = `
 
 // http://goo.gl/Mcm3b
 var RunInstancesExample = `
-<RunInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/"> 
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
-  <reservationId>r-47a5402e</reservationId> 
+<RunInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+  <reservationId>r-47a5402e</reservationId>
   <ownerId>999988887777</ownerId>
   <groupSet>
       <item>
@@ -99,7 +99,7 @@ var RunInstancesExample = `
 // http://goo.gl/3BKHj
 var TerminateInstancesExample = `
 <TerminateInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <instancesSet>
     <item>
       <instanceId>i-3ea74257</instanceId>
@@ -247,8 +247,8 @@ var DescribeInstancesExample1 = `
 
 // http://goo.gl/mLbmw
 var DescribeInstancesExample2 = `
-<DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/"> 
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+<DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <reservationSet>
     <item>
       <reservationId>r-bc7e30d7</reservationId>
@@ -321,8 +321,8 @@ var DescribeInstancesExample2 = `
 //http://goo.gl/zW7J4p
 var DescribeAddressesExample = `
 <DescribeAddressesResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
-   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
-   <addressesSet> 
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+   <addressesSet>
       <item>
          <publicIp>192.0.2.1</publicIp>
          <domain>standard</domain>
@@ -332,7 +332,7 @@ var DescribeAddressesExample = `
          <publicIp>198.51.100.2</publicIp>
          <domain>standard</domain>
          <instanceId/>
-      </item> 
+      </item>
       <item>
          <publicIp>203.0.113.41</publicIp>
          <allocationId>eipalloc-08229861</allocationId>
@@ -343,14 +343,42 @@ var DescribeAddressesExample = `
          <networkInterfaceOwnerId>053230519467</networkInterfaceOwnerId>
          <privateIpAddress>10.0.0.228</privateIpAddress>
      </item>
-   </addressesSet> 
+   </addressesSet>
+</DescribeAddressesResponse>
+`
+
+var DescribeAddressesAllocationIdExample = `
+<DescribeAddressesResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+   <addressesSet>
+      <item>
+         <publicIp>203.0.113.41</publicIp>
+         <allocationId>eipalloc-08229861</allocationId>
+         <domain>vpc</domain>
+         <instanceId>i-64600030</instanceId>
+         <associationId>eipassoc-f0229899</associationId>
+         <networkInterfaceId>eni-ef229886</networkInterfaceId>
+         <networkInterfaceOwnerId>053230519467</networkInterfaceOwnerId>
+         <privateIpAddress>10.0.0.228</privateIpAddress>
+     </item>
+     <item>
+         <publicIp>146.54.2.230</publicIp>
+         <allocationId>eipalloc-08364752</allocationId>
+         <domain>vpc</domain>
+         <instanceId>i-64693456</instanceId>
+         <associationId>eipassoc-f0348693</associationId>
+         <networkInterfaceId>eni-da764039</networkInterfaceId>
+         <networkInterfaceOwnerId>053230519467</networkInterfaceOwnerId>
+         <privateIpAddress>10.0.0.102</privateIpAddress>
+     </item>
+   </addressesSet>
 </DescribeAddressesResponse>
 `
 
 //http://goo.gl/aLPmbm
 var AllocateAddressExample = `
 <AllocateAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
-   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <publicIp>198.51.100.1</publicIp>
    <domain>vpc</domain>
    <allocationId>eipalloc-5723d13e</allocationId>
@@ -360,7 +388,7 @@ var AllocateAddressExample = `
 //http://goo.gl/Ciw2Z8
 var ReleaseAddressExample = `
 <ReleaseAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </ReleaseAddressResponse>
 `
@@ -377,7 +405,7 @@ var AssociateAddressExample = `
 //http://goo.gl/Dapkuz
 var DiassociateAddressExample = `
 <ReleaseAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </ReleaseAddressResponse>
 `
@@ -442,7 +470,7 @@ var CreateSnapshotExample = `
 // http://goo.gl/vwU1y
 var DeleteSnapshotExample = `
 <DeleteSnapshotResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </DeleteSnapshotResponse>
 `
@@ -450,7 +478,7 @@ var DeleteSnapshotExample = `
 // http://goo.gl/nkovs
 var DescribeSnapshotsExample = `
 <DescribeSnapshotsResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
-   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <snapshotSet>
       <item>
          <snapshotId>snap-1a2b3c4d</snapshotId>
@@ -484,7 +512,7 @@ var CreateSecurityGroupExample = `
 // http://goo.gl/k12Uy
 var DescribeSecurityGroupsExample = `
 <DescribeSecurityGroupsResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <securityGroupInfo>
     <item>
       <ownerId>999988887777</ownerId>
@@ -586,7 +614,7 @@ var AuthorizeSecurityGroupIngressExample = `
 // http://goo.gl/Mz7xr
 var RevokeSecurityGroupIngressExample = `
 <RevokeSecurityGroupIngressResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </RevokeSecurityGroupIngressResponse>
 `
@@ -602,7 +630,7 @@ var CreateTagsExample = `
 // http://goo.gl/awKeF
 var StartInstancesExample = `
 <StartInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>   
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <instancesSet>
     <item>
       <instanceId>i-10a64379</instanceId>
@@ -622,7 +650,7 @@ var StartInstancesExample = `
 // http://goo.gl/436dJ
 var StopInstancesExample = `
 <StopInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <instancesSet>
     <item>
       <instanceId>i-10a64379</instanceId>
@@ -642,7 +670,7 @@ var StopInstancesExample = `
 // http://goo.gl/baoUf
 var RebootInstancesExample = `
 <RebootInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </RebootInstancesResponse>
 `
