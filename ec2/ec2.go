@@ -553,12 +553,14 @@ type Address struct {
 }
 
 // DescribeAddresses returns details about one or more
-// of your Elastic IP Addresses
+// Elastic IP Addresses. Returned addresses can be
+// filtered by Public IP, Allocation ID or multiple filters
 //
 // See http://goo.gl/zW7J4p for more details.
-func (ec2 *EC2) DescribeAddresses(publicIps []string, filter *Filter) (resp *DescribeAddressesResp, err error) {
+func (ec2 *EC2) DescribeAddresses(publicIps []string, allocationIds []string, filter *Filter) (resp *DescribeAddressesResp, err error) {
 	params := makeParams("DescribeAddresses")
 	addParamsList(params, "PublicIp", publicIps)
+	addParamsList(params, "AllocationId", allocationIds)
 	filter.addParams(params)
 	resp = &DescribeAddressesResp{}
 	err = ec2.query(params, resp)

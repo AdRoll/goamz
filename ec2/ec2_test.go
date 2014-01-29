@@ -263,7 +263,7 @@ func (s *S) TestDescribeAddressesExample(c *gocheck.C) {
 	filter.Add("key1", "value1")
 	filter.Add("key2", "value2", "value3")
 
-	resp, err := s.ec2.DescribeAddresses([]string{"192.0.2.1", "198.51.100.2", "203.0.113.41"}, nil)
+	resp, err := s.ec2.DescribeAddresses([]string{"192.0.2.1", "198.51.100.2", "203.0.113.41"}, []string{}, nil)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], gocheck.DeepEquals, []string{"DescribeAddresses"})
