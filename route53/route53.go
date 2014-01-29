@@ -103,6 +103,12 @@ type GetHostedZoneResponse struct {
 	DelegationSet DelegationSet
 }
 
+type DeleteHostedZoneResponse struct {
+	XMLName    xml.Name `xml:"DeleteHostedZoneResponse"`
+	Xmlns      string   `xml:"xmlns,attr"`
+	ChangeInfo ChangeInfo
+}
+
 // query sends the specified HTTP request to the path and signs the request
 // with the required authentication and headers based on the Auth.
 //
@@ -162,6 +168,16 @@ func (r *Route53) ListHostedZones(marker string, maxItems int) (result *ListHost
 func (r *Route53) GetHostedZone(id string) (result *GetHostedZoneResponse, err error) {
 	result = new(GetHostedZoneResponse)
 	err = r.query("GET", fmt.Sprintf("%s/%v", r.Endpoint, id), nil, result)
+
+	return
+}
+
+// DeleteHostedZone deletes the hosted zone with the given id
+func (r *Route53) DeleteHostedZone(id string) (result *DeleteHostedZoneResponse, err error) {
+	path := fmt.Sprintf("%s/%s", r.Endpoint, id)
+
+	result = new(DeleteHostedZoneResponse)
+	err = r.query("DELETE", path, nil, result)
 
 	return
 }
