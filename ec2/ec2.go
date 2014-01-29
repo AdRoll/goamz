@@ -534,33 +534,180 @@ func (ec2 *EC2) TerminateInstances(instIds []string) (resp *TerminateInstancesRe
 
 // Response to a DescribeAddresses request.
 //
-// See http://goo.gl/mLbmw for more details.
-type AddressesResp struct {
+// See http://goo.gl/zW7J4p for more details.
+type DescribeAddressesResp struct {
 	RequestId string    `xml:"requestId"`
 	Addresses []Address `xml:"addressesSet>item"`
 }
 
+// Address represents an Elastic IP Address
+// See http://goo.gl/uxCjp7 for more details
 type Address struct {
-	PublicIp   string `xml:"publicIp"`
-	Domain     string `xml:"domain"`
-	InstanceID string `xml:"instanceId"`
+	PublicIp                string `xml:"publicIp"`
+	AllocationId            string `xml:"allocationId"`
+	Domain                  string `xml:"domain"`
+	InstanceId              string `xml:"instanceId"`
+	AssociationId           string `xml:"associationId"`
+	NetworkInterfaceId      string `xml:"networkInterfaceId"`
+	NetworkInterfaceOwnerId string `xml:"networkInterfaceOwnerId"`
+	PrivateIpAddress        string `xml:"privateIpAddress"`
 }
 
-// Instances returns details about instances in EC2.  Both parameters
-// are optional, and if provided will limit the instances returned to those
-// matching the given instance ids or filtering rules.
+// DescribeAddresses returns details about one or more
+// Elastic IP Addresses. Returned addresses can be
+// filtered by Public IP, Allocation ID or multiple filters
 //
-// See http://goo.gl/4No7c for more details.
-func (ec2 *EC2) Addresses(instIds []string, filter *Filter) (resp *AddressesResp, err error) {
+// See http://goo.gl/zW7J4p for more details.
+func (ec2 *EC2) DescribeAddresses(publicIps []string, allocationIds []string, filter *Filter) (resp *DescribeAddressesResp, err error) {
 	params := makeParams("DescribeAddresses")
-	addParamsList(params, "InstanceId", instIds)
+	addParamsList(params, "PublicIp", publicIps)
+	addParamsList(params, "AllocationId", allocationIds)
 	filter.addParams(params)
-	resp = &AddressesResp{}
+	resp = &DescribeAddressesResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
 	}
 	return
+}
+
+//Response to an AllocateAddress request
+//
+// See  http://goo.gl/aLPmbm for more details
+type AllocateAddressResp struct {
+	RequestId    string `xml:"requestId"`
+	PublicIp     string `xml:"publicIp"`
+	Domain       string `xml:"domain"`
+	AllocationId string `xml:"allocationId"`
+}
+
+// Allocates a new Elastic ip address.
+// The domain parameter is optional and is used for provisioning an ip address
+// in EC2 or in VPC respectively
+//
+// See http://goo.gl/aLPmbm for more details
+func (ec2 *EC2) AllocateAddress(domain string) (resp *AllocateAddressResp, err error) {
+	params := makeParams("AllocateAddress")
+	params["Domain"] = domain
+
+	resp = &AllocateAddressResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Response to a ReleaseAddress request
+//
+// See http://goo.gl/Ciw2Z8 for more details
+type ReleaseAddressResp struct {
+	RequestId string `xml:"requestId"`
+	Return    bool   `xml:"return"`
+}
+
+// Release existing elastic ip address from the account
+// PublicIp = Required for EC2
+// AllocationId = Required for VPC
+//
+// See http://goo.gl/Ciw2Z8 for more details
+func (ec2 *EC2) ReleaseAddress(publicIp, allocationId string) (resp *ReleaseAddressResp, err error) {
+	params := makeParams("ReleaseAddress")
+
+	if publicIp != "" {
+		params["PublicIp"] = publicIp
+
+	}
+	if allocationId != "" {
+		params["AllocationId"] = allocationId
+	}
+
+	resp = &ReleaseAddressResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Options set for AssociateAddress
+//
+// See http://goo.gl/hhj4z7 for more details
+type AssociateAddressOptions struct {
+	PublicIp           string
+	InstanceId         string
+	AllocationId       string
+	NetworkInterfaceId string
+	PrivateIpAddress   string
+	AllowReassociation bool
+}
+
+// Response to an AssociateAddress request
+//
+// See http://goo.gl/hhj4z7 for more details
+type AssociateAddressResp struct {
+	RequestId     string `xml:"requestId"`
+	Return        bool   `xml:"return"`
+	AssociationId string `xml:"associationId"`
+}
+
+// Associate an Elastic ip address to an instance id or a network interface
+//
+// See http://goo.gl/hhj4z7 for more details
+func (ec2 *EC2) AssociateAddress(options *AssociateAddressOptions) (resp *AssociateAddressResp, err error) {
+	params := makeParams("AssociateAddress")
+	params["InstanceId"] = options.InstanceId
+	if options.PublicIp != "" {
+		params["PublicIp"] = options.PublicIp
+	}
+	if options.AllocationId != "" {
+		params["AllocationId"] = options.AllocationId
+	}
+	if options.NetworkInterfaceId != "" {
+		params["NetworkInterfaceId"] = options.NetworkInterfaceId
+	}
+	if options.PrivateIpAddress != "" {
+		params["PrivateIpAddress"] = options.PrivateIpAddress
+	}
+	if options.AllowReassociation {
+		params["AllowReassociation"] = "true"
+	}
+
+	resp = &AssociateAddressResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+// Response to a Diassociate request
+//
+// See http://goo.gl/Dapkuzfor more details
+type DiassociateAddressResp struct {
+	RequestId string `xml:"requestId"`
+	Return    bool   `xml:"return"`
+}
+
+// Diassociate an elastic ip address from an instance
+// PublicIp - Required for EC2
+// AssociationId - Required for VPC
+// See http://goo.gl/Dapkuz for more details
+func (ec2 *EC2) DiassociateAddress(publicIp, associationId string) (resp *DiassociateAddressResp, err error) {
+	params := makeParams("DiassociateAddress")
+	if publicIp != "" {
+		params["PublicIp"] = publicIp
+	}
+	if associationId != "" {
+		params["AssociationId"] = associationId
+	}
+
+	resp = &DiassociateAddressResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 // Response to a DescribeInstances request.
