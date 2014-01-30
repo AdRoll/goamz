@@ -44,12 +44,16 @@ type DBInstance struct {
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBParameterGroup.html
-type DBParameterGroup struct{}
+type DBParameterGroup struct {
+	Name        string `xml:"DBParameterGroupName"`
+	Description string `xml:"Description"`
+	Family      string `xml:"DBParameterGroupFamily"`
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBParameterGroupStatus.html
 type DBParameterGroupStatus struct {
-	Name   string
-	Status string
+	Name   string `xml:"DBParameterGroupName"`
+	Status string `xml:"ParameterApplyStatus"`
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSecurityGroup.html
@@ -69,31 +73,52 @@ type DBSecurityGroupMembership struct {
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBInstanceStatusInfo.html
-type DBInstanceStatusInfo struct{}
+type DBInstanceStatusInfo struct {
+	Message    string `xml:"Message"`    // Details of the error if there is an error for the instance. If the instance is not in an error state, this value is blank.
+	Normal     bool   `xml:"Normal"`     // Boolean value that is true if the instance is operating normally, or false if the instance is in an error state.
+	Status     string `xml:"Status"`     // Status of the DB instance. For a StatusType of read replica, the values can be replicating, error, stopped, or terminated.
+	StatusType string `xml:"StatusType"` // This value is currently "read replication."
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSubnetGroup.html
 type DBSubnetGroup struct {
-	Description string
-	Name        string
-	Status      string
-	Subnets     []Subnet
-	VpcId       string
+	Name        string   `xml:"DBSubnetGroupName"`
+	Description string   `xml:"DBSubnetGroupDescription"`
+	Status      string   `xml:"SubnetGroupStatus"`
+	Subnets     []Subnet `xml:"Subnets"`
+	VpcId       string   `xml:"VpcId"`
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EC2SecurityGroup.html
-type EC2SecurityGroup struct{}
+type EC2SecurityGroup struct {
+	Id      string `xml:"EC2SecurityGroupId"`
+	Name    string `xml:"EC2SecurityGroupName"`
+	OwnerId string `xml:"EC2SecurityGroupOwnerId"`
+	Status  string `xml:"Status"`
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Endpoint.html
 type Endpoint struct {
-	Address string
-	Port    int
+	Address string `xml:"Address"`
+	Port    int    `xml:"Port"`
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_IPRange.html
-type IPRange struct{}
+type IPRange struct {
+	CIDRIP string `xml:"CIDRIP"`
+	Status string `xml:"Status"` // Specifies the status of the IP range. Status can be "authorizing", "authorized", "revoking", and "revoked".
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroup.html
-type OptionGroup struct{}
+type OptionGroup struct {
+	Name                                  string   `xml:"OptionGroupName"`
+	Description                           string   `xml:"OptionGroupDescription"`
+	VpcId                                 string   `xml:"VpcId"`
+	AllowsVpcAndNonVpcInstanceMemberships bool     `xml:"AllowsVpcAndNonVpcInstanceMemberships"`
+	EngineName                            string   `xml:"EngineName"`
+	MajorEngineVersion                    string   `xml:"MajorEngineVersion"`
+	Options                               []Option `xml:"Options"`
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroupMembership.html
 type OptionGroupMembership struct {
@@ -106,9 +131,9 @@ type PendingModifiedValues struct{}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Subnet.html
 type Subnet struct {
-	AvailabilityZone AvailabilityZone
-	Identifier       string
-	Status           string
+	Id               string           `xml:"SubnetIdentifier"`
+	Status           string           `xml:"SubnetStatus"`
+	AvailabilityZone AvailabilityZone `xml:"SubnetAvailabilityZone"`
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_VpcSecurityGroupMembership.html
