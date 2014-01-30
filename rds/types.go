@@ -222,10 +222,31 @@ type OptionGroupMembership struct {
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionSetting.html
-type OptionSetting struct{}
+type OptionSetting struct {
+	Name          string `xml:"Name"`
+	Value         string `xml:"Value"`
+	Description   string `xml:"Description"`
+	AllowedValues string `xml:"AllowedValues"`
+	ApplyType     string `xml:"ApplyType"`
+	DataType      string `xml:"DataType"`
+	DefaultValue  string `xml:"DefaultValue"`
+	IsCollection  bool   `xml:"IsCollection"`
+	IsModifiable  bool   `xml:"IsModifiable"`
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Parameter.html
-type Parameter struct{}
+type Parameter struct {
+	AllowedValues        string `xml:"AllowedValues"`
+	ApplyMethod          string `xml:"ApplyMethod"` // Valid Values: immediate | pending-reboot
+	ApplyType            string `xml:"ApplyType"`
+	DataType             string `xml:"DataType"`
+	Description          string `xml:"Description"`
+	IsModifiable         bool   `xml:"IsModifiable"`
+	MinimumEngineVersion string `xml:"MinimumEngineVersion"`
+	ParameterName        string `xml:"ParameterName"`
+	ParameterValue       string `xml:"ParameterValue"`
+	Source               string `xml:"Source"`
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_PendingModifiedValues.html
 type PendingModifiedValues struct {
