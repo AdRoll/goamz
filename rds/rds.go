@@ -62,8 +62,8 @@ func (rds *RDS) query(method, path string, params map[string]string, resp interf
 //
 // See http://goo.gl/KSPlAl for more details.
 type DescribeDBInstancesResp struct {
-	DBInstances []DBInstance `xml:"DescribeDBInstancesResult>DBInstances"` // The list of database instances
-	Marker      string       `xml:"DescribeDBInstancesResult>Marker"`      // An optional pagination token provided by a previous request
+	DBInstances []DBInstance `xml:"DescribeDBInstancesResult>DBInstances>DBInstance"` // The list of database instances
+	Marker      string       `xml:"DescribeDBInstancesResult>Marker"`                 // An optional pagination token provided by a previous request
 	RequestId   string       `xml:"ResponseMetadata>RequestId"`
 }
 
