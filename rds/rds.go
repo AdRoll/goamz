@@ -29,7 +29,7 @@ func New(auth aws.Auth, region aws.ServiceInfo) (*RDS, error) {
 // ----------------------------------------------------------------------------
 // Request dispatching logic.
 
-// query dispatches a request to the RDS API signed with a version 4 signature
+// query dispatches a request to the RDS API signed with a version 2 signature
 func (rds *RDS) query(method, path string, params map[string]string, resp interface{}) error {
 	// Add basic RDS param
 	params["Version"] = "2010-01-01"
