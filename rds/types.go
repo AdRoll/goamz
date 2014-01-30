@@ -2,8 +2,25 @@ package rds
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_AvailabilityZone.html
 type AvailabilityZone struct {
-	Name                   string
-	ProvisionedIopsCapable bool
+	Name                   string `xml:"Name"`
+	ProvisionedIopsCapable bool   `xml:"ProvisionedIopsCapable"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CharacterSet.html
+type CharacterSet struct {
+	Name        string `xml:"CharacterSetName"`
+	Description string `xml:"CharacterSetDescription"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBEngineVersion.html
+type DBEngineVersion struct {
+	DBEngineDescription        string         `xml:"DBEngineDescription"`        // The description of the database engine
+	DBEngineVersionDescription string         `xml:"DBEngineVersionDescription"` // The description of the database engine version
+	DBParameterGroupFamily     string         `xml:"DBParameterGroupFamily"`     // The name of the DB parameter group family for the database engine
+	DefaultCharacterSet        CharacterSet   `xml:"DefaultCharacterSet"`        // The default character set for new instances of this engine version, if the CharacterSetName parameter of the CreateDBInstance API is not specified
+	Engine                     string         `xml:"Engine"`                     // The name of the database engine
+	EngineVersion              string         `xml:"EngineVersion"`              // The version number of the database engine
+	SupportedCharacterSets     []CharacterSet `xml:"SupportedCharacterSets"`     // A list of the character sets supported by this engine for the CharacterSetName parameter of the CreateDBInstance API
 }
 
 // DBInstance encapsulates an instance of a Database
@@ -80,6 +97,28 @@ type DBSecurityGroupMembership struct {
 	Status string `xml:"Status"`
 }
 
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSnapshot.html
+type DBSnapshot struct {
+	AllocatedStorage     int    `xml:"AllocatedStorage"` // Specifies the allocated storage size in gigabytes (GB)
+	AvailabilityZone     string `xml:"AvailabilityZone"`
+	DBInstanceIdentifier string `xml:"DBInstanceIdentifier"`
+	DBSnapshotIdentifier string `xml:"DBSnapshotIdentifier"`
+	Engine               string `xml:"Engine"`
+	EngineVersion        string `xml:"EngineVersion"`
+	InstanceCreateTime   string `xml:"InstanceCreateTime"`
+	Iops                 int    `xml:"Iops"`
+	LicenseModel         string `xml:"LicenseModel"`
+	MasterUsername       string `xml:"MasterUsername"`
+	OptionGroupName      string `xml:"OptionGroupName"`
+	PercentProgress      int    `xml:"PercentProgress"`
+	Port                 int    `xml:"Port"`
+	SnapshotCreateTime   string `xml:"SnapshotCreateTime"`
+	SnapshotType         string `xml:"SnapshotType"`
+	SourceRegion         string `xml:"SourceRegion"`
+	Status               string `xml:"Status"`
+	VpcId                string `xml:"VpcId"`
+}
+
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSubnetGroup.html
 type DBSubnetGroup struct {
 	Name        string   `xml:"DBSubnetGroupName"`
@@ -103,10 +142,61 @@ type Endpoint struct {
 	Port    int    `xml:"Port"`
 }
 
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EngineDefaults.html
+type EngineDefaults struct {
+	DBParameterGroupFamily string      `xml:"DBParameterGroupFamily"`
+	Marker                 string      `xml:"Marker"`
+	Parameters             []Parameter `xml:"Parameters"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Event.html
+type Event struct {
+	Date             string   `xml:"Date"`             // Specifies the date and time of the event
+	EventCategories  []string `xml:"EventCategories"`  // Specifies the category for the event
+	Message          string   `xml:"Message"`          // Provides the text of this event
+	SourceIdentifier string   `xml:"SourceIdentifier"` // Provides the identifier for the source of the event
+	SourceType       string   `xml:"SourceType"`       // Valid Values: db-instance | db-parameter-group | db-security-group | db-snapshot
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EventCategoriesMap.html
+type EventCategoriesMap struct {
+	EventCategories []string `xml:"EventCategories"`
+	SourceType      string   `xml:"SourceType"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EventSubscription.html
+type EventSubscription struct {
+	CustSubscriptionId       string   `xml:"CustSubscriptionId"`       // The RDS event notification subscription Id
+	CustomerAwsId            string   `xml:"CustomerAwsId"`            // The AWS customer account associated with the RDS event notification subscription
+	Enabled                  bool     `xml:"Enabled"`                  // True indicates the subscription is enabled
+	EventCategoriesList      []string `xml:"EventCategoriesList"`      // A list of event categories for the RDS event notification subscription
+	SnsTopicArn              string   `xml:"SnsTopicArn"`              // The topic ARN of the RDS event notification subscription
+	SourceIdsList            []string `xml:"SourceIdsList"`            // A list of source Ids for the RDS event notification subscription
+	SourceType               string   `xml:"SourceType"`               // The source type for the RDS event notification subscription
+	Status                   string   `xml:"Status"`                   // Can be one of the following: creating | modifying | deleting | active | no-permission | topic-not-exist
+	SubscriptionCreationTime string   `xml:"SubscriptionCreationTime"` // The time the RDS event notification subscription was created
+}
+
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_IPRange.html
 type IPRange struct {
 	CIDRIP string `xml:"CIDRIP"`
 	Status string `xml:"Status"` // Specifies the status of the IP range. Status can be "authorizing", "authorized", "revoking", and "revoked".
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Option.html
+type Option struct {
+	Name                        string                       `xml:"OptionName"`
+	Description                 string                       `xml:"OptionDescription"`
+	Settings                    []OptionSetting              `xml:"OptionSettings"`
+	Permanent                   bool                         `xml:"Permanent"`
+	Persistent                  bool                         `xml:"Persistent"`
+	Port                        int                          `xml:"Port"`
+	DBSecurityGroupMemberships  []DBSecurityGroupMembership  `xml:"DBSecurityGroupMemberships"`  // If the option requires access to a port, then this DB security group allows access to the port
+	VpcSecurityGroupMemberships []VpcSecurityGroupMembership `xml:"VpcSecurityGroupMemberships"` // If the option requires access to a port, then this VPC security group allows access to the port
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionConfiguration.html
+type OptionConfiguration struct {
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroup.html
@@ -125,6 +215,12 @@ type OptionGroupMembership struct {
 	Name   string `xml:"OptionGroupName"` // The name of the option group that the instance belongs to
 	Status string `xml:"Status"`          // The status of the option group membership, e.g. in-sync, pending, pending-maintenance, applying
 }
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionSetting.html
+type OptionSetting struct{}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Parameter.html
+type Parameter struct{}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_PendingModifiedValues.html
 type PendingModifiedValues struct {
