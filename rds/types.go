@@ -221,6 +221,31 @@ type OptionGroupMembership struct {
 	Status string `xml:"Status"`          // The status of the option group membership, e.g. in-sync, pending, pending-maintenance, applying
 }
 
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroupOption.html
+type OptionGroupOption struct {
+	DefaultPort                       int                        `xml:"DefaultPort"`
+	Description                       string                     `xml:"Description"`
+	EngineName                        string                     `xml:"EngineName"`
+	MajorEngineVersion                string                     `xml:"MajorEngineVersion"`
+	MinimumRequiredMinorEngineVersion string                     `xml:"MinimumRequiredMinorEngineVersion"`
+	Name                              string                     `xml:"Name"`
+	OptionGroupOptionSettings         []OptionGroupOptionSetting `xml:"OptionGroupOptionSettings"`
+	OptionsDependedOn                 string                     `xml:"OptionsDependedOn"`
+	Permanent                         bool                       `xml:"Permanent"`
+	Persistent                        bool                       `xml:"Persistent"`
+	PortRequired                      bool                       `xml:"PortRequired"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroupOptionSetting.html
+type OptionGroupOptionSetting struct {
+	AllowedValues      string `xml:"AllowedValues"`
+	ApplyType          string `xml:"ApplyType"`
+	DefaultValue       string `xml:"DefaultValue"`
+	IsModifiable       bool   `xml:"IsModifiable"`
+	SettingDescription string `xml:"SettingDescription"`
+	SettingName        string `xml:"SettingName"`
+}
+
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionSetting.html
 type OptionSetting struct {
 	Name          string `xml:"Name"`
@@ -232,6 +257,18 @@ type OptionSetting struct {
 	DefaultValue  string `xml:"DefaultValue"`
 	IsCollection  bool   `xml:"IsCollection"`
 	IsModifiable  bool   `xml:"IsModifiable"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OrderableDBInstanceOption.html
+type OrderableDBInstanceOption struct {
+	AvailabilityZones  []AvailabilityZone `xml:"AvailabilityZones"`
+	DBInstanceClass    string             `xml:"DBInstanceClass"`
+	Engine             string             `xml:"Engine"`
+	EngineVersion      string             `xml:"EngineVersion"`
+	LicenseModel       string             `xml:"LicenseModel"`
+	MultiAZCapable     bool               `xml:"MultiAZCapable"`
+	ReadReplicaCapable bool               `xml:"ReadReplicaCapable"`
+	Vpc                bool               `xml:"Vpc"`
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Parameter.html
@@ -261,11 +298,55 @@ type PendingModifiedValues struct {
 	Port                  string `xml:"Port"`
 }
 
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_RecurringCharge.html
+type RecurringCharge struct {
+	Amount    float64 `xml:"RecurringChargeAmount"`
+	Frequency string  `xml:"RecurringChargeFrequency"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ReservedDBInstance.html
+type ReservedDBInstance struct {
+	CurrencyCode                  string            `xml:"CurrencyCode"`
+	DBInstanceClass               string            `xml:"DBInstanceClass"`
+	DBInstanceCount               int               `xml:"DBInstanceCount"`
+	Duration                      int               `xml:"Duration"`
+	FixedPrice                    float64           `xml:"FixedPrice"`
+	MultiAZ                       bool              `xml:"MultiAZ"`
+	OfferingType                  string            `xml:"OfferingType"`
+	ProductDescription            string            `xml:"ProductDescription"`
+	RecurringCharges              []RecurringCharge `xml:"RecurringCharges"`
+	ReservedDBInstanceId          string            `xml:"ReservedDBInstanceId"`
+	ReservedDBInstancesOfferingId string            `xml:"ReservedDBInstancesOfferingId"`
+	StartTime                     string            `xml:"StartTime"`
+	State                         string            `xml:"State"`
+	UsagePrice                    float64           `xml:"UsagePrice"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ReservedDBInstancesOffering.html
+type ReservedDBInstancesOffering struct {
+	CurrencyCode                  string            `xml:"CurrencyCode"`
+	DBInstanceClass               string            `xml:"DBInstanceClass"`
+	Duration                      int               `xml:"Duration"`
+	FixedPrice                    float64           `xml:"FixedPrice"`
+	MultiAZ                       bool              `xml:"MultiAZ"`
+	OfferingType                  string            `xml:"OfferingType"`
+	ProductDescription            string            `xml:"ProductDescription"`
+	RecurringCharges              []RecurringCharge `xml:"RecurringCharges"`
+	ReservedDBInstancesOfferingId string            `xml:"ReservedDBInstancesOfferingId"`
+	UsagePrice                    float64           `xml:"UsagePrice"`
+}
+
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Subnet.html
 type Subnet struct {
 	Id               string           `xml:"SubnetIdentifier"`
 	Status           string           `xml:"SubnetStatus"`
 	AvailabilityZone AvailabilityZone `xml:"SubnetAvailabilityZone"`
+}
+
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Tag.html
+type Tag struct {
+	Key   string `xml:"Key"`
+	Value string `xml:"Value"`
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_VpcSecurityGroupMembership.html
