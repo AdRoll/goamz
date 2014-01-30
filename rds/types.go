@@ -127,7 +127,17 @@ type OptionGroupMembership struct {
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_PendingModifiedValues.html
-type PendingModifiedValues struct{}
+type PendingModifiedValues struct {
+	AllocatedStorage      int    `xml:"AllocatedStorage"`
+	BackupRetentionPeriod int    `xml:"BackupRetentionPeriod"`
+	DBInstanceClass       string `xml:"DBInstanceClass"`
+	DBInstanceIdentifier  string `xml:"DBInstanceIdentifier"`
+	EngineVersion         string `xml:"EngineVersion"`
+	Iops                  int    `xml:"Iops"`
+	MasterUserPassword    string `xml:"MasterUserPassword"`
+	MultiAZ               bool   `xml:"MultiAZ"`
+	Port                  string `xml:"Port"`
+}
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Subnet.html
 type Subnet struct {
