@@ -10,6 +10,11 @@ import (
 
 const debug = true
 
+const (
+	ServiceName = "rds"
+	ApiVersion  = "2012-04-23"
+)
+
 // The RDS type encapsulates operations within a specific EC2 region.
 type RDS struct {
 	Service aws.AWSService
@@ -32,7 +37,7 @@ func New(auth aws.Auth, region aws.ServiceInfo) (*RDS, error) {
 // query dispatches a request to the RDS API signed with a version 2 signature
 func (rds *RDS) query(method, path string, params map[string]string, resp interface{}) error {
 	// Add basic RDS param
-	params["Version"] = "2010-01-01"
+	params["Version"] = ApiVersion
 
 	r, err := rds.Service.Query(method, path, params)
 	if err != nil {
