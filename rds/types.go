@@ -1,18 +1,21 @@
 package rds
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_AvailabilityZone.html
+// AvailabilityZone contains Availability Zone information
+// See http://goo.gl/GWF4zF for more details.
 type AvailabilityZone struct {
 	Name                   string `xml:"Name"`
 	ProvisionedIopsCapable bool   `xml:"ProvisionedIopsCapable"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_CharacterSet.html
+// CharacterSet represents a character set used by a Database Engine
+// See http://goo.gl/0BXwFp for more details.
 type CharacterSet struct {
 	Name        string `xml:"CharacterSetName"`
 	Description string `xml:"CharacterSetDescription"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBEngineVersion.html
+// DBEngineVersion describes a version of a Database Engine
+// See http://goo.gl/a5l6cv for more details.
 type DBEngineVersion struct {
 	DBEngineDescription        string         `xml:"DBEngineDescription"`        // The description of the database engine
 	DBEngineVersionDescription string         `xml:"DBEngineVersionDescription"` // The description of the database engine version
@@ -24,7 +27,6 @@ type DBEngineVersion struct {
 }
 
 // DBInstance encapsulates an instance of a Database
-//
 // See http://goo.gl/rQFpAe for more details.
 type DBInstance struct {
 	AllocatedStorage                      int                          `xml:"AllocatedStorage"`                      // Specifies the allocated storage size specified in gigabytes.
@@ -60,7 +62,8 @@ type DBInstance struct {
 	VpcSecurityGroups                     []VpcSecurityGroupMembership `xml:"VpcSecurityGroups"`                     // Provides List of VPC security group elements that the DB instance belongs to.
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBInstanceStatusInfo.html
+// DBInstanceStatusInfo provides a list of status information for a DB instance
+// See http://goo.gl/WuePdz for more details.
 type DBInstanceStatusInfo struct {
 	Message    string `xml:"Message"`    // Details of the error if there is an error for the instance. If the instance is not in an error state, this value is blank.
 	Normal     bool   `xml:"Normal"`     // Boolean value that is true if the instance is operating normally, or false if the instance is in an error state.
@@ -68,20 +71,23 @@ type DBInstanceStatusInfo struct {
 	StatusType string `xml:"StatusType"` // This value is currently "read replication."
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBParameterGroup.html
+// DBParameterGroup contains the result of a successful invocation of the CreateDBParameterGroup action
+// See http://goo.gl/a8BCTy for more details.
 type DBParameterGroup struct {
 	Name        string `xml:"DBParameterGroupName"`
 	Description string `xml:"Description"`
 	Family      string `xml:"DBParameterGroupFamily"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBParameterGroupStatus.html
+// DBParameterGroupStatus represents the status of the DB parameter group
+// See http://goo.gl/X318cI for more details.
 type DBParameterGroupStatus struct {
 	Name   string `xml:"DBParameterGroupName"`
 	Status string `xml:"ParameterApplyStatus"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSecurityGroup.html
+// DBSecurityGroup represents a RDS DB Security Group which controls network access to a DB instance that is not inside a VPC
+// See http://goo.gl/JF5oJy for more details.
 type DBSecurityGroup struct {
 	Name              string             `xml:"DBSecurityGroupName"`
 	Description       string             `xml:"DBSecurityGroupDescription"`
@@ -91,13 +97,15 @@ type DBSecurityGroup struct {
 	VpcId             string             `xml:"VpcId"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSecurityGroupMembership.html
+// DBSecurityGroupMembership represents a DBSecurityGroup which a Database Instance belongs to
+// See http://goo.gl/QjTK0b for more details.
 type DBSecurityGroupMembership struct {
 	Name   string `xml:"DBSecurityGroupName"`
 	Status string `xml:"Status"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSnapshot.html
+// DBSnapshot represents a snapshot of a Database (a backup of the Instance data)
+// See http://goo.gl/wkf0L9 for more details.
 type DBSnapshot struct {
 	AllocatedStorage     int    `xml:"AllocatedStorage"` // Specifies the allocated storage size in gigabytes (GB)
 	AvailabilityZone     string `xml:"AvailabilityZone"`
@@ -119,7 +127,8 @@ type DBSnapshot struct {
 	VpcId                string `xml:"VpcId"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSubnetGroup.html
+// DBSubnetGroup is a collection of subnets that is designated for an RDS DB Instance in a VPC
+// See http://goo.gl/8vMPkE for more details.
 type DBSubnetGroup struct {
 	Name        string   `xml:"DBSubnetGroupName"`
 	Description string   `xml:"DBSubnetGroupDescription"`
@@ -128,28 +137,32 @@ type DBSubnetGroup struct {
 	VpcId       string   `xml:"VpcId"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EC2SecurityGroup.html
+// EC2SecurityGroup a standard EC2 Security Group which can be assigned to a DB Instance
+// See http://goo.gl/AWavZ2 for more details.
 type EC2SecurityGroup struct {
 	Id      string `xml:"EC2SecurityGroupId"`
 	Name    string `xml:"EC2SecurityGroupName"`
-	OwnerId string `xml:"EC2SecurityGroupOwnerId"`
-	Status  string `xml:"Status"`
+	OwnerId string `xml:"EC2SecurityGroupOwnerId"` // The AWS ID of the owner of the EC2 security group
+	Status  string `xml:"Status"`                  // Status can be "authorizing", "authorized", "revoking", and "revoked"
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Endpoint.html
+// Endpoint encapsulates the connection endpoint for a DB Instance
+// See http://goo.gl/jefsJ4 for more details.
 type Endpoint struct {
 	Address string `xml:"Address"`
 	Port    int    `xml:"Port"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EngineDefaults.html
+// EngineDefaults describes the system parameter information for a given database engine
+// See http://goo.gl/XFy7Wv for more details.
 type EngineDefaults struct {
 	DBParameterGroupFamily string      `xml:"DBParameterGroupFamily"`
 	Marker                 string      `xml:"Marker"`
 	Parameters             []Parameter `xml:"Parameters"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Event.html
+// Event encapsulates events related to DB instances, DB security groups, DB snapshots, and DB parameter groups
+// See http://goo.gl/6fUQow for more details.
 type Event struct {
 	Date             string   `xml:"Date"`             // Specifies the date and time of the event
 	EventCategories  []string `xml:"EventCategories"`  // Specifies the category for the event
@@ -158,13 +171,15 @@ type Event struct {
 	SourceType       string   `xml:"SourceType"`       // Valid Values: db-instance | db-parameter-group | db-security-group | db-snapshot
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EventCategoriesMap.html
+// EventCategoriesMap encapsulates event categories for the specified source type
+// See http://goo.gl/9VY3aS for more details.
 type EventCategoriesMap struct {
 	EventCategories []string `xml:"EventCategories"`
 	SourceType      string   `xml:"SourceType"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_EventSubscription.html
+// EventSubscription describes a subscription, for a customer account, to a series of events
+// See http://goo.gl/zgNdXw for more details.
 type EventSubscription struct {
 	CustSubscriptionId       string   `xml:"CustSubscriptionId"`       // The RDS event notification subscription Id
 	CustomerAwsId            string   `xml:"CustomerAwsId"`            // The AWS customer account associated with the RDS event notification subscription
@@ -177,13 +192,15 @@ type EventSubscription struct {
 	SubscriptionCreationTime string   `xml:"SubscriptionCreationTime"` // The time the RDS event notification subscription was created
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_IPRange.html
+// IPRange encapsulates an IP range (and its status) used by a DB Security Group
+// See http://goo.gl/VfntNm for more details.
 type IPRange struct {
 	CIDRIP string `xml:"CIDRIP"`
 	Status string `xml:"Status"` // Specifies the status of the IP range. Status can be "authorizing", "authorized", "revoking", and "revoked".
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Option.html
+// Option describes a feature available for an RDS instance along with any settings applicable to it
+// See http://goo.gl/8DYY0J for more details.
 type Option struct {
 	Name                        string                       `xml:"OptionName"`
 	Description                 string                       `xml:"OptionDescription"`
@@ -195,7 +212,8 @@ type Option struct {
 	VpcSecurityGroupMemberships []VpcSecurityGroupMembership `xml:"VpcSecurityGroupMemberships"` // If the option requires access to a port, then this VPC security group allows access to the port
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionConfiguration.html
+// OptionConfiguration is a list of all available options
+// See http://goo.gl/kkEzw1 for more details.
 type OptionConfiguration struct {
 	OptionName                  string          `xml:"OptionName"`
 	OptionSettings              []OptionSetting `xml:"OptionSettings"`
@@ -204,7 +222,8 @@ type OptionConfiguration struct {
 	VpcSecurityGroupMemberships []string        `xml:"VpcSecurityGroupMemberships"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroup.html
+// OptionGroup represents a set of features, called options, that are available for a particular Amazon RDS DB instance
+// See http://goo.gl/NedBJl for more details.
 type OptionGroup struct {
 	Name                                  string   `xml:"OptionGroupName"`
 	Description                           string   `xml:"OptionGroupDescription"`
@@ -215,13 +234,15 @@ type OptionGroup struct {
 	Options                               []Option `xml:"Options"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroupMembership.html
+// OptionGroupMembership provides information on the option groups the DB instance is a member of
+// See http://goo.gl/XBW6j4 for more details.
 type OptionGroupMembership struct {
 	Name   string `xml:"OptionGroupName"` // The name of the option group that the instance belongs to
 	Status string `xml:"Status"`          // The status of the option group membership, e.g. in-sync, pending, pending-maintenance, applying
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroupOption.html
+// OptionGroupOption represents an option within an option group
+// See http://goo.gl/jQYL0U for more details.
 type OptionGroupOption struct {
 	DefaultPort                       int                        `xml:"DefaultPort"`
 	Description                       string                     `xml:"Description"`
@@ -236,7 +257,8 @@ type OptionGroupOption struct {
 	PortRequired                      bool                       `xml:"PortRequired"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroupOptionSetting.html
+// OptionGroupOptionSetting are used to display settings available for each option with their default values and other information
+// See http://goo.gl/9aIwNX for more details.
 type OptionGroupOptionSetting struct {
 	AllowedValues      string `xml:"AllowedValues"`
 	ApplyType          string `xml:"ApplyType"`
@@ -246,7 +268,8 @@ type OptionGroupOptionSetting struct {
 	SettingName        string `xml:"SettingName"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionSetting.html
+// OptionSetting encapsulates modifiable settings for a particular option (a feature available for a Database Instance)
+// See http://goo.gl/VjOJmW for more details.
 type OptionSetting struct {
 	Name          string `xml:"Name"`
 	Value         string `xml:"Value"`
@@ -259,7 +282,8 @@ type OptionSetting struct {
 	IsModifiable  bool   `xml:"IsModifiable"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OrderableDBInstanceOption.html
+// OrderableDBInstanceOption contains a list of available options for a DB instance
+// See http://goo.gl/FVPeVC for more details.
 type OrderableDBInstanceOption struct {
 	AvailabilityZones  []AvailabilityZone `xml:"AvailabilityZones"`
 	DBInstanceClass    string             `xml:"DBInstanceClass"`
@@ -271,7 +295,8 @@ type OrderableDBInstanceOption struct {
 	Vpc                bool               `xml:"Vpc"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Parameter.html
+// Parameter is used as a request parameter in various actions
+// See http://goo.gl/cJmvVT for more details.
 type Parameter struct {
 	AllowedValues        string `xml:"AllowedValues"`
 	ApplyMethod          string `xml:"ApplyMethod"` // Valid Values: immediate | pending-reboot
@@ -285,7 +310,8 @@ type Parameter struct {
 	Source               string `xml:"Source"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_PendingModifiedValues.html
+// PendingModifiedValues represents values modified in a ModifyDBInstance action
+// See http://goo.gl/UoXhLH for more details.
 type PendingModifiedValues struct {
 	AllocatedStorage      int    `xml:"AllocatedStorage"`
 	BackupRetentionPeriod int    `xml:"BackupRetentionPeriod"`
@@ -298,13 +324,15 @@ type PendingModifiedValues struct {
 	Port                  string `xml:"Port"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_RecurringCharge.html
+// RecurringCharge describes an amount that will be charged on a recurring basis with a given frequency
+// See http://goo.gl/3GDplh for more details.
 type RecurringCharge struct {
 	Amount    float64 `xml:"RecurringChargeAmount"`
 	Frequency string  `xml:"RecurringChargeFrequency"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ReservedDBInstance.html
+// ReservedDBInstance encapsulates a reserved Database Instance
+// See http://goo.gl/mjLhNI for more details.
 type ReservedDBInstance struct {
 	CurrencyCode                  string            `xml:"CurrencyCode"`
 	DBInstanceClass               string            `xml:"DBInstanceClass"`
@@ -322,7 +350,8 @@ type ReservedDBInstance struct {
 	UsagePrice                    float64           `xml:"UsagePrice"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ReservedDBInstancesOffering.html
+// ReservedDBInstancesOffering describes an available Reserved DB instance offering which can be purchased
+// See http://goo.gl/h5s8e6 for more details.
 type ReservedDBInstancesOffering struct {
 	CurrencyCode                  string            `xml:"CurrencyCode"`
 	DBInstanceClass               string            `xml:"DBInstanceClass"`
@@ -336,20 +365,23 @@ type ReservedDBInstancesOffering struct {
 	UsagePrice                    float64           `xml:"UsagePrice"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Subnet.html
+// Subnet describes an EC2 subnet, along with its status and location
+// See http://goo.gl/Nc8ymd for more details.
 type Subnet struct {
 	Id               string           `xml:"SubnetIdentifier"`
 	Status           string           `xml:"SubnetStatus"`
 	AvailabilityZone AvailabilityZone `xml:"SubnetAvailabilityZone"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_Tag.html
+// Tag represents metadata assigned to an Amazon RDS resource consisting of a key-value pair
+// See http://goo.gl/YnXRrE for more details.
 type Tag struct {
 	Key   string `xml:"Key"`
 	Value string `xml:"Value"`
 }
 
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_VpcSecurityGroupMembership.html
+// VpcSecurityGroupMembership describes a standard VPC Security Group which has been assigned to a DB Instance located in a VPC
+// See http://goo.gl/UIvmlS for more details.
 type VpcSecurityGroupMembership struct {
 	Id     string `xml:"VpcSecurityGroupId"`
 	Status string `xml:"Status"`
