@@ -1,11 +1,3 @@
-//
-// autoscaling: This package provides types and functions to interact with the AWS Auto Scale API
-//
-// Depends on https://wiki.ubuntu.com/goamz
-//
-// Written by Matt Heath <matt@hailocab.com>
-// Maintained by the Hailo Platform Team <platform@hailocab.com>
-
 package rds
 
 import (
