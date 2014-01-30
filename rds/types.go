@@ -43,6 +43,14 @@ type DBInstance struct {
 	VpcSecurityGroups                     []VpcSecurityGroupMembership `xml:"VpcSecurityGroups"`                     // Provides List of VPC security group elements that the DB instance belongs to.
 }
 
+// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBInstanceStatusInfo.html
+type DBInstanceStatusInfo struct {
+	Message    string `xml:"Message"`    // Details of the error if there is an error for the instance. If the instance is not in an error state, this value is blank.
+	Normal     bool   `xml:"Normal"`     // Boolean value that is true if the instance is operating normally, or false if the instance is in an error state.
+	Status     string `xml:"Status"`     // Status of the DB instance. For a StatusType of read replica, the values can be replicating, error, stopped, or terminated.
+	StatusType string `xml:"StatusType"` // This value is currently "read replication."
+}
+
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBParameterGroup.html
 type DBParameterGroup struct {
 	Name        string `xml:"DBParameterGroupName"`
@@ -70,14 +78,6 @@ type DBSecurityGroup struct {
 type DBSecurityGroupMembership struct {
 	Name   string `xml:"DBSecurityGroupName"`
 	Status string `xml:"Status"`
-}
-
-// http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBInstanceStatusInfo.html
-type DBInstanceStatusInfo struct {
-	Message    string `xml:"Message"`    // Details of the error if there is an error for the instance. If the instance is not in an error state, this value is blank.
-	Normal     bool   `xml:"Normal"`     // Boolean value that is true if the instance is operating normally, or false if the instance is in an error state.
-	Status     string `xml:"Status"`     // Status of the DB instance. For a StatusType of read replica, the values can be replicating, error, stopped, or terminated.
-	StatusType string `xml:"StatusType"` // This value is currently "read replication."
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DBSubnetGroup.html
