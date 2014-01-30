@@ -197,6 +197,11 @@ type Option struct {
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionConfiguration.html
 type OptionConfiguration struct {
+	OptionName                  string          `xml:"OptionName"`
+	OptionSettings              []OptionSetting `xml:"OptionSettings"`
+	Port                        int             `xml:"Port"`
+	DBSecurityGroupMemberships  []string        `xml:"DBSecurityGroupMemberships"`
+	VpcSecurityGroupMemberships []string        `xml:"VpcSecurityGroupMemberships"`
 }
 
 // http://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_OptionGroup.html
