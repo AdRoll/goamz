@@ -12,7 +12,7 @@ const debug = true
 
 const (
 	ServiceName = "rds"
-	ApiVersion  = "2012-04-23"
+	ApiVersion  = "2013-09-09"
 )
 
 // The RDS type encapsulates operations within a specific EC2 region.
