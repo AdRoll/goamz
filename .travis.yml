@@ -17,3 +17,4 @@ script:
   - go test -v ./s3/
   - go test -v ./sqs/
   - go test -v ./autoscaling/
+  - go test -v ./rds/
