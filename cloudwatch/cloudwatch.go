@@ -26,7 +26,7 @@ import (
 
 // The CloudWatch type encapsulates all the CloudWatch operations in a region.
 type CloudWatch struct {
-	Service   aws.AWSService
+	Service aws.AWSService
 }
 
 type Dimension struct {
@@ -68,12 +68,12 @@ type GetMetricStatisticsRequest struct {
 	Unit       string
 	Period     int
 	Statistics []string
-    Namespace  string
+	Namespace  string
 }
 
 type GetMetricStatisticsResult struct {
 	Datapoints []Datapoint `xml:"Datapoints>member"`
-	NextToken      string  `xml:"NextToken"`
+	NextToken  string      `xml:"NextToken"`
 }
 
 type GetMetricStatisticsResponse struct {
@@ -82,9 +82,9 @@ type GetMetricStatisticsResponse struct {
 }
 
 type Metric struct {
-  Dimensions  []Dimension `xml:"Dimensions>member"`
-  MetricName  string
-  Namespace   string
+	Dimensions []Dimension `xml:"Dimensions>member"`
+	MetricName string
+	Namespace  string
 }
 
 type ListMetricsResult struct {
@@ -100,8 +100,8 @@ type ListMetricsResponse struct {
 type ListMetricsRequest struct {
 	Dimensions []Dimension
 	MetricName string
-    Namespace  string
-    NextToken  string
+	Namespace  string
+	NextToken  string
 }
 
 var attempts = aws.AttemptStrategy{
@@ -154,7 +154,7 @@ func NewCloudWatch(auth aws.Auth, region aws.ServiceInfo) (*CloudWatch, error) {
 		return nil, err
 	}
 	return &CloudWatch{
-		Service:   service,
+		Service: service,
 	}, nil
 }
 
@@ -230,54 +230,54 @@ func (c *CloudWatch) GetMetricStatistics(req *GetMetricStatisticsRequest) (resul
 	return
 }
 
-// Returns a list of valid metrics stored for the AWS account owner. 
-// Returned metrics can be used with GetMetricStatistics to obtain statistical data for a given metric. 
+// Returns a list of valid metrics stored for the AWS account owner.
+// Returned metrics can be used with GetMetricStatistics to obtain statistical data for a given metric.
 
 func (c *CloudWatch) ListMetrics(req *ListMetricsRequest) (result *ListMetricsResponse, err error) {
 
 	// Serialize all the params
 	params := aws.MakeParams("ListMetrics")
-    if req.Namespace != "" {
-	    params["Namespace"] = req.Namespace
-    }
+	if req.Namespace != "" {
+		params["Namespace"] = req.Namespace
+	}
 	if len(req.Dimensions) > 0 {
-	    for i, d := range req.Dimensions {
-	    	prefix := "Dimensions.member." + strconv.Itoa(i+1)
-	    	params[prefix+".Name"] = d.Name
-	    	params[prefix+".Value"] = d.Value
-	    }
+		for i, d := range req.Dimensions {
+			prefix := "Dimensions.member." + strconv.Itoa(i+1)
+			params[prefix+".Name"] = d.Name
+			params[prefix+".Value"] = d.Value
+		}
 	}
 
 	result = new(ListMetricsResponse)
 	err = c.query("GET", "/", params, &result)
-    metrics := result.ListMetricsResult.Metrics
-    if result.ListMetricsResult.NextToken != "" {
-	    params = aws.MakeParams("ListMetrics")
-        params["NextToken"] = result.ListMetricsResult.NextToken
-        for result.ListMetricsResult.NextToken != "" && err == nil {
-	        result = new(ListMetricsResponse)
-	        err = c.query("GET", "/", params, &result)
-            if err == nil {
-                newslice := make([]Metric, len(metrics) + len(result.ListMetricsResult.Metrics))
-                copy(newslice, metrics)
-                copy(newslice[len(metrics):], result.ListMetricsResult.Metrics)
-                metrics = newslice
-            }
-        }
-        result.ListMetricsResult.Metrics = metrics
-    }
+	metrics := result.ListMetricsResult.Metrics
+	if result.ListMetricsResult.NextToken != "" {
+		params = aws.MakeParams("ListMetrics")
+		params["NextToken"] = result.ListMetricsResult.NextToken
+		for result.ListMetricsResult.NextToken != "" && err == nil {
+			result = new(ListMetricsResponse)
+			err = c.query("GET", "/", params, &result)
+			if err == nil {
+				newslice := make([]Metric, len(metrics)+len(result.ListMetricsResult.Metrics))
+				copy(newslice, metrics)
+				copy(newslice[len(metrics):], result.ListMetricsResult.Metrics)
+				metrics = newslice
+			}
+		}
+		result.ListMetricsResult.Metrics = metrics
+	}
 	return
 }
 
 func (c *CloudWatch) PutMetricData(metrics []MetricDatum) (result *aws.BaseResponse, err error) {
-	return c.PutMetricDataNamespace (metrics, "")
+	return c.PutMetricDataNamespace(metrics, "")
 }
 
-func (c *CloudWatch) PutMetricDataNamespace (metrics []MetricDatum, namespace string) (result *aws.BaseResponse, err error) {
+func (c *CloudWatch) PutMetricDataNamespace(metrics []MetricDatum, namespace string) (result *aws.BaseResponse, err error) {
 	// Serialize the params
 	params := aws.MakeParams("PutMetricData")
 	if namespace != "" {
-		params ["Namespace"] = namespace
+		params["Namespace"] = namespace
 	}
 	for i, metric := range metrics {
 		prefix := "MetricData.member." + strconv.Itoa(i+1)
