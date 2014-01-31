@@ -61,7 +61,7 @@ func (rds *RDS) query(method, path string, params map[string]string, resp interf
 // Response to a DescribeDBInstances request
 //
 // See http://goo.gl/KSPlAl for more details.
-type DescribeDBInstancesResp struct {
+type DescribeDBInstancesResponse struct {
 	DBInstances []DBInstance `xml:"DescribeDBInstancesResult>DBInstances>DBInstance"` // The list of database instances
 	Marker      string       `xml:"DescribeDBInstancesResult>Marker"`                 // An optional pagination token provided by a previous request
 	RequestId   string       `xml:"ResponseMetadata>RequestId"`
@@ -72,7 +72,7 @@ type DescribeDBInstancesResp struct {
 // Unfortunately RDS does not currently support filtering
 //
 // See http://goo.gl/lzZMyz for more details.
-func (rds *RDS) DescribeDBInstances(id string, maxRecords int, marker string) (*DescribeDBInstancesResp, error) {
+func (rds *RDS) DescribeDBInstances(id string, maxRecords int, marker string) (*DescribeDBInstancesResponse, error) {
 
 	params := aws.MakeParams("DescribeDBInstances")
 
@@ -87,7 +87,7 @@ func (rds *RDS) DescribeDBInstances(id string, maxRecords int, marker string) (*
 		params["Marker"] = marker
 	}
 
-	resp := &DescribeDBInstancesResp{}
+	resp := &DescribeDBInstancesResponse{}
 	err := rds.query("POST", "/", params, resp)
 	return resp, err
 }
