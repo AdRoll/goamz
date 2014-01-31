@@ -58,6 +58,9 @@ func (rds *RDS) query(method, path string, params map[string]string, resp interf
 	return err
 }
 
+// ----------------------------------------------------------------------------
+// API methods and corresponding response types.
+
 // Response to a DescribeDBInstances request
 //
 // See http://goo.gl/KSPlAl for more details.
