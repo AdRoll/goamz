@@ -15,6 +15,7 @@ var USGovWest = Region{
 	"https://dynamodb.us-gov-west-1.amazonaws.com",
 	ServiceInfo{"https://monitoring.us-gov-west-1.amazonaws.com", V2Signature},
 	"https://autoscaling.us-gov-west-1.amazonaws.com",
+	ServiceInfo{"https://rds.us-gov-west-1.amazonaws.com", V2Signature},
 }
 
 var USEast = Region{
@@ -32,6 +33,7 @@ var USEast = Region{
 	"https://dynamodb.us-east-1.amazonaws.com",
 	ServiceInfo{"https://monitoring.us-east-1.amazonaws.com", V2Signature},
 	"https://autoscaling.us-east-1.amazonaws.com",
+	ServiceInfo{"https://rds.us-east-1.amazonaws.com", V2Signature},
 }
 
 var USWest = Region{
@@ -49,6 +51,7 @@ var USWest = Region{
 	"https://dynamodb.us-west-1.amazonaws.com",
 	ServiceInfo{"https://monitoring.us-west-1.amazonaws.com", V2Signature},
 	"https://autoscaling.us-west-1.amazonaws.com",
+	ServiceInfo{"https://rds.us-west-1.amazonaws.com", V2Signature},
 }
 
 var USWest2 = Region{
@@ -66,6 +69,7 @@ var USWest2 = Region{
 	"https://dynamodb.us-west-2.amazonaws.com",
 	ServiceInfo{"https://monitoring.us-west-2.amazonaws.com", V2Signature},
 	"https://autoscaling.us-west-2.amazonaws.com",
+	ServiceInfo{"https://rds.us-west-2.amazonaws.com", V2Signature},
 }
 
 var EUWest = Region{
@@ -83,6 +87,7 @@ var EUWest = Region{
 	"https://dynamodb.eu-west-1.amazonaws.com",
 	ServiceInfo{"https://monitoring.eu-west-1.amazonaws.com", V2Signature},
 	"https://autoscaling.eu-west-1.amazonaws.com",
+	ServiceInfo{"https://rds.eu-west-1.amazonaws.com", V2Signature},
 }
 
 var APSoutheast = Region{
@@ -100,6 +105,7 @@ var APSoutheast = Region{
 	"https://dynamodb.ap-southeast-1.amazonaws.com",
 	ServiceInfo{"https://monitoring.ap-southeast-1.amazonaws.com", V2Signature},
 	"https://autoscaling.ap-southeast-1.amazonaws.com",
+	ServiceInfo{"https://rds.ap-southeast-1.amazonaws.com", V2Signature},
 }
 
 var APSoutheast2 = Region{
@@ -117,6 +123,7 @@ var APSoutheast2 = Region{
 	"https://dynamodb.ap-southeast-2.amazonaws.com",
 	ServiceInfo{"https://monitoring.ap-southeast-2.amazonaws.com", V2Signature},
 	"https://autoscaling.ap-southeast-2.amazonaws.com",
+	ServiceInfo{"https://rds.ap-southeast-2.amazonaws.com", V2Signature},
 }
 
 var APNortheast = Region{
@@ -134,6 +141,7 @@ var APNortheast = Region{
 	"https://dynamodb.ap-northeast-1.amazonaws.com",
 	ServiceInfo{"https://monitoring.ap-northeast-1.amazonaws.com", V2Signature},
 	"https://autoscaling.ap-northeast-1.amazonaws.com",
+	ServiceInfo{"https://rds.ap-northeast-1.amazonaws.com", V2Signature},
 }
 
 var SAEast = Region{
@@ -151,4 +159,5 @@ var SAEast = Region{
 	"https://dynamodb.sa-east-1.amazonaws.com",
 	ServiceInfo{"https://monitoring.sa-east-1.amazonaws.com", V2Signature},
 	"https://autoscaling.sa-east-1.amazonaws.com",
+	ServiceInfo{"https://rds.sa-east-1.amazonaws.com", V2Signature},
 }
