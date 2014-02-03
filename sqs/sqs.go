@@ -14,6 +14,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -440,6 +442,8 @@ func (s *SQS) query(queueUrl string, params map[string]string, resp interface{})
 		return buildError(r)
 	}
 	err = xml.NewDecoder(r.Body).Decode(resp)
+	io.Copy(ioutil.Discard, r.Body)
+
 	return err
 }
 
