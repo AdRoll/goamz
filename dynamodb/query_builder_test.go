@@ -157,6 +157,7 @@ func (s *QueryBuilderSuite) TestAddExpectedQuery(c *gocheck.C) {
 
 	expected := []dynamodb.Attribute{
 		*dynamodb.NewStringAttribute("domain", "expectedTest").SetExists(true),
+		*dynamodb.NewStringAttribute("testKey", "").SetExists(false),
 	}
 	q.AddExpected(expected)
 
@@ -173,6 +174,9 @@ func (s *QueryBuilderSuite) TestAddExpectedQuery(c *gocheck.C) {
 				"Value": {
 					"S": "expectedTest"
 				}
+			},
+			"testKey": {
+				"Exists": "false"
 			}
 		},
 		"Key": {
