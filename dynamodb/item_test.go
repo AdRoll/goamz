@@ -89,6 +89,7 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *gocheck.C) {
 		// Put with condition failed
 		expected := []dynamodb.Attribute{
 			*dynamodb.NewStringAttribute("Attr1", "expectedAttr1Val").SetExists(true),
+			*dynamodb.NewStringAttribute("AttrNotExists", "").SetExists(false),
 		}
 		if ok, err := s.table.ConditionalPutItem("NewHashKeyVal", "", attrs, expected); ok {
 			c.Errorf("Expect condition does not meet.")
