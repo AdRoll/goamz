@@ -3,7 +3,7 @@ package cloudfront
 import (
 	"crypto/sha1"
 	"encoding/base64"
-	"github.com/alimoeeny/goamz/aws"
+	"github.com/crowdmob/goamz/aws"
 	"log"
 	"strconv"
 	"time"
