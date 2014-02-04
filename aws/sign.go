@@ -35,6 +35,9 @@ func (s *V2Signer) Sign(method, path string, params map[string]string) {
 	params["AWSAccessKeyId"] = s.auth.AccessKey
 	params["SignatureVersion"] = "2"
 	params["SignatureMethod"] = "HmacSHA256"
+	if s.auth.Token() != "" {
+		params["SecurityToken"] = s.auth.Token()
+	}
 
 	// AWS specifies that the parameters in a signed request must
 	// be provided in the natural order of the keys. This is distinct
