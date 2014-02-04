@@ -18,7 +18,7 @@ func New(auth aws.Auth, baseurl string) *CloudFront {
 	return &CloudFront{auth: auth, BaseURL: baseurl}
 }
 
-func (cloudfront *CloudFront) SignedURL(path, querystrings, string, expires time.Time) string {
+func (cloudfront *CloudFront) SignedURL(path, querystrings string, expires time.Time) string {
 	policy := `{"Statement":[{"Resource":"` + cloudfront.BaseURL + "?" + querystrings + `,"Condition":{"DateLessThan":{"AWS:EpochTime":` + strconv.FormatInt(expires.Unix(), 10) + `}}}]}`
 
 	log.Printf("Policy: %v\n", policy)
