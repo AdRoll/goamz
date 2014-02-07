@@ -3,6 +3,7 @@ package s3_test
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/s3"
@@ -391,7 +392,7 @@ func (s *ClientTests) TestBucketList(c *gocheck.C) {
 func etag(data []byte) string {
 	sum := md5.New()
 	sum.Write(data)
-	return fmt.Sprintf(`"%x"`, sum.Sum(nil))
+	return hex.EncodeToString(sum.Sum(nil))
 }
 
 func checkContents(c *gocheck.C, contents []s3.Key, data map[string][]byte, expected []s3.Key) {
