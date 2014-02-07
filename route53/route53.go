@@ -172,6 +172,7 @@ func (r *Route53) CreateHostedZone(hostedZoneReq *CreateHostedZoneRequest) (*Cre
 	return result, err
 }
 
+// ChangeResourceRecordSet send a change resource record request to the AWS Route53 API
 func (r *Route53) ChangeResourceRecordSet(req *ChangeResourceRecordSetsRequest, zoneId string) (*ChangeResourceRecordSetsResponse, error) {
 	xmlBytes, err := xml.Marshal(req)
 	if err != nil {
