@@ -179,7 +179,6 @@ func (r *Route53) ChangeResourceRecordSet(req *ChangeResourceRecordSetsRequest, 
 		return nil, err
 	}
 	xmlBytes = []byte(xml.Header + string(xmlBytes))
-	fmt.Println(bytes.NewBuffer(xmlBytes).String())
 
 	result := new(ChangeResourceRecordSetsResponse)
 	path := fmt.Sprintf("%s/%s/rrset", r.Endpoint, zoneId)
