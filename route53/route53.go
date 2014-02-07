@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
 	"io"
 	"net/http"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
 type Route53 struct {
@@ -68,6 +69,16 @@ type CreateHostedZoneRequest struct {
 	HostedZoneConfig HostedZoneConfig
 }
 
+type ChangeResourceRecordSetsRequest struct {
+	XMLName xml.Name `xml:"ChangeResourceRecordSetsRequest"`
+	Xmlns   string   `xml:"xmlns,attr"`
+	Action  string   `xml:"ChangeBatch>Changes>Change>Action"`
+	Name    string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>Name"`
+	Type    string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>Type"`
+	TTL     string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>TTL,omitempty"`
+	Value   string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>ResourceRecords>ResourceRecord>Value"`
+}
+
 type HostedZoneConfig struct {
 	XMLName xml.Name `xml:"HostedZoneConfig"`
 	Comment string
@@ -78,6 +89,13 @@ type CreateHostedZoneResponse struct {
 	HostedZone    HostedZone
 	ChangeInfo    ChangeInfo
 	DelegationSet DelegationSet
+}
+
+type ChangeResourceRecordSetsResponse struct {
+	XMLName     xml.Name `xml:"ChangeResourceRecordSetsResponse"`
+	Id          string   `xml:"ChangeInfo>Id"`
+	Status      string   `xml:"ChangeInfo>Status"`
+	SubmittedAt string   `xml:"ChangeInfo>SubmittedAt"`
 }
 
 type ChangeInfo struct {
@@ -150,6 +168,21 @@ func (r *Route53) CreateHostedZone(hostedZoneReq *CreateHostedZoneRequest) (*Cre
 
 	result := new(CreateHostedZoneResponse)
 	err = r.query("POST", r.Endpoint, bytes.NewBuffer(xmlBytes), result)
+
+	return result, err
+}
+
+// ChangeResourceRecordSet send a change resource record request to the AWS Route53 API
+func (r *Route53) ChangeResourceRecordSet(req *ChangeResourceRecordSetsRequest, zoneId string) (*ChangeResourceRecordSetsResponse, error) {
+	xmlBytes, err := xml.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	xmlBytes = []byte(xml.Header + string(xmlBytes))
+
+	result := new(ChangeResourceRecordSetsResponse)
+	path := fmt.Sprintf("%s/%s/rrset", r.Endpoint, zoneId)
+	err = r.query("POST", path, bytes.NewBuffer(xmlBytes), result)
 
 	return result, err
 }
