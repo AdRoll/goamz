@@ -292,15 +292,7 @@ func (b *Bucket) PutCopy(path string, perm ACL, options Options, source string) 
 		"x-amz-acl":         {string(perm)},
 		"x-amz-copy-source": {source},
 	}
-	if options.SSE {
-		headers["x-amz-server-side-encryption"] = []string{"AES256"}
-	}
-	if len(options.ContentEncoding) != 0 {
-		headers["Content-Encoding"] = []string{options.ContentEncoding}
-	}
-	for k, v := range options.Meta {
-		headers["x-amz-meta-"+k] = v
-	}
+	options.addHeaders(headers)
 	req := &request{
 		method:  "PUT",
 		bucket:  b.Name,
@@ -323,21 +315,7 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 		"Content-Type":   {contType},
 		"x-amz-acl":      {string(perm)},
 	}
-	if options.SSE {
-		headers["x-amz-server-side-encryption"] = []string{"AES256"}
-	}
-	if len(options.ContentEncoding) != 0 {
-		headers["Content-Encoding"] = []string{options.ContentEncoding}
-	}
-	if len(options.CacheControl) != 0 {
-		headers["Cache-Control"] = []string{options.CacheControl}
-	}
-	if len(options.RedirectLocation) != 0 {
-		headers["x-amz-website-redirect-location"] = []string{options.RedirectLocation}
-	}
-	for k, v := range options.Meta {
-		headers["x-amz-meta-"+k] = v
-	}
+	options.addHeaders(headers)
 	req := &request{
 		method:  "PUT",
 		bucket:  b.Name,
@@ -346,6 +324,25 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 		payload: r,
 	}
 	return b.S3.query(req, nil)
+}
+
+// addHeaders adds o's specified fields to headers
+func (o Options) addHeaders(headers map[string][]string) {
+	if o.SSE {
+		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	}
+	if len(o.ContentEncoding) != 0 {
+		headers["Content-Encoding"] = []string{o.ContentEncoding}
+	}
+	if len(o.CacheControl) != 0 {
+		headers["Cache-Control"] = []string{o.CacheControl}
+	}
+	if len(o.RedirectLocation) != 0 {
+		headers["x-amz-website-redirect-location"] = []string{o.RedirectLocation}
+	}
+	for k, v := range o.Meta {
+		headers["x-amz-meta-"+k] = v
+	}
 }
 
 type RoutingRule struct {
