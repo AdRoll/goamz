@@ -67,6 +67,12 @@ type Options struct {
 	// x-amz-storage-class []string
 }
 
+type CopyOptions struct {
+	Options
+	MetadataDirective string
+	ContentType       string
+}
+
 // CopyObjectResult is the output from a Copy request
 type CopyObjectResult struct {
 	ETag         string
@@ -287,7 +293,7 @@ func (b *Bucket) Put(path string, data []byte, contType string, perm ACL, option
 }
 
 // PutCopy puts a copy of an object given by the key path into bucket b using b.Path as the target key
-func (b *Bucket) PutCopy(path string, perm ACL, options Options, source string) (*CopyObjectResult, error) {
+func (b *Bucket) PutCopy(path string, perm ACL, options CopyOptions, source string) (*CopyObjectResult, error) {
 	headers := map[string][]string{
 		"x-amz-acl":         {string(perm)},
 		"x-amz-copy-source": {source},
@@ -342,6 +348,17 @@ func (o Options) addHeaders(headers map[string][]string) {
 	}
 	for k, v := range o.Meta {
 		headers["x-amz-meta-"+k] = v
+	}
+}
+
+// addHeaders adds o's specified fields to headers
+func (o CopyOptions) addHeaders(headers map[string][]string) {
+	o.Options.addHeaders(headers)
+	if len(o.MetadataDirective) != 0 {
+		headers["x-amz-metadata-directive"] = []string{o.MetadataDirective}
+	}
+	if len(o.ContentType) != 0 {
+		headers["Content-Type"] = []string{o.ContentType}
 	}
 }
 
