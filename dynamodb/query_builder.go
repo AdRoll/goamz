@@ -120,7 +120,9 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 		})
 	}
 
-	b["LocalSecondaryIndexes"] = localSecondaryIndexes
+	if len(localSecondaryIndexes) > 0 {
+		b["LocalSecondaryIndexes"] = localSecondaryIndexes
+	}
 }
 
 func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {
