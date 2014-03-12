@@ -188,10 +188,12 @@ func (r *Route53) ChangeResourceRecordSet(req *ChangeResourceRecordSetsRequest, 
 
 // ListedHostedZones fetches a collection of HostedZones through the AWS Route53 API
 func (r *Route53) ListHostedZones(marker string, maxItems int) (result *ListHostedZonesResponse, err error) {
+    path := ""
+
     if marker == "" {
-	    path := fmt.Sprintf("%s?maxitems=%d", r.Endpoint, maxItems)
+	    path = fmt.Sprintf("%s?maxitems=%d", r.Endpoint, maxItems)
     } else {
-    	path := fmt.Sprintf("%s?marker=%v&maxitems=%d", r.Endpoint, marker, maxItems)
+    	path = fmt.Sprintf("%s?marker=%v&maxitems=%d", r.Endpoint, marker, maxItems)
     }
 
 	result = new(ListHostedZonesResponse)
