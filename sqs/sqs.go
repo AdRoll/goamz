@@ -418,6 +418,9 @@ func (s *SQS) query(queueUrl string, params map[string]string, resp interface{})
 	//	return err
 	//}
 
+	if s.Auth.Token() != "" {
+		params["SecurityToken"] = s.Auth.Token()
+	}
 	sign(s.Auth, "GET", path, params, url_.Host)
 
 	url_.RawQuery = multimap(params).Encode()
