@@ -242,11 +242,10 @@ func (b *Bucket) Exists(path string) (exists bool, err error) {
 
 		if err != nil {
 			// We can treat a 403 or 404 as non existance
-			if (*err.(*Error)).StatusCode == 403 || (*err.(*Error)).StatusCode == 404 {
+			if e, ok := err.(*Error); ok && (e.StatusCode == 403 || e.StatusCode == 404) {
 				return false, nil
-			} else {
-				return false, err
 			}
+			return false, err
 		}
 
 		if resp.StatusCode/100 == 2 {
