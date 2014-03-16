@@ -804,6 +804,7 @@ type Image struct {
 	RootDeviceType     string               `xml:"rootDeviceType"`
 	RootDeviceName     string               `xml:"rootDeviceName"`
 	VirtualizationType string               `xml:"virtualizationType"`
+	Tags               []Tag                `xml:"tagSet>item"`
 	Hypervisor         string               `xml:"hypervisor"`
 	BlockDevices       []BlockDeviceMapping `xml:"blockDeviceMapping>item"`
 }
