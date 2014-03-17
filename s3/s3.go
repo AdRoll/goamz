@@ -344,7 +344,7 @@ func (o Options) addHeaders(headers map[string][]string) {
 	if len(o.CacheControl) != 0 {
 		headers["Cache-Control"] = []string{o.CacheControl}
 	}
-	if len(options.ContentMD5) != 0 {
+	if len(o.ContentMD5) != 0 {
 		headers["Content-MD5"] = []string{o.ContentMD5}
 	}
 	if len(o.RedirectLocation) != 0 {
