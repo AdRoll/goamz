@@ -25,7 +25,7 @@ func NewRoute53(auth aws.Auth) (*Route53, error) {
 	return &Route53{
 		Auth:     auth,
 		Signer:   signer,
-		Endpoint: route53_host + "/2012-12-12/hostedzone",
+		Endpoint: route53_host + "/2013-04-01/hostedzone",
 	}, nil
 }
 
@@ -188,7 +188,13 @@ func (r *Route53) ChangeResourceRecordSet(req *ChangeResourceRecordSetsRequest, 
 
 // ListedHostedZones fetches a collection of HostedZones through the AWS Route53 API
 func (r *Route53) ListHostedZones(marker string, maxItems int) (result *ListHostedZonesResponse, err error) {
-	path := fmt.Sprintf("%s?marker=%v&maxitems=%d", r.Endpoint, marker, maxItems)
+    path := ""
+
+    if marker == "" {
+	    path = fmt.Sprintf("%s?maxitems=%d", r.Endpoint, maxItems)
+    } else {
+    	path = fmt.Sprintf("%s?marker=%v&maxitems=%d", r.Endpoint, marker, maxItems)
+    }
 
 	result = new(ListHostedZonesResponse)
 	err = r.query("GET", path, nil, result)

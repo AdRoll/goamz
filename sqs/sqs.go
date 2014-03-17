@@ -257,25 +257,30 @@ func (q *Queue) SendMessage(MessageBody string) (resp *SendMessageResponse, err 
 }
 
 // ReceiveMessageWithVisibilityTimeout
-func (q *Queue) ReceiveMessageWithVisibilityTimeout(MaxNumberOfMessages, VisibilityTimeoutSec int) (resp *ReceiveMessageResponse, err error) {
-	resp = &ReceiveMessageResponse{}
-	params := makeParams("ReceiveMessage")
-
-	params["AttributeName"] = "All"
-	params["MaxNumberOfMessages"] = strconv.Itoa(MaxNumberOfMessages)
-	params["VisibilityTimeout"] = strconv.Itoa(VisibilityTimeoutSec)
-
-	err = q.SQS.query(q.Url, params, resp)
-	return
+func (q *Queue) ReceiveMessageWithVisibilityTimeout(MaxNumberOfMessages, VisibilityTimeoutSec int) (*ReceiveMessageResponse, error) {
+	params := map[string]string{
+		"MaxNumberOfMessages": strconv.Itoa(MaxNumberOfMessages),
+		"VisibilityTimeout":   strconv.Itoa(VisibilityTimeoutSec),
+	}
+	return q.ReceiveMessageWithParameters(params)
 }
 
 // ReceiveMessage
-func (q *Queue) ReceiveMessage(MaxNumberOfMessages int) (resp *ReceiveMessageResponse, err error) {
+func (q *Queue) ReceiveMessage(MaxNumberOfMessages int) (*ReceiveMessageResponse, error) {
+	params := map[string]string{
+		"MaxNumberOfMessages": strconv.Itoa(MaxNumberOfMessages),
+	}
+	return q.ReceiveMessageWithParameters(params)
+}
+
+func (q *Queue) ReceiveMessageWithParameters(p map[string]string) (resp *ReceiveMessageResponse, err error) {
 	resp = &ReceiveMessageResponse{}
 	params := makeParams("ReceiveMessage")
-
 	params["AttributeName"] = "All"
-	params["MaxNumberOfMessages"] = strconv.Itoa(MaxNumberOfMessages)
+
+	for k, v := range p {
+		params[k] = v
+	}
 
 	err = q.SQS.query(q.Url, params, resp)
 	return
@@ -418,6 +423,9 @@ func (s *SQS) query(queueUrl string, params map[string]string, resp interface{})
 	//	return err
 	//}
 
+	if s.Auth.Token() != "" {
+		params["SecurityToken"] = s.Auth.Token()
+	}
 	sign(s.Auth, "GET", path, params, url_.Host)
 
 	url_.RawQuery = multimap(params).Encode()

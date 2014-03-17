@@ -61,6 +61,7 @@ type Options struct {
 	ContentEncoding  string
 	CacheControl     string
 	RedirectLocation string
+	ContentMD5       string
 	// What else?
 	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
@@ -341,6 +342,9 @@ func (o Options) addHeaders(headers map[string][]string) {
 	}
 	if len(o.CacheControl) != 0 {
 		headers["Cache-Control"] = []string{o.CacheControl}
+	}
+	if len(o.ContentMD5) != 0 {
+		headers["Content-MD5"] = []string{o.ContentMD5}
 	}
 	if len(o.RedirectLocation) != 0 {
 		headers["x-amz-website-redirect-location"] = []string{o.RedirectLocation}
@@ -628,6 +632,44 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	} else {
 		return u.String()
 	}
+}
+
+// UploadSignedURL returns a signed URL that allows anyone holding the URL
+// to upload the object at path. The signature is valid until expires.
+// contenttype is a string like image/png
+// path is the resource name in s3 terminalogy like images/ali.png [obviously exclusing the bucket name itself]
+func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time.Time) string {
+	expire_date := expires.Unix()
+	if method != "POST" {
+		method = "PUT"
+	}
+	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
+	fmt.Println("String to sign:\n", stringToSign)
+	a := b.S3.Auth
+	secretKey := a.SecretKey
+	accessId := a.AccessKey
+	mac := hmac.New(sha1.New, []byte(secretKey))
+	mac.Write([]byte(stringToSign))
+	macsum := mac.Sum(nil)
+	signature := base64.StdEncoding.EncodeToString([]byte(macsum))
+	signature = strings.TrimSpace(signature)
+
+	signedurl, err := url.Parse("https://" + b.Name + ".s3.amazonaws.com/")
+	if err != nil {
+		log.Println("ERROR sining url for S3 upload", err)
+		return ""
+	}
+	signedurl.Path += path
+	params := url.Values{}
+	params.Add("AWSAccessKeyId", accessId)
+	params.Add("Expires", strconv.FormatInt(expire_date, 10))
+	params.Add("Signature", signature)
+	if a.Token() != "" {
+		params.Add("token", a.Token())
+	}
+
+	signedurl.RawQuery = params.Encode()
+	return signedurl.String()
 }
 
 // PostFormArgs returns the action and input fields needed to allow anonymous
