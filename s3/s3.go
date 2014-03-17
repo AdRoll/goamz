@@ -68,6 +68,12 @@ type Options struct {
 	// x-amz-storage-class []string
 }
 
+type CopyOptions struct {
+	Options
+	MetadataDirective string
+	ContentType       string
+}
+
 // CopyObjectResult is the output from a Copy request
 type CopyObjectResult struct {
 	ETag         string
@@ -288,20 +294,12 @@ func (b *Bucket) Put(path string, data []byte, contType string, perm ACL, option
 }
 
 // PutCopy puts a copy of an object given by the key path into bucket b using b.Path as the target key
-func (b *Bucket) PutCopy(path string, perm ACL, options Options, source string) (*CopyObjectResult, error) {
+func (b *Bucket) PutCopy(path string, perm ACL, options CopyOptions, source string) (*CopyObjectResult, error) {
 	headers := map[string][]string{
 		"x-amz-acl":         {string(perm)},
 		"x-amz-copy-source": {source},
 	}
-	if options.SSE {
-		headers["x-amz-server-side-encryption"] = []string{"AES256"}
-	}
-	if len(options.ContentEncoding) != 0 {
-		headers["Content-Encoding"] = []string{options.ContentEncoding}
-	}
-	for k, v := range options.Meta {
-		headers["x-amz-meta-"+k] = v
-	}
+	options.addHeaders(headers)
 	req := &request{
 		method:  "PUT",
 		bucket:  b.Name,
@@ -324,24 +322,7 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 		"Content-Type":   {contType},
 		"x-amz-acl":      {string(perm)},
 	}
-	if options.SSE {
-		headers["x-amz-server-side-encryption"] = []string{"AES256"}
-	}
-	if len(options.ContentEncoding) != 0 {
-		headers["Content-Encoding"] = []string{options.ContentEncoding}
-	}
-	if len(options.CacheControl) != 0 {
-		headers["Cache-Control"] = []string{options.CacheControl}
-	}
-	if len(options.ContentMD5) != 0 {
-		headers["Content-MD5"] = []string{options.ContentMD5}
-	}
-	if len(options.RedirectLocation) != 0 {
-		headers["x-amz-website-redirect-location"] = []string{options.RedirectLocation}
-	}
-	for k, v := range options.Meta {
-		headers["x-amz-meta-"+k] = v
-	}
+	options.addHeaders(headers)
 	req := &request{
 		method:  "PUT",
 		bucket:  b.Name,
@@ -350,6 +331,39 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 		payload: r,
 	}
 	return b.S3.query(req, nil)
+}
+
+// addHeaders adds o's specified fields to headers
+func (o Options) addHeaders(headers map[string][]string) {
+	if o.SSE {
+		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	}
+	if len(o.ContentEncoding) != 0 {
+		headers["Content-Encoding"] = []string{o.ContentEncoding}
+	}
+	if len(o.CacheControl) != 0 {
+		headers["Cache-Control"] = []string{o.CacheControl}
+	}
+	if len(options.ContentMD5) != 0 {
+		headers["Content-MD5"] = []string{o.ContentMD5}
+	}
+	if len(o.RedirectLocation) != 0 {
+		headers["x-amz-website-redirect-location"] = []string{o.RedirectLocation}
+	}
+	for k, v := range o.Meta {
+		headers["x-amz-meta-"+k] = v
+	}
+}
+
+// addHeaders adds o's specified fields to headers
+func (o CopyOptions) addHeaders(headers map[string][]string) {
+	o.Options.addHeaders(headers)
+	if len(o.MetadataDirective) != 0 {
+		headers["x-amz-metadata-directive"] = []string{o.MetadataDirective}
+	}
+	if len(o.ContentType) != 0 {
+		headers["Content-Type"] = []string{o.ContentType}
+	}
 }
 
 type RoutingRule struct {
@@ -619,6 +633,44 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 	} else {
 		return u.String()
 	}
+}
+
+// UploadSignedURL returns a signed URL that allows anyone holding the URL
+// to upload the object at path. The signature is valid until expires.
+// contenttype is a string like image/png
+// path is the resource name in s3 terminalogy like images/ali.png [obviously exclusing the bucket name itself]
+func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time.Time) string {
+	expire_date := expires.Unix()
+	if method != "POST" {
+		method = "PUT"
+	}
+	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
+	fmt.Println("String to sign:\n", stringToSign)
+	a := b.S3.Auth
+	secretKey := a.SecretKey
+	accessId := a.AccessKey
+	mac := hmac.New(sha1.New, []byte(secretKey))
+	mac.Write([]byte(stringToSign))
+	macsum := mac.Sum(nil)
+	signature := base64.StdEncoding.EncodeToString([]byte(macsum))
+	signature = strings.TrimSpace(signature)
+
+	signedurl, err := url.Parse("https://" + b.Name + ".s3.amazonaws.com/")
+	if err != nil {
+		log.Println("ERROR sining url for S3 upload", err)
+		return ""
+	}
+	signedurl.Path += path
+	params := url.Values{}
+	params.Add("AWSAccessKeyId", accessId)
+	params.Add("Expires", strconv.FormatInt(expire_date, 10))
+	params.Add("Signature", signature)
+	if a.Token() != "" {
+		params.Add("token", a.Token())
+	}
+
+	signedurl.RawQuery = params.Encode()
+	return signedurl.String()
 }
 
 // PostFormArgs returns the action and input fields needed to allow anonymous

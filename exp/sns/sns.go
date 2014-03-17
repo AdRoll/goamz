@@ -366,7 +366,7 @@ type ListSubscriptionByTopicOpt struct {
 // See http://goo.gl/LaVcC for more details.
 func (sns *SNS) ListSubscriptionByTopic(options *ListSubscriptionByTopicOpt) (resp *ListSubscriptionByTopicResponse, err error) {
 	resp = &ListSubscriptionByTopicResponse{}
-	params := makeParams("ListSbubscriptionByTopic")
+	params := makeParams("ListSubscriptionsByTopic")
 
 	if options.NextToken != "" {
 		params["NextToken"] = options.NextToken

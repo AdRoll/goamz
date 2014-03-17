@@ -441,6 +441,10 @@ func (s *S) TestDescribeImagesExample(c *gocheck.C) {
 	c.Assert(i0.VirtualizationType, gocheck.Equals, "paravirtual")
 	c.Assert(i0.Hypervisor, gocheck.Equals, "xen")
 
+	c.Assert(i0.Tags, gocheck.HasLen, 1)
+	c.Assert(i0.Tags[0].Key, gocheck.Equals, "Purpose")
+	c.Assert(i0.Tags[0].Value, gocheck.Equals, "EXAMPLE")
+
 	c.Assert(i0.BlockDevices, gocheck.HasLen, 1)
 	c.Assert(i0.BlockDevices[0].DeviceName, gocheck.Equals, "/dev/sda1")
 	c.Assert(i0.BlockDevices[0].SnapshotId, gocheck.Equals, "snap-787e9403")

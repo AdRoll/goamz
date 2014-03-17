@@ -110,7 +110,19 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 		"WriteCapacityUnits": int(description.ProvisionedThroughput.WriteCapacityUnits),
 	}
 
-	// Todo: Implement LocalSecondayIndexes
+	localSecondaryIndexes := []interface{}{}
+
+	for _, ind := range description.LocalSecondaryIndexes {
+		localSecondaryIndexes = append(localSecondaryIndexes, msi{
+			"IndexName":  ind.IndexName,
+			"KeySchema":  ind.KeySchema,
+			"Projection": ind.Projection,
+		})
+	}
+
+	if len(localSecondaryIndexes) > 0 {
+		b["LocalSecondaryIndexes"] = localSecondaryIndexes
+	}
 }
 
 func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {

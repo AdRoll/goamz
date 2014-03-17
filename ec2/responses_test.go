@@ -446,6 +446,12 @@ var DescribeImagesExample = `
                 </item>
             </blockDeviceMapping>
             <virtualizationType>paravirtual</virtualizationType>
+            <tagSet>
+                <item>
+                    <key>Purpose</key>
+                    <value>EXAMPLE</value>
+                </item>
+            </tagSet>
             <hypervisor>xen</hypervisor>
         </item>
     </imagesSet>
