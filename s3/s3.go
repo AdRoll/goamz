@@ -61,6 +61,7 @@ type Options struct {
 	ContentEncoding  string
 	CacheControl     string
 	RedirectLocation string
+	ContentMD5       string
 	// What else?
 	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
@@ -342,6 +343,9 @@ func (o Options) addHeaders(headers map[string][]string) {
 	}
 	if len(o.CacheControl) != 0 {
 		headers["Cache-Control"] = []string{o.CacheControl}
+	}
+	if len(o.ContentMD5) != 0 {
+		headers["Content-MD5"] = []string{o.ContentMD5}
 	}
 	if len(o.RedirectLocation) != 0 {
 		headers["x-amz-website-redirect-location"] = []string{o.RedirectLocation}
