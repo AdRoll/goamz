@@ -13,6 +13,7 @@ package s3
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/xml"
@@ -365,6 +366,13 @@ func (o CopyOptions) addHeaders(headers map[string][]string) {
 	}
 }
 
+func makeXmlBuffer(doc []byte) *bytes.Buffer {
+	buf := new(bytes.Buffer)
+	buf.WriteString(xml.Header)
+	buf.Write(doc)
+	return buf
+}
+
 type RoutingRule struct {
 	ConditionKeyPrefixEquals     string `xml:"Condition>KeyPrefixEquals"`
 	RedirectReplaceKeyPrefixWith string `xml:"Redirect>ReplaceKeyPrefixWith,omitempty"`
@@ -385,9 +393,7 @@ func (b *Bucket) PutBucketWebsite(configuration WebsiteConfiguration) error {
 		return err
 	}
 
-	buf := new(bytes.Buffer)
-	buf.WriteString(xml.Header)
-	buf.Write(doc)
+	buf := makeXmlBuffer(doc)
 
 	return b.PutBucketSubresource("website", buf, int64(buf.Len()))
 }
@@ -417,6 +423,49 @@ func (b *Bucket) Del(path string) error {
 		bucket: b.Name,
 		path:   path,
 	}
+	return b.S3.query(req, nil)
+}
+
+type Delete struct {
+	Quiet   bool     `xml:"Quiet,omitempty"`
+	Objects []Object `xml:"Object"`
+}
+
+type Object struct {
+	Key       string `xml:"Key"`
+	VersionId string `xml:"VersionId,omitempty"`
+}
+
+// DelMulti removes up to 1000 objects from the S3 bucket.
+//
+// See http://goo.gl/jx6cWK for details.
+func (b *Bucket) DelMulti(objects Delete) error {
+	doc, err := xml.Marshal(objects)
+	if err != nil {
+		return err
+	}
+
+	buf := makeXmlBuffer(doc)
+	digest := md5.New()
+	size, err := digest.Write(buf.Bytes())
+	if err != nil {
+		return err
+	}
+
+	headers := map[string][]string{
+		"Content-Length": {strconv.FormatInt(int64(size), 10)},
+		"Content-MD5":    {base64.StdEncoding.EncodeToString(digest.Sum(nil))},
+		"Content-Type":   {"text/xml"},
+	}
+	req := &request{
+		path:    "/",
+		method:  "POST",
+		params:  url.Values{"delete": {""}},
+		bucket:  b.Name,
+		headers: headers,
+		payload: buf,
+	}
+
 	return b.S3.query(req, nil)
 }
 

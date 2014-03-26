@@ -251,6 +251,26 @@ func (s *S) TestDelObject(c *gocheck.C) {
 	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
 }
 
+func (s *S) TestDelMultiObjects(c *gocheck.C) {
+	testServer.Response(200, nil, "")
+
+	b := s.s3.Bucket("bucket")
+	objects := []s3.Object{s3.Object{Key: "test"}}
+	err := b.DelMulti(s3.Delete{
+		Quiet:   false,
+		Objects: objects,
+	})
+	c.Assert(err, gocheck.IsNil)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, gocheck.Equals, "POST")
+	c.Assert(req.URL.RawQuery, gocheck.Equals, "delete=")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+	c.Assert(req.Header["Content-MD5"], gocheck.Not(gocheck.Equals), "")
+	c.Assert(req.Header["Content-Type"], gocheck.Not(gocheck.Equals), "")
+	c.Assert(req.ContentLength, gocheck.Not(gocheck.Equals), "")
+}
+
 // Bucket List Objects docs: http://goo.gl/YjQTc
 
 func (s *S) TestList(c *gocheck.C) {
