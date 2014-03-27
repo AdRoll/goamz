@@ -239,3 +239,213 @@ func (s *S) TestListSubscriptionByTopic(c *gocheck.C) {
 	c.Assert(resp.Subscriptions[0].Protocol, gocheck.Equals, "email")
 	c.Assert(err, gocheck.IsNil)
 }
+func (s *S) TestCreatePlatformApplication(c *gocheck.C) {
+	testServer.Response(200, nil, TestCreatePlatformApplicationXmlOK)
+
+	attrs := []sns.AttributeEntry{
+		sns.AttributeEntry{Key: "PlatformCredential", Value: "AIzaSyClE2lcV2zEKTLYYo645zfk2jhQPFeyxDo"},
+		sns.AttributeEntry{Key: "PlatformPrincipal", Value: "There is no principal for GCM"},
+	}
+	opt := &sns.PlatformApplicationOpt{Name: "gcmpushapp", Platform: "GCM", Attributes: attrs}
+	resp, err := s.sns.CreatePlatformApplication(opt)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(resp.PlatformApplicationArn, gocheck.Equals, "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp")
+	c.Assert(resp.RequestId, gocheck.Equals, "b6f0e78b-e9d4-5a0e-b973-adc04e8a4ff9")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestCreatePlatformEndpoint(c *gocheck.C) {
+	testServer.Response(200, nil, TestCreatePlatformEndpointXmlOK)
+
+	opt := &sns.PlatformEndpointOpt{PlatformApplicationArn: "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp",
+		CustomUserData: "UserId=27576823", Token: "APA91bGi7fFachkC1xjlqT66VYEucGHochmf1VQAr9k...jsM0PKPxKhddCzx6paEsyay9Zn3D4wNUJb8m6HZrBEXAMPLE"}
+
+	resp, err := s.sns.CreatePlatformEndpoint(opt)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(resp.EndpointArn, gocheck.Equals, "arn:aws:sns:us-west-2:123456789012:endpoint/GCM/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3")
+	c.Assert(resp.RequestId, gocheck.Equals, "6613341d-3e15-53f7-bf3c-7e56994ba278")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestDeleteEndpoint(c *gocheck.C) {
+	testServer.Response(200, nil, DeleteEndpointXmlOK)
+
+	resp, err := s.sns.DeleteEndpoint("arn:aws:sns:us-west-2:123456789012:endpoint/GCM%/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(resp.RequestId, gocheck.Equals, "c1d2b191-353c-5a5f-8969-fbdd3900afa8")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestDeletePlatformApplication(c *gocheck.C) {
+	testServer.Response(200, nil, TestDeletePlatformApplicationXmlOK)
+
+	resp, err := s.sns.DeletePlatformApplication("arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(resp.RequestId, gocheck.Equals, "097dac18-7a77-5823-a8dd-e65476dcb037")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestGetEndpointAttributes(c *gocheck.C) {
+	testServer.Response(200, nil, TestGetEndpointAttributesXmlOK)
+
+	resp, err := s.sns.GetEndpointAttributes("arn:aws:sns:us-west-2:123456789012:endpoint/GCM/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(len(resp.Attributes), gocheck.Equals, 3)
+	c.Assert(resp.Attributes[0].Key, gocheck.Equals, "Enabled")
+	c.Assert(resp.Attributes[0].Value, gocheck.Equals, "true")
+
+	c.Assert(resp.Attributes[1].Key, gocheck.Equals, "CustomUserData")
+	c.Assert(resp.Attributes[1].Value, gocheck.Equals, "UserId=01234567")
+
+	c.Assert(resp.Attributes[2].Key, gocheck.Equals, "Token")
+	c.Assert(resp.Attributes[2].Value, gocheck.Equals, "APA91bGi7fFachkC1xjlqT66VYEucGHochmf1VQAr9k...jsM0PKPxKhddCzx6paEsyay9Zn3D4wNUJb8m6HZrBEXAMPLE")
+
+	c.Assert(resp.RequestId, gocheck.Equals, "6c725a19-a142-5b77-94f9-1055a9ea04e7")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestGetPlatformApplicationAttributes(c *gocheck.C) {
+	testServer.Response(200, nil, TestGetPlatformApplicationAttributesXmlOK)
+
+	resp, err := s.sns.GetPlatformApplicationAttributes("arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp", "")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(len(resp.Attributes), gocheck.Not(gocheck.Equals), 0)
+	c.Assert(resp.Attributes[0].Key, gocheck.Equals, "AllowEndpointPolicies")
+	c.Assert(resp.Attributes[0].Value, gocheck.Equals, "false")
+	c.Assert(resp.RequestId, gocheck.Equals, "74848df2-87f6-55ed-890c-c7be80442462")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestListEndpointsByPlatformApplication(c *gocheck.C) {
+	testServer.Response(200, nil, TestListEndpointsByPlatformApplicationXmlOK)
+
+	resp, err := s.sns.ListEndpointsByPlatformApplication("arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp", "")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(len(resp.Endpoints), gocheck.Not(gocheck.Equals), 0)
+	c.Assert(resp.Endpoints[0].EndpointArn, gocheck.Equals, "arn:aws:sns:us-west-2:123456789012:endpoint/GCM/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3")
+	c.Assert(len(resp.Endpoints[0].Attributes), gocheck.Equals, 3)
+	c.Assert(resp.Endpoints[0].Attributes[0].Key, gocheck.Equals, "Enabled")
+	c.Assert(resp.Endpoints[0].Attributes[0].Value, gocheck.Equals, "true")
+	c.Assert(resp.Endpoints[0].Attributes[1].Key, gocheck.Equals, "CustomUserData")
+	c.Assert(resp.Endpoints[0].Attributes[1].Value, gocheck.Equals, "UserId=27576823")
+	c.Assert(resp.Endpoints[0].Attributes[2].Key, gocheck.Equals, "Token")
+	c.Assert(resp.Endpoints[0].Attributes[2].Value, gocheck.Equals, "APA91bGi7fFachkC1xjlqT66VYEucGHochmf1VQAr9k...jsM0PKPxKhddCzx6paEsyay9Zn3D4wNUJb8m6HZrBEXAMPLE")
+
+	c.Assert(resp.RequestId, gocheck.Equals, "9a48768c-dac8-5a60-aec0-3cc27ea08d96")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestListPlatformApplications(c *gocheck.C) {
+	testServer.Response(200, nil, TestListPlatformApplicationsXmlOK)
+
+	resp, err := s.sns.ListPlatformApplications("")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(len(resp.PlatformApplications), gocheck.Not(gocheck.Equals), 0)
+
+	c.Assert(resp.PlatformApplications[0].PlatformApplicationArn, gocheck.Equals, "arn:aws:sns:us-west-2:123456789012:app/APNS_SANDBOX/apnspushapp")
+	c.Assert(len(resp.PlatformApplications[0].Attributes), gocheck.Equals, 1)
+	c.Assert(resp.PlatformApplications[0].Attributes[0].Key, gocheck.Equals, "AllowEndpointPolicies")
+	c.Assert(resp.PlatformApplications[0].Attributes[0].Value, gocheck.Equals, "false")
+
+	c.Assert(resp.PlatformApplications[1].PlatformApplicationArn, gocheck.Equals, "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp")
+	c.Assert(len(resp.PlatformApplications[1].Attributes), gocheck.Equals, 1)
+	c.Assert(resp.PlatformApplications[1].Attributes[0].Key, gocheck.Equals, "AllowEndpointPolicies")
+	c.Assert(resp.PlatformApplications[1].Attributes[0].Value, gocheck.Equals, "false")
+
+	c.Assert(resp.RequestId, gocheck.Equals, "315a335e-85d8-52df-9349-791283cbb529")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestSetEndpointAttributes(c *gocheck.C) {
+	testServer.Response(200, nil, TestSetEndpointAttributesXmlOK)
+
+	attrs := []sns.AttributeEntry{
+		sns.AttributeEntry{Key: "CustomUserData", Value: "My custom userdata"},
+	}
+
+	opts := &sns.SetEndpointAttributesOpt{
+		EndpointArn: "arn:aws:sns:us-west-2:123456789012:endpoint/GCM/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3",
+		Attributes:  attrs}
+
+	resp, err := s.sns.SetEndpointAttributes(opts)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(resp.RequestId, gocheck.Equals, "2fe0bfc7-3e85-5ee5-a9e2-f58b35e85f6a")
+
+	c.Assert(err, gocheck.IsNil)
+}
+
+func (s *S) TestSetPlatformApplicationAttributes(c *gocheck.C) {
+	testServer.Response(200, nil, TestSetPlatformApplicationAttributesXmlOK)
+
+	attrs := []sns.AttributeEntry{
+		sns.AttributeEntry{Key: "EventEndpointCreated", Value: "arn:aws:sns:us-west-2:123456789012:topicarn"},
+	}
+
+	opts := &sns.SetPlatformApplicationAttributesOpt{
+		PlatformApplicationArn: "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp",
+		Attributes:             attrs}
+
+	resp, err := s.sns.SetPlatformApplicationAttributes(opts)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, gocheck.Equals, "GET")
+	c.Assert(req.URL.Path, gocheck.Equals, "/")
+	c.Assert(req.Header["Date"], gocheck.Not(gocheck.Equals), "")
+
+	c.Assert(resp.RequestId, gocheck.Equals, "cf577bcc-b3dc-5463-88f1-3180b9412395")
+
+	c.Assert(err, gocheck.IsNil)
+}
