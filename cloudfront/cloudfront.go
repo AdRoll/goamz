@@ -1,7 +1,6 @@
 package cloudfront
 
 import (
-	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -62,13 +61,7 @@ func buildPolicy(resource string, expireTime time.Time) ([]byte, error) {
 		},
 	}
 
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	if err := enc.Encode(p); err != nil {
-		return nil, err
-	}
-
-	return b.Bytes(), nil
+	return json.Marshal(p)
 }
 
 func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
