@@ -85,7 +85,7 @@ func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
 // Creates a signed url using RSAwithSHA1 as specified by
 // http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-creating-signed-url-canned-policy.html#private-content-canned-policy-creating-signature
 func (cf *CloudFront) CannedSignedURL(path, queryString string, expires time.Time) (string, error) {
-	resource := path
+	resource := cf.BaseURL + path
 	if queryString != "" {
 		resource = path + "?" + queryString
 	}
