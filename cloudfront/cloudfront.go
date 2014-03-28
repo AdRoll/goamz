@@ -91,12 +91,10 @@ func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
 
 // Creates a signed url using RSAwithSHA1 as specified by
 // http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-creating-signed-url-canned-policy.html#private-content-canned-policy-creating-signature
-func (cf *CloudFront) CannedSignedURL(path string, query url.Values, expires time.Time) (string, error) {
+func (cf *CloudFront) CannedSignedURL(path, queryString string, expires time.Time) (string, error) {
 	resource := path
-	if query == nil {
-		query = make(url.Values)
-	} else {
-		resource += "?" + query.Encode()
+	if queryString != "" {
+		resource = path + "?" + queryString
 	}
 
 	policy, err := buildPolicy(resource, expires)
@@ -115,12 +113,15 @@ func (cf *CloudFront) CannedSignedURL(path string, query url.Values, expires tim
 		return "", err
 	}
 
-	query.Set("Expires", fmt.Sprintf("%d", (expires.Truncate(time.Millisecond).Unix())))
-	query.Set("Signature", signature)
-	query.Set("Key-Pair-Id", cf.keyPairId)
+	uri.RawQuery = queryString
+	if queryString != "" {
+		uri.RawQuery += "&"
+	}
+
+	expireTime := expires.Truncate(time.Millisecond).Unix()
 
 	uri.Path = path
-	uri.RawQuery = query.Encode()
+	uri.RawQuery += fmt.Sprintf("Expires=%d&Signature=%s&Key-Pair-Id=%s", expireTime, signature, cf.keyPairId)
 
 	return uri.String(), nil
 }
