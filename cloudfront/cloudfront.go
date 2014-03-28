@@ -1,7 +1,6 @@
 package cloudfront
 
 import (
-	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -32,7 +31,7 @@ func New(baseurl string, key *rsa.PrivateKey, keyPairId string) *CloudFront {
 }
 
 type epochTime struct {
-	EpochTime int64 `json:"AWS:EpochTIme"`
+	EpochTime int64 `json:"AWS:EpochTime"`
 }
 
 type condition struct {
@@ -62,13 +61,7 @@ func buildPolicy(resource string, expireTime time.Time) ([]byte, error) {
 		},
 	}
 
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	if err := enc.Encode(p); err != nil {
-		return nil, err
-	}
-
-	return b.Bytes(), nil
+	return json.Marshal(p)
 }
 
 func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
@@ -92,7 +85,7 @@ func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
 // Creates a signed url using RSAwithSHA1 as specified by
 // http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-creating-signed-url-canned-policy.html#private-content-canned-policy-creating-signature
 func (cf *CloudFront) CannedSignedURL(path, queryString string, expires time.Time) (string, error) {
-	resource := path
+	resource := cf.BaseURL + path
 	if queryString != "" {
 		resource = path + "?" + queryString
 	}
