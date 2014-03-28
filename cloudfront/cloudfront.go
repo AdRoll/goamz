@@ -32,7 +32,7 @@ func New(baseurl string, key *rsa.PrivateKey, keyPairId string) *CloudFront {
 }
 
 type epochTime struct {
-	EpochTime int64 `json:"AWS:EpochTIme"`
+	EpochTime int64 `json:"AWS:EpochTime"`
 }
 
 type condition struct {
