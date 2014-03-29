@@ -212,6 +212,7 @@ type RunInstancesOptions struct {
 	PrivateIPAddress      string
 	IamInstanceProfile    IamInstanceProfile
 	BlockDeviceMappings   []BlockDeviceMapping
+	EbsOptimized          bool
 }
 
 // Response to a RunInstances request.
@@ -469,6 +470,9 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 	}
 	if options.IamInstanceProfile.Name != "" {
 		params["IamInstanceProfile.Name"] = options.IamInstanceProfile.Name
+	}
+	if options.EbsOptimized {
+		params["EbsOptimized"] = "true"
 	}
 
 	resp = &RunInstancesResp{}
