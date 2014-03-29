@@ -833,5 +833,5 @@ func (s *S) TestSignatureWithEndpointPath(c *gocheck.C) {
 	c.Assert(err, gocheck.IsNil)
 
 	req := testServer.WaitRequest()
-	c.Assert(req.Form["Signature"], gocheck.DeepEquals, []string{"klxs+VwDa1EKHBsxlDYYN58wbP6An+RVdhETv1Fm/os="})
+	c.Assert(req.Form["Signature"], gocheck.DeepEquals, []string{"VVoC6Y6xfES+KvZo+789thP8+tye4F6fOKBiKmXk4S4="})
 }
