@@ -204,6 +204,7 @@ type RunInstancesOptions struct {
 	UserData              []byte
 	AvailabilityZone      string
 	PlacementGroupName    string
+	Tenancy               string
 	Monitoring            bool
 	SubnetId              string
 	DisableAPITermination bool
@@ -444,6 +445,9 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 	}
 	if options.PlacementGroupName != "" {
 		params["Placement.GroupName"] = options.PlacementGroupName
+	}
+	if options.Tenancy != "" {
+		params["Placement.Tenancy"] = options.Tenancy
 	}
 	if options.Monitoring {
 		params["Monitoring.Enabled"] = "true"
