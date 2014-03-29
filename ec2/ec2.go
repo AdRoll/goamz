@@ -193,25 +193,24 @@ func addParamsList(params map[string]string, label string, ids []string) {
 //
 // See http://goo.gl/Mcm3b for more details.
 type RunInstancesOptions struct {
-	ImageId                string
-	MinCount               int
-	MaxCount               int
-	KeyName                string
-	InstanceType           string
-	SecurityGroups         []SecurityGroup
-	KernelId               string
-	RamdiskId              string
-	UserData               []byte
-	AvailabilityZone       string
-	PlacementGroupName     string
-	Monitoring             bool
-	SubnetId               string
-	DisableAPITermination  bool
-	ShutdownBehavior       string
-	PrivateIPAddress       string
-	IamInstanceProfileArn  string
-	IamInstanceProfileName string
-	BlockDeviceMappings    []BlockDeviceMapping
+	ImageId               string
+	MinCount              int
+	MaxCount              int
+	KeyName               string
+	InstanceType          string
+	SecurityGroups        []SecurityGroup
+	KernelId              string
+	RamdiskId             string
+	UserData              []byte
+	AvailabilityZone      string
+	PlacementGroupName    string
+	Monitoring            bool
+	SubnetId              string
+	DisableAPITermination bool
+	ShutdownBehavior      string
+	PrivateIPAddress      string
+	IamInstanceProfile    IamInstanceProfile
+	BlockDeviceMappings   []BlockDeviceMapping
 }
 
 // Response to a RunInstances request.
@@ -357,8 +356,9 @@ type InstancePrivateIpAddress struct {
 // IamInstanceProfile
 // See http://goo.gl/PjyijL for more details
 type IamInstanceProfile struct {
-	ARN string `xml:"arn"`
-	Id  string `xml:"id"`
+	ARN  string `xml:"arn"`
+	Id   string `xml:"id"`
+	Name string `xml:"name"`
 }
 
 // RunInstances starts new instances in EC2.
@@ -460,11 +460,11 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 	if options.PrivateIPAddress != "" {
 		params["PrivateIpAddress"] = options.PrivateIPAddress
 	}
-	if options.IamInstanceProfileArn != "" {
-		params["IamInstanceProfile.Arn"] = options.IamInstanceProfileArn
+	if options.IamInstanceProfile.ARN != "" {
+		params["IamInstanceProfile.Arn"] = options.IamInstanceProfile.ARN
 	}
-	if options.IamInstanceProfileName != "" {
-		params["IamInstanceProfile.Name"] = options.IamInstanceProfileName
+	if options.IamInstanceProfile.Name != "" {
+		params["IamInstanceProfile.Name"] = options.IamInstanceProfile.Name
 	}
 
 	resp = &RunInstancesResp{}
