@@ -119,7 +119,7 @@ type xmlErrors struct {
 var timeNow = time.Now
 
 func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
-	params["Version"] = "2013-02-01"
+	params["Version"] = "2014-02-01"
 	params["Timestamp"] = timeNow().In(time.UTC).Format(time.RFC3339)
 	endpoint, err := url.Parse(ec2.Region.EC2Endpoint)
 	if err != nil {
@@ -193,25 +193,26 @@ func addParamsList(params map[string]string, label string, ids []string) {
 //
 // See http://goo.gl/Mcm3b for more details.
 type RunInstancesOptions struct {
-	ImageId                string
-	MinCount               int
-	MaxCount               int
-	KeyName                string
-	InstanceType           string
-	SecurityGroups         []SecurityGroup
-	KernelId               string
-	RamdiskId              string
-	UserData               []byte
-	AvailabilityZone       string
-	PlacementGroupName     string
-	Monitoring             bool
-	SubnetId               string
-	DisableAPITermination  bool
-	ShutdownBehavior       string
-	PrivateIPAddress       string
-	IamInstanceProfileArn  string
-	IamInstanceProfileName string
-	BlockDeviceMappings    []BlockDeviceMapping
+	ImageId               string
+	MinCount              int
+	MaxCount              int
+	KeyName               string
+	InstanceType          string
+	SecurityGroups        []SecurityGroup
+	KernelId              string
+	RamdiskId             string
+	UserData              []byte
+	AvailabilityZone      string
+	PlacementGroupName    string
+	Tenancy               string
+	Monitoring            bool
+	SubnetId              string
+	DisableAPITermination bool
+	ShutdownBehavior      string
+	PrivateIPAddress      string
+	IamInstanceProfile    IamInstanceProfile
+	BlockDeviceMappings   []BlockDeviceMapping
+	EbsOptimized          bool
 }
 
 // Response to a RunInstances request.
@@ -357,8 +358,9 @@ type InstancePrivateIpAddress struct {
 // IamInstanceProfile
 // See http://goo.gl/PjyijL for more details
 type IamInstanceProfile struct {
-	ARN string `xml:"arn"`
-	Id  string `xml:"id"`
+	ARN  string `xml:"arn"`
+	Id   string `xml:"id"`
+	Name string `xml:"name"`
 }
 
 // RunInstances starts new instances in EC2.
@@ -445,6 +447,9 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 	if options.PlacementGroupName != "" {
 		params["Placement.GroupName"] = options.PlacementGroupName
 	}
+	if options.Tenancy != "" {
+		params["Placement.Tenancy"] = options.Tenancy
+	}
 	if options.Monitoring {
 		params["Monitoring.Enabled"] = "true"
 	}
@@ -460,11 +465,14 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 	if options.PrivateIPAddress != "" {
 		params["PrivateIpAddress"] = options.PrivateIPAddress
 	}
-	if options.IamInstanceProfileArn != "" {
-		params["IamInstanceProfile.Arn"] = options.IamInstanceProfileArn
+	if options.IamInstanceProfile.ARN != "" {
+		params["IamInstanceProfile.Arn"] = options.IamInstanceProfile.ARN
 	}
-	if options.IamInstanceProfileName != "" {
-		params["IamInstanceProfile.Name"] = options.IamInstanceProfileName
+	if options.IamInstanceProfile.Name != "" {
+		params["IamInstanceProfile.Name"] = options.IamInstanceProfile.Name
+	}
+	if options.EbsOptimized {
+		params["EbsOptimized"] = "true"
 	}
 
 	resp = &RunInstancesResp{}
