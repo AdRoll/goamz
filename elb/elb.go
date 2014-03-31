@@ -233,8 +233,8 @@ func (elb *ELB) DescribeInstanceHealth(lbName string, instanceIds ...string) (*D
 		"Action":           "DescribeInstanceHealth",
 		"LoadBalancerName": lbName,
 	}
-	for _, iId := range instanceIds {
-		key := fmt.Sprintf("Instances.member.1.InstanceId")
+	for i, iId := range instanceIds {
+		key := fmt.Sprintf("Instances.member.%d.InstanceId", i + 1)
 		params[key] = iId
 	}
 	resp := new(DescribeInstanceHealthResp)
