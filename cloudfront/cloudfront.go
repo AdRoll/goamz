@@ -2,7 +2,6 @@ package cloudfront
 
 import (
 	"crypto"
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"encoding/base64"
@@ -72,7 +71,7 @@ func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
 
 	hashed := hash.Sum(nil)
 
-	signed, err := rsa.SignPKCS1v15(rand.Reader, cf.key, crypto.SHA1, hashed)
+	signed, err := rsa.SignPKCS1v15(nil, cf.key, crypto.SHA1, hashed)
 	if err != nil {
 		return "", err
 	}
