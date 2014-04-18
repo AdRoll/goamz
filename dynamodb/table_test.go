@@ -2,7 +2,7 @@ package dynamodb_test
 
 import (
 	"github.com/crowdmob/goamz/dynamodb"
-	"launchpad.net/gocheck"
+	"gopkg.in/check.v1"
 )
 
 type TableSuite struct {
@@ -10,7 +10,7 @@ type TableSuite struct {
 	DynamoDBTest
 }
 
-func (s *TableSuite) SetUpSuite(c *gocheck.C) {
+func (s *TableSuite) SetUpSuite(c *check.C) {
 	setUpAuth(c)
 	s.DynamoDBTest.TableDescriptionT = s.TableDescriptionT
 	s.server = &dynamodb.Server{dynamodb_auth, dynamodb_region}
@@ -42,9 +42,9 @@ var table_suite = &TableSuite{
 	},
 }
 
-var _ = gocheck.Suite(table_suite)
+var _ = check.Suite(table_suite)
 
-func (s *TableSuite) TestCreateListTable(c *gocheck.C) {
+func (s *TableSuite) TestCreateListTable(c *check.C) {
 	status, err := s.server.CreateTable(s.TableDescriptionT)
 	if err != nil {
 		c.Fatal(err)
@@ -59,6 +59,6 @@ func (s *TableSuite) TestCreateListTable(c *gocheck.C) {
 	if err != nil {
 		c.Fatal(err)
 	}
-	c.Check(len(tables), gocheck.Not(gocheck.Equals), 0)
-	c.Check(findTableByName(tables, s.TableDescriptionT.TableName), gocheck.Equals, true)
+	c.Check(len(tables), check.Not(check.Equals), 0)
+	c.Check(findTableByName(tables, s.TableDescriptionT.TableName), check.Equals, true)
 }

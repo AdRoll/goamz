@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
-	"launchpad.net/gocheck"
+	"gopkg.in/check.v1"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,7 +13,7 @@ import (
 )
 
 func Test(t *testing.T) {
-	gocheck.TestingT(t)
+	check.TestingT(t)
 }
 
 var integration = flag.Bool("i", false, "Enable integration tests")
@@ -22,7 +22,7 @@ type SuiteI struct {
 	auth aws.Auth
 }
 
-func (s *SuiteI) SetUpSuite(c *gocheck.C) {
+func (s *SuiteI) SetUpSuite(c *check.C) {
 	if !*integration {
 		c.Skip("Integration tests not enabled (-i flag)")
 	}
@@ -37,11 +37,11 @@ type HTTPSuite struct{}
 
 var testServer = NewTestHTTPServer("http://localhost:4455", 5e9)
 
-func (s *HTTPSuite) SetUpSuite(c *gocheck.C) {
+func (s *HTTPSuite) SetUpSuite(c *check.C) {
 	testServer.Start()
 }
 
-func (s *HTTPSuite) TearDownTest(c *gocheck.C) {
+func (s *HTTPSuite) TearDownTest(c *check.C) {
 	testServer.FlushRequests()
 }
 
