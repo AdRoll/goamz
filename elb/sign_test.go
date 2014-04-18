@@ -3,21 +3,21 @@ package elb_test
 import (
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/elb"
-	"launchpad.net/gocheck"
+	"gopkg.in/check.v1"
 )
 
 var testAuth = aws.Auth{AccessKey: "user", SecretKey: "secret"}
 
-func (s *S) TestBasicSignature(c *gocheck.C) {
+func (s *S) TestBasicSignature(c *check.C) {
 	params := map[string]string{}
 	elb.Sign(testAuth, "GET", "/path", params, "localhost")
-	c.Assert(params["SignatureVersion"], gocheck.Equals, "2")
-	c.Assert(params["SignatureMethod"], gocheck.Equals, "HmacSHA256")
+	c.Assert(params["SignatureVersion"], check.Equals, "2")
+	c.Assert(params["SignatureMethod"], check.Equals, "HmacSHA256")
 	expected := "6lSe5QyXum0jMVc7cOUz32/52ZnL7N5RyKRk/09yiK4="
-	c.Assert(params["Signature"], gocheck.Equals, expected)
+	c.Assert(params["Signature"], check.Equals, expected)
 }
 
-func (s *S) TestParamSignature(c *gocheck.C) {
+func (s *S) TestParamSignature(c *check.C) {
 	params := map[string]string{
 		"param1": "value1",
 		"param2": "value2",
@@ -25,10 +25,10 @@ func (s *S) TestParamSignature(c *gocheck.C) {
 	}
 	elb.Sign(testAuth, "GET", "/path", params, "localhost")
 	expected := "XWOR4+0lmK8bD8CGDGZ4kfuSPbb2JibLJiCl/OPu1oU="
-	c.Assert(params["Signature"], gocheck.Equals, expected)
+	c.Assert(params["Signature"], check.Equals, expected)
 }
 
-func (s *S) TestManyParams(c *gocheck.C) {
+func (s *S) TestManyParams(c *check.C) {
 	params := map[string]string{
 		"param1":  "value10",
 		"param2":  "value2",
@@ -43,18 +43,18 @@ func (s *S) TestManyParams(c *gocheck.C) {
 	}
 	elb.Sign(testAuth, "GET", "/path", params, "localhost")
 	expected := "di0sjxIvezUgQ1SIL6i+C/H8lL+U0CQ9frLIak8jkVg="
-	c.Assert(params["Signature"], gocheck.Equals, expected)
+	c.Assert(params["Signature"], check.Equals, expected)
 }
 
-func (s *S) TestEscaping(c *gocheck.C) {
+func (s *S) TestEscaping(c *check.C) {
 	params := map[string]string{"Nonce": "+ +"}
 	elb.Sign(testAuth, "GET", "/path", params, "localhost")
-	c.Assert(params["Nonce"], gocheck.Equals, "+ +")
+	c.Assert(params["Nonce"], check.Equals, "+ +")
 	expected := "bqffDELReIqwjg/W0DnsnVUmfLK4wXVLO4/LuG+1VFA="
-	c.Assert(params["Signature"], gocheck.Equals, expected)
+	c.Assert(params["Signature"], check.Equals, expected)
 }
 
-func (s *S) TestSignatureExample1(c *gocheck.C) {
+func (s *S) TestSignatureExample1(c *check.C) {
 	params := map[string]string{
 		"Timestamp": "2009-02-01T12:53:20+00:00",
 		"Version":   "2007-11-07",
@@ -62,5 +62,5 @@ func (s *S) TestSignatureExample1(c *gocheck.C) {
 	}
 	elb.Sign(aws.Auth{AccessKey: "access", SecretKey: "secret"}, "GET", "/", params, "sdb.amazonaws.com")
 	expected := "okj96/5ucWBSc1uR2zXVfm6mDHtgfNv657rRtt/aunQ="
-	c.Assert(params["Signature"], gocheck.Equals, expected)
+	c.Assert(params["Signature"], check.Equals, expected)
 }
