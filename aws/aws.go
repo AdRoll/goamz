@@ -369,3 +369,105 @@ func Encode(s string) string {
 	}
 	return string(e[:ei])
 }
+
+func dialTimeout(network, addr string) (net.Conn, error) {
+	return net.DialTimeout(network, addr, time.Duration(2*time.Second))
+}
+
+func instanceRegion() string {
+	transport := http.Transport{Dial: dialTimeout}
+	client := http.Client{
+		Transport: &transport,
+	}
+	resp, err := client.Get("http://169.254.169.254/latest/meta-data/placement/availability-zone")
+	if err != nil {
+		return "unknown"
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "unknown"
+		} else {
+			b := string(body)
+			region := b[:len(b)-1]
+			return region
+		}
+	}
+}
+
+func instanceId() string {
+	transport := http.Transport{Dial: dialTimeout}
+	client := http.Client{
+		Transport: &transport,
+	}
+	resp, err := client.Get("http://169.254.169.254/latest/meta-data/instance-id")
+	if err != nil {
+		return "unknown"
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "unknown"
+		} else {
+			return string(body)
+		}
+	}
+}
+
+func instanceType() string {
+	transport := http.Transport{Dial: dialTimeout}
+	client := http.Client{
+		Transport: &transport,
+	}
+	resp, err := client.Get("http://169.254.169.254/latest/meta-data/instance-type")
+	if err != nil {
+		return "unknown"
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "unknown"
+		} else {
+			return string(body)
+		}
+	}
+}
+
+func ServerLocalIp() string {
+	transport := http.Transport{Dial: dialTimeout}
+	client := http.Client{
+		Transport: &transport,
+	}
+	resp, err := client.Get("http://169.254.169.254/latest/meta-data/local-ipv4")
+	if err != nil {
+		return "127.0.0.1"
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "127.0.0.1"
+		} else {
+			return string(body)
+		}
+	}
+}
+
+func ServerPublicIp() string {
+	transport := http.Transport{Dial: dialTimeout}
+	client := http.Client{
+		Transport: &transport,
+	}
+	resp, err := client.Get("http://169.254.169.254/latest/meta-data/public-ipv4")
+	if err != nil {
+		return "127.0.0.1"
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "127.0.0.1"
+		} else {
+			return string(body)
+		}
+	}
+}
+
