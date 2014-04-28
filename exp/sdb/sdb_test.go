@@ -1,9 +1,9 @@
 package sdb_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/exp/sdb"
-	"github.com/crowdmob/goamz/testutil"
+	"github.com/flowhealth/goamz/aws"
+	"github.com/flowhealth/goamz/exp/sdb"
+	"github.com/flowhealth/goamz/testutil"
 	"gopkg.in/check.v1"
 	"testing"
 )
