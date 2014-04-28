@@ -1,6 +1,5 @@
 # GoAMZ
 
-[![Build Status](https://travis-ci.org/flowhealth/goamz.png?branch=master)](https://travis-ci.org/flowhealth/goamz)
 
 The _goamz_ package enables Go programs to interact with Amazon Web Services.
 
