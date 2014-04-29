@@ -374,7 +374,7 @@ func dialTimeout(network, addr string) (net.Conn, error) {
 	return net.DialTimeout(network, addr, time.Duration(2*time.Second))
 }
 
-func instanceRegion() string {
+func InstanceRegion() string {
 	transport := http.Transport{Dial: dialTimeout}
 	client := http.Client{
 		Transport: &transport,
@@ -395,7 +395,7 @@ func instanceRegion() string {
 	}
 }
 
-func instanceId() string {
+func InstanceId() string {
 	transport := http.Transport{Dial: dialTimeout}
 	client := http.Client{
 		Transport: &transport,
@@ -414,7 +414,7 @@ func instanceId() string {
 	}
 }
 
-func instanceType() string {
+func InstanceType() string {
 	transport := http.Transport{Dial: dialTimeout}
 	client := http.Client{
 		Transport: &transport,
