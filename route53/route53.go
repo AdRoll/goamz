@@ -90,6 +90,28 @@ type CreateHostedZoneResponse struct {
 	DelegationSet DelegationSet
 }
 
+type ResourceRecordSets struct {
+	XMLName    xml.Name `xml:"ResourceRecordSets"`
+	ResourceRecordSet []ResourceRecordSet
+}
+
+type ResourceRecordSet struct {
+	XMLName                xml.Name `xml:"ResourceRecordSet"`
+	Name                   string
+	Type                   string
+	TTL                    int
+}
+
+type ListResourceRecordSetsResponse struct {
+	XMLName              xml.Name `xml:"ListResourceRecordSetsResponse"`
+	ResourceRecordSets   []ResourceRecordSets
+	IsTruncated          bool
+	MaxItems             int
+	NextRecordName       string
+	NextRecordType       string
+	NextRecordIdentifier string
+}
+
 type ChangeResourceRecordSetsResponse struct {
 	XMLName     xml.Name `xml:"ChangeResourceRecordSetsResponse"`
 	Id          string   `xml:"ChangeInfo>Id"`
@@ -169,6 +191,19 @@ func (r *Route53) CreateHostedZone(hostedZoneReq *CreateHostedZoneRequest) (*Cre
 	err = r.query("POST", r.Endpoint, bytes.NewBuffer(xmlBytes), result)
 
 	return result, err
+}
+
+// ListResourceRecordSets fetches a collection of ResourceRecordSets through the AWS Route53 API
+func (r *Route53) ListResourceRecordSets(hostedZone string, name string, _type string, identifier string, maxitems int) (result *ListResourceRecordSetsResponse, err error) {
+	// TODO
+	// 1. get path by building a string path := fmt.Sprintf("%s/%s/rrset?name=%s&type=%s", r.Endpoint, hostedZone, name, _type)
+	// 2. allow optional parameters (params can be nil or empty)
+	path := fmt.Sprintf("%s/%s/rrset", r.Endpoint, hostedZone)
+
+	result = new(ListResourceRecordSetsResponse)
+	err = r.query("GET", path, nil, result)
+
+	return
 }
 
 // ChangeResourceRecordSet send a change resource record request to the AWS Route53 API
