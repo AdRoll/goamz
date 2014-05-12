@@ -7,6 +7,7 @@ import (
 	"github.com/crowdmob/goamz/aws"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type Route53 struct {
@@ -195,10 +196,14 @@ func (r *Route53) CreateHostedZone(hostedZoneReq *CreateHostedZoneRequest) (*Cre
 
 // ListResourceRecordSets fetches a collection of ResourceRecordSets through the AWS Route53 API
 func (r *Route53) ListResourceRecordSets(hostedZone string, name string, _type string, identifier string, maxitems int) (result *ListResourceRecordSetsResponse, err error) {
-	// TODO
-	// 1. get path by building a string path := fmt.Sprintf("%s/%s/rrset?name=%s&type=%s", r.Endpoint, hostedZone, name, _type)
-	// 2. allow optional parameters (params can be nil or empty)
-	path := fmt.Sprintf("%s/%s/rrset", r.Endpoint, hostedZone)
+	var buffer bytes.Buffer
+	addParam(&buffer, "name", name)
+	addParam(&buffer, "type", _type)
+	addParam(&buffer, "identifier", identifier)
+	if maxitems > 0 {
+		addParam(&buffer, "maxitems", strconv.Itoa(maxitems))
+	}
+	path := fmt.Sprintf("%s/%s/rrset?%s", r.Endpoint, hostedZone, buffer.String())
 
 	result = new(ListResourceRecordSetsResponse)
 	err = r.query("GET", path, nil, result)
@@ -253,4 +258,13 @@ func (r *Route53) DeleteHostedZone(id string) (result *DeleteHostedZoneResponse,
 	err = r.query("DELETE", path, nil, result)
 
 	return
+}
+
+func addParam(buffer *bytes.Buffer, name, value string) {
+	if value != "" {
+		if buffer.Len() > 0 {
+			buffer.WriteString("&")
+		}
+		buffer.WriteString(fmt.Sprintf("%s=%s", name, value))
+	}
 }
