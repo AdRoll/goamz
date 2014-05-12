@@ -92,15 +92,26 @@ type CreateHostedZoneResponse struct {
 }
 
 type ResourceRecordSets struct {
-	XMLName    xml.Name `xml:"ResourceRecordSets"`
+	XMLName           xml.Name `xml:"ResourceRecordSets"`
 	ResourceRecordSet []ResourceRecordSet
 }
 
+type AliasTarget struct {
+	HostedZoneId         HostedZoneId
+	DNSName              DNSName
+	EvaluateTargetHealth bool
+}
+
 type ResourceRecordSet struct {
-	XMLName                xml.Name `xml:"ResourceRecordSet"`
-	Name                   string
-	Type                   string
-	TTL                    int
+	XMLName       xml.Name `xml:"ResourceRecordSet"`
+	Name          string
+	Type          string
+	TTL           int
+	// TODO: Add  Value string
+	HealthCheckId string
+	Region        string
+	Failover      string
+	AliasTarget   AliasTarget
 }
 
 type ListResourceRecordSetsResponse struct {
