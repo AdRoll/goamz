@@ -128,6 +128,10 @@ func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 	if endpoint.Path == "" {
 		endpoint.Path = "/"
 	}
+	if ec2.Auth.Token() != "" {
+		params["SecurityToken"] = ec2.Auth.Token()
+	}
+
 	sign(ec2.Auth, "GET", endpoint.Path, params, endpoint.Host)
 	endpoint.RawQuery = multimap(params).Encode()
 	if debug {
