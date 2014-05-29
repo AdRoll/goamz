@@ -30,11 +30,6 @@ func NewRoute53(auth aws.Auth) (*Route53, error) {
 }
 
 // General Structs used in all types of requests
-type HostedZones struct {
-	XMLName    xml.Name `xml:"HostedZones"`
-	HostedZone []HostedZone
-}
-
 type HostedZone struct {
 	XMLName                xml.Name `xml:"HostedZone"`
 	Id                     string
@@ -51,8 +46,8 @@ type Config struct {
 
 // Structs for getting the existing Hosted Zones
 type ListHostedZonesResponse struct {
-	XMLName     xml.Name `xml:"ListHostedZonesResponse"`
-	HostedZones []HostedZones
+	XMLName     xml.Name     `xml:"ListHostedZonesResponse"`
+	HostedZones []HostedZone `xml:"HostedZones>HostedZone"`
 	Marker      string
 	IsTruncated bool
 	NextMarker  string
@@ -74,7 +69,7 @@ type ChangeResourceRecordSetsRequest struct {
 	Action  string   `xml:"ChangeBatch>Changes>Change>Action"`
 	Name    string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>Name"`
 	Type    string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>Type"`
-	TTL     string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>TTL,omitempty"`
+	TTL     int      `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>TTL,omitempty"`
 	Value   string   `xml:"ChangeBatch>Changes>Change>ResourceRecordSet>ResourceRecords>ResourceRecord>Value"`
 }
 
