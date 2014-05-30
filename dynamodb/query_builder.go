@@ -34,6 +34,10 @@ func (q *Query) AddKey(t *Table, key *Key) {
 	q.buffer["Key"] = keymap
 }
 
+func (q *Query) AddExclusiveStartKey(t *Table, key *Key) {
+	q.buffer["ExclusiveStartKey"] = keyAttributes(t, key)
+}
+
 func keyAttributes(t *Table, key *Key) msi {
 	k := t.Key
 
