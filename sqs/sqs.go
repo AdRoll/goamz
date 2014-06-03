@@ -258,7 +258,7 @@ func (q *Queue) SendMessageWithDelay(MessageBody string, DelaySeconds int64) (re
 	return
 }
 
-func (q *Queue) SendMessageWithAttributes(MessageBody string, Attributes map[string]string) (resp *SendMessageResponse, err error) {
+func (q *Queue) SendMessageWithAttributes(MessageBody string, MessageAttributes map[string]string) (resp *SendMessageResponse, err error) {
 	resp = &SendMessageResponse{}
 	params := makeParams("SendMessage")
 
@@ -266,7 +266,7 @@ func (q *Queue) SendMessageWithAttributes(MessageBody string, Attributes map[str
 
 	// Add attributes (currently only supports string values)
 	i := 1
-	for k, v := range Attributes {
+	for k, v := range MessageAttributes {
 		params[fmt.Sprintf("MessageAttribute.%d.Name", i)] = k
 		params[fmt.Sprintf("MessageAttribute.%d.Value.StringValue", i)] = v
 		params[fmt.Sprintf("MessageAttribute.%d.Value.DataType", i)] = "String"
@@ -275,10 +275,13 @@ func (q *Queue) SendMessageWithAttributes(MessageBody string, Attributes map[str
 
 	err = q.SQS.query(q.Url, params, resp)
 
-	// Assert we have expected Attribute MD5
-	expectedMD5 := fmt.Sprintf("%x", calculateAttributeMD5(Attributes))
-	if expectedMD5 != resp.AttributeMD5 {
-		return resp, errors.New(fmt.Sprintf("Attribute MD5 mismatch, expecting `%v`, found `%v`", expectedMD5, resp.AttributeMD5))
+	// Assert we have expected Attribute MD5 if we've passed any Message Attributes
+	if len(MessageAttributes) > 0 {
+		expectedAttributeMD5 := fmt.Sprintf("%x", calculateAttributeMD5(MessageAttributes))
+
+		if expectedAttributeMD5 != resp.AttributeMD5 {
+			return resp, errors.New(fmt.Sprintf("Attribute MD5 mismatch, expecting `%v`, found `%v`", expectedAttributeMD5, resp.AttributeMD5))
+		}
 	}
 
 	return
