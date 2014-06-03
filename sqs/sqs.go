@@ -90,6 +90,7 @@ type DeleteQueueResponse struct {
 }
 
 type SendMessageResponse struct {
+	AttributeMD5     string `xml:"SendMessageResult>MD5OfMessageAttributes"`
 	MD5              string `xml:"SendMessageResult>MD5OfMessageBody"`
 	Id               string `xml:"SendMessageResult>MessageId"`
 	ResponseMetadata ResponseMetadata
@@ -101,16 +102,27 @@ type ReceiveMessageResponse struct {
 }
 
 type Message struct {
-	MessageId     string      `xml:"MessageId"`
-	Body          string      `xml:"Body"`
-	MD5OfBody     string      `xml:"MD5OfBody"`
-	ReceiptHandle string      `xml:"ReceiptHandle"`
-	Attribute     []Attribute `xml:"Attribute"`
+	MessageId        string             `xml:"MessageId"`
+	Body             string             `xml:"Body"`
+	MD5OfBody        string             `xml:"MD5OfBody"`
+	ReceiptHandle    string             `xml:"ReceiptHandle"`
+	Attribute        []Attribute        `xml:"Attribute"`
+	MessageAttribute []MessageAttribute `xml:"MessageAttribute"`
 }
 
 type Attribute struct {
 	Name  string `xml:"Name"`
 	Value string `xml:"Value"`
+}
+
+type MessageAttribute struct {
+	Name  string                `xml:"Name"`
+	Value MessageAttributeValue `xml:"Value"`
+}
+
+type MessageAttributeValue struct {
+	DataType    string `xml:"DataType"`
+	StringValue string `xml:"StringValue"`
 }
 
 type ChangeMessageVisibilityResponse struct {
@@ -246,14 +258,37 @@ func (q *Queue) SendMessageWithDelay(MessageBody string, DelaySeconds int64) (re
 	return
 }
 
-func (q *Queue) SendMessage(MessageBody string) (resp *SendMessageResponse, err error) {
+func (q *Queue) SendMessageWithAttributes(MessageBody string, MessageAttributes map[string]string) (resp *SendMessageResponse, err error) {
 	resp = &SendMessageResponse{}
 	params := makeParams("SendMessage")
 
 	params["MessageBody"] = MessageBody
 
+	// Add attributes (currently only supports string values)
+	i := 1
+	for k, v := range MessageAttributes {
+		params[fmt.Sprintf("MessageAttribute.%d.Name", i)] = k
+		params[fmt.Sprintf("MessageAttribute.%d.Value.StringValue", i)] = v
+		params[fmt.Sprintf("MessageAttribute.%d.Value.DataType", i)] = "String"
+		i++
+	}
+
 	err = q.SQS.query(q.Url, params, resp)
+
+	// Assert we have expected Attribute MD5 if we've passed any Message Attributes
+	if len(MessageAttributes) > 0 {
+		expectedAttributeMD5 := fmt.Sprintf("%x", calculateAttributeMD5(MessageAttributes))
+
+		if expectedAttributeMD5 != resp.AttributeMD5 {
+			return resp, errors.New(fmt.Sprintf("Attribute MD5 mismatch, expecting `%v`, found `%v`", expectedAttributeMD5, resp.AttributeMD5))
+		}
+	}
+
 	return
+}
+
+func (q *Queue) SendMessage(MessageBody string) (resp *SendMessageResponse, err error) {
+	return q.SendMessageWithAttributes(MessageBody, map[string]string{})
 }
 
 // ReceiveMessageWithVisibilityTimeout
