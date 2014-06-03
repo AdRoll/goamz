@@ -33,6 +33,33 @@ var TestDeleteQueueXmlOK = `
 var TestSendMessageXmlOK = `
 <SendMessageResponse>
   <SendMessageResult>
+    <MD5OfMessageAttributes>d41d8cd98f00b204e9800998ecf8427e</MD5OfMessageAttributes>
+    <MD5OfMessageBody>fafb00f5732ab283681e124bf8747ed1</MD5OfMessageBody>
+    <MessageId>5fea7756-0ea4-451a-a703-a558b933e274</MessageId>
+  </SendMessageResult>
+  <ResponseMetadata>
+    <RequestId>27daac76-34dd-47df-bd01-1f6e873584a0</RequestId>
+  </ResponseMetadata>
+</SendMessageResponse>
+`
+
+var TestSendMessageWithAttributesXmlOK = `
+<SendMessageResponse>
+  <SendMessageResult>
+    <MD5OfMessageAttributes>fe84d6b9875bc7a88b28014389b64ed0</MD5OfMessageAttributes>
+    <MD5OfMessageBody>fafb00f5732ab283681e124bf8747ed1</MD5OfMessageBody>
+    <MessageId>5fea7756-0ea4-451a-a703-a558b933e274</MessageId>
+  </SendMessageResult>
+  <ResponseMetadata>
+    <RequestId>27daac76-34dd-47df-bd01-1f6e873584a0</RequestId>
+  </ResponseMetadata>
+</SendMessageResponse>
+`
+
+var TestSendMessageXmlInvalidAttributeMD5 = `
+<SendMessageResponse>
+  <SendMessageResult>
+    <MD5OfMessageAttributes>incorrect</MD5OfMessageAttributes>
     <MD5OfMessageBody>fafb00f5732ab283681e124bf8747ed1</MD5OfMessageBody>
     <MessageId>5fea7756-0ea4-451a-a703-a558b933e274</MessageId>
   </SendMessageResult>
@@ -86,6 +113,20 @@ var TestReceiveMessageXmlOK = `
         <Name>ApproximateFirstReceiveTimestamp</Name>
         <Value>1250700979248</Value>
       </Attribute>
+      <MessageAttribute>
+        <Name>Hero</Name>
+        <Value>
+          <DataType>String</DataType>
+          <StringValue>James Bond</StringValue>
+        </Value>
+      </MessageAttribute>
+      <MessageAttribute>
+        <Name>Villian</Name>
+        <Value>
+          <DataType>String</DataType>
+          <StringValue>Goldfinger</StringValue>
+        </Value>
+      </MessageAttribute>
     </Message>
   </ReceiveMessageResult>
 <ResponseMetadata>

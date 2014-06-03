@@ -110,7 +110,41 @@ func (s *S) TestSendMessage(c *check.C) {
 	h.Write([]byte(msg))
 	c.Assert(resp.MD5, check.Equals, fmt.Sprintf("%x", h.Sum(nil)))
 	c.Assert(resp.Id, check.Equals, "5fea7756-0ea4-451a-a703-a558b933e274")
+	c.Assert(resp.AttributeMD5, check.Equals, fmt.Sprintf("%x", calculateAttributeMD5(map[string]string{})))
 	c.Assert(err, check.IsNil)
+}
+
+func (s *S) TestSendMessageWithMessageAttributes(c *check.C) {
+	testServer.PrepareResponse(200, nil, TestSendMessageWithAttributesXmlOK)
+
+	attributes := map[string]string{"red": "fish", "blue": "fish"}
+
+	q := &Queue{s.sqs, testServer.URL + "/123456789012/testQueue/"}
+	resp, err := q.SendMessageWithAttributes("This is a test message", attributes)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.URL.Path, check.Equals, "/123456789012/testQueue/")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+
+	msg := "This is a test message"
+	var h hash.Hash = md5.New()
+	h.Write([]byte(msg))
+	c.Assert(resp.MD5, check.Equals, fmt.Sprintf("%x", h.Sum(nil)))
+	c.Assert(resp.Id, check.Equals, "5fea7756-0ea4-451a-a703-a558b933e274")
+	c.Assert(resp.AttributeMD5, check.Equals, fmt.Sprintf("%x", calculateAttributeMD5(attributes)))
+	c.Assert(err, check.IsNil)
+}
+
+func (s *S) TestSendMessageWithMessageAttributesInvalidAttributeMD5(c *check.C) {
+	testServer.PrepareResponse(200, nil, TestSendMessageXmlInvalidAttributeMD5)
+
+	attributes := map[string]string{"red": "fish", "blue": "fish"}
+
+	q := &Queue{s.sqs, testServer.URL + "/123456789012/testQueue/"}
+	_, err := q.SendMessageWithAttributes("This is a test message", attributes)
+
+	c.Assert(err.Error(), check.Equals, "Attribute MD5 mismatch, expecting `fe84d6b9875bc7a88b28014389b64ed0`, found `incorrect`")
 }
 
 func (s *S) TestSendMessageBatch(c *check.C) {
@@ -188,6 +222,20 @@ func (s *S) TestReceiveMessage(c *check.C) {
 	for i, expected := range expectedAttributeResults {
 		c.Assert(resp.Messages[0].Attribute[i].Name, check.Equals, expected.Name)
 		c.Assert(resp.Messages[0].Attribute[i].Value, check.Equals, expected.Value)
+	}
+
+	expectedMessageAttributeResults := []struct {
+		Name  string
+		Value string
+	}{
+		{Name: "Hero", Value: "James Bond"},
+		{Name: "Villian", Value: "Goldfinger"},
+	}
+
+	for i, expected := range expectedMessageAttributeResults {
+		c.Assert(resp.Messages[0].MessageAttribute[i].Name, check.Equals, expected.Name)
+		c.Assert(resp.Messages[0].MessageAttribute[i].Value.DataType, check.Equals, "String")
+		c.Assert(resp.Messages[0].MessageAttribute[i].Value.StringValue, check.Equals, expected.Value)
 	}
 
 	c.Assert(err, check.IsNil)
