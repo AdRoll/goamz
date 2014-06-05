@@ -108,6 +108,7 @@ type Message struct {
 	ReceiptHandle    string             `xml:"ReceiptHandle"`
 	Attribute        []Attribute        `xml:"Attribute"`
 	MessageAttribute []MessageAttribute `xml:"MessageAttribute"`
+	DelaySeconds     int
 }
 
 type Attribute struct {
@@ -370,6 +371,10 @@ func (q *Queue) SendMessageBatch(msgList []Message) (resp *SendMessageBatchRespo
 		count := idx + 1
 		params[fmt.Sprintf("SendMessageBatchRequestEntry.%d.Id", count)] = fmt.Sprintf("msg-%d", count)
 		params[fmt.Sprintf("SendMessageBatchRequestEntry.%d.MessageBody", count)] = msg.Body
+
+		if msg.DelaySeconds > 0 {
+			params[fmt.Sprintf("SendMessageBatchRequestEntry.%d.DelaySeconds", count)] = strconv.Itoa(msg.DelaySeconds)
+		}
 	}
 
 	err = q.SQS.query(q.Url, params, resp)
