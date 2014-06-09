@@ -34,6 +34,11 @@ func MakeBoolAttr(name string, value bool) dynamodb.Attribute {
 	return *dynamodb.NewNumericAttribute(name, converted)
 }
 
+func MakeInt32Attr(name string, value int32) dynamodb.Attribute {
+	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(int64(value), 10))
+
+}
+
 func MakeTimeTimeAttr(name string, value time.Time) dynamodb.Attribute {
 	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(value.Unix(), 10))
 }
@@ -57,6 +62,21 @@ func GetBoolAttr(name string, attrs map[string]*dynamodb.Attribute) (bool, error
 		} else {
 			return false, MakeAttrInvalidErr(name, val.Value)
 		}
+	}
+}
+
+func GetInt32Attr(name string, attrs map[string]*dynamodb.Attribute) (v int32, err error) {
+	var v64 int64
+	if val, ok := attrs[name]; !ok {
+		err = MakeAttrNotFoundErr(name)
+		return
+	} else {
+		if v64, err = strconv.ParseInt(val.Value, 10, 32); err != nil {
+			err = MakeAttrInvalidErr(name, val.Value)
+		} else {
+			return int32(v64), nil
+		}
+		return
 	}
 }
 
