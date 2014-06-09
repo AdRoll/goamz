@@ -275,7 +275,9 @@ func (q *Queue) SendMessageWithAttributes(MessageBody string, MessageAttributes 
 		i++
 	}
 
-	err = q.SQS.query(q.Url, params, resp)
+	if err = q.SQS.query(q.Url, params, resp); err != nil {
+		return resp, err
+	}
 
 	// Assert we have expected Attribute MD5 if we've passed any Message Attributes
 	if len(MessageAttributes) > 0 {
@@ -455,7 +457,7 @@ func (s *SQS) query(queueUrl string, params map[string]string, resp interface{})
 		return err
 	}
 
-	params["Version"] = "2011-10-01"
+	params["Version"] = "2012-11-05"
 	hreq, err := http.NewRequest("POST", url_.String(), strings.NewReader(multimap(params).Encode()))
 	if err != nil {
 		return err
