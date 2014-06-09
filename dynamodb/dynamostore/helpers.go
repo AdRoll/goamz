@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const NullString = "NULL"
+
 func MakeAttrNotFoundErr(attr string) error {
 	return fmt.Errorf("DeSerialization error: attribute %s not found")
 }
@@ -16,7 +18,11 @@ func MakeAttrInvalidErr(attr, value string) error {
 }
 
 func MakeStringAttr(name string, value string) dynamodb.Attribute {
-	return *dynamodb.NewStringAttribute(name, value)
+	if value == "" {
+		return *dynamodb.NewStringAttribute(name, NullString)
+	} else {
+		return *dynamodb.NewStringAttribute(name, value)
+	}
 }
 
 const (
@@ -47,7 +53,11 @@ func GetStringAttr(name string, attrs map[string]*dynamodb.Attribute) (string, e
 	if val, ok := attrs[name]; !ok {
 		return "", MakeAttrNotFoundErr(name)
 	} else {
-		return val.Value, nil
+		if val.Value == NullString {
+			return "", nil
+		} else {
+			return val.Value, nil
+		}
 	}
 }
 
