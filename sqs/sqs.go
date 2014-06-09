@@ -273,7 +273,9 @@ func (q *Queue) SendMessageWithAttributes(MessageBody string, MessageAttributes 
 		i++
 	}
 
-	err = q.SQS.query(q.Url, params, resp)
+	if err = q.SQS.query(q.Url, params, resp); err != nil {
+		return resp, err
+	}
 
 	// Assert we have expected Attribute MD5 if we've passed any Message Attributes
 	if len(MessageAttributes) > 0 {
