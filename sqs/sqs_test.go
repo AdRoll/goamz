@@ -55,12 +55,15 @@ func (s *S) TestCreateQueueWithAttributes(c *check.C) {
 
 	s.sqs.CreateQueueWithAttributes("testQueue", map[string]string{
 		"ReceiveMessageWaitTimeSeconds": "20",
+		"MessageRetentionPeriod":        "60",
 	})
 	req := testServer.WaitRequest()
 
 	// TestCreateQueue() tests the core functionality, just check the timeout in this test
 	c.Assert(req.Form["Attribute.1.Name"], check.DeepEquals, []string{"ReceiveMessageWaitTimeSeconds"})
 	c.Assert(req.Form["Attribute.1.Value"], check.DeepEquals, []string{"20"})
+	c.Assert(req.Form["Attribute.2.Name"], check.DeepEquals, []string{"MessageRetentionPeriod"})
+	c.Assert(req.Form["Attribute.2.Value"], check.DeepEquals, []string{"60"})
 }
 
 func (s *S) TestListQueues(c *check.C) {
