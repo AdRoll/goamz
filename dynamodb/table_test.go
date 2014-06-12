@@ -1,6 +1,7 @@
 package dynamodb_test
 
 import (
+	"fmt"
 	"github.com/crowdmob/goamz/dynamodb"
 	"gopkg.in/check.v1"
 )
@@ -42,11 +43,44 @@ var table_suite = &TableSuite{
 	},
 }
 
-var _ = check.Suite(table_suite)
+var table_suite_gsi = &TableSuite{
+	TableDescriptionT: dynamodb.TableDescriptionT{
+		TableName: "DynamoDBTestMyTable2",
+		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
+			dynamodb.AttributeDefinitionT{"UserId", "S"},
+			dynamodb.AttributeDefinitionT{"OSType", "S"},
+		},
+		KeySchema: []dynamodb.KeySchemaT{
+			dynamodb.KeySchemaT{"UserId", "HASH"},
+			dynamodb.KeySchemaT{"OSType", "RANGE"},
+		},
+		ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+			ReadCapacityUnits:  1,
+			WriteCapacityUnits: 1,
+		},
+		GlobalSecondaryIndexes: []dynamodb.GlobalSecondaryIndexT{
+			dynamodb.GlobalSecondaryIndexT{
+				IndexName: "IMSIIndex",
+				KeySchema: []dynamodb.KeySchemaT{
+					dynamodb.KeySchemaT{"IMSI", "HASH"},
+				},
+				Projection: dynamodb.ProjectionT{
+					ProjectionType: "KEYS_ONLY",
+				},
+				ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+					ReadCapacityUnits:  1,
+					WriteCapacityUnits: 1,
+				},
+			},
+		},
+	},
+}
 
-func (s *TableSuite) TestCreateListTable(c *check.C) {
+func (s *TableSuite) TestCreateListTableGsi(c *check.C) {
 	status, err := s.server.CreateTable(s.TableDescriptionT)
 	if err != nil {
+		fmt.Printf("err %#v", err)
+		fmt.Printf(status, err.Error())
 		c.Fatal(err)
 	}
 	if status != "ACTIVE" && status != "CREATING" {
@@ -62,3 +96,6 @@ func (s *TableSuite) TestCreateListTable(c *check.C) {
 	c.Check(len(tables), check.Not(check.Equals), 0)
 	c.Check(findTableByName(tables, s.TableDescriptionT.TableName), check.Equals, true)
 }
+
+var _ = check.Suite(table_suite)
+var _ = check.Suite(table_suite_gsi)
