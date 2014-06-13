@@ -143,7 +143,7 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 	}
 
 	if len(globalSecondaryIndexes) > 0 {
-		b["globalSecondaryIndexes"] = globalSecondaryIndexes
+		b["GlobalSecondaryIndexes"] = globalSecondaryIndexes
 	}
 }
 
