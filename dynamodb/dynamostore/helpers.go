@@ -54,7 +54,7 @@ func MakeTimeTimeAttr(name string, value time.Time) dynamodb.Attribute {
 	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(value.Unix(), 10))
 }
 
-func GetByteAttr(name string, attrs map[string]*dynamodb.Attribute) ([]byte, error) {
+func GetBinaryAttr(name string, attrs map[string]*dynamodb.Attribute) ([]byte, error) {
 	if val, ok := attrs[name]; !ok {
 		return nil, MakeAttrNotFoundErr(name)
 	} else {
