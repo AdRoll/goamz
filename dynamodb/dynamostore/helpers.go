@@ -1,6 +1,7 @@
 package dynamostore
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/flowhealth/goamz/dynamodb"
 	"strconv"
@@ -42,11 +43,31 @@ func MakeBoolAttr(name string, value bool) dynamodb.Attribute {
 
 func MakeInt32Attr(name string, value int32) dynamodb.Attribute {
 	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(int64(value), 10))
+}
 
+func MakeBinaryAttr(name string, value []byte) dynamodb.Attribute {
+	b64val := base64.StdEncoding.EncodeToString(value)
+	return *dynamodb.NewBinaryAttribute(name, b64val)
 }
 
 func MakeTimeTimeAttr(name string, value time.Time) dynamodb.Attribute {
 	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(value.Unix(), 10))
+}
+
+func GetByteAttr(name string, attrs map[string]*dynamodb.Attribute) ([]byte, error) {
+	if val, ok := attrs[name]; !ok {
+		return nil, MakeAttrNotFoundErr(name)
+	} else {
+		if val.Value == NullString {
+			return []byte{}, nil
+		} else {
+			if binVal, err := base64.StdEncoding.DecodeString(val.Value); err != nil {
+				return binVal, nil
+			} else {
+				return nil, err
+			}
+		}
+	}
 }
 
 func GetStringAttr(name string, attrs map[string]*dynamodb.Attribute) (string, error) {
