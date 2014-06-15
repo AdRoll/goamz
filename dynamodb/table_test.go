@@ -49,6 +49,7 @@ var table_suite_gsi = &TableSuite{
 		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
 			dynamodb.AttributeDefinitionT{"UserId", "S"},
 			dynamodb.AttributeDefinitionT{"OSType", "S"},
+			dynamodb.AttributeDefinitionT{"IMSI", "S"},
 		},
 		KeySchema: []dynamodb.KeySchemaT{
 			dynamodb.KeySchemaT{"UserId", "HASH"},
