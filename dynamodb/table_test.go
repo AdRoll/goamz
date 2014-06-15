@@ -80,7 +80,6 @@ func (s *TableSuite) TestCreateListTableGsi(c *check.C) {
 	status, err := s.server.CreateTable(s.TableDescriptionT)
 	if err != nil {
 		fmt.Printf("err %#v", err)
-		fmt.Printf(status, err.Error())
 		c.Fatal(err)
 	}
 	if status != "ACTIVE" && status != "CREATING" {
