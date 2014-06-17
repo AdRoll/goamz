@@ -526,6 +526,47 @@ func (s *S) TestDescribeSnapshotsExample(c *check.C) {
 	c.Assert(s0.Tags[0].Value, check.Equals, "demo_db_14_backup")
 }
 
+func (s *S) TestDescribeSubnetsExample(c *check.C) {
+	testServer.Response(200, nil, DescribeSubnetsExample)
+
+	filter := ec2.NewFilter()
+	filter.Add("key1", "value1")
+	filter.Add("key2", "value2", "value3")
+
+	resp, err := s.ec2.Subnets([]string{"subnet-1", "subnet-2"}, filter)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeSubnets"})
+	c.Assert(req.Form["SubnetId.1"], check.DeepEquals, []string{"subnet-1"})
+	c.Assert(req.Form["SubnetId.2"], check.DeepEquals, []string{"subnet-2"})
+	c.Assert(req.Form["Filter.1.Name"], check.DeepEquals, []string{"key1"})
+	c.Assert(req.Form["Filter.1.Value.1"], check.DeepEquals, []string{"value1"})
+	c.Assert(req.Form["Filter.1.Value.2"], check.IsNil)
+	c.Assert(req.Form["Filter.2.Name"], check.DeepEquals, []string{"key2"})
+	c.Assert(req.Form["Filter.2.Value.1"], check.DeepEquals, []string{"value2"})
+	c.Assert(req.Form["Filter.2.Value.2"], check.DeepEquals, []string{"value3"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "a5266c3e-2b7a-4434-971e-317b6EXAMPLE")
+	c.Assert(resp.Subnets, check.HasLen, 3)
+
+	s0 := resp.Subnets[0]
+	c.Assert(s0.Id, check.Equals, "subnet-3e993755")
+	c.Assert(s0.State, check.Equals, "available")
+	c.Assert(s0.VpcId, check.Equals, "vpc-f84a9b93")
+	c.Assert(s0.CidrBlock, check.Equals, "10.0.12.0/24")
+	c.Assert(s0.AvailableIpAddressCount, check.Equals, 249)
+	c.Assert(s0.AvailabilityZone, check.Equals, "us-west-2c")
+	c.Assert(s0.DefaultForAz, check.Equals, false)
+	c.Assert(s0.MapPublicIpOnLaunch, check.Equals, false)
+
+	c.Assert(s0.Tags, check.HasLen, 2)
+	c.Assert(s0.Tags[0].Key, check.Equals, "visibility")
+	c.Assert(s0.Tags[0].Value, check.Equals, "private")
+	c.Assert(s0.Tags[1].Key, check.Equals, "Name")
+	c.Assert(s0.Tags[1].Value, check.Equals, "application")
+}
+
 func (s *S) TestCreateSecurityGroupExample(c *check.C) {
 	testServer.Response(200, nil, CreateSecurityGroupExample)
 
