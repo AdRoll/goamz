@@ -19,8 +19,7 @@ func NewQuery(t *Table) *Query {
 }
 
 func NewQueryFor(tableName string) *Query {
-	q := NewEmptyQuery{msi{}}
-	q.addTableByName(tableName)
+	q := &Query{msi{"TableName":tableName}}
 	return q
 }
 
@@ -252,9 +251,6 @@ func attributeList(attributes []Attribute) msi {
 	return b
 }
 
-func (q *Query) addTableByName(tableName string) {
-	q.buffer["TableName"] = tableName
-}
 
 func (q *Query) String() string {
 	bytes, _ := json.Marshal(q.buffer)
