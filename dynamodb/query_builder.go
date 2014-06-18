@@ -5,6 +5,7 @@ import (
 )
 
 type msi map[string]interface{}
+
 type Query struct {
 	buffer msi
 }
@@ -14,8 +15,12 @@ func NewEmptyQuery() *Query {
 }
 
 func NewQuery(t *Table) *Query {
-	q := &Query{msi{}}
-	q.addTable(t)
+	return NewQueryFor(t.Name)
+}
+
+func NewQueryFor(tableName string) *Query {
+	q := NewEmptyQuery{msi{}}
+	q.addTableByName(tableName)
 	return q
 }
 
@@ -245,10 +250,6 @@ func attributeList(attributes []Attribute) msi {
 		b[a.Name] = msi{a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()]}
 	}
 	return b
-}
-
-func (q *Query) addTable(t *Table) {
-	q.addTableByName(t.Name)
 }
 
 func (q *Query) addTableByName(tableName string) {
