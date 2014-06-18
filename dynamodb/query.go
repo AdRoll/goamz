@@ -55,6 +55,10 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, e
 	return itemCount, nil
 }
 
+func (t *Table) RunQuery(q *Query) ([]map[string]*Attribute, error) {
+	return runQuery(q, t)
+}
+
 func runQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
 	jsonResponse, err := t.Server.queryServer("DynamoDB_20120810.Query", q)
 	if err != nil {
