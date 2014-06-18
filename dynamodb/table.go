@@ -192,8 +192,7 @@ func (t *Table) DescribeTable() (*TableDescriptionT, error) {
 }
 
 func (s *Server) DescribeTable(name string) (*TableDescriptionT, error) {
-	q := NewEmptyQuery()
-	q.addTableByName(name)
+	q := NewQueryFor(name)
 
 	jsonResponse, err := s.queryServer(target("DescribeTable"), q)
 	if err != nil {
