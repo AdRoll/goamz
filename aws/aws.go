@@ -470,4 +470,3 @@ func ServerPublicIp() string {
 		}
 	}
 }
-
