@@ -170,7 +170,7 @@ func (t *Table) ConditionalPutItem(hashKey, rangeKey string, attributes, expecte
 	return t.putItem(hashKey, rangeKey, attributes, expected)
 }
 
-func (t *Table) RunPutItemQuery(query *Query) (bool, error) {
+func (t *Table) RunPutItemQuery(q *Query) (bool, error) {
 	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
 
 	if err != nil {
@@ -200,7 +200,7 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 		q.AddExpected(expected)
 	}
 
-	return self.RunPutItemQuery(q)
+	return t.RunPutItemQuery(q)
 }
 
 func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {
