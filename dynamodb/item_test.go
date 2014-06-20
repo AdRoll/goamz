@@ -69,6 +69,38 @@ var item_without_range_suite = &ItemSuite{
 var _ = check.Suite(item_suite)
 var _ = check.Suite(item_without_range_suite)
 
+func (s *ItemSuite) TestConditionalAddAttributesItem(c *check.C) {
+	if s.WithRange {
+		// No rangekey test required
+		return
+	}
+
+	attrs := []dynamodb.Attribute{
+		*dynamodb.NewNumericAttribute("AttrN", "10"),
+	}
+	pk := &dynamodb.Key{HashKey: "NewHashKeyVal"}
+
+	// Put
+	if ok, err := s.table.PutItem("NewHashKeyVal", "", attrs); !ok {
+		c.Fatal(err)
+	}
+
+	{
+		// Put with condition failed
+		expected := []dynamodb.Attribute{
+			*dynamodb.NewNumericAttribute("AttrN", "0").SetExists(true),
+			*dynamodb.NewStringAttribute("AttrNotExists", "").SetExists(false),
+		}
+		// Add attributes with condition failed
+		if ok, err := s.table.ConditionalAddAttributes(pk, attrs, expected); ok {
+			c.Errorf("Expect condition does not meet.")
+		} else {
+			c.Check(err.Error(), check.Matches, "ConditionalCheckFailedException.*")
+		}
+
+	}
+}
+
 func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 	if s.WithRange {
 		// No rangekey test required
@@ -92,13 +124,6 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 			*dynamodb.NewStringAttribute("AttrNotExists", "").SetExists(false),
 		}
 		if ok, err := s.table.ConditionalPutItem("NewHashKeyVal", "", attrs, expected); ok {
-			c.Errorf("Expect condition does not meet.")
-		} else {
-			c.Check(err.Error(), check.Matches, "ConditionalCheckFailedException.*")
-		}
-
-		// Add attributes with condition failed
-		if ok, err := s.table.ConditionalAddAttributes(pk, attrs, expected); ok {
 			c.Errorf("Expect condition does not meet.")
 		} else {
 			c.Check(err.Error(), check.Matches, "ConditionalCheckFailedException.*")
