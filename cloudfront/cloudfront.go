@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/crowdmob/goamz/aws"
 	"net/url"
 	"strconv"
 	"strings"
@@ -20,6 +21,10 @@ type CloudFront struct {
 }
 
 var base64Replacer = strings.NewReplacer("=", "_", "+", "-", "/", "~")
+
+func NewKeyLess(auth aws.Auth, baseurl string) *CloudFront {
+	return &CloudFront{keyPairId: auth.AccessKey, BaseURL: baseurl}
+}
 
 func New(baseurl string, key *rsa.PrivateKey, keyPairId string) *CloudFront {
 	return &CloudFront{
@@ -65,17 +70,21 @@ func buildPolicy(resource string, expireTime time.Time) ([]byte, error) {
 
 func (cf *CloudFront) generateSignature(policy []byte) (string, error) {
 	hash := sha1.New()
-	if _, err := hash.Write(policy); err != nil {
-		return "", err
-	}
-
-	hashed := hash.Sum(nil)
-
-	signed, err := rsa.SignPKCS1v15(nil, cf.key, crypto.SHA1, hashed)
+	_, err := hash.Write(policy)
 	if err != nil {
 		return "", err
 	}
 
+	hashed := hash.Sum(nil)
+	var signed []byte
+	if cf.key.Validate() == nil {
+		signed, err = rsa.SignPKCS1v15(nil, cf.key, crypto.SHA1, hashed)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		signed = hashed
+	}
 	encoded := base64Replacer.Replace(base64.StdEncoding.EncodeToString(signed))
 
 	return encoded, nil
