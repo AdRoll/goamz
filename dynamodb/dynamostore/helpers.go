@@ -45,6 +45,10 @@ func MakeInt32Attr(name string, value int32) dynamodb.Attribute {
 	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(int64(value), 10))
 }
 
+func MakeFloat64Attr(name string, value float64) dynamodb.Attribute {
+	return *dynamodb.NewNumericAttribute(name, strconv.FormatFloat(value, 'f', -1, 64))
+}
+
 func MakeBinaryAttr(name string, value []byte) dynamodb.Attribute {
 	b64val := base64.StdEncoding.EncodeToString(value)
 	return *dynamodb.NewBinaryAttribute(name, b64val)
@@ -106,6 +110,21 @@ func GetInt32Attr(name string, attrs map[string]*dynamodb.Attribute) (v int32, e
 			err = MakeAttrInvalidErr(name, val.Value)
 		} else {
 			return int32(v64), nil
+		}
+		return
+	}
+}
+
+func GetFloat64Attr(name string, attrs map[string]*dynamodb.Attribute) (v float64, err error) {
+	var v64 float64
+	if val, ok := attrs[name]; !ok {
+		err = MakeAttrNotFoundErr(name)
+		return
+	} else {
+		if v64, err = strconv.ParseFloat(val.Value, 64); err != nil {
+			err = MakeAttrInvalidErr(name, val.Value)
+		} else {
+			return v64, nil
 		}
 		return
 	}
