@@ -49,6 +49,7 @@ var table_suite_gsi = &TableSuite{
 		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
 			dynamodb.AttributeDefinitionT{"UserId", "S"},
 			dynamodb.AttributeDefinitionT{"OSType", "S"},
+			dynamodb.AttributeDefinitionT{"IMSI", "S"},
 		},
 		KeySchema: []dynamodb.KeySchemaT{
 			dynamodb.KeySchemaT{"UserId", "HASH"},
@@ -80,7 +81,6 @@ func (s *TableSuite) TestCreateListTableGsi(c *check.C) {
 	status, err := s.server.CreateTable(s.TableDescriptionT)
 	if err != nil {
 		fmt.Printf("err %#v", err)
-		fmt.Printf(status, err.Error())
 		c.Fatal(err)
 	}
 	if status != "ACTIVE" && status != "CREATING" {
