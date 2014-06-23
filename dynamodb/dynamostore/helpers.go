@@ -6,9 +6,15 @@ import (
 	"github.com/flowhealth/goamz/dynamodb"
 	"strconv"
 	"time"
+	"bytes"
+	"strings"
 )
 
-const NullString = "NULL"
+const (
+	NullString = "NULL"
+	timePrefix = "time_"
+)
+
 
 func MakeAttrNotFoundErr(attr string) error {
 	return fmt.Errorf("DeSerialization error: attribute %s not found")
@@ -55,7 +61,13 @@ func MakeBinaryAttr(name string, value []byte) dynamodb.Attribute {
 }
 
 func MakeTimeTimeAttr(name string, value time.Time) dynamodb.Attribute {
-	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(value.Unix(), 10))
+	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(value.UnixNano(), 10))
+}
+
+func MakeTimePrefixedAttr(name string, value time.Time) dynamodb.Attribute {
+	b := bytes.NewBufferString(timePrefix)
+	b.WriteString(strconv.FormatInt(value.UnixNano(), 10))
+	return *dynamodb.NewStringAttribute(name, b.String())
 }
 
 func GetBinaryAttr(name string, attrs map[string]*dynamodb.Attribute) ([]byte, error) {
@@ -66,9 +78,9 @@ func GetBinaryAttr(name string, attrs map[string]*dynamodb.Attribute) ([]byte, e
 			return []byte{}, nil
 		} else {
 			if binVal, err := base64.StdEncoding.DecodeString(val.Value); err != nil {
-				return binVal, nil
-			} else {
 				return nil, err
+			} else {
+				return binVal, nil
 			}
 		}
 	}
@@ -143,4 +155,23 @@ func GetTimeTimeAttr(name string, attrs map[string]*dynamodb.Attribute) (t time.
 		}
 		return
 	}
+}
+
+func GetTimePrefixedAttr(name string, attrs map[string]*dynamodb.Attribute) (t time.Time, err error) {
+	var timestamp int64
+	if val, ok := attrs[name]; !ok {
+		err = MakeAttrNotFoundErr(name)
+		return
+	} else {
+		if timestamp, err = strconv.ParseInt(strings.TrimPrefix(val.Value, timePrefix), 10, 64); err != nil {
+			err = MakeAttrInvalidErr(name, val.Value)
+		} else {
+			t = time.Unix(timestamp/1e9, timestamp%1e9)
+		}
+		return
+	}
+}
+
+func IsTimePrefixedAttr(attr *dynamodb.Attribute) bool {
+	return strings.LastIndex(attr.Name, timePrefix) == 0
 }
