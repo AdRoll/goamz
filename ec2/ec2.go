@@ -48,7 +48,7 @@ func New(auth aws.Auth, region aws.Region) *EC2 {
 //     filter := NewFilter()
 //     filter.Add("architecture", "i386")
 //     filter.Add("launch-index", "0")
-//     resp, err := ec2.Instances(nil, filter)
+//     resp, err := ec2.DescribeInstances(nil, filter)
 //
 type Filter struct {
 	m map[string][]string
