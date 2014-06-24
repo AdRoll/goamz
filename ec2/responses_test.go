@@ -748,3 +748,26 @@ var RebootInstancesExample = `
   <return>true</return>
 </RebootInstancesResponse>
 `
+
+var DescribeReservedInstancesExample = `
+<DescribeReservedInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2014-06-15/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <reservedInstancesSet>
+      <item>
+         <reservedInstancesId>e5a2ff3b-7d14-494f-90af-0b5d0EXAMPLE</reservedInstancesId>
+         <instanceType>m1.xlarge</instanceType>
+         <availabilityZone>us-east-1b</availabilityZone>
+         <duration>31536000</duration>
+         <fixedPrice>61.0</fixedPrice>
+         <usagePrice>0.034</usagePrice>
+         <instanceCount>3</instanceCount>
+         <productDescription>Linux/UNIX</productDescription>
+         <state>active</state> 
+         <instanceTenancy>default</instanceTenancy>
+         <currencyCode>USD</currencyCode>
+         <offeringType>Light Utilization</offeringType>
+         <recurringCharges/>
+      </item>
+   </reservedInstancesSet> 
+</DescribeReservedInstancesResponse>
+`

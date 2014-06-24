@@ -876,3 +876,22 @@ func (s *S) TestSignatureWithEndpointPath(c *check.C) {
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Signature"], check.DeepEquals, []string{"VVoC6Y6xfES+KvZo+789thP8+tye4F6fOKBiKmXk4S4="})
 }
+
+func (s *S) TestDescribeReservedInstancesiExample(c *check.C) {
+	testServer.Response(200, nil, DescribeReservedInstancesExample)
+
+	resp, err := s.ec2.DescribeReservedInstances([]string{"i-1", "i-2"}, nil)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeReservedInstances"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.ReservedInstances, check.HasLen, 1)
+
+	r0 := resp.ReservedInstances[0]
+	c.Assert(r0.ReservedInstanceId, check.Equals, "e5a2ff3b-7d14-494f-90af-0b5d0EXAMPLE")
+
+}
+
+

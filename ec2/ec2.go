@@ -1309,3 +1309,66 @@ func (ec2 *EC2) RebootInstances(ids ...string) (resp *SimpleResp, err error) {
 	}
 	return resp, nil
 }
+
+// Reserved Instances
+
+// Structures
+
+// DescribeReservedInstancesResponse structure returned from a DescribeReservedInstances request.
+//
+// See
+type DescribeReservedInstancesResponse struct {
+	RequestId         string                          `xml:"requestId"`
+	ReservedInstances []ReservedInstancesResponseItem `xml:"reservedInstancesSet>item"`
+}
+
+//
+//
+// See
+type ReservedInstancesResponseItem struct {
+	ReservedInstanceId string            `xml:"reservedInstancesId"`
+	InstanceType       string            `xml:"instanceType"`
+	AvailabilityZone    string            `xml:"availabilityZone"`
+	Start               string            `xml:"start"`
+	Duration            uint64            `xml:"duration"`
+	End                 string            `xml:"end"`
+	FixedPrice          float32           `xml:"fixedPrice"`
+	UsagePrice          float32           `xml:"usagePrice"`
+	InstanceCount       int               `xml:"instanceCount"`
+	ProductDescription  string            `xml:"productDescription"`
+	State               string            `xml:"state"`
+	Tags                []Tag             `xml:"tagSet->item"`
+	InstanceTenancy     string            `xml:"instanceTenancy"`
+	CurrencyCode        string            `xml:"currencyCode"`
+	OfferingType        string            `xml:"offeringType"`
+	RecurringCharges    []RecurringCharge `xml:"recurringCharges>item"`
+}
+
+//
+//
+// See
+type RecurringCharge struct {
+	Frequency string  `xml:"frequency"`
+	Amount    float32 `xml:"amount"`
+}
+
+// functions
+// DescribeReservedInstances
+//
+// See 
+func (ec2 *EC2) DescribeReservedInstances(instIds []string, filter *Filter) (resp *DescribeReservedInstancesResponse, err error) {
+	params := makeParams("DescribeReservedInstances")
+
+        for i, id := range instIds {
+                params["ReservedInstancesId."+strconv.Itoa(i+1)] = id
+        }
+        filter.addParams(params)
+
+	resp = &DescribeReservedInstancesResponse{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
