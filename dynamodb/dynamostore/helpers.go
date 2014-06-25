@@ -1,20 +1,19 @@
 package dynamostore
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"github.com/flowhealth/goamz/dynamodb"
 	"strconv"
-	"time"
-	"bytes"
 	"strings"
+	"time"
 )
 
 const (
 	NullString = "NULL"
 	timePrefix = "time_"
 )
-
 
 func MakeAttrNotFoundErr(attr string) error {
 	return fmt.Errorf("DeSerialization error: attribute %s not found")
@@ -61,6 +60,10 @@ func MakeBinaryAttr(name string, value []byte) dynamodb.Attribute {
 }
 
 func MakeTimeTimeAttr(name string, value time.Time) dynamodb.Attribute {
+	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(value.Unix(), 10))
+}
+
+func MakeTimeTimeNanoAttr(name string, value time.Time) dynamodb.Attribute {
 	return *dynamodb.NewNumericAttribute(name, strconv.FormatInt(value.UnixNano(), 10))
 }
 
@@ -152,6 +155,21 @@ func GetTimeTimeAttr(name string, attrs map[string]*dynamodb.Attribute) (t time.
 			err = MakeAttrInvalidErr(name, val.Value)
 		} else {
 			t = time.Unix(timestamp, 0)
+		}
+		return
+	}
+}
+
+func GetTimeTimeNanoAttr(name string, attrs map[string]*dynamodb.Attribute) (t time.Time, err error) {
+	var timestamp int64
+	if val, ok := attrs[name]; !ok {
+		err = MakeAttrNotFoundErr(name)
+		return
+	} else {
+		if timestamp, err = strconv.ParseInt(val.Value, 10, 64); err != nil {
+			err = MakeAttrInvalidErr(name, val.Value)
+		} else {
+			t = time.UnixNano(0, timestamp)
 		}
 		return
 	}
