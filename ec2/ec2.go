@@ -217,6 +217,18 @@ type RunInstancesOptions struct {
 	IamInstanceProfile    IamInstanceProfile
 	BlockDeviceMappings   []BlockDeviceMapping
 	EbsOptimized          bool
+	NetworkInterfaces     []NetworkInterface
+}
+
+// NetworkInterface is for creating and attaching to ec2 instances on launch
+type NetworkInterface struct {
+	AssociatePublicIpAddress bool
+	SubnetId                 string
+	Description              string
+	SecurityGroups           []SecurityGroup
+	DeleteOnTermination      bool
+	PrivateIpAddress         string // primary private ip
+	PrivateIpAddresses       []InstancePrivateIpAddress
 }
 
 // Response to a RunInstances request.
@@ -479,6 +491,40 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 		params["EbsOptimized"] = "true"
 	}
 
+	if options.NetworkInterfaces != nil {
+		for i, ni := range options.NetworkInterfaces {
+			prefix := fmt.Sprintf("NetworkInterface.%d.", i+1)
+			params[prefix+"DeviceIndex"] = strconv.Itoa(i)
+			if ni.SubnetId != "" {
+				params[prefix+"SubnetId"] = ni.SubnetId
+			}
+			if ni.Description != "" {
+				params[prefix+"Description"] = ni.Description
+			}
+			if ni.AssociatePublicIpAddress {
+				params[prefix+"AssociatePublicIpAddress"] = "true"
+			}
+			if ni.PrivateIpAddress != "" {
+				params[prefix+"PrivateIpAddress"] = ni.PrivateIpAddress
+			}
+			if ni.SecurityGroups != nil {
+				for secId, g := range ni.SecurityGroups {
+					params[prefix+"SecurityGroupId."+strconv.Itoa(secId+1)] = g.Id
+				}
+			}
+			if ni.DeleteOnTermination {
+				params[prefix+"DeleteOnTermination"] = "true"
+			}
+			if ni.PrivateIpAddresses != nil {
+				for pId, addy := range ni.PrivateIpAddresses {
+					params[prefix+"PrivateIpAddresses."+strconv.Itoa(pId+1)+".PrivateIpAddress"] = addy.PrivateIPAddress
+					if addy.Primary {
+						params[prefix+"PrivateIpAddresses."+strconv.Itoa(pId+1)+".Primary"] = "true"
+					}
+				}
+			}
+		}
+	}
 	resp = &RunInstancesResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
