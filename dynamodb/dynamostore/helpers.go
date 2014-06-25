@@ -169,7 +169,7 @@ func GetTimeTimeNanoAttr(name string, attrs map[string]*dynamodb.Attribute) (t t
 		if timestamp, err = strconv.ParseInt(val.Value, 10, 64); err != nil {
 			err = MakeAttrInvalidErr(name, val.Value)
 		} else {
-			t = time.UnixNano(0, timestamp)
+			t = time.Unix(0, timestamp)
 		}
 		return
 	}
