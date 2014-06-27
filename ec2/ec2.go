@@ -110,7 +110,7 @@ func (err *Error) Error() string {
 // For now a single error inst is being exposed. In the future it may be useful
 // to provide access to all of them, but rather than doing it as an array/slice,
 // use a *next pointer, so that it's backward compatible and it continues to be
-// easy to handle the first error, which is what most people will want.
+// easpy to handle the first error, which is what most people will want.
 type xmlErrors struct {
 	RequestId string  `xml:"RequestID"`
 	Errors    []Error `xml:"Errors>Error"`
@@ -1328,20 +1328,20 @@ type DescribeReservedInstancesResponse struct {
 type ReservedInstancesResponseItem struct {
 	ReservedInstanceId string            `xml:"reservedInstancesId"`
 	InstanceType       string            `xml:"instanceType"`
-	AvailabilityZone    string            `xml:"availabilityZone"`
-	Start               string            `xml:"start"`
-	Duration            uint64            `xml:"duration"`
-	End                 string            `xml:"end"`
-	FixedPrice          float32           `xml:"fixedPrice"`
-	UsagePrice          float32           `xml:"usagePrice"`
-	InstanceCount       int               `xml:"instanceCount"`
-	ProductDescription  string            `xml:"productDescription"`
-	State               string            `xml:"state"`
-	Tags                []Tag             `xml:"tagSet->item"`
-	InstanceTenancy     string            `xml:"instanceTenancy"`
-	CurrencyCode        string            `xml:"currencyCode"`
-	OfferingType        string            `xml:"offeringType"`
-	RecurringCharges    []RecurringCharge `xml:"recurringCharges>item"`
+	AvailabilityZone   string            `xml:"availabilityZone"`
+	Start              string            `xml:"start"`
+	Duration           uint64            `xml:"duration"`
+	End                string            `xml:"end"`
+	FixedPrice         float32           `xml:"fixedPrice"`
+	UsagePrice         float32           `xml:"usagePrice"`
+	InstanceCount      int               `xml:"instanceCount"`
+	ProductDescription string            `xml:"productDescription"`
+	State              string            `xml:"state"`
+	Tags               []Tag             `xml:"tagSet->item"`
+	InstanceTenancy    string            `xml:"instanceTenancy"`
+	CurrencyCode       string            `xml:"currencyCode"`
+	OfferingType       string            `xml:"offeringType"`
+	RecurringCharges   []RecurringCharge `xml:"recurringCharges>item"`
 }
 
 //
@@ -1355,14 +1355,14 @@ type RecurringCharge struct {
 // functions
 // DescribeReservedInstances
 //
-// See 
+// See
 func (ec2 *EC2) DescribeReservedInstances(instIds []string, filter *Filter) (resp *DescribeReservedInstancesResponse, err error) {
 	params := makeParams("DescribeReservedInstances")
 
-        for i, id := range instIds {
-                params["ReservedInstancesId."+strconv.Itoa(i+1)] = id
-        }
-        filter.addParams(params)
+	for i, id := range instIds {
+		params["ReservedInstancesId."+strconv.Itoa(i+1)] = id
+	}
+	filter.addParams(params)
 
 	resp = &DescribeReservedInstancesResponse{}
 	err = ec2.query(params, resp)
@@ -1371,4 +1371,3 @@ func (ec2 *EC2) DescribeReservedInstances(instIds []string, filter *Filter) (res
 	}
 	return resp, nil
 }
-
