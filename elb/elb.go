@@ -278,8 +278,13 @@ func (elb *ELB) query(params map[string]string, resp interface{}) error {
 	if endpoint.Path == "" {
 		endpoint.Path = "/"
 	}
-	sign(elb.Auth, "GET", endpoint.Path, params, endpoint.Host)
+	signer, err := aws.NewV2Signer(elb.Auth, aws.ServiceInfo{Endpoint: elb.Region.ELBEndpoint, Signer: 2})
+	if err != nil {
+		return err
+	}
+	signer.Sign("GET", endpoint.Path, params)
 	endpoint.RawQuery = multimap(params).Encode()
+
 	r, err := http.Get(endpoint.String())
 	if err != nil {
 		return err
