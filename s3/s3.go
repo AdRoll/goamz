@@ -18,7 +18,6 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
 	"io"
 	"io/ioutil"
 	"log"
@@ -29,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
 const debug = false
@@ -196,6 +197,12 @@ func (b *Bucket) GetResponse(path string) (resp *http.Response, err error) {
 	return b.GetResponseWithHeaders(path, make(http.Header))
 }
 
+// GetRequest is like GetRequest but returns instead an *http.Request that
+// performs the GET operation.
+func (b *Bucket) GetRequest(path string) (*http.Request, error) {
+	return b.GetRequestWithHeaders(path, make(http.Header))
+}
+
 // GetReaderWithHeaders retrieves an object from an S3 bucket
 // Accepts custom headers to be sent as the second parameter
 // returning the body of the HTTP response.
@@ -222,6 +229,17 @@ func (b *Bucket) GetResponseWithHeaders(path string, headers map[string][]string
 		return resp, nil
 	}
 	panic("unreachable")
+}
+
+// GetRequestMethHeaders is like GetResponseWithHeaders but returns instead an
+// *http.Request that performs the GET operation.
+func (b *Bucket) GetRequestWithHeaders(path string, headers map[string][]string) (*http.Request, error) {
+	req := &request{
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+	}
+	return b.S3.preparedHTTPRequest(req)
 }
 
 // Exists checks whether or not an object exists on an S3 bucket using a HEAD request.
@@ -334,6 +352,24 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 		payload: r,
 	}
 	return b.S3.query(req, nil)
+}
+
+// PutRequest is like PutReader but returns an HTTP request that will perform the PUT operation.
+// The Body field of the returned request must be set (each time) before the request is made.
+func (b *Bucket) PutRequest(path string, length int64, contType string, perm ACL, options Options) (*http.Request, error) {
+	headers := map[string][]string{
+		"Content-Length": {strconv.FormatInt(length, 10)},
+		"Content-Type":   {contType},
+		"x-amz-acl":      {string(perm)},
+	}
+	options.addHeaders(headers)
+	req := &request{
+		method:  "PUT",
+		bucket:  b.Name,
+		path:    path,
+		headers: headers,
+	}
+	return b.S3.preparedHTTPRequest(req)
 }
 
 // addHeaders adds o's specified fields to headers
@@ -790,6 +826,21 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 	return err
 }
 
+// query prepares and runs the req request.
+// If resp is not nil, the XML data contained in the response
+// body will be unmarshalled on it.
+func (s3 *S3) preparedHTTPRequest(req *request) (*http.Request, error) {
+	err := s3.prepare(req)
+	if err != nil {
+		return nil, err
+	}
+	hreq, err := s3.hreq(req)
+	if err != nil {
+		return nil, err
+	}
+	return hreq, err
+}
+
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
 	var signpath = req.path
@@ -847,20 +898,12 @@ func (s3 *S3) prepare(req *request) error {
 	return nil
 }
 
-// run sends req and returns the http response from the server.
-// If resp is not nil, the XML data contained in the response
-// body will be unmarshalled on it.
-func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
-	if debug {
-		log.Printf("Running S3 request: %#v", req)
-	}
-
+func (s3 *S3) hreq(req *request) (*http.Request, error) {
 	u, err := req.url()
 	if err != nil {
 		return nil, err
 	}
-
-	hreq := http.Request{
+	hreq := &http.Request{
 		URL:        u,
 		Method:     req.method,
 		ProtoMajor: 1,
@@ -875,6 +918,20 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 	}
 	if req.payload != nil {
 		hreq.Body = ioutil.NopCloser(req.payload)
+	}
+	return hreq, nil
+}
+
+// run sends req and returns the http response from the server.
+// If resp is not nil, the XML data contained in the response
+// body will be unmarshalled on it.
+func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
+	if debug {
+		log.Printf("Running S3 request: %#v", req)
+	}
+	hreq, err := s3.hreq(req)
+	if err != nil {
+		return nil, err
 	}
 
 	c := http.Client{
@@ -897,7 +954,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		},
 	}
 
-	hresp, err := c.Do(&hreq)
+	hresp, err := c.Do(hreq)
 	if err != nil {
 		return nil, err
 	}
