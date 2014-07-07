@@ -40,6 +40,8 @@ type S3 struct {
 	aws.Region
 	ConnectTimeout time.Duration
 	ReadTimeout    time.Duration
+	connTO, readTO time.Duration
+	client         *http.Client
 	private        byte // Reserve the right of using private data.
 }
 
@@ -90,7 +92,10 @@ var attempts = aws.AttemptStrategy{
 
 // New creates a new S3.
 func New(auth aws.Auth, region aws.Region) *S3 {
-	return &S3{auth, region, 0, 0, 0}
+	return &S3{
+		Auth:   auth,
+		Region: region,
+	}
 }
 
 // Bucket returns a Bucket with the given name.
@@ -338,20 +343,17 @@ func (b *Bucket) PutCopy(path string, perm ACL, options CopyOptions, source stri
 // PutReader inserts an object into the S3 bucket by consuming data
 // from r until EOF.
 func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL, options Options) error {
-	headers := map[string][]string{
-		"Content-Length": {strconv.FormatInt(length, 10)},
-		"Content-Type":   {contType},
-		"x-amz-acl":      {string(perm)},
+	hreq, err := b.PutRequest(path, length, contType, perm, options)
+	if err != nil {
+		return err
 	}
-	options.addHeaders(headers)
-	req := &request{
-		method:  "PUT",
-		bucket:  b.Name,
-		path:    path,
-		headers: headers,
-		payload: r,
+	hreq.Body = ioutil.NopCloser(r)
+	hresp, err := b.S3.http().Do(hreq)
+	if err != nil {
+		return err
 	}
-	return b.S3.query(req, nil)
+	_, err = b.S3.process(hresp, err)
+	return err
 }
 
 // PutRequest is like PutReader but returns an HTTP request that will perform the PUT operation.
@@ -922,6 +924,31 @@ func (s3 *S3) hreq(req *request) (*http.Request, error) {
 	return hreq, nil
 }
 
+// http returns a client for performing requests against the S3 REST API.  If a
+// client was created previously, and timeout values have not changed then,
+// client is reused. If no timeouts are provided the http.DefaultClient is
+// returned.
+func (s3 *S3) http() *http.Client {
+	if s3.ConnectTimeout != s3.connTO || s3.ReadTimeout != s3.readTO {
+		s3.client = nil
+	}
+	if s3.client == nil {
+		if s3.ConnectTimeout == 0 && s3.ReadTimeout == 0 {
+			return http.DefaultClient
+		}
+		s3.client = &http.Client{
+			Transport: &http.Transport{
+				Dial: (&net.Dialer{
+					Timeout:   s3.ConnectTimeout,
+					KeepAlive: 30 * time.Second,
+				}).Dial,
+			},
+			Timeout: s3.ConnectTimeout + s3.ReadTimeout,
+		}
+	}
+	return s3.client
+}
+
 // run sends req and returns the http response from the server.
 // If resp is not nil, the XML data contained in the response
 // body will be unmarshalled on it.
@@ -934,30 +961,18 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		return nil, err
 	}
 
-	c := http.Client{
-		Transport: &http.Transport{
-			Dial: func(netw, addr string) (c net.Conn, err error) {
-				deadline := time.Now().Add(s3.ReadTimeout)
-				if s3.ConnectTimeout > 0 {
-					c, err = net.DialTimeout(netw, addr, s3.ConnectTimeout)
-				} else {
-					c, err = net.Dial(netw, addr)
-				}
-				if err != nil {
-					return
-				}
-				if s3.ReadTimeout > 0 {
-					err = c.SetDeadline(deadline)
-				}
-				return
-			},
-		},
-	}
-
-	hresp, err := c.Do(hreq)
+	hresp, err := s3.http().Do(hreq)
 	if err != nil {
 		return nil, err
 	}
+
+	return s3.process(hresp, resp)
+}
+
+// process inspects hresp, detects error responses, and unmarshals successful
+// responses to resp if non-nil. The *http.Response object is returned in the
+// event of an xml parse error.
+func (s3 *S3) process(hresp *http.Response, resp interface{}) (*http.Response, error) {
 	if debug {
 		dump, _ := httputil.DumpResponse(hresp, true)
 		log.Printf("} -> %s\n", dump)
@@ -966,15 +981,16 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		return nil, buildError(hresp)
 	}
 	if resp != nil {
-		err = xml.NewDecoder(hresp.Body).Decode(resp)
+		err := xml.NewDecoder(hresp.Body).Decode(resp)
 		hresp.Body.Close()
 
 		if debug {
 			log.Printf("goamz.s3> decoded xml into %#v", resp)
 		}
 
+		return hresp, err
 	}
-	return hresp, err
+	return hresp, nil
 }
 
 // Error represents an error in an operation with S3.
