@@ -828,9 +828,7 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 	return err
 }
 
-// query prepares and runs the req request.
-// If resp is not nil, the XML data contained in the response
-// body will be unmarshalled on it.
+// perparedHTTPRequest prepares req and returns the result of s3.hreq(req).
 func (s3 *S3) preparedHTTPRequest(req *request) (*http.Request, error) {
 	err := s3.prepare(req)
 	if err != nil {
@@ -900,6 +898,9 @@ func (s3 *S3) prepare(req *request) error {
 	return nil
 }
 
+// hreq creates an *http.Request to perform req.  If req.payload is non-nil it
+// is wrapped in the returned request to ensure it is not closed after the it
+// completes.
 func (s3 *S3) hreq(req *request) (*http.Request, error) {
 	u, err := req.url()
 	if err != nil {
