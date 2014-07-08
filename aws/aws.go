@@ -19,7 +19,17 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/user"
+	"path"
+	"regexp"
+	"strings"
 	"time"
+)
+
+// Regular expressions for INI files
+var (
+	iniSectionRegexp = regexp.MustCompile(`^\s*\[([^\[\]]+)\]\s*$`)
+	iniSettingRegexp = regexp.MustCompile(`^\s*(.+?)\s*=\s*(.*\S)\s*$`)
 )
 
 // Defines the valid signers
@@ -313,6 +323,13 @@ func GetAuth(accessKey string, secretKey, token string, expiration time.Time) (a
 		auth.expiration = exptdate
 		return auth, err
 	}
+
+	// Next try getting auth from the credentials file
+	auth, err = CredentialFileAuth("", "", time.Minute*5)
+	if err == nil {
+		return
+	}
+
 	err = errors.New("No valid AWS authentication found")
 	return auth, err
 }
@@ -337,6 +354,96 @@ func EnvAuth() (auth Auth, err error) {
 		err = errors.New("AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY not found in environment")
 	}
 	return
+}
+
+// CredentialFileAuth creates and Auth based on a credentials file. The file
+// contains various authentication profiles for use with AWS.
+//
+// The credentials file, which is used by other AWS SDKs, is documented at
+// http://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs
+func CredentialFileAuth(filePath string, profile string, expiration time.Duration) (auth Auth, err error) {
+	if profile == "" {
+		profile = "default"
+	}
+
+	if filePath == "" {
+		u, err := user.Current()
+		if err != nil {
+			return auth, err
+		}
+
+		filePath = path.Join(u.HomeDir, ".aws", "credentials")
+	}
+
+	// read the file, then parse the INI
+	contents, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return
+	}
+
+	profiles := parseINI(string(contents))
+	profileData, ok := profiles[profile]
+
+	if !ok {
+		err = errors.New("The credentials file did not contain the profile")
+		return
+	}
+
+	keyId, ok := profileData["aws_access_key_id"]
+	if !ok {
+		err = errors.New("The credentials file did not contain required attribute aws_access_key_id")
+		return
+	}
+
+	secretKey, ok := profileData["aws_secret_access_key"]
+	if !ok {
+		err = errors.New("The credentials file did not contain required attribute aws_access_key_id")
+		return
+	}
+
+	auth.AccessKey = keyId
+	auth.SecretKey = secretKey
+
+	if token, ok := profileData["aws_session_token"]; ok {
+		auth.token = token
+	}
+
+	auth.expiration = time.Now().Add(expiration)
+
+	return
+}
+
+// parseINI takes the contents of a credentials file and returns a map, whose keys
+// are the various profiles, and whose values are maps of the settings for the
+// profiles
+func parseINI(fileContents string) map[string]map[string]string {
+	profiles := make(map[string]map[string]string)
+
+	lines := strings.Split(fileContents, "\n")
+
+	var currentSection map[string]string
+	for _, line := range lines {
+		// remove comments, which start with a semi-colon
+		if split := strings.Split(line, ";"); len(split) > 1 {
+			line = split[0]
+		}
+
+		// check if the line is the start of a profile.
+		//
+		// for example:
+		//     [default]
+		//
+		// otherwise, check for the proper setting
+		//     property=value
+		if sectMatch := iniSectionRegexp.FindStringSubmatch(line); len(sectMatch) == 2 {
+			currentSection = make(map[string]string)
+			profiles[sectMatch[1]] = currentSection
+		} else if setMatch := iniSettingRegexp.FindStringSubmatch(line); len(setMatch) == 3 && currentSection != nil {
+			currentSection[setMatch[1]] = setMatch[2]
+		}
+	}
+
+	return profiles
 }
 
 // Encode takes a string and URI-encodes it in a way suitable
