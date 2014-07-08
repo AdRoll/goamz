@@ -703,3 +703,11 @@ var DescribeReservedInstancesExample = `
    </reservedInstancesSet> 
 </DescribeReservedInstancesResponse>
 `
+
+var DeregisterImageExample = `
+<DeregisterImageResponse xmlns="http://ec2.amazonaws.com/doc/2014-06-15/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <return>true</return>
+</DeregisterImageResponse>
+`
+

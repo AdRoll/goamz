@@ -840,6 +840,11 @@ type BlockDeviceMapping struct {
 	IOPS int64 `xml:"ebs>iops"`
 }
 
+type DescribeImagesOptions struct {
+        ExecutableBy string
+        Owner        string
+}
+
 // Image represents details about an image.
 //
 // See http://goo.gl/iSqJG for more details.
@@ -876,20 +881,29 @@ type Image struct {
 // a very large number of images being returned.
 //
 // See http://goo.gl/SRBhW for more details.
-func (ec2 *EC2) Images(ids []string, filter *Filter) (resp *ImagesResp, err error) {
-	params := makeParams("DescribeImages")
-	for i, id := range ids {
-		params["ImageId."+strconv.Itoa(i+1)] = id
-	}
-	filter.addParams(params)
+func (ec2 *EC2) Images(ids []string, filter *Filter, options *DescribeImagesOptions) (resp *ImagesResp, err error) {
+        params := makeParams("DescribeImages")
+        if options.Owner != "" {
+                params["Owner"] = options.Owner
+        }
+        if options.ExecutableBy != "" {
+                params["Owner"] = options.ExecutableBy
+        }
 
-	resp = &ImagesResp{}
-	err = ec2.query(params, resp)
-	if err != nil {
-		return nil, err
-	}
-	return
+        for i, id := range ids {
+                params["ImageId."+strconv.Itoa(i+1)] = id
+        }
+        filter.addParams(params)
+
+        resp = &ImagesResp{}
+        err = ec2.query(params, resp)
+        if err != nil {
+                return nil, err
+        }
+        return
 }
+
+
 
 // Response to a CreateSnapshot request.
 //
@@ -925,20 +939,19 @@ func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapsh
 // snapshot in order to restore the volume.
 //
 // See http://goo.gl/vwU1y for more details.
-func (ec2 *EC2) DeleteSnapshots(ids []string) (resp *SimpleResp, err error) {
-	params := makeParams("DeleteSnapshot")
-	for i, id := range ids {
-		params["SnapshotId."+strconv.Itoa(i+1)] = id
-	}
+func (ec2 *EC2) DeleteSnapshots(ssId string) (resp *SimpleResp, err error) {
+        params := makeParams("DeleteSnapshot")
+        params["SnapshotId"] = ssId
 
-	resp = &SimpleResp{}
-	err = ec2.query(params, resp)
-	if err != nil {
-		return nil, err
-	}
+        resp = &SimpleResp{}
+        err = ec2.query(params, resp)
+        if err != nil {
+                return nil, err
+        }
 
-	return
+        return
 }
+
 
 // Response to a DescribeSnapshots request.
 //
@@ -981,6 +994,27 @@ func (ec2 *EC2) Snapshots(ids []string, filter *Filter) (resp *SnapshotsResp, er
 		return nil, err
 	}
 	return
+}
+
+// DeregisterImage
+//
+type DeregisterImageResponse struct {
+        RequestId string `xml:"requestId"`
+        Response  bool   `xml:"return"`
+}
+
+// See
+//
+func (ec2 *EC2) DeregisterImage(imageId string) (resp *DeregisterImageResponse, err error) {
+        params := makeParams("DeregisterImage")
+        params["ImageId"] = imageId
+
+        resp = &DeregisterImageResponse{}
+        err = ec2.query(params, resp)
+        if err != nil {
+                return nil, err
+        }
+        return
 }
 
 // ----------------------------------------------------------------------------

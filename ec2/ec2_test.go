@@ -407,7 +407,12 @@ func (s *S) TestDescribeImagesExample(c *check.C) {
 	filter.Add("key1", "value1")
 	filter.Add("key2", "value2", "value3")
 
-	resp, err := s.ec2.Images([]string{"ami-1", "ami-2"}, filter)
+	options := ec2.DescribeImagesOptions{
+		Owner:        "self",
+		ExecutableBy: "all",
+	}
+
+	resp, err := s.ec2.Images([]string{"ami-1", "ami-2"}, filter, &options)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeImages"})
@@ -477,11 +482,11 @@ func (s *S) TestCreateSnapshotExample(c *check.C) {
 func (s *S) TestDeleteSnapshotsExample(c *check.C) {
 	testServer.Response(200, nil, DeleteSnapshotExample)
 
-	resp, err := s.ec2.DeleteSnapshots([]string{"snap-78a54011"})
+	resp, err := s.ec2.DeleteSnapshots("snap-78a54011")
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DeleteSnapshot"})
-	c.Assert(req.Form["SnapshotId.1"], check.DeepEquals, []string{"snap-78a54011"})
+	c.Assert(req.Form["SnapshotId"], check.DeepEquals, []string{"snap-78a54011"})
 
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
@@ -836,7 +841,7 @@ func (s *S) TestSignatureWithEndpointPath(c *check.C) {
 	c.Assert(req.Form["Signature"], check.DeepEquals, []string{"VVoC6Y6xfES+KvZo+789thP8+tye4F6fOKBiKmXk4S4="})
 }
 
-func (s *S) TestDescribeReservedInstancesiExample(c *check.C) {
+func (s *S) TestDescribeReservedInstancesExample(c *check.C) {
 	testServer.Response(200, nil, DescribeReservedInstancesExample)
 
 	resp, err := s.ec2.DescribeReservedInstances([]string{"i-1", "i-2"}, nil)
@@ -853,4 +858,16 @@ func (s *S) TestDescribeReservedInstancesiExample(c *check.C) {
 
 }
 
+func (s *S) TestDeregisterImage(c *check.C) {
+	testServer.Response(200, nil, DeregisterImageExample)
 
+	resp, err := s.ec2.DeregisterImage("i-1")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DeregisterImage"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Response, check.Equals, true)
+
+}
