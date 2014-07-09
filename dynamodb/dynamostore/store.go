@@ -235,7 +235,11 @@ func (self *TKeyAttrStore) All(startFromKey string, limit int) ([]map[string]*dy
 		return nil, "", LookupErr
 	} else {
 		glog.V(5).Infof("Succeed scan fetch, got: %v records", len(attrMaps))
-		return attrMaps, lastKey.HashKey, nil
+		if lastKey != nil {
+			return attrMaps, lastKey.HashKey, nil
+		} else {
+			return attrMaps, "", nil
+		}
 	}
 }
 
