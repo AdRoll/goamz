@@ -30,6 +30,7 @@ var (
 
 type IKeyAttrStore interface {
 	Get(string) (map[string]*dynamodb.Attribute, *TError)
+	All(startFromKey string, limit int) ([]map[string]*dynamodb.Attribute, string, *TError)
 	Save(string, ...dynamodb.Attribute) *TError
 	Delete(string) *TError
 	Init() *TError
@@ -210,17 +211,32 @@ func (self *TKeyAttrStore) Save(key string, attrs ...dynamodb.Attribute) *TError
 
 func (self *TKeyAttrStore) Get(key string) (map[string]*dynamodb.Attribute, *TError) {
 	glog.V(5).Infof("Getting item with pk: %s", key)
-	attrMap, _err := self.table.GetItem(makePrimaryKey(key))
-	if _err == nil {
-		glog.V(5).Infof("Succeed item %s fetch, got: %v", key, attrMap)
-	} else {
-		if _err == dynamodb.ErrNotFound {
+	if attrMap, err := self.table.GetItem(makePrimaryKey(key)); err != nil {
+		if err == dynamodb.ErrNotFound {
 			return nil, NotFoundErr
 		} else {
+			glog.Errorf("Failed to get an item because: %s", err.Error())
 			return nil, LookupErr
 		}
+	} else {
+		glog.V(5).Infof("Succeed item %s fetch, got: %v", key, attrMap)
+		return attrMap, nil
 	}
-	return attrMap, nil
+}
+
+func (self *TKeyAttrStore) All(startFromKey string, limit int) ([]map[string]*dynamodb.Attribute, string, *TError) {
+	var pk *dynamodb.Key
+	if startFromKey != "" {
+		pk = makePrimaryKey(startFromKey)
+	}
+	nilAttrComparisons := []dynamodb.AttributeComparison{}
+	if attrMaps, lastKey, err := self.table.ScanPartialLimit(nilAttrComparisons, pk, int64(limit)); err != nil {
+		glog.Errorf("Failed to perform scan because: %s", err.Error())
+		return nil, "", LookupErr
+	} else {
+		glog.V(5).Infof("Succeed scan fetch, got: %v records", len(attrMaps))
+		return attrMaps, lastKey.HashKey, nil
+	}
 }
 
 func makePrimaryKey(key string) *dynamodb.Key {
