@@ -91,27 +91,37 @@ type CreateHostedZoneResponse struct {
 	DelegationSet DelegationSet
 }
 
-type ResourceRecordSets struct {
-	XMLName           xml.Name `xml:"ResourceRecordSets"`
-	ResourceRecordSet []ResourceRecordSet
-}
-
 type AliasTarget struct {
-	HostedZoneId         HostedZoneId
-	DNSName              DNSName
+	HostedZoneId         string
+	DNSName              string
 	EvaluateTargetHealth bool
 }
 
+type ResourceRecord struct {
+	XMLName xml.Name `xml:"ResourceRecord"`
+	Value   string
+}
+
+type ResourceRecords struct {
+	XMLName        xml.Name `xml:"ResourceRecords"`
+	ResourceRecord []ResourceRecord
+}
+
 type ResourceRecordSet struct {
-	XMLName       xml.Name `xml:"ResourceRecordSet"`
-	Name          string
-	Type          string
-	TTL           int
-	// TODO: Add  Value string
-	HealthCheckId string
-	Region        string
-	Failover      string
-	AliasTarget   AliasTarget
+	XMLName         xml.Name `xml:"ResourceRecordSet"`
+	Name            string
+	Type            string
+	TTL             int
+	ResourceRecords []ResourceRecords
+	HealthCheckId   string
+	Region          string
+	Failover        string
+	AliasTarget     AliasTarget
+}
+
+type ResourceRecordSets struct {
+	XMLName           xml.Name `xml:"ResourceRecordSets"`
+	ResourceRecordSet []ResourceRecordSet
 }
 
 type ListResourceRecordSetsResponse struct {
@@ -216,10 +226,26 @@ func (r *Route53) ListResourceRecordSets(hostedZone string, name string, _type s
 	}
 	path := fmt.Sprintf("%s/%s/rrset?%s", r.Endpoint, hostedZone, buffer.String())
 
+	fmt.Println(path)
 	result = new(ListResourceRecordSetsResponse)
 	err = r.query("GET", path, nil, result)
 
 	return
+}
+
+func (response *ListResourceRecordSetsResponse) GetResourceRecordSets() []ResourceRecordSet {
+	return response.ResourceRecordSets[0].ResourceRecordSet
+}
+
+func (recordset *ResourceRecordSet) GetValues() []string {
+	if len(recordset.ResourceRecords) > 0 {
+		result := make([]string, len(recordset.ResourceRecords[0].ResourceRecord))
+		for i, record := range recordset.ResourceRecords[0].ResourceRecord {
+			result[i] = record.Value
+		}
+		return result
+	}
+	return make([]string, 0)
 }
 
 // ChangeResourceRecordSet send a change resource record request to the AWS Route53 API
