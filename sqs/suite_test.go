@@ -108,6 +108,7 @@ func (s *TestHTTPServer) FlushRequests() {
 }
 
 func (s *TestHTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
 	s.request <- req
 	var resp *testResponse
 	select {
@@ -131,7 +132,6 @@ func (s *TestHTTPServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (s *TestHTTPServer) WaitRequest() *http.Request {
 	select {
 	case req := <-s.request:
-		req.ParseForm()
 		return req
 	case <-time.After(s.Timeout):
 		panic("Timeout waiting for goamz request")

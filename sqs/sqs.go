@@ -21,6 +21,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -442,39 +443,36 @@ func (q *Queue) DeleteMessageBatch(msgList []Message) (resp *DeleteMessageBatchR
 }
 
 func (s *SQS) query(queueUrl string, params map[string]string, resp interface{}) (err error) {
-	params["Version"] = "2011-10-01"
-	params["Timestamp"] = time.Now().In(time.UTC).Format(time.RFC3339)
 	var url_ *url.URL
 
-	var path string
 	if queueUrl != "" && len(queueUrl) > len(s.Region.SQSEndpoint) {
 		url_, err = url.Parse(queueUrl)
-		path = queueUrl[len(s.Region.SQSEndpoint):]
 	} else {
 		url_, err = url.Parse(s.Region.SQSEndpoint)
-		path = "/"
 	}
+
 	if err != nil {
 		return err
 	}
 
-	//url_, err := url.Parse(s.Region.SQSEndpoint)
-	//if err != nil {
-	//	return err
-	//}
+	params["Version"] = "2011-10-01"
+	hreq, err := http.NewRequest("POST", url_.String(), strings.NewReader(multimap(params).Encode()))
+	if err != nil {
+		return err
+	}
+
+	hreq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
 
 	if s.Auth.Token() != "" {
-		params["SecurityToken"] = s.Auth.Token()
-	}
-	sign(s.Auth, "GET", path, params, url_.Host)
-
-	url_.RawQuery = multimap(params).Encode()
-
-	if debug {
-		log.Printf("GET ", url_.String())
+		hreq.Header.Set("X-Amz-Security-Token", s.Auth.Token())
 	}
 
-	r, err := http.Get(url_.String())
+	signer := aws.NewV4Signer(s.Auth, "sqs", s.Region)
+	signer.Sign(hreq)
+
+	r, err := http.DefaultClient.Do(hreq)
+
 	if err != nil {
 		return err
 	}
