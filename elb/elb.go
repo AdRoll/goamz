@@ -364,6 +364,7 @@ func makeCreateParams(createLB *CreateLoadBalancer) map[string]string {
 		params[fmt.Sprintf(key, index, "InstanceProtocol")] = l.InstanceProtocol
 		params[fmt.Sprintf(key, index, "Protocol")] = l.Protocol
 		params[fmt.Sprintf(key, index, "LoadBalancerPort")] = strconv.Itoa(l.LoadBalancerPort)
+		params[fmt.Sprintf(key, index, "SSLCertificateId")] = l.SSLCertificateId
 	}
 	for i, az := range createLB.AvailabilityZones {
 		key := fmt.Sprintf("AvailabilityZones.member.%d", i+1)
