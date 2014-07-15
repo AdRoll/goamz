@@ -55,6 +55,7 @@ type Region struct {
 	CloudWatchServicepoint ServiceInfo
 	AutoScalingEndpoint    string
 	RDSEndpoint            ServiceInfo
+	KinesisEndpoint        string
 }
 
 var Regions = map[string]Region{
