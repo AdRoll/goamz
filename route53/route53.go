@@ -7,6 +7,7 @@ import (
 	"github.com/crowdmob/goamz/aws"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type Route53 struct {
@@ -93,6 +94,49 @@ type CreateHostedZoneResponse struct {
 	DelegationSet DelegationSet
 }
 
+type AliasTarget struct {
+	HostedZoneId         string
+	DNSName              string
+	EvaluateTargetHealth bool
+}
+
+type ResourceRecord struct {
+	XMLName xml.Name `xml:"ResourceRecord"`
+	Value   string
+}
+
+type ResourceRecords struct {
+	XMLName        xml.Name `xml:"ResourceRecords"`
+	ResourceRecord []ResourceRecord
+}
+
+type ResourceRecordSet struct {
+	XMLName         xml.Name `xml:"ResourceRecordSet"`
+	Name            string
+	Type            string
+	TTL             int
+	ResourceRecords []ResourceRecords
+	HealthCheckId   string
+	Region          string
+	Failover        string
+	AliasTarget     AliasTarget
+}
+
+type ResourceRecordSets struct {
+	XMLName           xml.Name `xml:"ResourceRecordSets"`
+	ResourceRecordSet []ResourceRecordSet
+}
+
+type ListResourceRecordSetsResponse struct {
+	XMLName              xml.Name `xml:"ListResourceRecordSetsResponse"`
+	ResourceRecordSets   []ResourceRecordSets
+	IsTruncated          bool
+	MaxItems             int
+	NextRecordName       string
+	NextRecordType       string
+	NextRecordIdentifier string
+}
+
 type ChangeResourceRecordSetsResponse struct {
 	XMLName     xml.Name `xml:"ChangeResourceRecordSetsResponse"`
 	Id          string   `xml:"ChangeInfo>Id"`
@@ -174,6 +218,39 @@ func (r *Route53) CreateHostedZone(hostedZoneReq *CreateHostedZoneRequest) (*Cre
 	return result, err
 }
 
+// ListResourceRecordSets fetches a collection of ResourceRecordSets through the AWS Route53 API
+func (r *Route53) ListResourceRecordSets(hostedZone string, name string, _type string, identifier string, maxitems int) (result *ListResourceRecordSetsResponse, err error) {
+	var buffer bytes.Buffer
+	addParam(&buffer, "name", name)
+	addParam(&buffer, "type", _type)
+	addParam(&buffer, "identifier", identifier)
+	if maxitems > 0 {
+		addParam(&buffer, "maxitems", strconv.Itoa(maxitems))
+	}
+	path := fmt.Sprintf("%s/%s/rrset?%s", r.Endpoint, hostedZone, buffer.String())
+
+	fmt.Println(path)
+	result = new(ListResourceRecordSetsResponse)
+	err = r.query("GET", path, nil, result)
+
+	return
+}
+
+func (response *ListResourceRecordSetsResponse) GetResourceRecordSets() []ResourceRecordSet {
+	return response.ResourceRecordSets[0].ResourceRecordSet
+}
+
+func (recordset *ResourceRecordSet) GetValues() []string {
+	if len(recordset.ResourceRecords) > 0 {
+		result := make([]string, len(recordset.ResourceRecords[0].ResourceRecord))
+		for i, record := range recordset.ResourceRecords[0].ResourceRecord {
+			result[i] = record.Value
+		}
+		return result
+	}
+	return make([]string, 0)
+}
+
 // ChangeResourceRecordSet send a change resource record request to the AWS Route53 API
 func (r *Route53) ChangeResourceRecordSet(req *ChangeResourceRecordSetsRequest, zoneId string) (*ChangeResourceRecordSetsResponse, error) {
 	xmlBytes, err := xml.Marshal(req)
@@ -221,4 +298,13 @@ func (r *Route53) DeleteHostedZone(id string) (result *DeleteHostedZoneResponse,
 	err = r.query("DELETE", path, nil, result)
 
 	return
+}
+
+func addParam(buffer *bytes.Buffer, name, value string) {
+	if value != "" {
+		if buffer.Len() > 0 {
+			buffer.WriteString("&")
+		}
+		buffer.WriteString(fmt.Sprintf("%s=%s", name, value))
+	}
 }
