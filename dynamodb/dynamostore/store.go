@@ -210,12 +210,14 @@ func (self *TKeyAttrStore) Save(key string, attrs ...dynamodb.Attribute) *TError
 }
 
 func (self *TKeyAttrStore) Get(key string) (map[string]*dynamodb.Attribute, *TError) {
+	contract.Require(key != "", "Empty key is not allowed")
+
 	glog.V(5).Infof("Getting item with pk: %s", key)
 	if attrMap, err := self.table.GetItem(makePrimaryKey(key)); err != nil {
 		if err == dynamodb.ErrNotFound {
 			return nil, NotFoundErr
 		} else {
-			glog.Errorf("Failed to get an item because: %s", err.Error())
+			glog.Errorf("Failed to get an item pk=%s because: %s", key, err.Error())
 			return nil, LookupErr
 		}
 	} else {
