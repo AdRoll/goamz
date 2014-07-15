@@ -219,7 +219,7 @@ func (s *SQS) newQueue(queueName string, attrs map[string]string) (resp *CreateQ
 	i := 1
 	for k, v := range attrs {
 		nameParam := fmt.Sprintf("Attribute.%d.Name", i)
-		valParam := fmt.Sprintf("Attribute.%d.Value", 1)
+		valParam := fmt.Sprintf("Attribute.%d.Value", i)
 		params[nameParam] = k
 		params[valParam] = v
 		i++
