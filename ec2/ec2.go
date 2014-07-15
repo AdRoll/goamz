@@ -983,6 +983,44 @@ func (ec2 *EC2) Snapshots(ids []string, filter *Filter) (resp *SnapshotsResp, er
 	return
 }
 
+// ---------------------------------------------------------------------------
+// Subnets
+
+type SubnetsResp struct {
+	RequestId string   `xml:"requestId"`
+	Subnets   []Subnet `xml:"subnetSet>item"`
+}
+
+// Subnet represents details about a given VPC subnet
+type Subnet struct {
+	Id                      string `xml:"subnetId"`
+	State                   string `xml:"state"`
+	VpcId                   string `xml:"vpcId"`
+	CidrBlock               string `xml:"cidrBlock"`
+	AvailableIpAddressCount int    `xml:"availableIpAddressCount"`
+	AvailabilityZone        string `xml:"availabilityZone"`
+	DefaultForAz            bool   `xml:"defaultForAz"`
+	MapPublicIpOnLaunch     bool   `xml:"mapPublicIpOnLaunch"`
+	Tags                    []Tag  `xml:"tagSet>item"`
+}
+
+// Subnets returns details about VPC subnets.
+// The ids are filter parameters, if provided, limit the subnets returned.
+func (ec2 *EC2) Subnets(ids []string, filter *Filter) (resp *SubnetsResp, err error) {
+	params := makeParams("DescribeSubnets")
+	for i, id := range ids {
+		params["SubnetId."+strconv.Itoa(i+1)] = id
+	}
+	filter.addParams(params)
+
+	resp = &SubnetsResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // ----------------------------------------------------------------------------
 // Security group management functions and types.
 
