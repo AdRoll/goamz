@@ -2,14 +2,15 @@ package s3_test
 
 import (
 	"bytes"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/s3"
-	"github.com/crowdmob/goamz/testutil"
-	"gopkg.in/check.v1"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/crowdmob/goamz/aws"
+	"github.com/crowdmob/goamz/s3"
+	"github.com/crowdmob/goamz/testutil"
+	"gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) {
@@ -140,6 +141,26 @@ func (s *S) TestGetReader(c *check.C) {
 	c.Assert(err, check.IsNil)
 	data, err := ioutil.ReadAll(rc)
 	rc.Close()
+	c.Assert(err, check.IsNil)
+	c.Assert(string(data), check.Equals, "content")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.URL.Path, check.Equals, "/bucket/name")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+}
+
+// TestGetRequest is modified from TestGetReader.
+func (s *S) TestGetRequest(c *check.C) {
+	testServer.Response(200, nil, "content")
+
+	b := s.s3.Bucket("bucket")
+	hreq, err := b.GetRequest("name")
+	c.Assert(err, check.IsNil)
+	hresp, err := new(http.Client).Do(hreq)
+	c.Assert(err, check.IsNil)
+	data, err := ioutil.ReadAll(hresp.Body)
+	hresp.Body.Close()
 	c.Assert(err, check.IsNil)
 	c.Assert(string(data), check.Equals, "content")
 
