@@ -183,6 +183,7 @@ type PublishOpt struct {
 	MessageStructure string
 	Subject          string
 	TopicArn         string
+	TargetArn        string
 }
 
 type PublishResp struct {
@@ -211,6 +212,10 @@ func (sns *SNS) Publish(options *PublishOpt) (resp *PublishResp, err error) {
 
 	if options.TopicArn != "" {
 		params["TopicArn"] = options.TopicArn
+	}
+
+	if options.TargetArn != "" {
+		params["TargetArn"] = options.TargetArn
 	}
 
 	err = sns.query(nil, nil, params, resp)
