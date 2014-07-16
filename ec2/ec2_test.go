@@ -477,11 +477,11 @@ func (s *S) TestCreateSnapshotExample(c *check.C) {
 func (s *S) TestDeleteSnapshotsExample(c *check.C) {
 	testServer.Response(200, nil, DeleteSnapshotExample)
 
-	resp, err := s.ec2.DeleteSnapshots([]string{"snap-78a54011"})
+	resp, err := s.ec2.DeleteSnapshots("snap-78a54011")
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DeleteSnapshot"})
-	c.Assert(req.Form["SnapshotId.1"], check.DeepEquals, []string{"snap-78a54011"})
+	c.Assert(req.Form["SnapshotId"], check.DeepEquals, []string{"snap-78a54011"})
 
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")

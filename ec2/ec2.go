@@ -925,11 +925,9 @@ func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapsh
 // snapshot in order to restore the volume.
 //
 // See http://goo.gl/vwU1y for more details.
-func (ec2 *EC2) DeleteSnapshots(ids []string) (resp *SimpleResp, err error) {
+func (ec2 *EC2) DeleteSnapshots(ssid string) (resp *SimpleResp, err error) {
 	params := makeParams("DeleteSnapshot")
-	for i, id := range ids {
-		params["SnapshotId."+strconv.Itoa(i+1)] = id
-	}
+	params["SnapshotId"] = ssId
 
 	resp = &SimpleResp{}
 	err = ec2.query(params, resp)
