@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const maxNumberOfRetry = 4
+
 type BatchGetItem struct {
 	Server *Server
 	Keys   map[*Table][]Key
@@ -194,6 +196,10 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 	retry := false
 	for {
 		jsonResponse, err = t.Server.queryServer(target("PutItem"), q)
+		if currentRetry >= maxNumberOfRetry {
+			break
+		}
+
 		if err != nil {
 			log.Printf("Error requesting from Amazon, request was: %#v\n response is:%#v\n and error is: %#v\n", q, string(jsonResponse), err)
 			if err, ok := err.(*Error); ok {
@@ -204,14 +210,14 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 				}
 			}
 		}
-		if retry {
-			log.Printf("Retrying in %v ms\n", (1<<currentRetry)*50)
-			<-time.After((1 << currentRetry) * 50 * time.Millisecond)
-			currentRetry += 1
-		}
-		if currentRetry > 4 || !retry { // (2 ^ 4) * 50 = 800ms  or  (2 ^ 5) * 50 = 1.6 second
+
+		if !retry {
 			break
 		}
+
+		log.Printf("Retrying in %v ms\n", (1<<currentRetry)*50)
+		<-time.After((1 << currentRetry) * 50 * time.Millisecond)
+		currentRetry += 1
 	}
 
 	if err != nil {
