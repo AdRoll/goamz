@@ -3,6 +3,7 @@ package aws_test
 import (
 	"github.com/crowdmob/goamz/aws"
 	"gopkg.in/check.v1"
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -90,4 +91,50 @@ func (s *S) TestRegionsAreNamed(c *check.C) {
 	for n, r := range aws.Regions {
 		c.Assert(n, check.Equals, r.Name)
 	}
+}
+
+func (s *S) TestCredentialsFileAuth(c *check.C) {
+	file, err := ioutil.TempFile("", "creds")
+
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	iniFile := `
+
+[default] ; comment 123
+aws_access_key_id = keyid1 ;comment
+aws_secret_access_key=key1     
+
+	[profile2]
+    aws_access_key_id = keyid2 ;comment
+	aws_secret_access_key=key2     
+	aws_session_token=token1
+
+`
+	_, err = file.WriteString(iniFile)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	err = file.Close()
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	// check non-existant profile
+	_, err = aws.CredentialFileAuth(file.Name(), "no profile", 30*time.Minute)
+	c.Assert(err, check.Not(check.Equals), nil)
+
+	defaultProfile, err := aws.CredentialFileAuth(file.Name(), "default", 30*time.Minute)
+	c.Assert(err, check.Equals, nil)
+	c.Assert(defaultProfile.AccessKey, check.Equals, "keyid1")
+	c.Assert(defaultProfile.SecretKey, check.Equals, "key1")
+	c.Assert(defaultProfile.Token(), check.Equals, "")
+
+	profile2, err := aws.CredentialFileAuth(file.Name(), "profile2", 30*time.Minute)
+	c.Assert(err, check.Equals, nil)
+	c.Assert(profile2.AccessKey, check.Equals, "keyid2")
+	c.Assert(profile2.SecretKey, check.Equals, "key2")
+	c.Assert(profile2.Token(), check.Equals, "token1")
 }
