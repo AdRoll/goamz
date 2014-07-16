@@ -894,4 +894,18 @@ func (s *S) TestDescribeReservedInstancesiExample(c *check.C) {
 
 }
 
+func (s *S) TestDeregisterImage(c *check.C) {
+        testServer.Response(200, nil, DeregisterImageExample)
+
+        resp, err := s.ec2.DeregisterImage("i-1")
+
+        req := testServer.WaitRequest()
+        c.Assert(req.Form["Action"], check.DeepEquals, []string{"DeregisterImage"})
+
+        c.Assert(err, check.IsNil)
+        c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+        c.Assert(resp.Response, check.Equals, true)
+
+}
+
 
