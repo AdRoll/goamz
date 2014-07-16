@@ -193,21 +193,19 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 	// based on:
 	// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html#APIRetries
 	currentRetry := uint(0)
-	retry := false
 	for {
 		jsonResponse, err = t.Server.queryServer(target("PutItem"), q)
 		if currentRetry >= maxNumberOfRetry {
 			break
 		}
 
+		retry := false
 		if err != nil {
 			log.Printf("Error requesting from Amazon, request was: %#v\n response is:%#v\n and error is: %#v\n", q, string(jsonResponse), err)
 			if err, ok := err.(*Error); ok {
-				if (err.StatusCode == 500) || (err.Code == "ThrottlingException") || (err.Code == "ProvisionedThroughputExceededException") {
-					retry = true
-				} else {
-					retry = false
-				}
+				retry = (err.StatusCode == 500) ||
+					(err.Code == "ThrottlingException") ||
+					(err.Code == "ProvisionedThroughputExceededException")
 			}
 		}
 
