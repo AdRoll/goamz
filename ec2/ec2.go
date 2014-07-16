@@ -981,6 +981,28 @@ func (ec2 *EC2) Snapshots(ids []string, filter *Filter) (resp *SnapshotsResp, er
 	return
 }
 
+// DeregisterImage
+//
+type DeregisterImageResponse struct {
+        RequestId string `xml:"requestId"`
+        Response  bool   `xml:"return"`
+}
+
+// See
+//
+func (ec2 *EC2) DeregisterImage(imageId string) (resp *DeregisterImageResponse, err error) {
+        params := makeParams("DeregisterImage")
+        params["ImageId"] = imageId
+
+        resp = &DeregisterImageResponse{}
+        err = ec2.query(params, resp)
+        if err != nil {
+                return nil, err
+        }
+        return
+}
+
+
 // ---------------------------------------------------------------------------
 // Subnets
 
