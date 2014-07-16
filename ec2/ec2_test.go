@@ -893,5 +893,3 @@ func (s *S) TestDescribeReservedInstancesiExample(c *check.C) {
 	c.Assert(r0.ReservedInstanceId, check.Equals, "e5a2ff3b-7d14-494f-90af-0b5d0EXAMPLE")
 
 }
-
-

@@ -216,7 +216,6 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 		}
 	}
 
-
 	if err != nil {
 		return false, err
 	}
