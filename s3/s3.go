@@ -18,6 +18,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"github.com/crowdmob/goamz/aws"
 	"io"
 	"io/ioutil"
 	"log"
@@ -28,8 +29,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/crowdmob/goamz/aws"
 )
 
 const debug = false
@@ -40,8 +39,6 @@ type S3 struct {
 	aws.Region
 	ConnectTimeout time.Duration
 	ReadTimeout    time.Duration
-	connTO, readTO time.Duration
-	client         *http.Client
 	private        byte // Reserve the right of using private data.
 }
 
@@ -92,10 +89,7 @@ var attempts = aws.AttemptStrategy{
 
 // New creates a new S3.
 func New(auth aws.Auth, region aws.Region) *S3 {
-	return &S3{
-		Auth:   auth,
-		Region: region,
-	}
+	return &S3{auth, region, 0, 0, 0}
 }
 
 // Bucket returns a Bucket with the given name.
@@ -202,12 +196,6 @@ func (b *Bucket) GetResponse(path string) (resp *http.Response, err error) {
 	return b.GetResponseWithHeaders(path, make(http.Header))
 }
 
-// GetRequest is like GetRequest but returns instead an *http.Request that
-// performs the GET operation.
-func (b *Bucket) GetRequest(path string) (*http.Request, error) {
-	return b.GetRequestWithHeaders(path, make(http.Header))
-}
-
 // GetReaderWithHeaders retrieves an object from an S3 bucket
 // Accepts custom headers to be sent as the second parameter
 // returning the body of the HTTP response.
@@ -234,17 +222,6 @@ func (b *Bucket) GetResponseWithHeaders(path string, headers map[string][]string
 		return resp, nil
 	}
 	panic("unreachable")
-}
-
-// GetRequestMethHeaders is like GetResponseWithHeaders but returns instead an
-// *http.Request that performs the GET operation.
-func (b *Bucket) GetRequestWithHeaders(path string, headers map[string][]string) (*http.Request, error) {
-	req := &request{
-		bucket:  b.Name,
-		path:    path,
-		headers: headers,
-	}
-	return b.S3.preparedHTTPRequest(req)
 }
 
 // Exists checks whether or not an object exists on an S3 bucket using a HEAD request.
@@ -343,22 +320,6 @@ func (b *Bucket) PutCopy(path string, perm ACL, options CopyOptions, source stri
 // PutReader inserts an object into the S3 bucket by consuming data
 // from r until EOF.
 func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType string, perm ACL, options Options) error {
-	hreq, err := b.PutRequest(path, length, contType, perm, options)
-	if err != nil {
-		return err
-	}
-	hreq.Body = ioutil.NopCloser(r)
-	hresp, err := b.S3.http().Do(hreq)
-	if err != nil {
-		return err
-	}
-	_, err = b.S3.process(hresp, err)
-	return err
-}
-
-// PutRequest is like PutReader but returns an HTTP request that will perform the PUT operation.
-// The Body field of the returned request must be set (each time) before the request is made.
-func (b *Bucket) PutRequest(path string, length int64, contType string, perm ACL, options Options) (*http.Request, error) {
 	headers := map[string][]string{
 		"Content-Length": {strconv.FormatInt(length, 10)},
 		"Content-Type":   {contType},
@@ -370,8 +331,9 @@ func (b *Bucket) PutRequest(path string, length int64, contType string, perm ACL
 		bucket:  b.Name,
 		path:    path,
 		headers: headers,
+		payload: r,
 	}
-	return b.S3.preparedHTTPRequest(req)
+	return b.S3.query(req, nil)
 }
 
 // addHeaders adds o's specified fields to headers
@@ -828,19 +790,6 @@ func (s3 *S3) query(req *request, resp interface{}) error {
 	return err
 }
 
-// perparedHTTPRequest prepares req and returns the result of s3.hreq(req).
-func (s3 *S3) preparedHTTPRequest(req *request) (*http.Request, error) {
-	err := s3.prepare(req)
-	if err != nil {
-		return nil, err
-	}
-	hreq, err := s3.hreq(req)
-	if err != nil {
-		return nil, err
-	}
-	return hreq, err
-}
-
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
 	var signpath = req.path
@@ -898,15 +847,20 @@ func (s3 *S3) prepare(req *request) error {
 	return nil
 }
 
-// hreq creates an *http.Request to perform req.  If req.payload is non-nil it
-// is wrapped in the returned request to ensure it is not closed after the it
-// completes.
-func (s3 *S3) hreq(req *request) (*http.Request, error) {
+// run sends req and returns the http response from the server.
+// If resp is not nil, the XML data contained in the response
+// body will be unmarshalled on it.
+func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
+	if debug {
+		log.Printf("Running S3 request: %#v", req)
+	}
+
 	u, err := req.url()
 	if err != nil {
 		return nil, err
 	}
-	hreq := &http.Request{
+
+	hreq := http.Request{
 		URL:        u,
 		Method:     req.method,
 		ProtoMajor: 1,
@@ -922,58 +876,31 @@ func (s3 *S3) hreq(req *request) (*http.Request, error) {
 	if req.payload != nil {
 		hreq.Body = ioutil.NopCloser(req.payload)
 	}
-	return hreq, nil
-}
 
-// http returns a client for performing requests against the S3 REST API.  If a
-// client was created previously, and timeout values have not changed then,
-// client is reused. If no timeouts are provided the http.DefaultClient is
-// returned.
-func (s3 *S3) http() *http.Client {
-	if s3.ConnectTimeout != s3.connTO || s3.ReadTimeout != s3.readTO {
-		s3.client = nil
-	}
-	if s3.client == nil {
-		if s3.ConnectTimeout == 0 && s3.ReadTimeout == 0 {
-			return http.DefaultClient
-		}
-		s3.client = &http.Client{
-			Transport: &http.Transport{
-				Dial: (&net.Dialer{
-					Timeout:   s3.ConnectTimeout,
-					KeepAlive: 30 * time.Second,
-				}).Dial,
+	c := http.Client{
+		Transport: &http.Transport{
+			Dial: func(netw, addr string) (c net.Conn, err error) {
+				deadline := time.Now().Add(s3.ReadTimeout)
+				if s3.ConnectTimeout > 0 {
+					c, err = net.DialTimeout(netw, addr, s3.ConnectTimeout)
+				} else {
+					c, err = net.Dial(netw, addr)
+				}
+				if err != nil {
+					return
+				}
+				if s3.ReadTimeout > 0 {
+					err = c.SetDeadline(deadline)
+				}
+				return
 			},
-			Timeout: s3.ConnectTimeout + s3.ReadTimeout,
-		}
+		},
 	}
-	return s3.client
-}
 
-// run sends req and returns the http response from the server.
-// If resp is not nil, the XML data contained in the response
-// body will be unmarshalled on it.
-func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
-	if debug {
-		log.Printf("Running S3 request: %#v", req)
-	}
-	hreq, err := s3.hreq(req)
+	hresp, err := c.Do(&hreq)
 	if err != nil {
 		return nil, err
 	}
-
-	hresp, err := s3.http().Do(hreq)
-	if err != nil {
-		return nil, err
-	}
-
-	return s3.process(hresp, resp)
-}
-
-// process inspects hresp, detects error responses, and unmarshals successful
-// responses to resp if non-nil. The *http.Response object is returned in the
-// event of an xml parse error.
-func (s3 *S3) process(hresp *http.Response, resp interface{}) (*http.Response, error) {
 	if debug {
 		dump, _ := httputil.DumpResponse(hresp, true)
 		log.Printf("} -> %s\n", dump)
@@ -982,16 +909,15 @@ func (s3 *S3) process(hresp *http.Response, resp interface{}) (*http.Response, e
 		return nil, buildError(hresp)
 	}
 	if resp != nil {
-		err := xml.NewDecoder(hresp.Body).Decode(resp)
+		err = xml.NewDecoder(hresp.Body).Decode(resp)
 		hresp.Body.Close()
 
 		if debug {
 			log.Printf("goamz.s3> decoded xml into %#v", resp)
 		}
 
-		return hresp, err
 	}
-	return hresp, nil
+	return hresp, err
 }
 
 // Error represents an error in an operation with S3.
