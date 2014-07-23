@@ -1,5 +1,6 @@
 # GoAMZ
 
+[![Build Status](https://ci.flowhealth.com/github.com/flowhealth/goamz/status.svg?branch=master)](https://ci.flowhealth.com/github.com/flowhealth/goamz)
 
 The _goamz_ package enables Go programs to interact with Amazon Web Services.
 

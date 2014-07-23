@@ -1,2 +1,7 @@
 github.com/feyeleanor/sets
 github.com/bitly/go-simplejson
+github.com/flowhealth/glog
+github.com/flowhealth/gocontract
+github.com/flowhealth/goannoying
+github.com/onsi/gomega
+github.com/onsi/ginkgo
