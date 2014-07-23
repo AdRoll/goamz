@@ -1,0 +1,9 @@
+image: flowhealth/go_buildtools:1.3
+script:
+  - gpm 
+  - go test -parallel 1 -v ./...
+
+notify:
+  email:
+    recipients:
+      - viktor@flowhealth.com
