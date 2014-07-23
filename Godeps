@@ -5,3 +5,4 @@ github.com/flowhealth/gocontract
 github.com/flowhealth/goannoying
 github.com/onsi/gomega
 github.com/onsi/ginkgo
+gopkg.in/check.v1
