@@ -106,7 +106,7 @@ func (self *TKeyAttrStore) findTableByName(name string) bool {
 	glog.V(5).Infof("Searching for table %s in table list", name)
 	tables, err := self.dynamoServer.ListTables()
 	glog.V(5).Infof("Got table list: %v", tables)
-	contract.RequireNoErrorf(err, err.Error())
+	contract.RequireNoErrorf(err, "Failed to lookup table %v", err)
 	for _, t := range tables {
 		if t == name {
 			glog.V(5).Infof("Found table %s", name)
