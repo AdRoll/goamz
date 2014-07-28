@@ -39,10 +39,38 @@ var s3ParamsToSign = map[string]bool{
 	"delete":                       true,
 }
 
+
+type Param struct {
+	K string
+	V string
+}
+type SortableParams []*Param
+func (p SortableParams) Len() int           { return len(p) }
+func (p SortableParams) Less(i, j int) bool { return p[i].K < p[j].K }
+func (p SortableParams) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p SortableParams) Join(kvSep, paramSep string, discardEmpty bool) string {
+	out := ""
+	for _, param := range p {
+		paramStr := ""
+		if discardEmpty && param.V == "" {
+			paramStr += param.K
+		} else {
+			paramStr += param.K+kvSep+param.V
+		}
+		if out == "" {
+			out += paramStr
+		} else {
+			out += paramSep+paramStr
+		}
+	}
+	return out
+}
+
+
 func sign(auth aws.Auth, method, canonicalPath string, params, headers map[string][]string) {
 	var md5, ctype, date, xamz string
 	var xamzDate bool
-	var sarray []string
+	var sarray SortableParams
 	for k, v := range headers {
 		k = strings.ToLower(k)
 		switch k {
@@ -57,7 +85,7 @@ func sign(auth aws.Auth, method, canonicalPath string, params, headers map[strin
 		default:
 			if strings.HasPrefix(k, "x-amz-") {
 				vall := strings.Join(v, ",")
-				sarray = append(sarray, k+":"+vall)
+				sarray = append(sarray, &Param{k,vall})
 				if k == "x-amz-date" {
 					xamzDate = true
 					date = ""
@@ -66,8 +94,8 @@ func sign(auth aws.Auth, method, canonicalPath string, params, headers map[strin
 		}
 	}
 	if len(sarray) > 0 {
-		sort.StringSlice(sarray).Sort()
-		xamz = strings.Join(sarray, "\n") + "\n"
+		sort.Sort(sarray)
+		xamz = sarray.Join(":", "\n", false) + "\n"
 	}
 
 	expires := false
@@ -82,18 +110,13 @@ func sign(auth aws.Auth, method, canonicalPath string, params, headers map[strin
 	for k, v := range params {
 		if s3ParamsToSign[k] {
 			for _, vi := range v {
-				if vi == "" {
-					sarray = append(sarray, k)
-				} else {
-					// "When signing you do not encode these values."
-					sarray = append(sarray, k+"="+vi)
-				}
+				sarray = append(sarray, &Param{k, vi})
 			}
 		}
 	}
 	if len(sarray) > 0 {
-		sort.StringSlice(sarray).Sort()
-		canonicalPath = canonicalPath + "?" + strings.Join(sarray, "&")
+		sort.Sort(sarray)
+		canonicalPath = canonicalPath + "?" + sarray.Join("=", "&", true)
 	}
 
 	payload := method + "\n" + md5 + "\n" + ctype + "\n" + date + "\n" + xamz + canonicalPath
