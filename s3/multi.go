@@ -105,12 +105,13 @@ func (b *Bucket) Multi(key, contType string, perm ACL) (*Multi, error) {
 // key inside b and returns a value for manipulating it.
 //
 // See http://goo.gl/XP8kL for details.
-func (b *Bucket) InitMulti(key string, contType string, perm ACL) (*Multi, error) {
+func (b *Bucket) InitMulti(key string, contType string, perm ACL, options Options) (*Multi, error) {
 	headers := map[string][]string{
 		"Content-Type":   {contType},
 		"Content-Length": {"0"},
 		"x-amz-acl":      {string(perm)},
 	}
+	options.addHeaders(headers)
 	params := map[string][]string{
 		"uploads": {""},
 	}
