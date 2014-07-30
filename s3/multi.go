@@ -88,7 +88,7 @@ func (b *Bucket) ListMulti(prefix, delim string) (multis []*Multi, prefixes []st
 // Multi returns a multipart upload handler for the provided key
 // inside b. If a multipart upload exists for key, it is returned,
 // otherwise a new multipart upload is initiated with contType and perm.
-func (b *Bucket) Multi(key, contType string, perm ACL) (*Multi, error) {
+func (b *Bucket) Multi(key, contType string, perm ACL, options Options) (*Multi, error) {
 	multis, _, err := b.ListMulti(key, "")
 	if err != nil && !hasCode(err, "NoSuchUpload") {
 		return nil, err
@@ -98,7 +98,7 @@ func (b *Bucket) Multi(key, contType string, perm ACL) (*Multi, error) {
 			return m, nil
 		}
 	}
-	return b.InitMulti(key, contType, perm)
+	return b.InitMulti(key, contType, perm, options)
 }
 
 // InitMulti initializes a new multipart upload at the provided
