@@ -1,7 +1,7 @@
 package s3
 
 import (
-	"github.com/diamondap/goamz/aws"
+	"github.com/crowdmob/goamz/aws"
 )
 
 var originalStrategy = attempts
