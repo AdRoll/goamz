@@ -111,9 +111,7 @@ func (b *Bucket) InitMulti(key string, contType string, perm ACL, options Option
 		"Content-Length": {"0"},
 		"x-amz-acl":      {string(perm)},
 	}
-	if options != nil {
-		options.addHeaders(headers)
-	}
+	options.addHeaders(headers)
 	params := map[string][]string{
 		"uploads": {""},
 	}

@@ -18,7 +18,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/diamondap/goamz/aws"
 	"io"
 	"io/ioutil"
 	"log"

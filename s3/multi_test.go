@@ -2,7 +2,7 @@ package s3_test
 
 import (
 	"encoding/xml"
-	"github.com/crowdmob/goamz/s3"
+	"github.com/diamondap/goamz/s3"
 	"gopkg.in/check.v1"
 	"io"
 	"io/ioutil"
@@ -14,9 +14,9 @@ func (s *S) TestInitMulti(c *check.C) {
 	b := s.s3.Bucket("sample")
 
 	metadata := make(map[string][]string)
-	metadata["key1"] = { "value1" }
-	metadata["key2"] = { "value2" }
-	options = s3.Options {
+	metadata["key1"] = []string { "value1" }
+	metadata["key2"] = []string { "value2" }
+	options := s3.Options {
 		SSE: true,
 		Meta: metadata,
 		ContentEncoding: "text/utf8",
@@ -35,13 +35,13 @@ func (s *S) TestInitMulti(c *check.C) {
 	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
 	c.Assert(req.Form["uploads"], check.DeepEquals, []string{""})
 
-	c.Assert(req.Header["x-amz-server-side-encryption"], check.DeepEquals, []string{"AES256"})
+	c.Assert(req.Header["X-Amz-Server-Side-Encryption"], check.DeepEquals, []string{"AES256"})
 	c.Assert(req.Header["Content-Encoding"], check.DeepEquals, []string{"text/utf8"})
 	c.Assert(req.Header["Cache-Control"], check.DeepEquals, []string{"no-cache"})
-	c.Assert(req.Header["Content-MD5"], check.DeepEquals, []string{"0000000000000000"})
-	c.Assert(req.Header["x-amz-website-redirect-location"], check.DeepEquals, []string{"http://github.com/crowdmob/goamz"})
-	c.Assert(req.Header["x-amz-meta-key1"], check.DeepEquals, []string{"value1"})
-	c.Assert(req.Header["x-amz-meta-key2"], check.DeepEquals, []string{"value2"})
+	c.Assert(req.Header["Content-Md5"], check.DeepEquals, []string{"0000000000000000"})
+	c.Assert(req.Header["X-Amz-Website-Redirect-Location"], check.DeepEquals, []string{"http://github.com/crowdmob/goamz"})
+	c.Assert(req.Header["X-Amz-Meta-Key1"], check.DeepEquals, []string{"value1"})
+	c.Assert(req.Header["X-Amz-Meta-Key2"], check.DeepEquals, []string{"value2"})
 
 	c.Assert(multi.UploadId, check.Matches, "JNbR_[A-Za-z0-9.]+QQ--")
 }
