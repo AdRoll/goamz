@@ -11,10 +11,21 @@ import (
 
 func (s *S) TestInitMulti(c *check.C) {
 	testServer.Response(200, nil, InitMultiResultDump)
-
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	metadata := make(map[string][]string)
+	metadata["key1"] = { "value1" }
+	metadata["key2"] = { "value2" }
+	options = s3.Options {
+		SSE: true,
+		Meta: metadata,
+		ContentEncoding: "text/utf8",
+		CacheControl: "no-cache",
+		RedirectLocation: "http://github.com/crowdmob/goamz",
+		ContentMD5: "0000000000000000",
+	}
+
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, options)
 	c.Assert(err, check.IsNil)
 
 	req := testServer.WaitRequest()
@@ -23,6 +34,14 @@ func (s *S) TestInitMulti(c *check.C) {
 	c.Assert(req.Header["Content-Type"], check.DeepEquals, []string{"text/plain"})
 	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
 	c.Assert(req.Form["uploads"], check.DeepEquals, []string{""})
+
+	c.Assert(req.Header["x-amz-server-side-encryption"], check.DeepEquals, []string{"AES256"})
+	c.Assert(req.Header["Content-Encoding"], check.DeepEquals, []string{"text/utf8"})
+	c.Assert(req.Header["Cache-Control"], check.DeepEquals, []string{"no-cache"})
+	c.Assert(req.Header["Content-MD5"], check.DeepEquals, []string{"0000000000000000"})
+	c.Assert(req.Header["x-amz-website-redirect-location"], check.DeepEquals, []string{"http://github.com/crowdmob/goamz"})
+	c.Assert(req.Header["x-amz-meta-key1"], check.DeepEquals, []string{"value1"})
+	c.Assert(req.Header["x-amz-meta-key2"], check.DeepEquals, []string{"value2"})
 
 	c.Assert(multi.UploadId, check.Matches, "JNbR_[A-Za-z0-9.]+QQ--")
 }
@@ -36,7 +55,7 @@ func (s *S) TestMultiNoPreviousUpload(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.Multi("multi", "text/plain", s3.Private)
+	multi, err := b.Multi("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	req := testServer.WaitRequest()
@@ -58,7 +77,7 @@ func (s *S) TestMultiReturnOld(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.Multi("multi1", "text/plain", s3.Private)
+	multi, err := b.Multi("multi1", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 	c.Assert(multi.Key, check.Equals, "multi1")
 	c.Assert(multi.UploadId, check.Equals, "iUVug89pPvSswrikD")
@@ -78,7 +97,7 @@ func (s *S) TestListParts(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	parts, err := multi.ListParts()
@@ -118,7 +137,7 @@ func (s *S) TestPutPart(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	part, err := multi.PutPart(1, strings.NewReader("<part 1>"))
@@ -160,7 +179,7 @@ func (s *S) TestPutAllNoPreviousUpload(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	parts, err := multi.PutAll(strings.NewReader("part1part2last"), 5)
@@ -214,7 +233,7 @@ func (s *S) TestPutAllZeroSizeFile(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	// Must send at least one part, so that completing it will work.
@@ -249,7 +268,7 @@ func (s *S) TestPutAllResume(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	// "part1" and "part3" match the checksums in ResultDump1.
@@ -295,7 +314,7 @@ func (s *S) TestMultiComplete(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	err = multi.Complete([]s3.Part{{2, `"ETag2"`, 32}, {1, `"ETag1"`, 64}})
@@ -333,7 +352,7 @@ func (s *S) TestMultiAbort(c *check.C) {
 
 	b := s.s3.Bucket("sample")
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 
 	err = multi.Abort()
