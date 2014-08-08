@@ -35,20 +35,12 @@ type SQS struct {
 }
 
 // NewFrom Create A new SQS Client given an access and secret Key
-// region must be one of "us.east, us.west, eu.west"
 func NewFrom(accessKey, secretKey, region string) (*SQS, error) {
 
 	auth := aws.Auth{AccessKey: accessKey, SecretKey: secretKey}
-	aws_region := aws.USEast
 
-	switch region {
-	case "us.east":
-		aws_region = aws.USEast
-	case "us.west":
-		aws_region = aws.USWest
-	case "eu.west":
-		aws_region = aws.EUWest
-	default:
+	aws_region, ok := aws.Regions[region]
+	if ok != true {
 		return nil, errors.New(fmt.Sprintf("Unknow/Unsupported region %s", region))
 	}
 
