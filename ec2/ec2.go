@@ -891,6 +891,32 @@ func (ec2 *EC2) Images(ids []string, filter *Filter) (resp *ImagesResp, err erro
 	return
 }
 
+type CreateImageResp struct {
+	RequestId string `xml:"requestId"`
+	ImageId   string `xml:"imageId"`
+}
+
+// CreateImage creates an Amazon EBS-backed AMI from an Amazon EBS-backed instance that
+// is either running or stopped.
+//
+// see http://goo.gl/MnMunA for more details.
+func (ec2 *EC2) CreateImage(instanceId, name, description string, noReboot bool) (resp *CreateImageResp, err error) {
+	params := makeParams("CreateImage")
+	params["InstanceId"] = instanceId
+	params["Name"] = name
+	params["Description"] = description
+	if noReboot {
+		params["NoReboot"] = "true"
+	}
+
+	resp = &CreateImageResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // Response to a CreateSnapshot request.
 //
 // See http://goo.gl/ttcda for more details.
