@@ -283,9 +283,9 @@ func (c *CloudWatch) ListMetrics(req *ListMetricsRequest) (result *ListMetricsRe
 	err = c.query("GET", "/", params, &result)
 	metrics := result.ListMetricsResult.Metrics
 	if result.ListMetricsResult.NextToken != "" {
-		params = aws.MakeParams("ListMetrics")
-		params["NextToken"] = result.ListMetricsResult.NextToken
 		for result.ListMetricsResult.NextToken != "" && err == nil {
+			params = aws.MakeParams("ListMetrics")
+			params["NextToken"] = result.ListMetricsResult.NextToken
 			result = new(ListMetricsResponse)
 			err = c.query("GET", "/", params, &result)
 			if err == nil {
