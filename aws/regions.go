@@ -23,7 +23,7 @@ var USEast = Region{
 	"us-east-1",
 	"https://ec2.us-east-1.amazonaws.com",
 	"https://s3.amazonaws.com",
-	"",
+	"https://${bucket}.s3.amazonaws.com",
 	false,
 	false,
 	"https://sdb.amazonaws.com",
