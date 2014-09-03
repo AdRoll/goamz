@@ -3,6 +3,7 @@ package dynamodb
 import (
 	"errors"
 	"fmt"
+
 	simplejson "github.com/bitly/go-simplejson"
 )
 
@@ -55,21 +56,22 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, e
 	return itemCount, nil
 }
 
-func runQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
+func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
+
 	jsonResponse, err := t.Server.queryServer("DynamoDB_20120810.Query", q)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	json, err := simplejson.NewJson(jsonResponse)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	itemCount, err := json.Get("Count").Int()
 	if err != nil {
 		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
-		return nil, errors.New(message)
+		return nil, nil, errors.New(message)
 	}
 
 	results := make([]map[string]*Attribute, itemCount)
@@ -78,9 +80,29 @@ func runQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
 		item, err := json.Get("Items").GetIndex(i).Map()
 		if err != nil {
 			message := fmt.Sprintf("Unexpected response %s", jsonResponse)
-			return nil, errors.New(message)
+			return nil, nil, errors.New(message)
 		}
 		results[i] = parseAttributes(item)
 	}
-	return results, nil
+
+	var lastEvaluatedKey *Key
+	if lastKeyMap := json.Get("LastEvaluatedKey").MustMap(); lastKeyMap != nil {
+		lastEvaluatedKey = parseKey(t, lastKeyMap)
+	}
+
+	return results, lastEvaluatedKey, nil
+
+}
+
+func runQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
+
+	result, _, err := t.QueryTable(q)
+
+	if err != nil {
+		return nil, err
+
+	}
+
+	return result, err
+
 }
