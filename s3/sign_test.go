@@ -130,3 +130,19 @@ func (s *S) TestSignExampleUnicodeKeys(c *check.C) {
 	expected := "AWS 0PN5J17HBGZHT7JJ3X82:dxhSBHoI6eVSPcXJqEghlUzZMnY="
 	c.Assert(headers["Authorization"], check.DeepEquals, []string{expected})
 }
+
+func (s *S) TestSignExampleCustomSSE(c *check.C) {
+	method := "GET"
+	path := "/secret/config"
+	params := map[string][]string{}
+	headers := map[string][]string{
+		"Host": {"secret.johnsmith.net:8080"},
+		"Date": {"Tue, 27 Mar 2007 21:06:08 +0000"},
+		"x-amz-server-side-encryption-customer-key":       {"MWJhakVna1dQT1B0SDFMeGtVVnRQRTFGaU1ldFJrU0I="},
+		"x-amz-server-side-encryption-customer-key-MD5":   {"glIqxpqQ4a9aoK/iLttKzQ=="},
+		"x-amz-server-side-encryption-customer-algorithm": {"AES256"},
+	}
+	s3.Sign(testAuth, method, path, params, headers)
+	expected := "AWS 0PN5J17HBGZHT7JJ3X82:Xq6PWmIo0aOWq+LDjCEiCGgbmHE="
+	c.Assert(headers["Authorization"], check.DeepEquals, []string{expected})
+}
