@@ -142,8 +142,10 @@ type GetUserResp struct {
 // See http://goo.gl/ZnzRN for more details.
 func (iam *IAM) GetUser(name string) (*GetUserResp, error) {
 	params := map[string]string{
-		"Action":   "GetUser",
-		"UserName": name,
+		"Action": "GetUser",
+	}
+	if name != "" {
+		params["UserName"] = name
 	}
 	resp := new(GetUserResp)
 	if err := iam.query(params, resp); err != nil {
