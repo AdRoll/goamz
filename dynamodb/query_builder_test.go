@@ -15,7 +15,7 @@ var _ = check.Suite(&QueryBuilderSuite{})
 
 func (s *QueryBuilderSuite) SetUpSuite(c *check.C) {
 	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-	s.server = &dynamodb.Server{*auth, aws.USEast}
+	s.server = dynamodb.New(*auth, aws.USEast)
 }
 
 func (s *QueryBuilderSuite) TestEmptyQuery(c *check.C) {
