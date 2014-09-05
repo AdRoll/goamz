@@ -877,7 +877,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		hreq.Body = ioutil.NopCloser(req.payload)
 	}
 
-    c := http.Client{
+	c := http.Client{
 		Transport: &http.Transport{
 			Dial: func(netw, addr string) (c net.Conn, err error) {
 				deadline := time.Now().Add(s3.ReadTimeout)
@@ -894,7 +894,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 				}
 				return
 			},
-            Proxy: http.ProxyFromEnvironment,
+			Proxy: http.ProxyFromEnvironment,
 		},
 	}
 
