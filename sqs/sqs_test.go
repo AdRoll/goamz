@@ -6,6 +6,7 @@ import (
 	"github.com/crowdmob/goamz/aws"
 	"gopkg.in/check.v1"
 	"hash"
+	"reflect"
 )
 
 var _ = check.Suite(&S{})
@@ -63,23 +64,14 @@ func (s *S) TestCreateQueueWithAttributes(c *check.C) {
 
 	// Since attributes is a map the order is random,
 	// So I modified the test so that it will not be sensitive to the order of the two attributes,
-	// And I don't know how to write assertions like this with gocheck so I write it in plain go test stuff
-	if !(reflect.DeepEqual(req.Form["Attribute.1.Name"], []string{"ReceiveMessageWaitTimeSeconds"}) ||
-		reflect.DeepEqual(req.Form["Attribute.2.Name"], []string{"ReceiveMessageWaitTimeSeconds"})) {
-		t.Fail()
-	}
-	if !(reflect.DeepEqual(req.Form["Attribute.1.Value"], []string{"20"}) ||
-		reflect.DeepEqual(req.Form["Attribute.2.Value"], []string{"20"})) {
-		t.Fail()
-	}
-	if !(reflect.DeepEqual(req.Form["Attribute.1.Name"], []string{"MessageRetentionPeriod"}) ||
-		reflect.DeepEqual(req.Form["Attribute.2.Name"], []string{"MessageRetentionPeriod"})) {
-		t.Fail()
-	}
-	if !(reflect.DeepEqual(req.Form["Attribute.1.Value"], []string{"60"}) ||
-		reflect.DeepEqual(req.Form["Attribute.2.Value"], []string{"60"})) {
-		t.Fail()
-	}
+	c.Assert((reflect.DeepEqual(req.Form["Attribute.1.Name"], []string{"ReceiveMessageWaitTimeSeconds"}) ||
+		reflect.DeepEqual(req.Form["Attribute.2.Name"], []string{"ReceiveMessageWaitTimeSeconds"})), check.Equals, true)
+	c.Assert((reflect.DeepEqual(req.Form["Attribute.1.Value"], []string{"20"}) ||
+		reflect.DeepEqual(req.Form["Attribute.2.Value"], []string{"20"})), check.Equals, true)
+	c.Assert((reflect.DeepEqual(req.Form["Attribute.1.Name"], []string{"MessageRetentionPeriod"}) ||
+		reflect.DeepEqual(req.Form["Attribute.2.Name"], []string{"MessageRetentionPeriod"})), check.Equals, true)
+	c.Assert((reflect.DeepEqual(req.Form["Attribute.1.Value"], []string{"60"}) ||
+		reflect.DeepEqual(req.Form["Attribute.2.Value"], []string{"60"})), check.Equals, true)
 }
 
 func (s *S) TestListQueues(c *check.C) {
