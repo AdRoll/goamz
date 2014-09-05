@@ -14,15 +14,15 @@ func (s *S) TestInitMulti(c *check.C) {
 	b := s.s3.Bucket("sample")
 
 	metadata := make(map[string][]string)
-	metadata["key1"] = []string { "value1" }
-	metadata["key2"] = []string { "value2" }
-	options := s3.Options {
-		SSE: true,
-		Meta: metadata,
-		ContentEncoding: "text/utf8",
-		CacheControl: "no-cache",
+	metadata["key1"] = []string{"value1"}
+	metadata["key2"] = []string{"value2"}
+	options := s3.Options{
+		SSE:              true,
+		Meta:             metadata,
+		ContentEncoding:  "text/utf8",
+		CacheControl:     "no-cache",
 		RedirectLocation: "http://github.com/crowdmob/goamz",
-		ContentMD5: "0000000000000000",
+		ContentMD5:       "0000000000000000",
 	}
 
 	multi, err := b.InitMulti("multi", "text/plain", s3.Private, options)
