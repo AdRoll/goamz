@@ -308,6 +308,7 @@ func (q *Queue) ReceiveMessageWithParameters(p map[string]string) (resp *Receive
 	resp = &ReceiveMessageResponse{}
 	params := makeParams("ReceiveMessage")
 	params["AttributeName"] = "All"
+	params["MessageAttributeName"] = "All"
 
 	for k, v := range p {
 		params[k] = v
