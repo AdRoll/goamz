@@ -399,7 +399,7 @@ func CredentialFileAuth(filePath string, profile string, expiration time.Duratio
 
 	secretKey, ok := profileData["aws_secret_access_key"]
 	if !ok {
-		err = errors.New("The credentials file did not contain required attribute aws_access_key_id")
+		err = errors.New("The credentials file did not contain required attribute aws_secret_access_key")
 		return
 	}
 

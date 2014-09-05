@@ -16,6 +16,10 @@ type Server struct {
 	Region aws.Region
 }
 
+func New(auth aws.Auth, region aws.Region) *Server {
+	return &Server{auth, region}
+}
+
 /*
 type Query struct {
 	Query string

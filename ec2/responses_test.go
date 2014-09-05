@@ -1,14 +1,15 @@
 package ec2_test
 
-var ErrorDump = `
+var (
+	ErrorDump = `
 <?xml version="1.0" encoding="UTF-8"?>
 <Response><Errors><Error><Code>UnsupportedOperation</Code>
 <Message>AMIs with an instance-store root device are not supported for the instance type 't1.micro'.</Message>
 </Error></Errors><RequestID>0503f4e9-bbd6-483c-b54f-c4ae9f3b30f4</RequestID></Response>
 `
 
-// http://goo.gl/Mcm3b
-var RunInstancesExample = `
+	// http://goo.gl/Mcm3b
+	RunInstancesExample = `
 <RunInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <reservationId>r-47a5402e</reservationId>
@@ -96,8 +97,8 @@ var RunInstancesExample = `
 </RunInstancesResponse>
 `
 
-// http://goo.gl/3BKHj
-var TerminateInstancesExample = `
+	// http://goo.gl/3BKHj
+	TerminateInstancesExample = `
 <TerminateInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <instancesSet>
@@ -116,8 +117,8 @@ var TerminateInstancesExample = `
 </TerminateInstancesResponse>
 `
 
-// http://goo.gl/mLbmw
-var DescribeInstancesExample1 = `
+	// http://goo.gl/mLbmw
+	DescribeInstancesExample1 = `
 <DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>98e3c9a4-848c-4d6d-8e8a-b1bdEXAMPLE</requestId>
   <reservationSet>
@@ -245,8 +246,8 @@ var DescribeInstancesExample1 = `
 </DescribeInstancesResponse>
 `
 
-// http://goo.gl/mLbmw
-var DescribeInstancesExample2 = `
+	// http://goo.gl/mLbmw
+	DescribeInstancesExample2 = `
 <DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <reservationSet>
@@ -318,8 +319,8 @@ var DescribeInstancesExample2 = `
 </DescribeInstancesResponse>
 `
 
-//http://goo.gl/zW7J4p
-var DescribeAddressesExample = `
+	//http://goo.gl/zW7J4p
+	DescribeAddressesExample = `
 <DescribeAddressesResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <addressesSet>
@@ -347,7 +348,7 @@ var DescribeAddressesExample = `
 </DescribeAddressesResponse>
 `
 
-var DescribeAddressesAllocationIdExample = `
+	DescribeAddressesAllocationIdExample = `
 <DescribeAddressesResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <addressesSet>
@@ -375,8 +376,8 @@ var DescribeAddressesAllocationIdExample = `
 </DescribeAddressesResponse>
 `
 
-//http://goo.gl/aLPmbm
-var AllocateAddressExample = `
+	//http://goo.gl/aLPmbm
+	AllocateAddressExample = `
 <AllocateAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <publicIp>198.51.100.1</publicIp>
@@ -385,16 +386,16 @@ var AllocateAddressExample = `
 </AllocateAddressResponse>
 `
 
-//http://goo.gl/Ciw2Z8
-var ReleaseAddressExample = `
+	//http://goo.gl/Ciw2Z8
+	ReleaseAddressExample = `
 <ReleaseAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </ReleaseAddressResponse>
 `
 
-//http://goo.gl/hhj4z7
-var AssociateAddressExample = `
+	//http://goo.gl/hhj4z7
+	AssociateAddressExample = `
 <AssociateAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <return>true</return>
@@ -402,16 +403,16 @@ var AssociateAddressExample = `
 </AssociateAddressResponse>
 `
 
-//http://goo.gl/Dapkuz
-var DiassociateAddressExample = `
+	//http://goo.gl/Dapkuz
+	DiassociateAddressExample = `
 <ReleaseAddressResponse xmlns="http://ec2.amazonaws.com/doc/2013-10-01/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </ReleaseAddressResponse>
 `
 
-// http://goo.gl/V0U25
-var DescribeImagesExample = `
+	// http://goo.gl/V0U25
+	DescribeImagesExample = `
 <DescribeImagesResponse xmlns="http://ec2.amazonaws.com/doc/2012-08-15/">
          <requestId>4a4a27a2-2e7c-475d-b35b-ca822EXAMPLE</requestId>
     <imagesSet>
@@ -458,8 +459,8 @@ var DescribeImagesExample = `
 </DescribeImagesResponse>
 `
 
-// http://goo.gl/ttcda
-var CreateSnapshotExample = `
+	// http://goo.gl/ttcda
+	CreateSnapshotExample = `
 <CreateSnapshotResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <snapshotId>snap-78a54011</snapshotId>
@@ -473,16 +474,16 @@ var CreateSnapshotExample = `
 </CreateSnapshotResponse>
 `
 
-// http://goo.gl/vwU1y
-var DeleteSnapshotExample = `
+	// http://goo.gl/vwU1y
+	DeleteSnapshotExample = `
 <DeleteSnapshotResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </DeleteSnapshotResponse>
 `
 
-// http://goo.gl/nkovs
-var DescribeSnapshotsExample = `
+	// http://goo.gl/nkovs
+	DescribeSnapshotsExample = `
 <DescribeSnapshotsResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <snapshotSet>
@@ -506,7 +507,7 @@ var DescribeSnapshotsExample = `
 </DescribeSnapshotsResponse>
 `
 
-var DescribeSubnetsExample = `
+	DescribeSubnetsExample = `
 <DescribeSubnetsResponse xmlns="http://ec2.amazonaws.com/doc/2014-02-01/">
     <requestId>a5266c3e-2b7a-4434-971e-317b6EXAMPLE</requestId>
     <subnetSet>
@@ -574,8 +575,8 @@ var DescribeSubnetsExample = `
 </DescribeSubnetsResponse>
 `
 
-// http://goo.gl/Eo7Yl
-var CreateSecurityGroupExample = `
+	// http://goo.gl/Eo7Yl
+	CreateSecurityGroupExample = `
 <CreateSecurityGroupResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <return>true</return>
@@ -583,8 +584,8 @@ var CreateSecurityGroupExample = `
 </CreateSecurityGroupResponse>
 `
 
-// http://goo.gl/k12Uy
-var DescribeSecurityGroupsExample = `
+	// http://goo.gl/k12Uy
+	DescribeSecurityGroupsExample = `
 <DescribeSecurityGroupsResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <securityGroupInfo>
@@ -626,8 +627,8 @@ var DescribeSecurityGroupsExample = `
 </DescribeSecurityGroupsResponse>
 `
 
-// A dump which includes groups within ip permissions.
-var DescribeSecurityGroupsDump = `
+	// A dump which includes groups within ip permissions.
+	DescribeSecurityGroupsDump = `
 <?xml version="1.0" encoding="UTF-8"?>
 <DescribeSecurityGroupsResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
     <requestId>87b92b57-cc6e-48b2-943f-f6f0e5c9f46c</requestId>
@@ -669,40 +670,40 @@ var DescribeSecurityGroupsDump = `
 </DescribeSecurityGroupsResponse>
 `
 
-// http://goo.gl/QJJDO
-var DeleteSecurityGroupExample = `
+	// http://goo.gl/QJJDO
+	DeleteSecurityGroupExample = `
 <DeleteSecurityGroupResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <return>true</return>
 </DeleteSecurityGroupResponse>
 `
 
-// http://goo.gl/u2sDJ
-var AuthorizeSecurityGroupIngressExample = `
+	// http://goo.gl/u2sDJ
+	AuthorizeSecurityGroupIngressExample = `
 <AuthorizeSecurityGroupIngressResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </AuthorizeSecurityGroupIngressResponse>
 `
 
-// http://goo.gl/Mz7xr
-var RevokeSecurityGroupIngressExample = `
+	// http://goo.gl/Mz7xr
+	RevokeSecurityGroupIngressExample = `
 <RevokeSecurityGroupIngressResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </RevokeSecurityGroupIngressResponse>
 `
 
-// http://goo.gl/Vmkqc
-var CreateTagsExample = `
+	// http://goo.gl/Vmkqc
+	CreateTagsExample = `
 <CreateTagsResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <return>true</return>
 </CreateTagsResponse>
 `
 
-// http://goo.gl/awKeF
-var StartInstancesExample = `
+	// http://goo.gl/awKeF
+	StartInstancesExample = `
 <StartInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <instancesSet>
@@ -721,8 +722,8 @@ var StartInstancesExample = `
 </StartInstancesResponse>
 `
 
-// http://goo.gl/436dJ
-var StopInstancesExample = `
+	// http://goo.gl/436dJ
+	StopInstancesExample = `
 <StopInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <instancesSet>
@@ -741,17 +742,17 @@ var StopInstancesExample = `
 </StopInstancesResponse>
 `
 
-// http://goo.gl/baoUf
-var RebootInstancesExample = `
+	// http://goo.gl/baoUf
+	RebootInstancesExample = `
 <RebootInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </RebootInstancesResponse>
 `
 
-var DescribeReservedInstancesExample = `
+	DescribeReservedInstancesExample = `
 <DescribeReservedInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2014-06-15/">
-   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <reservedInstancesSet>
       <item>
          <reservedInstancesId>e5a2ff3b-7d14-494f-90af-0b5d0EXAMPLE</reservedInstancesId>
@@ -762,19 +763,19 @@ var DescribeReservedInstancesExample = `
          <usagePrice>0.034</usagePrice>
          <instanceCount>3</instanceCount>
          <productDescription>Linux/UNIX</productDescription>
-         <state>active</state> 
+         <state>active</state>
          <instanceTenancy>default</instanceTenancy>
          <currencyCode>USD</currencyCode>
          <offeringType>Light Utilization</offeringType>
          <recurringCharges/>
       </item>
-   </reservedInstancesSet> 
+   </reservedInstancesSet>
 </DescribeReservedInstancesResponse>
 `
-var DeregisterImageExample = `
+	DeregisterImageExample = `
 <DeregisterImageResponse xmlns="http://ec2.amazonaws.com/doc/2014-06-15/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
   <return>true</return>
 </DeregisterImageResponse>
 `
-
+)

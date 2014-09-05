@@ -156,6 +156,10 @@ func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
 	q.buffer["KeyConditions"] = buildComparisons(comparisons)
 }
 
+func (q *Query) AddQueryFilter(comparisons []AttributeComparison) {
+	q.buffer["QueryFilter"] = buildComparisons(comparisons)
+}
+
 func (q *Query) AddLimit(limit int64) {
 	q.buffer["Limit"] = limit
 }
