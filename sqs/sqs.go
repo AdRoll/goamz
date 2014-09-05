@@ -35,20 +35,12 @@ type SQS struct {
 }
 
 // NewFrom Create A new SQS Client given an access and secret Key
-// region must be one of "us.east, us.west, eu.west"
 func NewFrom(accessKey, secretKey, region string) (*SQS, error) {
 
 	auth := aws.Auth{AccessKey: accessKey, SecretKey: secretKey}
-	aws_region := aws.USEast
 
-	switch region {
-	case "us.east":
-		aws_region = aws.USEast
-	case "us.west":
-		aws_region = aws.USWest
-	case "eu.west":
-		aws_region = aws.EUWest
-	default:
+	aws_region, ok := aws.Regions[region]
+	if ok != true {
 		return nil, errors.New(fmt.Sprintf("Unknow/Unsupported region %s", region))
 	}
 
@@ -133,6 +125,10 @@ type ChangeMessageVisibilityResponse struct {
 
 type GetQueueAttributesResponse struct {
 	Attributes       []Attribute `xml:"GetQueueAttributesResult>Attribute"`
+	ResponseMetadata ResponseMetadata
+}
+
+type SetQueueAttributesResponse struct {
 	ResponseMetadata ResponseMetadata
 }
 
@@ -316,6 +312,7 @@ func (q *Queue) ReceiveMessageWithParameters(p map[string]string) (resp *Receive
 	resp = &ReceiveMessageResponse{}
 	params := makeParams("ReceiveMessage")
 	params["AttributeName"] = "All"
+	params["MessageAttributeName"] = "All"
 
 	for k, v := range p {
 		params[k] = v
@@ -339,6 +336,23 @@ func (q *Queue) GetQueueAttributes(A string) (resp *GetQueueAttributesResponse, 
 	resp = &GetQueueAttributesResponse{}
 	params := makeParams("GetQueueAttributes")
 	params["AttributeName"] = A
+
+	err = q.SQS.query(q.Url, params, resp)
+	return
+}
+
+func (q *Queue) SetQueueAttributes(attrs map[string]string) (resp *SetQueueAttributesResponse, err error) {
+	resp = &SetQueueAttributesResponse{}
+	params := makeParams("SetQueueAttributes")
+
+	i := 1
+	for k, v := range attrs {
+		nameParam := fmt.Sprintf("Attribute.%d.Name", i)
+		valParam := fmt.Sprintf("Attribute.%d.Value", i)
+		params[nameParam] = k
+		params[valParam] = v
+		i++
+	}
 
 	err = q.SQS.query(q.Url, params, resp)
 	return

@@ -115,7 +115,7 @@ func (s *S) TestGetTopicAttributes(c *check.C) {
 func (s *S) TestPublish(c *check.C) {
 	testServer.Response(200, nil, TestPublishXmlOK)
 
-	pubOpt := &sns.PublishOpt{"foobar", "", "subject", "arn:aws:sns:us-east-1:123456789012:My-Topic"}
+	pubOpt := &sns.PublishOpt{"foobar", "", "subject", "arn:aws:sns:us-east-1:123456789012:My-Topic", ""}
 	resp, err := s.sns.Publish(pubOpt)
 	req := testServer.WaitRequest()
 

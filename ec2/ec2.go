@@ -891,6 +891,32 @@ func (ec2 *EC2) Images(ids []string, filter *Filter) (resp *ImagesResp, err erro
 	return
 }
 
+type CreateImageResp struct {
+	RequestId string `xml:"requestId"`
+	ImageId   string `xml:"imageId"`
+}
+
+// CreateImage creates an Amazon EBS-backed AMI from an Amazon EBS-backed instance that
+// is either running or stopped.
+//
+// see http://goo.gl/MnMunA for more details.
+func (ec2 *EC2) CreateImage(instanceId, name, description string, noReboot bool) (resp *CreateImageResp, err error) {
+	params := makeParams("CreateImage")
+	params["InstanceId"] = instanceId
+	params["Name"] = name
+	params["Description"] = description
+	if noReboot {
+		params["NoReboot"] = "true"
+	}
+
+	resp = &CreateImageResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // Response to a CreateSnapshot request.
 //
 // See http://goo.gl/ttcda for more details.
@@ -984,24 +1010,23 @@ func (ec2 *EC2) Snapshots(ids []string, filter *Filter) (resp *SnapshotsResp, er
 // DeregisterImage
 //
 type DeregisterImageResponse struct {
-        RequestId string `xml:"requestId"`
-        Response  bool   `xml:"return"`
+	RequestId string `xml:"requestId"`
+	Response  bool   `xml:"return"`
 }
 
 // See
 //
 func (ec2 *EC2) DeregisterImage(imageId string) (resp *DeregisterImageResponse, err error) {
-        params := makeParams("DeregisterImage")
-        params["ImageId"] = imageId
+	params := makeParams("DeregisterImage")
+	params["ImageId"] = imageId
 
-        resp = &DeregisterImageResponse{}
-        err = ec2.query(params, resp)
-        if err != nil {
-                return nil, err
-        }
-        return
+	resp = &DeregisterImageResponse{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
 }
-
 
 // ---------------------------------------------------------------------------
 // Subnets
@@ -1348,20 +1373,20 @@ type DescribeReservedInstancesResponse struct {
 type ReservedInstancesResponseItem struct {
 	ReservedInstanceId string            `xml:"reservedInstancesId"`
 	InstanceType       string            `xml:"instanceType"`
-	AvailabilityZone    string            `xml:"availabilityZone"`
-	Start               string            `xml:"start"`
-	Duration            uint64            `xml:"duration"`
-	End                 string            `xml:"end"`
-	FixedPrice          float32           `xml:"fixedPrice"`
-	UsagePrice          float32           `xml:"usagePrice"`
-	InstanceCount       int               `xml:"instanceCount"`
-	ProductDescription  string            `xml:"productDescription"`
-	State               string            `xml:"state"`
-	Tags                []Tag             `xml:"tagSet->item"`
-	InstanceTenancy     string            `xml:"instanceTenancy"`
-	CurrencyCode        string            `xml:"currencyCode"`
-	OfferingType        string            `xml:"offeringType"`
-	RecurringCharges    []RecurringCharge `xml:"recurringCharges>item"`
+	AvailabilityZone   string            `xml:"availabilityZone"`
+	Start              string            `xml:"start"`
+	Duration           uint64            `xml:"duration"`
+	End                string            `xml:"end"`
+	FixedPrice         float32           `xml:"fixedPrice"`
+	UsagePrice         float32           `xml:"usagePrice"`
+	InstanceCount      int               `xml:"instanceCount"`
+	ProductDescription string            `xml:"productDescription"`
+	State              string            `xml:"state"`
+	Tags               []Tag             `xml:"tagSet->item"`
+	InstanceTenancy    string            `xml:"instanceTenancy"`
+	CurrencyCode       string            `xml:"currencyCode"`
+	OfferingType       string            `xml:"offeringType"`
+	RecurringCharges   []RecurringCharge `xml:"recurringCharges>item"`
 }
 
 //
@@ -1375,14 +1400,14 @@ type RecurringCharge struct {
 // functions
 // DescribeReservedInstances
 //
-// See 
+// See
 func (ec2 *EC2) DescribeReservedInstances(instIds []string, filter *Filter) (resp *DescribeReservedInstancesResponse, err error) {
 	params := makeParams("DescribeReservedInstances")
 
-        for i, id := range instIds {
-                params["ReservedInstancesId."+strconv.Itoa(i+1)] = id
-        }
-        filter.addParams(params)
+	for i, id := range instIds {
+		params["ReservedInstancesId."+strconv.Itoa(i+1)] = id
+	}
+	filter.addParams(params)
 
 	resp = &DescribeReservedInstancesResponse{}
 	err = ec2.query(params, resp)
@@ -1391,4 +1416,3 @@ func (ec2 *EC2) DescribeReservedInstances(instIds []string, filter *Filter) (res
 	}
 	return resp, nil
 }
-

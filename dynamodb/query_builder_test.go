@@ -15,7 +15,7 @@ var _ = check.Suite(&QueryBuilderSuite{})
 
 func (s *QueryBuilderSuite) SetUpSuite(c *check.C) {
 	auth := &aws.Auth{AccessKey: "", SecretKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"}
-	s.server = &dynamodb.Server{*auth, aws.USEast}
+	s.server = dynamodb.New(*auth, aws.USEast)
 }
 
 func (s *QueryBuilderSuite) TestEmptyQuery(c *check.C) {
@@ -96,6 +96,18 @@ func (s *QueryBuilderSuite) TestAddWriteRequestItems(c *check.C) {
     ],
     "FooData": [
       {
+        "DeleteRequest": {
+          "Key": {
+            "TestRangeKeyDel": {
+              "N": "7777777"
+            },
+            "TestHashKeyDel": {
+              "S": "DelKey"
+            }
+          }
+        }
+      },
+      {
         "PutRequest": {
           "Item": {
             "testingstrbatch": {
@@ -121,18 +133,6 @@ func (s *QueryBuilderSuite) TestAddWriteRequestItems(c *check.C) {
             },
             "testing": {
               "N": "444"
-            }
-          }
-        }
-      },
-      {
-        "DeleteRequest": {
-          "Key": {
-            "TestRangeKeyDel": {
-              "N": "7777777"
-            },
-            "TestHashKeyDel": {
-              "S": "DelKey"
             }
           }
         }
@@ -368,6 +368,55 @@ func (s *QueryBuilderSuite) TestAddKeyConditions(c *check.C) {
         }
       ],
       "ComparisonOperator": "EQ"
+    }
+  },
+  "TableName": "sites"
+}
+	`))
+	if err != nil {
+		c.Fatal(err)
+	}
+	c.Check(queryJson, check.DeepEquals, expectedJson)
+}
+
+func (s *QueryBuilderSuite) TestAddQueryFilterConditions(c *check.C) {
+	primary := dynamodb.NewStringAttribute("domain", "")
+	key := dynamodb.PrimaryKey{primary, nil}
+	table := s.server.NewTable("sites", key)
+
+	q := dynamodb.NewQuery(table)
+	acs := []dynamodb.AttributeComparison{
+		*dynamodb.NewStringAttributeComparison("domain", "EQ", "example.com"),
+	}
+	qf := []dynamodb.AttributeComparison{
+		*dynamodb.NewNumericAttributeComparison("count", dynamodb.COMPARISON_GREATER_THAN, 5),
+	}
+	q.AddKeyConditions(acs)
+	q.AddQueryFilter(qf)
+	queryJson, err := simplejson.NewJson([]byte(q.String()))
+
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	expectedJson, err := simplejson.NewJson([]byte(`
+{
+  "KeyConditions": {
+    "domain": {
+      "AttributeValueList": [
+        {
+          "S": "example.com"
+        }
+      ],
+      "ComparisonOperator": "EQ"
+    }
+  },
+  "QueryFilter": {
+    "count": {
+      "AttributeValueList": [
+        { "N": "5" }
+      ],
+      "ComparisonOperator": "GT"
     }
   },
   "TableName": "sites"

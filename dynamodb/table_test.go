@@ -14,7 +14,7 @@ type TableSuite struct {
 func (s *TableSuite) SetUpSuite(c *check.C) {
 	setUpAuth(c)
 	s.DynamoDBTest.TableDescriptionT = s.TableDescriptionT
-	s.server = &dynamodb.Server{dynamodb_auth, dynamodb_region}
+	s.server = dynamodb.New(dynamodb_auth, dynamodb_region)
 	pk, err := s.TableDescriptionT.BuildPrimaryKey()
 	if err != nil {
 		c.Skip(err.Error())

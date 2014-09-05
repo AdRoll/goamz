@@ -409,7 +409,7 @@ func (s *ClientTests) TestMultiInitPutList(c *check.C) {
 	err := b.PutBucket(s3.Private)
 	c.Assert(err, check.IsNil)
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 	c.Assert(multi.UploadId, check.Matches, ".+")
 	defer multi.Abort()
@@ -456,7 +456,7 @@ func (s *ClientTests) TestMultiComplete(c *check.C) {
 	err := b.PutBucket(s3.Private)
 	c.Assert(err, check.IsNil)
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 	c.Assert(multi.UploadId, check.Matches, ".+")
 	defer multi.Abort()
@@ -511,7 +511,7 @@ func (s *ClientTests) TestListMulti(c *check.C) {
 		"multi1",
 	}
 	for _, key := range keys {
-		m, err := b.InitMulti(key, "", s3.Private)
+		m, err := b.InitMulti(key, "", s3.Private, s3.Options{})
 		c.Assert(err, check.IsNil)
 		defer m.Abort()
 	}
@@ -572,7 +572,7 @@ func (s *ClientTests) TestMultiPutAllZeroLength(c *check.C) {
 	err := b.PutBucket(s3.Private)
 	c.Assert(err, check.IsNil)
 
-	multi, err := b.InitMulti("multi", "text/plain", s3.Private)
+	multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
 	c.Assert(err, check.IsNil)
 	defer multi.Abort()
 

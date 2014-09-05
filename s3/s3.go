@@ -902,6 +902,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 				}
 				return
 			},
+			Proxy: http.ProxyFromEnvironment,
 		},
 	}
 
@@ -913,7 +914,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 		dump, _ := httputil.DumpResponse(hresp, true)
 		log.Printf("} -> %s\n", dump)
 	}
-	if hresp.StatusCode != 200 && hresp.StatusCode != 204 {
+	if hresp.StatusCode != 200 && hresp.StatusCode != 204 && hresp.StatusCode != 206 {
 		return nil, buildError(hresp)
 	}
 	if resp != nil {

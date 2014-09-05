@@ -132,6 +132,9 @@ func (k *Kinesis) PutRecord(streamName, partitionKey string, data []byte, hashKe
 	}
 
 	body, err := k.query(target, query)
+	if err != nil {
+		return nil, err
+	}
 
 	prr := &PutRecordResponse{}
 	err = json.Unmarshal(body, prr)

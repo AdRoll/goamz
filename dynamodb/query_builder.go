@@ -2,6 +2,7 @@ package dynamodb
 
 import (
 	"encoding/json"
+	"sort"
 )
 
 type msi map[string]interface{}
@@ -83,7 +84,18 @@ func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attrib
 		for table, itemActions := range tableItems {
 			out[table.Name] = func() interface{} {
 				out2 := []interface{}{}
-				for action, items := range itemActions {
+
+				// here breaks an order of array....
+				// For now, we iterate over sorted key by action for stable testing
+				keys := []string{}
+				for k := range itemActions {
+					keys = append(keys, k)
+				}
+				sort.Strings(keys)
+
+				for ki := range keys {
+					action := keys[ki]
+					items := itemActions[action]
 					for _, attributes := range items {
 						Item_or_Key := map[bool]string{true: "Item", false: "Key"}[action == "Put"]
 						out2 = append(out2, msi{action + "Request": msi{Item_or_Key: attributeList(attributes)}})
@@ -154,6 +166,10 @@ func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {
 
 func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
 	q.buffer["KeyConditions"] = buildComparisons(comparisons)
+}
+
+func (q *Query) AddQueryFilter(comparisons []AttributeComparison) {
+	q.buffer["QueryFilter"] = buildComparisons(comparisons)
 }
 
 func (q *Query) AddLimit(limit int64) {
