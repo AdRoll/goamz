@@ -96,6 +96,18 @@ func (s *QueryBuilderSuite) TestAddWriteRequestItems(c *check.C) {
     ],
     "FooData": [
       {
+        "DeleteRequest": {
+          "Key": {
+            "TestRangeKeyDel": {
+              "N": "7777777"
+            },
+            "TestHashKeyDel": {
+              "S": "DelKey"
+            }
+          }
+        }
+      },
+      {
         "PutRequest": {
           "Item": {
             "testingstrbatch": {
@@ -121,18 +133,6 @@ func (s *QueryBuilderSuite) TestAddWriteRequestItems(c *check.C) {
             },
             "testing": {
               "N": "444"
-            }
-          }
-        }
-      },
-      {
-        "DeleteRequest": {
-          "Key": {
-            "TestRangeKeyDel": {
-              "N": "7777777"
-            },
-            "TestHashKeyDel": {
-              "S": "DelKey"
             }
           }
         }
