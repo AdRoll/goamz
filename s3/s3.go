@@ -894,6 +894,7 @@ func (s3 *S3) run(req *request, resp interface{}) (*http.Response, error) {
 				}
 				return
 			},
+			Proxy: http.ProxyFromEnvironment,
 		},
 	}
 
