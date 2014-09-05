@@ -128,6 +128,10 @@ type GetQueueAttributesResponse struct {
 	ResponseMetadata ResponseMetadata
 }
 
+type SetQueueAttributesResponse struct {
+	ResponseMetadata ResponseMetadata
+}
+
 type ResponseMetadata struct {
 	RequestId string
 	BoxUsage  float64
@@ -332,6 +336,23 @@ func (q *Queue) GetQueueAttributes(A string) (resp *GetQueueAttributesResponse, 
 	resp = &GetQueueAttributesResponse{}
 	params := makeParams("GetQueueAttributes")
 	params["AttributeName"] = A
+
+	err = q.SQS.query(q.Url, params, resp)
+	return
+}
+
+func (q *Queue) SetQueueAttributes(attrs map[string]string) (resp *SetQueueAttributesResponse, err error) {
+	resp = &SetQueueAttributesResponse{}
+	params := makeParams("SetQueueAttributes")
+
+	i := 1
+	for k, v := range attrs {
+		nameParam := fmt.Sprintf("Attribute.%d.Name", i)
+		valParam := fmt.Sprintf("Attribute.%d.Value", i)
+		params[nameParam] = k
+		params[valParam] = v
+		i++
+	}
 
 	err = q.SQS.query(q.Url, params, resp)
 	return
