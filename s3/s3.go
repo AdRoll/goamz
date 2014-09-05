@@ -57,12 +57,15 @@ type Owner struct {
 // Fold options into an Options struct
 //
 type Options struct {
-	SSE              bool
-	Meta             map[string][]string
-	ContentEncoding  string
-	CacheControl     string
-	RedirectLocation string
-	ContentMD5       string
+	SSE                  bool
+	SSECustomerAlgorithm string
+	SSECustomerKey       string
+	SSECustomerKeyMD5    string
+	Meta                 map[string][]string
+	ContentEncoding      string
+	CacheControl         string
+	RedirectLocation     string
+	ContentMD5           string
 	// What else?
 	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
@@ -340,6 +343,11 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 func (o Options) addHeaders(headers map[string][]string) {
 	if o.SSE {
 		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+	} else if len(o.SSECustomerAlgorithm) != 0 && len(o.SSECustomerKey) != 0 && len(o.SSECustomerKeyMD5) != 0 {
+		// Amazon-managed keys and customer-managed keys are mutually exclusive
+		headers["x-amz-server-side-encryption-customer-algorithm"] = []string{o.SSECustomerAlgorithm}
+		headers["x-amz-server-side-encryption-customer-key"] = []string{o.SSECustomerKey}
+		headers["x-amz-server-side-encryption-customer-key-MD5"] = []string{o.SSECustomerKeyMD5}
 	}
 	if len(o.ContentEncoding) != 0 {
 		headers["Content-Encoding"] = []string{o.ContentEncoding}
