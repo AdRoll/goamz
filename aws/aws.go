@@ -276,6 +276,11 @@ func GetMetaData(path string) (contents []byte, err error) {
 	return []byte(body), err
 }
 
+func GetRegion(regionName string) (region Region) {
+	region = Regions[regionName]
+	return
+}
+
 func getInstanceCredentials() (cred credentials, err error) {
 	credentialPath := "iam/security-credentials/"
 
