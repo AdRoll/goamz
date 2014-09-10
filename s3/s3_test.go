@@ -193,6 +193,28 @@ func (s *S) TestPutObject(c *check.C) {
 	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
 }
 
+// PutCopy docs: http://goo.gl/mhEHtA
+func (s *S) TestPutCopy(c *check.C) {
+	testServer.Response(200, nil, PutCopyResultDump)
+
+	b := s.s3.Bucket("bucket")
+	res, err := b.PutCopy("name", s3.Private, s3.CopyOptions{},
+		// 0xFC is &uuml; - 0xE9 is &eacute;
+		"source-bucket/\u00FCber-fil\u00E9.jpg")
+	c.Assert(err, check.IsNil)
+	c.Assert(res, check.DeepEquals, &s3.CopyObjectResult{
+		ETag:         `"9b2cf535f27731c974343645a3985328"`,
+		LastModified: `2009-10-28T22:32:00`})
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, check.Equals, "PUT")
+	c.Assert(req.URL.Path, check.Equals, "/bucket/name")
+	c.Assert(req.Header["Date"], check.Not(check.DeepEquals), []string{""})
+	c.Assert(req.Header["Content-Length"], check.DeepEquals, []string{"0"})
+	c.Assert(req.Header["X-Amz-Copy-Source"], check.DeepEquals, []string{`source-bucket%2F%C3%BCber-fil%C3%A9.jpg`})
+	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
+}
+
 func (s *S) TestPutObjectReadTimeout(c *check.C) {
 	s.s3.ReadTimeout = 50 * time.Millisecond
 	defer func() {
