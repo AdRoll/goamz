@@ -303,7 +303,7 @@ func (b *Bucket) Put(path string, data []byte, contType string, perm ACL, option
 func (b *Bucket) PutCopy(path string, perm ACL, options CopyOptions, source string) (*CopyObjectResult, error) {
 	headers := map[string][]string{
 		"x-amz-acl":         {string(perm)},
-		"x-amz-copy-source": {source},
+		"x-amz-copy-source": {url.QueryEscape(source)},
 	}
 	options.addHeaders(headers)
 	req := &request{

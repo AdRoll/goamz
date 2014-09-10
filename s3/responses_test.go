@@ -1,5 +1,13 @@
 package s3_test
 
+var PutCopyResultDump = `
+<?xml version="1.0" encoding="UTF-8"?>
+<CopyObjectResult>
+  <LastModified>2009-10-28T22:32:00</LastModified>
+  <ETag>&quot;9b2cf535f27731c974343645a3985328&quot;</ETag>
+</CopyObjectResult>
+`
+
 var GetObjectErrorDump = `
 <?xml version="1.0" encoding="UTF-8"?>
 <Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message>
