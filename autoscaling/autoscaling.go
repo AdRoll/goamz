@@ -153,6 +153,7 @@ type LaunchConfiguration struct {
 	EbsOptimized             bool     `xml:"EbsOptimized"`
 	LaunchConfigurationARN   string   `xml:"LaunchConfigurationARN"`
 	LaunchConfigurationName  string   `xml:"LaunchConfigurationName"`
+	IamInstanceProfile       string   `xml:"IamInstanceProfile"`
 	ImageId                  string   `xml:"ImageId"`
 	InstanceType             string   `xml:"InstanceType"`
 	KernelId                 string   `xml:"KernelId"`
@@ -283,6 +284,9 @@ func (as *AutoScaling) CreateLaunchConfiguration(lc LaunchConfiguration) (
 	if len(lc.ImageId) > 0 {
 		params["ImageId"] = lc.ImageId
 		params["InstanceType"] = lc.InstanceType
+	}
+	if len(lc.IamInstanceProfile) > 0 {
+		params["IamInstanceProfile"] = lc.IamInstanceProfile
 	}
 	if lc.AssociatePublicIpAddress {
 		params["AssociatePublicIpAddress"] = "true"
