@@ -103,6 +103,38 @@ func (s3 *S3) Bucket(name string) *Bucket {
 	return &Bucket{s3, name}
 }
 
+type BucketInfo struct {
+	Name         string
+	CreationDate string
+}
+
+type GetServiceResp struct {
+	Owner   Owner
+	Buckets []BucketInfo `xml:">Bucket"`
+}
+
+// GetService gets a list of all buckets owned by an account.
+//
+// See http://goo.gl/wbHkGj for details.
+func (s3 *S3) GetService() (*GetServiceResp, error) {
+	bucket := s3.Bucket("")
+
+	r, err := bucket.Get("")
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(string(r))
+
+	// Parse the XML response.
+	var resp GetServiceResp
+	if err = xml.Unmarshal(r, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 var createBucketConfiguration = `<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <LocationConstraint>%s</LocationConstraint>
 </CreateBucketConfiguration>`
