@@ -17,7 +17,6 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
 	"io"
@@ -825,20 +824,20 @@ func (s3 *S3) queryV4Sign(req *request, resp interface{}) error {
 // Sets baseurl on req from bucket name and the region endpoint
 func (s3 *S3) setBaseURL(req *request) error {
 	if req.bucket == "" {
-		return errors.New("No bucket name")
-	}
-
-	req.baseurl = s3.Region.S3BucketEndpoint
-	if req.baseurl == "" {
-		// Use the path method to address the bucket.
 		req.baseurl = s3.Region.S3Endpoint
-		req.path = "/" + req.bucket + req.path
 	} else {
-		// Just in case, prevent injection.
-		if strings.IndexAny(req.bucket, "/:@") >= 0 {
-			return fmt.Errorf("bad S3 bucket: %q", req.bucket)
+		req.baseurl = s3.Region.S3BucketEndpoint
+		if req.baseurl == "" {
+			// Use the path method to address the bucket.
+			req.baseurl = s3.Region.S3Endpoint
+			req.path = "/" + req.bucket + req.path
+		} else {
+			// Just in case, prevent injection.
+			if strings.IndexAny(req.bucket, "/:@") >= 0 {
+				return fmt.Errorf("bad S3 bucket: %q", req.bucket)
+			}
+			req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
 		}
-		req.baseurl = strings.Replace(req.baseurl, "${bucket}", req.bucket, -1)
 	}
 
 	return nil
@@ -869,11 +868,11 @@ func (s3 *S3) prepare(req *request) error {
 		}
 		signpath = req.path
 
+		err := s3.setBaseURL(req)
+		if err != nil {
+			return err
+		}
 		if req.bucket != "" {
-			err := s3.setBaseURL(req)
-			if err != nil {
-				return err
-			}
 			signpath = "/" + req.bucket + signpath
 		}
 	}
