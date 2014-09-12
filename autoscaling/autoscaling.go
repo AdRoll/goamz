@@ -135,7 +135,7 @@ type AutoScalingGroup struct {
 	MinSize                 int64      `xml:"MinSize"`
 	TerminationPolicies     []string   `xml:"TerminationPolicies>member"`
 	VPCZoneIdentifier       string     `xml:"VPCZoneIdentifier"`
-	Tags                    []Tag      `xml:"Tags"`
+	Tags                    []Tag      `xml:"Tags>member"`
 	SuspendedProcesses      []string   `xml:"SuspendedProcesses>member"`
 }
 

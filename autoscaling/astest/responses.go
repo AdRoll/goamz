@@ -62,7 +62,15 @@ var DescribeAutoScalingGroupResponse = `
   <DescribeAutoScalingGroupsResult>
     <AutoScalingGroups>
       <member>
-        <Tags/>
+        <Tags>
+          <member>
+            <ResourceId>the-name</ResourceId>
+            <PropagateAtLaunch>true</PropagateAtLaunch>
+            <Value>the-name</Value>
+            <Key>Name</Key>
+            <ResourceType>auto-scaling-group</ResourceType>
+          </member>
+	</Tags>
         <SuspendedProcesses/>
         <AutoScalingGroupName>ASGTest1</AutoScalingGroupName>
         <HealthCheckType>EC2</HealthCheckType>
