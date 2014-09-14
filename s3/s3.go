@@ -903,7 +903,6 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 
 	hreq := http.Request{
 		URL:        u,
-		Host:       "s3.amazonaws.com",
 		Method:     req.method,
 		ProtoMajor: 1,
 		ProtoMinor: 1,
