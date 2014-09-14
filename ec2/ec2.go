@@ -1269,10 +1269,8 @@ func (ec2 *EC2) authOrRevoke(op string, group SecurityGroup, perms []IPPerm) (re
 //
 // See http://goo.gl/bncl3 for more details
 type Tag struct {
-	ResourceId   string `xml:"resourceId"`
-	ResourceType string `xml:"resourceType"`
-	Key          string `xml:"key"`
-	Value        string `xml:"value"`
+	Key   string `xml:"key"`
+	Value string `xml:"value"`
 }
 
 // CreateTags adds or overwrites one or more tags for the specified instance ids.
@@ -1295,12 +1293,23 @@ func (ec2 *EC2) CreateTags(instIds []string, tags []Tag) (resp *SimpleResp, err 
 	return resp, nil
 }
 
+// DescribedTag represents key-value metadata used to classify and organize EC2
+// instances. Also includes the Resource ID and type the tag is attached to
+//
+// See http://goo.gl/hgJjO7 for more details.
+type DescribedTag struct {
+	ResourceId   string `xml:"resourceId"`
+	ResourceType string `xml:"resourceType"`
+	Key          string `xml:"key"`
+	Value        string `xml:"value"`
+}
+
 // Response to a DescribeTags request.
 //
 // See http://goo.gl/hgJjO7 for more details.
 type DescribeTagsResp struct {
-	RequestId string `xml:"requestId"`
-	Tags      []Tag  `xml:"tagSet>item"`
+	RequestId string         `xml:"requestId"`
+	Tags      []DescribedTag `xml:"tagSet>item"`
 }
 
 // DescribeTags returns tags about one or more EC2 Resources. Returned tags can
