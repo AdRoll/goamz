@@ -184,11 +184,11 @@ func (q *Query) AddIndex(value string) {
 }
 
 func (q *Query) AddScanIndexForward(val bool) {
-  if val {
-    q.buffer["ScanIndexForward"] = "true"
-  } else {
-    q.buffer["ScanIndexForward"] = "false"
-  }
+	if val {
+		q.buffer["ScanIndexForward"] = "true"
+	} else {
+		q.buffer["ScanIndexForward"] = "false"
+	}
 }
 
 /*
