@@ -702,6 +702,51 @@ var (
 </CreateTagsResponse>
 `
 
+	// http://goo.gl/hgJjO7
+	DescribeTagsExample = `
+<DescribeTagsResponse xmlns="http://ec2.amazonaws.com/doc/2014-06-15/">
+   <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
+   <tagSet>
+      <item>
+         <resourceId>ami-1a2b3c4d</resourceId>
+         <resourceType>image</resourceType>
+         <key>webserver</key>
+         <value/>
+      </item>
+       <item>
+         <resourceId>ami-1a2b3c4d</resourceId>
+         <resourceType>image</resourceType>
+         <key>stack</key>
+         <value>Production</value>
+      </item>
+      <item>
+         <resourceId>i-5f4e3d2a</resourceId>
+         <resourceType>instance</resourceType>
+         <key>webserver</key>
+         <value/>
+      </item>
+       <item>
+         <resourceId>i-5f4e3d2a</resourceId>
+         <resourceType>instance</resourceType>
+         <key>stack</key>
+         <value>Production</value>
+      </item>
+      <item>
+         <resourceId>i-12345678</resourceId>
+         <resourceType>instance</resourceType>
+         <key>database_server</key>
+         <value/>
+      </item>
+       <item>
+         <resourceId>i-12345678</resourceId>
+         <resourceType>instance</resourceType>
+         <key>stack</key>
+         <value>Test</value>
+      </item>
+    </tagSet>
+</DescribeTagsResponse>
+`
+
 	// http://goo.gl/awKeF
 	StartInstancesExample = `
 <StartInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">

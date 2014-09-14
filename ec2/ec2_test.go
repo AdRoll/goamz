@@ -808,6 +808,36 @@ func (s *S) TestCreateTags(c *check.C) {
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
+func (s *S) TestDescribeTags(c *check.C) {
+	testServer.Response(200, nil, DescribeTagsExample)
+
+	filter := ec2.NewFilter()
+	filter.Add("key1", "value1")
+
+	resp, err := s.ec2.DescribeTags(filter)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeTags"})
+	c.Assert(req.Form["Filter.1.Name"], check.DeepEquals, []string{"key1"})
+	c.Assert(req.Form["Filter.1.Value.1"], check.DeepEquals, []string{"value1"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.Tags, check.HasLen, 6)
+
+	r0 := resp.Tags[0]
+	c.Assert(r0.Key, check.Equals, "webserver")
+	c.Assert(r0.Value, check.Equals, "")
+	c.Assert(r0.ResourceId, check.Equals, "ami-1a2b3c4d")
+	c.Assert(r0.ResourceType, check.Equals, "image")
+
+	r1 := resp.Tags[1]
+	c.Assert(r1.Key, check.Equals, "stack")
+	c.Assert(r1.Value, check.Equals, "Production")
+	c.Assert(r1.ResourceId, check.Equals, "ami-1a2b3c4d")
+	c.Assert(r1.ResourceType, check.Equals, "image")
+}
+
 func (s *S) TestStartInstances(c *check.C) {
 	testServer.Response(200, nil, StartInstancesExample)
 
