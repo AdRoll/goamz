@@ -1304,13 +1304,11 @@ type DescribeTagsResp struct {
 }
 
 // DescribeTags returns tags about one or more EC2 Resources. Returned tags can
-// be filtered by Resource Id, Resource Type or multiple other filters.
+// be filtered.
 //
 // See http://goo.gl/hgJjO7 for more details.
-func (ec2 *EC2) DescribeTags(resourceIds []string, resourceTypes []string, filter *Filter) (resp *DescribeTagsResp, err error) {
+func (ec2 *EC2) DescribeTags(filter *Filter) (resp *DescribeTagsResp, err error) {
 	params := makeParams("DescribeTags")
-	addParamsList(params, "ResourceId", resourceIds)
-	addParamsList(params, "ResourceType", resourceTypes)
 	filter.addParams(params)
 	resp = &DescribeTagsResp{}
 	err = ec2.query(params, resp)
