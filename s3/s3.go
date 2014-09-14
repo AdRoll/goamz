@@ -845,6 +845,9 @@ func (s3 *S3) queryV4Sign(req *request, resp interface{}) error {
 		return err
 	}
 
+	// req.Host must be set for V4 signature calculation
+	hreq.Host = hreq.URL.Host
+
 	signer := aws.NewV4Signer(s3.Auth, "s3", s3.Region)
 	signer.IncludeXAmzContentSha256 = true
 	signer.Sign(hreq)
