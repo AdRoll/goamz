@@ -10,21 +10,21 @@ import (
 func (t *Table) Query(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKeyConditions(attributeComparisons)
-	return runQuery(q, t)
+	return RunQuery(q, t)
 }
 
 func (t *Table) QueryOnIndex(attributeComparisons []AttributeComparison, indexName string) ([]map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKeyConditions(attributeComparisons)
 	q.AddIndex(indexName)
-	return runQuery(q, t)
+	return RunQuery(q, t)
 }
 
 func (t *Table) LimitedQuery(attributeComparisons []AttributeComparison, limit int64) ([]map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKeyConditions(attributeComparisons)
 	q.AddLimit(limit)
-	return runQuery(q, t)
+	return RunQuery(q, t)
 }
 
 func (t *Table) LimitedQueryOnIndex(attributeComparisons []AttributeComparison, indexName string, limit int64) ([]map[string]*Attribute, error) {
@@ -32,7 +32,7 @@ func (t *Table) LimitedQueryOnIndex(attributeComparisons []AttributeComparison, 
 	q.AddKeyConditions(attributeComparisons)
 	q.AddIndex(indexName)
 	q.AddLimit(limit)
-	return runQuery(q, t)
+	return RunQuery(q, t)
 }
 
 func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, error) {
@@ -57,7 +57,6 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, e
 }
 
 func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
-
 	jsonResponse, err := t.Server.queryServer("DynamoDB_20120810.Query", q)
 	if err != nil {
 		return nil, nil, err
@@ -94,7 +93,7 @@ func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
 
 }
 
-func runQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
+func RunQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
 
 	result, _, err := t.QueryTable(q)
 
