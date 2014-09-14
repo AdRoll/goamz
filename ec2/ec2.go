@@ -1269,8 +1269,10 @@ func (ec2 *EC2) authOrRevoke(op string, group SecurityGroup, perms []IPPerm) (re
 //
 // See http://goo.gl/bncl3 for more details
 type Tag struct {
-	Key   string `xml:"key"`
-	Value string `xml:"value"`
+	ResourceId   string `xml:"resourceId"`
+	ResourceType string `xml:"resourceType"`
+	Key          string `xml:"key"`
+	Value        string `xml:"value"`
 }
 
 // CreateTags adds or overwrites one or more tags for the specified instance ids.
@@ -1291,6 +1293,31 @@ func (ec2 *EC2) CreateTags(instIds []string, tags []Tag) (resp *SimpleResp, err 
 		return nil, err
 	}
 	return resp, nil
+}
+
+// Response to a DescribeTags request.
+//
+// See http://goo.gl/hgJjO7 for more details.
+type DescribeTagsResp struct {
+	RequestId string `xml:"requestId"`
+	Tags      []Tag  `xml:"tagSet>item"`
+}
+
+// DescribeTags returns tags about one or more EC2 Resources. Returned tags can
+// be filtered by Resource Id, Resource Type or multiple other filters.
+//
+// See http://goo.gl/hgJjO7 for more details.
+func (ec2 *EC2) DescribeTags(resourceIds []string, resourceTypes []string, filter *Filter) (resp *DescribeTagsResp, err error) {
+	params := makeParams("DescribeTags")
+	addParamsList(params, "ResourceId", resourceIds)
+	addParamsList(params, "ResourceType", resourceTypes)
+	filter.addParams(params)
+	resp = &DescribeTagsResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
 }
 
 // Response to a StartInstances request.
