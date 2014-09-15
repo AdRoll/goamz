@@ -893,9 +893,13 @@ func (s3 *S3) setBaseURL(req *request) error {
 // not the escaped hex representation '%3F'.
 func partiallyEscapedPath(path string) string {
 	pathEscapedAndSplit := strings.Split((&url.URL{Path: path}).String(), "/")
-	// Check for the one "?" that should not be escaped.
-	if pathEscapedAndSplit[2][0:3] == "%3F" {
-		pathEscapedAndSplit[2] = "?" + pathEscapedAndSplit[2][3:]
+	if len(pathEscapedAndSplit) >= 3 {
+		if len(pathEscapedAndSplit[2]) >= 3 {
+			// Check for the one "?" that should not be escaped.
+			if pathEscapedAndSplit[2][0:3] == "%3F" {
+				pathEscapedAndSplit[2] = "?" + pathEscapedAndSplit[2][3:]
+			}
+		}
 	}
 	return strings.Join(pathEscapedAndSplit, "/")
 }
