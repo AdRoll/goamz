@@ -124,8 +124,6 @@ func (s3 *S3) GetService() (*GetServiceResp, error) {
 		return nil, err
 	}
 
-	fmt.Println(string(r))
-
 	// Parse the XML response.
 	var resp GetServiceResp
 	if err = xml.Unmarshal(r, &resp); err != nil {
@@ -681,6 +679,29 @@ func (b *Bucket) Versions(prefix, delim, keyMarker string, versionIdMarker strin
 		return nil, err
 	}
 	return result, nil
+}
+
+type GetLocationResp struct {
+	Location string `xml:",innerxml"`
+}
+
+func (b *Bucket) Location() (string, error) {
+	r, err := b.Get("/?location")
+	if err != nil {
+		return "", err
+	}
+
+	// Parse the XML response.
+	var resp GetLocationResp
+	if err = xml.Unmarshal(r, &resp); err != nil {
+		return "", err
+	}
+
+	if resp.Location == "" {
+		return "us-east-1", nil
+	} else {
+		return resp.Location, nil
+	}
 }
 
 // URL returns a non-signed URL that allows retriving the
