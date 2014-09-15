@@ -878,6 +878,28 @@ func (s3 *S3) setBaseURL(req *request) error {
 	return nil
 }
 
+// partiallyEscapedPath partially escapes the S3 path allowing for all S3 REST API calls.
+//
+// Some commands including:
+//      GET Bucket acl              http://goo.gl/aoXflF
+//      GET Bucket cors             http://goo.gl/UlmBdx
+//      GET Bucket lifecycle        http://goo.gl/8Fme7M
+//      GET Bucket policy           http://goo.gl/ClXIo3
+//      GET Bucket location         http://goo.gl/5lh8RD
+//      GET Bucket Logging          http://goo.gl/sZ5ckF
+//      GET Bucket notification     http://goo.gl/qSSZKD
+//      GET Bucket tagging          http://goo.gl/QRvxnM
+// require the first character after the bucket name in the path to be a literal '?' and
+// not the escaped hex representation '%3F'.
+func partiallyEscapedPath(path string) string {
+	pathEscapedAndSplit := strings.Split((&url.URL{Path: path}).String(), "/")
+	// Check for the one "?" that should not be escaped.
+	if pathEscapedAndSplit[2][0:3] == "%3F" {
+		pathEscapedAndSplit[2] = "?" + pathEscapedAndSplit[2][3:]
+	}
+	return strings.Join(pathEscapedAndSplit, "/")
+}
+
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
 	var signpath = req.path
@@ -918,13 +940,14 @@ func (s3 *S3) prepare(req *request) error {
 	if err != nil {
 		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
 	}
-	reqSignpathSpaceFix := (&url.URL{Path: signpath}).String()
+
+	signpathPatiallyEscaped := partiallyEscapedPath(signpath)
 	req.headers["Host"] = []string{u.Host}
 	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 	if s3.Auth.Token() != "" {
 		req.headers["X-Amz-Security-Token"] = []string{s3.Auth.Token()}
 	}
-	sign(s3.Auth, req.method, reqSignpathSpaceFix, req.params, req.headers)
+	sign(s3.Auth, req.method, signpathPatiallyEscaped, req.params, req.headers)
 	return nil
 }
 
@@ -934,6 +957,7 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+	u.Opaque = fmt.Sprintf("//%s%s", u.Host, partiallyEscapedPath(u.Path))
 
 	hreq := http.Request{
 		URL:        u,
