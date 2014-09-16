@@ -401,3 +401,49 @@ func (s *S) TestExistsNotFound403(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(result, check.Equals, false)
 }
+
+func (s *S) TestGetService(c *check.C) {
+	testServer.Response(200, nil, GetServiceDump)
+
+	expected := s3.GetServiceResp{
+		Owner: s3.Owner{
+			ID:          "bcaf1ffd86f461ca5fb16fd081034f",
+			DisplayName: "webfile",
+		},
+		Buckets: []s3.BucketInfo{
+			s3.BucketInfo{
+				Name:         "quotes",
+				CreationDate: "2006-02-03T16:45:09.000Z",
+			},
+			s3.BucketInfo{
+				Name:         "samples",
+				CreationDate: "2006-02-03T16:41:58.000Z",
+			},
+		},
+	}
+
+	received, err := s.s3.GetService()
+
+	c.Assert(err, check.IsNil)
+	c.Assert(*received, check.DeepEquals, expected)
+}
+
+func (s *S) TestLocation(c *check.C) {
+	testServer.Response(200, nil, GetLocationUsStandard)
+	expectedUsStandard := "us-east-1"
+
+	bucketUsStandard := s.s3.Bucket("us-east-1")
+	resultUsStandard, err := bucketUsStandard.Location()
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resultUsStandard, check.Equals, expectedUsStandard)
+
+	testServer.Response(200, nil, GetLocationUsWest1)
+	expectedUsWest1 := "us-west-1"
+
+	bucketUsWest1 := s.s3.Bucket("us-west-1")
+	resultUsWest1, err := bucketUsWest1.Location()
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resultUsWest1, check.Equals, expectedUsWest1)
+}
