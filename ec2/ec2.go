@@ -917,6 +917,24 @@ func (ec2 *EC2) CreateImage(instanceId, name, description string, noReboot bool)
 	return
 }
 
+// CopyImage initiates the copy of an AMI from the specified source region to the current region.
+//
+// see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-CopyImage.html for more details.
+func (ec2 *EC2) CopyImage(sourceRegion aws.Region, imageId, name, description string) (resp *CreateImageResp, err error) {
+	params := makeParams("CopyImage")
+	params["SourceRegion"] = sourceRegion.Name
+	params["SourceImageId"] = imageId
+	params["Name"] = name
+	params["Description"] = description
+
+	resp = &CreateImageResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // Response to a CreateSnapshot request.
 //
 // See http://goo.gl/ttcda for more details.
