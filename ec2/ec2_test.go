@@ -624,6 +624,73 @@ func (s *S) TestDescribeSecurityGroupsExample(c *check.C) {
 	c.Assert(g1ipp.SourceIPs, check.IsNil)
 }
 
+func (s *S) TestDescribeSecurityGroups(c *check.C) {
+	testServer.Response(200, nil, SecurityGroupsVPCExample)
+
+	expected := ec2.SecurityGroupsResp{
+		RequestId: "59dbff89-35bd-4eac-99ed-be587EXAMPLE",
+		Groups: []ec2.SecurityGroupInfo{
+			ec2.SecurityGroupInfo{
+				SecurityGroup: ec2.SecurityGroup{
+					Id:   "sg-67ad940e",
+					Name: "WebServers",
+				},
+				OwnerId:     "999988887777",
+				Description: "Web Servers",
+				IPPerms: []ec2.IPPerm{
+					ec2.IPPerm{
+						Protocol:     "tcp",
+						FromPort:     80,
+						ToPort:       80,
+						SourceIPs:    []string{"0.0.0.0/0"},
+						SourceGroups: nil,
+					},
+				},
+				IPPermsEgress: []ec2.IPPerm{
+					ec2.IPPerm{
+						Protocol:     "tcp",
+						FromPort:     22,
+						ToPort:       22,
+						SourceIPs:    []string{"10.0.0.0/8"},
+						SourceGroups: nil,
+					},
+				},
+			},
+			ec2.SecurityGroupInfo{
+				SecurityGroup: ec2.SecurityGroup{
+					Id:   "sg-76abc467",
+					Name: "RangedPortsBySource",
+				},
+				OwnerId:     "999988887777",
+				Description: "Group A",
+				IPPerms: []ec2.IPPerm{
+					ec2.IPPerm{
+						Protocol: "tcp",
+						FromPort: 6000,
+						ToPort:   7000,
+					},
+				},
+				VpcId: "vpc-12345678",
+				Tags: []ec2.Tag{
+					ec2.Tag{
+						Key:   "key",
+						Value: "value",
+					},
+				},
+			},
+		},
+	}
+
+	resp, err := s.ec2.SecurityGroups([]ec2.SecurityGroup{{Name: "WebServers"}, {Name: "RangedPortsBySource"}}, nil)
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Action"), check.Equals, "DescribeSecurityGroups")
+	c.Assert(values.Get("GroupName.1"), check.Equals, "WebServers")
+	c.Assert(values.Get("GroupName.2"), check.Equals, "RangedPortsBySource")
+
+	c.Assert(err, check.IsNil)
+	c.Assert(*resp, check.DeepEquals, expected)
+}
+
 func (s *S) TestDescribeSecurityGroupsExampleWithFilter(c *check.C) {
 	testServer.Response(200, nil, DescribeSecurityGroupsExample)
 
