@@ -1132,9 +1132,12 @@ type SecurityGroupsResp struct {
 // See http://goo.gl/CIdyP for more details.
 type SecurityGroupInfo struct {
 	SecurityGroup
-	OwnerId     string   `xml:"ownerId"`
-	Description string   `xml:"groupDescription"`
-	IPPerms     []IPPerm `xml:"ipPermissions>item"`
+	OwnerId       string   `xml:"ownerId"`
+	Description   string   `xml:"groupDescription"`
+	IPPerms       []IPPerm `xml:"ipPermissions>item"`
+	IPPermsEgress []IPPerm `xml:"ipPermissionsEgress>item"`
+	VpcId         string   `xml:"vpcId"`
+	Tags          []Tag    `xml:"tagSet>item"`
 }
 
 // IPPerm represents an allowance within an EC2 security group.
