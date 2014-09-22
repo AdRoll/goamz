@@ -627,6 +627,68 @@ var (
 </DescribeSecurityGroupsResponse>
 `
 
+	SecurityGroupsVPCExample = `
+<DescribeSecurityGroupsResponse xmlns="http://ec2.amazonaws.com/doc/2011-12-15/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+  <securityGroupInfo>
+    <item>
+      <ownerId>999988887777</ownerId>
+      <groupName>WebServers</groupName>
+      <groupId>sg-67ad940e</groupId>
+      <groupDescription>Web Servers</groupDescription>
+      <ipPermissions>
+        <item>
+           <ipProtocol>tcp</ipProtocol>
+           <fromPort>80</fromPort>
+           <toPort>80</toPort>
+           <groups/>
+           <ipRanges>
+             <item>
+               <cidrIp>0.0.0.0/0</cidrIp>
+             </item>
+           </ipRanges>
+        </item>
+      </ipPermissions>
+      <ipPermissionsEgress>
+        <item>
+          <ipProtocol>tcp</ipProtocol>
+           <fromPort>22</fromPort>
+           <toPort>22</toPort>
+           <groups/>
+           <ipRanges>
+             <item>
+               <cidrIp>10.0.0.0/8</cidrIp>
+             </item>
+           </ipRanges>
+        </item>
+      </ipPermissionsEgress>
+    </item>
+    <item>
+      <ownerId>999988887777</ownerId>
+      <groupName>RangedPortsBySource</groupName>
+      <groupId>sg-76abc467</groupId>
+      <groupDescription>Group A</groupDescription>
+      <ipPermissions>
+        <item>
+           <ipProtocol>tcp</ipProtocol>
+           <fromPort>6000</fromPort>
+           <toPort>7000</toPort>
+           <groups/>
+           <ipRanges/>
+        </item>
+      </ipPermissions>
+      <vpcId>vpc-12345678</vpcId>
+      <tagSet>
+        <item>
+          <key>key</key>
+          <value>value</value>
+        </item>
+      </tagSet>
+    </item>
+  </securityGroupInfo>
+</DescribeSecurityGroupsResponse>  
+`
+
 	// A dump which includes groups within ip permissions.
 	DescribeSecurityGroupsDump = `
 <?xml version="1.0" encoding="UTF-8"?>
