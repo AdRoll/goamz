@@ -313,7 +313,7 @@ func GetAuth(accessKey string, secretKey, token string, expiration time.Time) (a
 		auth.expiration = exptdate
 		return auth, err
 	}
-	err = errors.New("No valid AWS authentication found")
+	err = fmt.Errorf("No valid AWS authentication found, err: %v", err)
 	return auth, err
 }
 
