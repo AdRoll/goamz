@@ -18,7 +18,6 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
 	"io"
 	"io/ioutil"
 	"log"
@@ -29,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
 const debug = false
@@ -524,6 +525,9 @@ type ListResp struct {
 	IsTruncated    bool
 	Contents       []Key
 	CommonPrefixes []string `xml:">Prefix"`
+	// if IsTruncated is true, pass NextMarker as marker argument to List()
+	// to get the next set of keys
+	NextMarker string
 }
 
 // The Key type represents an item stored in an S3 bucket.
@@ -616,6 +620,14 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 	}
 	if err != nil {
 		return nil, err
+	}
+	// if NextMarker is not returned, it should be set to the name of last key,
+	// so let's do it so that each caller doesn't have to
+	if result.IsTruncated && result.NextMarker == "" {
+		n := len(result.Contents)
+		if n > 0 {
+			result.NextMarker = result.Contents[n-1].Key
+		}
 	}
 	return result, nil
 }
