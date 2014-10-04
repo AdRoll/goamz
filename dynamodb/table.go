@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	simplejson "github.com/bitly/go-simplejson"
 )
 
@@ -119,34 +120,59 @@ func (s *Server) NewTable(name string, key PrimaryKey) *Table {
 func (s *Server) ListTables() ([]string, error) {
 	var tables []string
 
-	query := NewEmptyQuery()
-
-	jsonResponse, err := s.queryServer(target("ListTables"), query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	json, err := simplejson.NewJson(jsonResponse)
-
-	if err != nil {
-		return nil, err
-	}
-
-	response, err := json.Get("TableNames").Array()
-
-	if err != nil {
-		message := fmt.Sprintf("Unexpected response %s", jsonResponse)
-		return nil, errors.New(message)
-	}
-
-	for _, value := range response {
-		if t, ok := (value).(string); ok {
+	err := s.ListTablesCallbackIterator(
+		func(t string) {
 			tables = append(tables, t)
+		},
+	)
+
+	return tables, err
+}
+
+func (s *Server) ListTablesCallbackIterator(cb func(string)) error {
+	var lastEvaluatedTableName string
+
+	for {
+		query := NewEmptyQuery()
+		query.AddExclusiveStartTableName(lastEvaluatedTableName)
+
+		jsonResponse, err := s.queryServer(target("ListTables"), query)
+		if err != nil {
+			return err
+		}
+
+		json, err := simplejson.NewJson(jsonResponse)
+		if err != nil {
+			return err
+		}
+
+		lastEvaluatedTableName = ""
+		if json, ok := json.CheckGet("LastEvaluatedTableName"); ok {
+			lastEvaluatedTableName, err = json.String()
+			if err != nil {
+				message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+				return errors.New(message)
+			}
+		}
+
+		response, err := json.Get("TableNames").Array()
+		if err != nil {
+			message := fmt.Sprintf("Unexpected response %s", jsonResponse)
+			return errors.New(message)
+		}
+
+		for _, value := range response {
+			if t, ok := (value).(string); ok {
+				cb(t)
+			}
+		}
+		if lastEvaluatedTableName == "" {
+			break
 		}
 	}
 
-	return tables, nil
+	return nil
+
 }
 
 func (s *Server) CreateTable(tableDescription TableDescriptionT) (string, error) {
