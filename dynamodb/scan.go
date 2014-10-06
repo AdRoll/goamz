@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
 )
@@ -41,6 +42,33 @@ func (t *Table) FetchPartialResults(query *Query) ([]map[string]*Attribute, *Key
 	}
 
 	return results, lastEvaluatedKey, nil
+}
+
+func (t *Table) FetchResultCallbackIterator(query *Query, cb func(map[string]*Attribute) error) error {
+	for {
+		var results []map[string]*Attribute
+		var lastEvaluatedKey *Key
+		var err error
+		err = exponentialBackoff(func() error {
+			results, lastEvaluatedKey, err = t.FetchPartialResults(query)
+			return err
+		}, 15)
+		if err != nil {
+			return err
+		}
+		for _, item := range results {
+			if err := cb(item); err != nil {
+				return err
+			}
+		}
+
+		if lastEvaluatedKey == nil {
+			break
+		}
+		query.AddExclusiveStartKey(t, lastEvaluatedKey)
+	}
+
+	return nil
 }
 
 func (t *Table) ScanPartial(attributeComparisons []AttributeComparison, exclusiveStartKey *Key) ([]map[string]*Attribute, *Key, error) {
@@ -88,6 +116,12 @@ func (t *Table) ParallelScan(attributeComparisons []AttributeComparison, segment
 	return t.FetchResults(q)
 }
 
+func (t *Table) ScanCallbackIterator(attributeComparisons []AttributeComparison, cb func(map[string]*Attribute) error) error {
+	q := NewQuery(t)
+	q.AddScanFilter(attributeComparisons)
+	return t.FetchResultCallbackIterator(q, cb)
+}
+
 func parseKey(t *Table, s map[string]interface{}) *Key {
 	k := &Key{}
 
@@ -132,4 +166,20 @@ func parseKey(t *Table, s map[string]interface{}) *Key {
 	}
 
 	return k
+}
+
+func exponentialBackoff(f func() error, maxRetry uint) error {
+	var err error
+	currentRetry := uint(0)
+	for {
+		if err = f(); err == nil {
+			return nil
+		}
+
+		if currentRetry >= maxRetry {
+			return err
+		}
+		time.Sleep((1 << currentRetry) * 50 * time.Millisecond)
+		currentRetry++
+	}
 }
