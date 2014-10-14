@@ -234,9 +234,19 @@ var listPartsMax = 1000
 //
 // See http://goo.gl/ePioY for details.
 func (m *Multi) ListParts() ([]Part, error) {
+	return m.ListPartsPostMarker(0)
+}
+
+// ListParts returns the list of previously uploaded parts in m,
+// ordered by part number (Only parts with higher part numbers than
+// partNumberMarker will be listed)
+//
+// See http://goo.gl/ePioY for details.
+func (m *Multi) ListPartsPostMarker(partNumberMarker int) ([]Part, error) {
 	params := map[string][]string{
-		"uploadId":  {m.UploadId},
-		"max-parts": {strconv.FormatInt(int64(listPartsMax), 10)},
+		"uploadId":           {m.UploadId},
+		"max-parts":          {strconv.FormatInt(int64(listPartsMax), 10)},
+		"part-number-marker": {strconv.FormatInt(int64(partNumberMarker), 10)},
 	}
 	var parts partSlice
 	for attempt := attempts.Start(); attempt.Next(); {
