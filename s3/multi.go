@@ -229,23 +229,25 @@ type listPartsResp struct {
 // That's the default. Here just for testing.
 var listPartsMax = 1000
 
-// ListParts returns the list of previously uploaded parts in m,
-// ordered by part number.
-//
-// See http://goo.gl/ePioY for details.
+// Kepy for backcompatability. See the documentation for ListPartsFull
 func (m *Multi) ListParts() ([]Part, error) {
-	return m.ListPartsPostMarker(0)
+	return m.ListPartsFull(0, listPartsMax)
 }
 
 // ListParts returns the list of previously uploaded parts in m,
 // ordered by part number (Only parts with higher part numbers than
-// partNumberMarker will be listed)
+// partNumberMarker will be listed). Only up to maxParts parts will be
+// returned.
 //
 // See http://goo.gl/ePioY for details.
-func (m *Multi) ListPartsPostMarker(partNumberMarker int) ([]Part, error) {
+func (m *Multi) ListPartsFull(partNumberMarker int, maxParts int) ([]Part, error) {
+	if maxParts > listPartsMax {
+		maxParts = listPartsMax
+	}
+
 	params := map[string][]string{
 		"uploadId":           {m.UploadId},
-		"max-parts":          {strconv.FormatInt(int64(listPartsMax), 10)},
+		"max-parts":          {strconv.FormatInt(int64(maxParts), 10)},
 		"part-number-marker": {strconv.FormatInt(int64(partNumberMarker), 10)},
 	}
 	var parts partSlice
