@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/crowdmob/goamz/aws"
@@ -38,9 +39,12 @@ const debug = false
 type S3 struct {
 	aws.Auth
 	aws.Region
-	ConnectTimeout time.Duration
-	ReadTimeout    time.Duration
-	private        byte // Reserve the right of using private data.
+	ConnectTimeout  time.Duration
+	ReadTimeout     time.Duration
+	private         byte // Reserve the right of using private data.
+	HTTPClient      *http.Client
+	ReuseHTTPClient bool
+	httpClientLock  sync.RWMutex
 }
 
 // The Bucket type encapsulates operations with an S3 bucket.
@@ -93,7 +97,10 @@ var attempts = aws.AttemptStrategy{
 
 // New creates a new S3.
 func New(auth aws.Auth, region aws.Region) *S3 {
-	return &S3{auth, region, 0, 0, 0}
+	return &S3{
+		Auth:   auth,
+		Region: region,
+	}
 }
 
 // Bucket returns a Bucket with the given name.
@@ -1001,7 +1008,7 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 		Method:     req.method,
 		ProtoMajor: 1,
 		ProtoMinor: 1,
-		Close:      true,
+		Close:      false,
 		Header:     req.headers,
 	}
 
@@ -1020,31 +1027,31 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 // If resp is not nil, the XML data contained in the response
 // body will be unmarshalled on it.
 func (s3 *S3) doHttpRequest(hreq *http.Request, resp interface{}) (*http.Response, error) {
-	c := http.Client{
-		Transport: &http.Transport{
-			Dial: func(netw, addr string) (c net.Conn, err error) {
-				deadline := time.Now().Add(s3.ReadTimeout)
-				if s3.ConnectTimeout > 0 {
-					c, err = net.DialTimeout(netw, addr, s3.ConnectTimeout)
-				} else {
-					c, err = net.Dial(netw, addr)
-				}
-				if err != nil {
-					return
-				}
-				if s3.ReadTimeout > 0 {
-					err = c.SetDeadline(deadline)
-				}
-				return
-			},
-			Proxy: http.ProxyFromEnvironment,
-		},
+	var c *http.Client
+	if s3.ReuseHTTPClient {
+		s3.httpClientLock.RLock()
+		c = s3.HTTPClient
+		s3.httpClientLock.RUnlock()
+
+		if c == nil {
+			s3.httpClientLock.Lock()
+			if s3.HTTPClient == nil {
+				c = s3.buildHTTPClient()
+				s3.HTTPClient = c
+			} else {
+				c = s3.HTTPClient
+			}
+			s3.httpClientLock.Unlock()
+		}
+	} else {
+		c = s3.buildHTTPClient()
 	}
 
 	hresp, err := c.Do(hreq)
 	if err != nil {
 		return nil, err
 	}
+
 	if debug {
 		dump, _ := httputil.DumpResponse(hresp, true)
 		log.Printf("} -> %s\n", dump)
@@ -1062,6 +1069,31 @@ func (s3 *S3) doHttpRequest(hreq *http.Request, resp interface{}) (*http.Respons
 
 	}
 	return hresp, err
+}
+
+func (s3 *S3) buildHTTPClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			Dial: func(netw, addr string) (c net.Conn, err error) {
+				if s3.ConnectTimeout > 0 {
+					c, err = net.DialTimeout(netw, addr, s3.ConnectTimeout)
+				} else {
+					c, err = net.Dial(netw, addr)
+				}
+
+				if err != nil {
+					return
+				}
+
+				if s3.ReadTimeout > 0 {
+					deadline := time.Now().Add(s3.ReadTimeout)
+					err = c.SetDeadline(deadline)
+				}
+				return
+			},
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
 }
 
 // run sends req and returns the http response from the server.
