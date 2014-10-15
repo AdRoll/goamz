@@ -1,7 +1,18 @@
 package dynamodb
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"strings"
+)
+
+const (
+	UPDATE_EXPRESSION_ACTION_SET    = "SET"
+	UPDATE_EXPRESSION_ACTION_REMOVE = "REMOVE"
+
+	COUNTER_UP   = "UP"
+	COUNTER_DOWN = "DOWN"
 )
 
 type msi map[string]interface{}
@@ -19,7 +30,7 @@ func NewQuery(t *Table) *Query {
 }
 
 func NewQueryFor(tableName string) *Query {
-	q := &Query{msi{"TableName":tableName}}
+	q := &Query{msi{"TableName": tableName}}
 	return q
 }
 
@@ -256,3 +267,86 @@ func (q *Query) String() string {
 	bytes, _ := json.Marshal(q.buffer)
 	return string(bytes)
 }
+
+
+func (a Attribute) ToUpdateExpressionAttribute() UpdateExpressionAttribute {
+	ua := UpdateExpressionAttribute{}
+	ua.Attribute = a
+	return ua
+}
+
+// Wrap Attributes and adds flag field to handle counters
+type UpdateExpressionAttribute struct {
+	Attribute
+
+	// Counter | DESCRIPTION
+	// -------------------------------
+	// UP      | Increment counter
+	// DOWN    | Decrement counter
+	// ""      | Do nothing
+	Counter string
+}
+
+
+// Append UpdateExpression part of UpdateItem
+//
+// Action | DESCRIPTION - see http://goo.gl/ufVvpk
+// -------------------------------
+// SET    | Set one or more attributes
+// REMOVE | Remove one or more attributes
+func (q *Query) AddUpdateExpression(attributes []UpdateExpressionAttribute, action string) {
+	var buffer bytes.Buffer
+
+	switch strings.ToUpper(action) {
+	case UPDATE_EXPRESSION_ACTION_SET:
+		aCopy := make([]Attribute, len(attributes))
+		for i, ac := range attributes {
+			aCopy[i] = ac.Attribute
+			aCopy[i].Name = ":v" + ac.Name
+		}
+		q.appendExpressionAttributeValues(aCopy)
+
+		for _, a := range attributes {
+			if buffer.Len() > 0 {
+				buffer.WriteString(", ")
+			}
+
+			if a.Counter == COUNTER_UP && a.Type == TYPE_NUMBER {
+				buffer.WriteString(fmt.Sprintf("%v = %v + :v%v", a.Name, a.Name, a.Name))
+			} else if a.Counter == COUNTER_DOWN && a.Type == TYPE_NUMBER {
+				buffer.WriteString(fmt.Sprintf("%v = %v - :v%v", a.Name, a.Name, a.Name))
+			} else {
+				if a.Exists == "false" {
+					buffer.WriteString(fmt.Sprintf("%v = if_not_exists(%s, :v%v)", a.Name, a.Name, a.Name))
+				} else {
+					buffer.WriteString(fmt.Sprintf("%v = :v%v", a.Name, a.Name))
+				}
+			}
+		}
+	case UPDATE_EXPRESSION_ACTION_REMOVE:
+		for _, a := range attributes {
+			if buffer.Len() > 0 {
+				buffer.WriteString(", ")
+			}
+			buffer.WriteString(a.Name)
+		}
+	}
+	q.buffer["UpdateExpression"] = fmt.Sprintf("%s %s", action, buffer.String())
+}
+
+
+func (q *Query) appendExpressionAttributeValues(attributes []Attribute) {
+	tmp := attributeList(attributes)
+	eaMsi := msi{}
+
+	if m, ok := q.buffer["ExpressionAttributeValues"]; ok {
+		eaMsi = m.(msi)
+	}
+
+	for k, v := range tmp {
+		eaMsi[k] = v
+	}
+	q.buffer["ExpressionAttributeValues"] = eaMsi
+}
+
+
