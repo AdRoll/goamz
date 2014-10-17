@@ -2,13 +2,14 @@ package rds
 
 import (
 	"encoding/xml"
-	"github.com/crowdmob/goamz/aws"
 	"log"
 	"net/http/httputil"
 	"strconv"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
-const debug = true
+const debug = false
 
 const (
 	ServiceName = "rds"
@@ -91,6 +92,35 @@ func (rds *RDS) DescribeDBInstances(id string, maxRecords int, marker string) (*
 	}
 
 	resp := &DescribeDBInstancesResponse{}
+	err := rds.query("POST", "/", params, resp)
+	return resp, err
+}
+
+type DownloadDBLogFilePortionResponse struct {
+	Marker                string `xml:"DownloadDBLogFilePortionResult>Marker"`
+	LogFileData           string `xml:"DownloadDBLogFilePortionResult>LogFileData"`
+	AdditionalDataPending string `xml:"DownloadDBLogFilePortionResult>AdditionalDataPending"`
+	RequestId             string `xml:"ResponseMetadata>RequestId"`
+}
+
+// DownloadDBLogFilePortion - Downloads all or a portion of the specified log file
+//
+// See http://goo.gl/Gfpz9l for more details.
+func (rds *RDS) DownloadDBLogFilePortion(id, filename, marker string, numberOfLines int) (*DownloadDBLogFilePortionResponse, error) {
+
+	params := aws.MakeParams("DownloadDBLogFilePortion")
+
+	params["DBInstanceIdentifier"] = id
+	params["LogFileName"] = filename
+
+	if marker != "" {
+		params["Marker"] = marker
+	}
+	if numberOfLines != 0 {
+		params["NumberOfLines"] = strconv.Itoa(numberOfLines)
+	}
+
+	resp := &DownloadDBLogFilePortionResponse{}
 	err := rds.query("POST", "/", params, resp)
 	return resp, err
 }
