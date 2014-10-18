@@ -259,12 +259,17 @@ func (t *Table) ConditionalDeleteAttributes(key *Key, attributes, expected []Att
 
 // Update attributes with UpdateExpression - see more http://goo.gl/PB6RXt
 func (t *Table) UpdateAttributesWithUpdateExpression(key *Key, attributes []UpdateExpressionAttribute) (bool, error) {
-	return t.updateItemWithUpdateExpression(key, attributes, "SET")
+	return t.updateItemWithUpdateExpression(key, attributes, nil, "SET")
+}
+
+// Update attributes with UpdateExpression and ConditionExpression - see more http://goo.gl/PB6RXt
+func (t *Table) ConditionalUpdateAttributesWithUpdateExpression(key *Key, attributes []UpdateExpressionAttribute, condition *ConditionExpression) (bool, error) {
+	return t.updateItemWithUpdateExpression(key, attributes, condition, "SET")
 }
 
 // Delete attributes with UpdateExpression - see more http://goo.gl/PB6RXt
 func (t *Table) DeleteAttributesWithUpdateExpression(key *Key, attributes []UpdateExpressionAttribute) (bool, error) {
-	return t.updateItemWithUpdateExpression(key, attributes, "REMOVE")
+	return t.updateItemWithUpdateExpression(key, attributes, nil, "REMOVE")
 }
 
 func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, action string) (bool, error) {
@@ -295,7 +300,7 @@ func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, act
 	return true, nil
 }
 
-func (t *Table) updateItemWithUpdateExpression(key *Key, attributes []UpdateExpressionAttribute, action string) (bool, error) {
+func (t *Table) updateItemWithUpdateExpression(key *Key, attributes []UpdateExpressionAttribute, condition *ConditionExpression, action string) (bool, error) {
 
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
@@ -304,6 +309,12 @@ func (t *Table) updateItemWithUpdateExpression(key *Key, attributes []UpdateExpr
 	q := NewQuery(t)
 	q.AddKey(t, key)
 	q.AddUpdateExpression(attributes, action)
+
+	if condition != nil {
+		if err := q.AddConditionExpression(condition); err != nil {
+			return false, err
+		}
+	}
 
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
 	if err != nil {
