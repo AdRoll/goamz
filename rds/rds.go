@@ -2,9 +2,13 @@ package rds
 
 import (
 	"encoding/xml"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"net/http/httputil"
 	"strconv"
+	"time"
 
 	"github.com/crowdmob/goamz/aws"
 )
@@ -19,6 +23,8 @@ const (
 // The RDS type encapsulates operations within a specific EC2 region.
 type RDS struct {
 	Service aws.AWSService
+	Auth    aws.Auth
+	Region  aws.Region
 }
 
 // New creates a new RDS Client.
@@ -29,6 +35,8 @@ func New(auth aws.Auth, region aws.Region) (*RDS, error) {
 	}
 	return &RDS{
 		Service: service,
+		Auth:    auth,
+		Region:  region,
 	}, nil
 }
 
@@ -123,4 +131,46 @@ func (rds *RDS) DownloadDBLogFilePortion(id, filename, marker string, numberOfLi
 	resp := &DownloadDBLogFilePortionResponse{}
 	err := rds.query("POST", "/", params, resp)
 	return resp, err
+}
+
+// DownloadCompleteDBLogFile - Downloads the contents of the specified database log file
+//
+// See http://goo.gl/plC66B for more details.
+
+func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (string, error) {
+	url := fmt.Sprintf(
+		"%s/v13/downloadCompleteLogFile/%s/%s",
+		rds.Region.RDSEndpoint.Endpoint,
+		id,
+		filename,
+	)
+	hreq, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Printf("Error http.NewRequest GET %s", url)
+		return "", err
+	}
+	token := rds.Auth.Token()
+	if token != "" {
+		hreq.Header.Set("X-Amz-Security-Token", token)
+	}
+	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
+	signer := aws.NewV4Signer(rds.Auth, "rds", rds.Region)
+	signer.Sign(hreq)
+	resp, err := http.DefaultClient.Do(hreq)
+	if err != nil {
+		log.Printf("Error calling Amazon")
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Could not read response body")
+		return "", err
+	}
+	if resp.StatusCode != 200 {
+		log.Printf("Responce HTTP status code is %d", resp.StatusCode)
+		log.Printf(string(body))
+		return "", err
+	}
+	return string(body), err
 }
