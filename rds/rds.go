@@ -1,8 +1,10 @@
 package rds
 
 import (
+  "errors"
 	"encoding/xml"
 	"fmt"
+  "io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -137,7 +139,7 @@ func (rds *RDS) DownloadDBLogFilePortion(id, filename, marker string, numberOfLi
 //
 // See http://goo.gl/plC66B for more details.
 
-func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (string, error) {
+func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (io.ReadCloser, error) {
 	url := fmt.Sprintf(
 		"%s/v13/downloadCompleteLogFile/%s/%s",
 		rds.Region.RDSEndpoint.Endpoint,
@@ -146,8 +148,10 @@ func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (string, error) {
 	)
 	hreq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Printf("Error http.NewRequest GET %s", url)
-		return "", err
+    if debug {
+		  log.Printf("Error http.NewRequest GET %s", url)
+    }
+		return nil, err
 	}
 	token := rds.Auth.Token()
 	if token != "" {
@@ -158,19 +162,31 @@ func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (string, error) {
 	signer.Sign(hreq)
 	resp, err := http.DefaultClient.Do(hreq)
 	if err != nil {
-		log.Printf("Error calling Amazon")
-		return "", err
+    if debug {
+		  log.Print("Error calling Amazon")
+    }
+    return nil, err
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Could not read response body")
-		return "", err
-	}
-	if resp.StatusCode != 200 {
-		log.Printf("Responce HTTP status code is %d", resp.StatusCode)
-		log.Printf(string(body))
-		return "", err
-	}
-	return string(body), err
+  if resp.StatusCode == 200 {
+    return resp.Body, nil
+  } else {
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+      if debug {
+        log.Printf("Could not read response body")
+      }
+      return nil, err
+    }
+    msg := fmt.Sprintf(
+      "Responce:\n\tStatusCode: %d\n\tBody: %s\n",
+      resp.StatusCode,
+      string(body),
+    )
+    if debug {
+      log.Printf(msg)
+    }
+    err = errors.New(msg)
+    return nil, err
+  }
 }
