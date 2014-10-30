@@ -1,10 +1,10 @@
 package rds
 
 import (
-  "errors"
 	"encoding/xml"
+	"errors"
 	"fmt"
-  "io"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -148,9 +148,9 @@ func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (io.ReadCloser, e
 	)
 	hreq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-    if debug {
-		  log.Printf("Error http.NewRequest GET %s", url)
-    }
+		if debug {
+			log.Printf("Error http.NewRequest GET %s", url)
+		}
 		return nil, err
 	}
 	token := rds.Auth.Token()
@@ -162,31 +162,31 @@ func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (io.ReadCloser, e
 	signer.Sign(hreq)
 	resp, err := http.DefaultClient.Do(hreq)
 	if err != nil {
-    if debug {
-		  log.Print("Error calling Amazon")
-    }
-    return nil, err
+		if debug {
+			log.Print("Error calling Amazon")
+		}
+		return nil, err
 	}
-  if resp.StatusCode == 200 {
-    return resp.Body, nil
-  } else {
-    defer resp.Body.Close()
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-      if debug {
-        log.Printf("Could not read response body")
-      }
-      return nil, err
-    }
-    msg := fmt.Sprintf(
-      "Responce:\n\tStatusCode: %d\n\tBody: %s\n",
-      resp.StatusCode,
-      string(body),
-    )
-    if debug {
-      log.Printf(msg)
-    }
-    err = errors.New(msg)
-    return nil, err
-  }
+	if resp.StatusCode == 200 {
+		return resp.Body, nil
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if debug {
+				log.Printf("Could not read response body")
+			}
+			return nil, err
+		}
+		msg := fmt.Sprintf(
+			"Responce:\n\tStatusCode: %d\n\tBody: %s\n",
+			resp.StatusCode,
+			string(body),
+		)
+		if debug {
+			log.Printf(msg)
+		}
+		err = errors.New(msg)
+		return nil, err
+	}
 }
