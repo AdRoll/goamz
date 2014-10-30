@@ -66,6 +66,8 @@ type Region struct {
 	AutoScalingEndpoint    string
 	RDSEndpoint            ServiceInfo
 	KinesisEndpoint        string
+	STSEndpoint            string
+	CloudFormationEndpoint string
 }
 
 var Regions = map[string]Region{
@@ -203,6 +205,16 @@ func (a *Auth) Expiration() time.Time {
 	return a.expiration
 }
 
+// To be used with other APIs that return auth credentials such as STS
+func NewAuth(accessKey, secretKey, token string, expiration time.Time) *Auth {
+	return &Auth{
+		AccessKey:  accessKey,
+		SecretKey:  secretKey,
+		token:      token,
+		expiration: expiration,
+	}
+}
+
 // ResponseMetadata
 type ResponseMetadata struct {
 	RequestId string // A unique ID for tracking the request
@@ -241,6 +253,9 @@ type credentials struct {
 	Expiration      string
 }
 
+// GetMetaData retrieves instance metadata about the current machine.
+//
+// See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html for more details.
 func GetMetaData(path string) (contents []byte, err error) {
 	c := http.Client{
 		Transport: &http.Transport{
