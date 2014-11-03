@@ -2,7 +2,7 @@ package sns_test
 
 import (
 	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/exp/sns"
+	"github.com/crowdmob/goamz/sns"
 	"github.com/crowdmob/goamz/testutil"
 	"gopkg.in/check.v1"
 	"testing"
@@ -23,7 +23,8 @@ var testServer = testutil.NewHTTPServer()
 func (s *S) SetUpSuite(c *check.C) {
 	testServer.Start()
 	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
-	s.sns = sns.New(auth, aws.Region{SNSEndpoint: testServer.URL})
+	sns, _ := sns.New(auth, aws.Region{SNSEndpoint: testServer.URL})
+	s.sns = sns
 }
 
 func (s *S) TearDownTest(c *check.C) {
@@ -33,7 +34,7 @@ func (s *S) TearDownTest(c *check.C) {
 func (s *S) TestListTopicsOK(c *check.C) {
 	testServer.Response(200, nil, TestListTopicsXmlOK)
 
-	resp, err := s.sns.ListTopics(nil)
+	resp, err := s.sns.ListTopics("")
 	req := testServer.WaitRequest()
 
 	c.Assert(req.Method, check.Equals, "GET")
@@ -50,7 +51,7 @@ func (s *S) TestCreateTopic(c *check.C) {
 	resp, err := s.sns.CreateTopic("My-Topic")
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
@@ -62,11 +63,11 @@ func (s *S) TestCreateTopic(c *check.C) {
 func (s *S) TestDeleteTopic(c *check.C) {
 	testServer.Response(200, nil, TestDeleteTopicXmlOK)
 
-	t := sns.Topic{nil, "arn:aws:sns:us-east-1:123456789012:My-Topic"}
-	resp, err := s.sns.DeleteTopic(t)
+	t := sns.Topic{"arn:aws:sns:us-east-1:123456789012:My-Topic"}
+	resp, err := s.sns.DeleteTopic(t.TopicArn)
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
@@ -77,7 +78,7 @@ func (s *S) TestDeleteTopic(c *check.C) {
 func (s *S) TestListSubscriptions(c *check.C) {
 	testServer.Response(200, nil, TestListSubscriptionsXmlOK)
 
-	resp, err := s.sns.ListSubscriptions(nil)
+	resp, err := s.sns.ListSubscriptions("")
 	req := testServer.WaitRequest()
 
 	c.Assert(req.Method, check.Equals, "GET")
@@ -115,11 +116,11 @@ func (s *S) TestGetTopicAttributes(c *check.C) {
 func (s *S) TestPublish(c *check.C) {
 	testServer.Response(200, nil, TestPublishXmlOK)
 
-	pubOpt := &sns.PublishOpt{"foobar", "", "subject", "arn:aws:sns:us-east-1:123456789012:My-Topic"}
+	pubOpt := &sns.PublishOptions{"foobar", "", "subject", "", "arn:aws:sns:us-east-1:123456789012:My-Topic"}
 	resp, err := s.sns.Publish(pubOpt)
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
@@ -134,7 +135,7 @@ func (s *S) TestSetTopicAttributes(c *check.C) {
 	resp, err := s.sns.SetTopicAttributes("DisplayName", "MyTopicName", "arn:aws:sns:us-east-1:123456789012:My-Topic")
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
@@ -148,7 +149,7 @@ func (s *S) TestSubscribe(c *check.C) {
 	resp, err := s.sns.Subscribe("example@amazon.com", "email", "arn:aws:sns:us-east-1:123456789012:My-Topic")
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
@@ -163,7 +164,7 @@ func (s *S) TestUnsubscribe(c *check.C) {
 	resp, err := s.sns.Unsubscribe("arn:aws:sns:us-east-1:123456789012:My-Topic:a169c740-3766-11df-8963-01868b7c937a")
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
@@ -174,16 +175,47 @@ func (s *S) TestUnsubscribe(c *check.C) {
 func (s *S) TestConfirmSubscription(c *check.C) {
 	testServer.Response(200, nil, TestConfirmSubscriptionXmlOK)
 
-	opt := &sns.ConfirmSubscriptionOpt{"", "51b2ff3edb475b7d91550e0ab6edf0c1de2a34e6ebaf6", "arn:aws:sns:us-east-1:123456789012:My-Topic"}
-	resp, err := s.sns.ConfirmSubscription(opt)
+	resp, err := s.sns.ConfirmSubscription("arn:aws:sns:us-east-1:123456789012:My-Topic", "51b2ff3edb475b7d91550e0ab6edf0c1de2a34e6ebaf6", "")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, check.Equals, "POST")
+	c.Assert(req.URL.Path, check.Equals, "/")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+
+	c.Assert(resp.SubscriptionArn, check.Equals, "arn:aws:sns:us-east-1:123456789012:My-Topic:80289ba6-0fd4-4079-afb4-ce8c8260f0ca")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "7a50221f-3774-11df-a9b7-05d48da6f042")
+	c.Assert(err, check.IsNil)
+}
+
+func (s *S) TestGetSubscriptionAttributes(c *check.C) {
+	testServer.Response(200, nil, TestGetSubscriptionAttributesXmlOK)
+
+	resp, err := s.sns.GetSubscriptionAttributes("arn:aws:sns:us-east-1:123456789012:My-Topic")
 	req := testServer.WaitRequest()
 
 	c.Assert(req.Method, check.Equals, "GET")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
-	c.Assert(resp.SubscriptionArn, check.Equals, "arn:aws:sns:us-east-1:123456789012:My-Topic:80289ba6-0fd4-4079-afb4-ce8c8260f0ca")
-	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "7a50221f-3774-11df-a9b7-05d48da6f042")
+	c.Assert(len(resp.Attributes), check.Not(check.Equals), 0)
+	c.Assert(resp.Attributes[0].Key, check.Equals, "Owner")
+	c.Assert(resp.Attributes[0].Value, check.Equals, "123456789012")
+
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "95bfab85-1300-403f-a86e-2e78f095a05d")
+	c.Assert(err, check.IsNil)
+}
+
+func (s *S) TestSetSubscriptionAttributes(c *check.C) {
+	testServer.Response(200, nil, TestSetSubscriptionAttributesXmlOK)
+
+	resp, err := s.sns.SetSubscriptionAttributes("arn:aws:sns:us-east-1:123456789012:My-Topic", "DeliveryPolicy", "")
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, check.Equals, "POST")
+	c.Assert(req.URL.Path, check.Equals, "/")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "21382310-78db-4f88-bae0-a2c38ed5fe32")
 	c.Assert(err, check.IsNil)
 }
 
@@ -195,14 +227,14 @@ func (s *S) TestAddPermission(c *check.C) {
 	perm[0].AccountId = "987654321000"
 	perm[1].AccountId = "876543210000"
 
-	resp, err := s.sns.AddPermission(perm, "NewPermission", "arn:aws:sns:us-east-1:123456789012:My-Topic")
+	resp, err := s.sns.AddPermission("NewPermission", "arn:aws:sns:us-east-1:123456789012:My-Topic", perm)
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
-	c.Assert(resp.RequestId, check.Equals, "6a213e4e-33a8-11df-9540-99d0768312d3")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "6a213e4e-33a8-11df-9540-99d0768312d3")
 	c.Assert(err, check.IsNil)
 }
 
@@ -212,19 +244,18 @@ func (s *S) TestRemovePermission(c *check.C) {
 	resp, err := s.sns.RemovePermission("NewPermission", "arn:aws:sns:us-east-1:123456789012:My-Topic")
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
-	c.Assert(resp.RequestId, check.Equals, "d170b150-33a8-11df-995a-2d6fbe836cc1")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "d170b150-33a8-11df-995a-2d6fbe836cc1")
 	c.Assert(err, check.IsNil)
 }
 
 func (s *S) TestListSubscriptionByTopic(c *check.C) {
 	testServer.Response(200, nil, TestListSubscriptionsByTopicXmlOK)
 
-	opt := &sns.ListSubscriptionByTopicOpt{"", "arn:aws:sns:us-east-1:123456789012:My-Topic"}
-	resp, err := s.sns.ListSubscriptionByTopic(opt)
+	resp, err := s.sns.ListSubscriptionsByTopic("", "arn:aws:sns:us-east-1:123456789012:My-Topic")
 	req := testServer.WaitRequest()
 
 	c.Assert(req.Method, check.Equals, "GET")
@@ -242,20 +273,19 @@ func (s *S) TestListSubscriptionByTopic(c *check.C) {
 func (s *S) TestCreatePlatformApplication(c *check.C) {
 	testServer.Response(200, nil, TestCreatePlatformApplicationXmlOK)
 
-	attrs := []sns.AttributeEntry{
-		sns.AttributeEntry{Key: "PlatformCredential", Value: "AIzaSyClE2lcV2zEKTLYYo645zfk2jhQPFeyxDo"},
-		sns.AttributeEntry{Key: "PlatformPrincipal", Value: "There is no principal for GCM"},
+	attrs := []sns.Attribute{
+		sns.Attribute{Key: "PlatformCredential", Value: "AIzaSyClE2lcV2zEKTLYYo645zfk2jhQPFeyxDo"},
+		sns.Attribute{Key: "PlatformPrincipal", Value: "There is no principal for GCM"},
 	}
-	opt := &sns.PlatformApplicationOpt{Name: "gcmpushapp", Platform: "GCM", Attributes: attrs}
-	resp, err := s.sns.CreatePlatformApplication(opt)
+	resp, err := s.sns.CreatePlatformApplication("gcmpushapp", "GCM", attrs)
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
 	c.Assert(resp.PlatformApplicationArn, check.Equals, "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp")
-	c.Assert(resp.RequestId, check.Equals, "b6f0e78b-e9d4-5a0e-b973-adc04e8a4ff9")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "b6f0e78b-e9d4-5a0e-b973-adc04e8a4ff9")
 
 	c.Assert(err, check.IsNil)
 }
@@ -263,18 +293,18 @@ func (s *S) TestCreatePlatformApplication(c *check.C) {
 func (s *S) TestCreatePlatformEndpoint(c *check.C) {
 	testServer.Response(200, nil, TestCreatePlatformEndpointXmlOK)
 
-	opt := &sns.PlatformEndpointOpt{PlatformApplicationArn: "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp",
+	opt := &sns.PlatformEndpointOptions{PlatformApplicationArn: "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp",
 		CustomUserData: "UserId=27576823", Token: "APA91bGi7fFachkC1xjlqT66VYEucGHochmf1VQAr9k...jsM0PKPxKhddCzx6paEsyay9Zn3D4wNUJb8m6HZrBEXAMPLE"}
 
 	resp, err := s.sns.CreatePlatformEndpoint(opt)
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
 	c.Assert(resp.EndpointArn, check.Equals, "arn:aws:sns:us-west-2:123456789012:endpoint/GCM/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3")
-	c.Assert(resp.RequestId, check.Equals, "6613341d-3e15-53f7-bf3c-7e56994ba278")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "6613341d-3e15-53f7-bf3c-7e56994ba278")
 
 	c.Assert(err, check.IsNil)
 }
@@ -285,11 +315,11 @@ func (s *S) TestDeleteEndpoint(c *check.C) {
 	resp, err := s.sns.DeleteEndpoint("arn:aws:sns:us-west-2:123456789012:endpoint/GCM%/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3")
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
-	c.Assert(resp.RequestId, check.Equals, "c1d2b191-353c-5a5f-8969-fbdd3900afa8")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "c1d2b191-353c-5a5f-8969-fbdd3900afa8")
 
 	c.Assert(err, check.IsNil)
 }
@@ -300,11 +330,11 @@ func (s *S) TestDeletePlatformApplication(c *check.C) {
 	resp, err := s.sns.DeletePlatformApplication("arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp")
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
-	c.Assert(resp.RequestId, check.Equals, "097dac18-7a77-5823-a8dd-e65476dcb037")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "097dac18-7a77-5823-a8dd-e65476dcb037")
 
 	c.Assert(err, check.IsNil)
 }
@@ -329,7 +359,7 @@ func (s *S) TestGetEndpointAttributes(c *check.C) {
 	c.Assert(resp.Attributes[2].Key, check.Equals, "Token")
 	c.Assert(resp.Attributes[2].Value, check.Equals, "APA91bGi7fFachkC1xjlqT66VYEucGHochmf1VQAr9k...jsM0PKPxKhddCzx6paEsyay9Zn3D4wNUJb8m6HZrBEXAMPLE")
 
-	c.Assert(resp.RequestId, check.Equals, "6c725a19-a142-5b77-94f9-1055a9ea04e7")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "6c725a19-a142-5b77-94f9-1055a9ea04e7")
 
 	c.Assert(err, check.IsNil)
 }
@@ -337,7 +367,7 @@ func (s *S) TestGetEndpointAttributes(c *check.C) {
 func (s *S) TestGetPlatformApplicationAttributes(c *check.C) {
 	testServer.Response(200, nil, TestGetPlatformApplicationAttributesXmlOK)
 
-	resp, err := s.sns.GetPlatformApplicationAttributes("arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp", "")
+	resp, err := s.sns.GetPlatformApplicationAttributes("arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp")
 	req := testServer.WaitRequest()
 
 	c.Assert(req.Method, check.Equals, "GET")
@@ -347,7 +377,7 @@ func (s *S) TestGetPlatformApplicationAttributes(c *check.C) {
 	c.Assert(len(resp.Attributes), check.Not(check.Equals), 0)
 	c.Assert(resp.Attributes[0].Key, check.Equals, "AllowEndpointPolicies")
 	c.Assert(resp.Attributes[0].Value, check.Equals, "false")
-	c.Assert(resp.RequestId, check.Equals, "74848df2-87f6-55ed-890c-c7be80442462")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "74848df2-87f6-55ed-890c-c7be80442462")
 
 	c.Assert(err, check.IsNil)
 }
@@ -372,7 +402,7 @@ func (s *S) TestListEndpointsByPlatformApplication(c *check.C) {
 	c.Assert(resp.Endpoints[0].Attributes[2].Key, check.Equals, "Token")
 	c.Assert(resp.Endpoints[0].Attributes[2].Value, check.Equals, "APA91bGi7fFachkC1xjlqT66VYEucGHochmf1VQAr9k...jsM0PKPxKhddCzx6paEsyay9Zn3D4wNUJb8m6HZrBEXAMPLE")
 
-	c.Assert(resp.RequestId, check.Equals, "9a48768c-dac8-5a60-aec0-3cc27ea08d96")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "9a48768c-dac8-5a60-aec0-3cc27ea08d96")
 
 	c.Assert(err, check.IsNil)
 }
@@ -399,7 +429,7 @@ func (s *S) TestListPlatformApplications(c *check.C) {
 	c.Assert(resp.PlatformApplications[1].Attributes[0].Key, check.Equals, "AllowEndpointPolicies")
 	c.Assert(resp.PlatformApplications[1].Attributes[0].Value, check.Equals, "false")
 
-	c.Assert(resp.RequestId, check.Equals, "315a335e-85d8-52df-9349-791283cbb529")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "315a335e-85d8-52df-9349-791283cbb529")
 
 	c.Assert(err, check.IsNil)
 }
@@ -407,22 +437,18 @@ func (s *S) TestListPlatformApplications(c *check.C) {
 func (s *S) TestSetEndpointAttributes(c *check.C) {
 	testServer.Response(200, nil, TestSetEndpointAttributesXmlOK)
 
-	attrs := []sns.AttributeEntry{
-		sns.AttributeEntry{Key: "CustomUserData", Value: "My custom userdata"},
+	attrs := []sns.Attribute{
+		sns.Attribute{Key: "CustomUserData", Value: "My custom userdata"},
 	}
 
-	opts := &sns.SetEndpointAttributesOpt{
-		EndpointArn: "arn:aws:sns:us-west-2:123456789012:endpoint/GCM/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3",
-		Attributes:  attrs}
-
-	resp, err := s.sns.SetEndpointAttributes(opts)
+	resp, err := s.sns.SetEndpointAttributes("arn:aws:sns:us-west-2:123456789012:endpoint/GCM/gcmpushapp/5e3e9847-3183-3f18-a7e8-671c3a57d4b3", attrs)
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
-	c.Assert(resp.RequestId, check.Equals, "2fe0bfc7-3e85-5ee5-a9e2-f58b35e85f6a")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "2fe0bfc7-3e85-5ee5-a9e2-f58b35e85f6a")
 
 	c.Assert(err, check.IsNil)
 }
@@ -430,22 +456,18 @@ func (s *S) TestSetEndpointAttributes(c *check.C) {
 func (s *S) TestSetPlatformApplicationAttributes(c *check.C) {
 	testServer.Response(200, nil, TestSetPlatformApplicationAttributesXmlOK)
 
-	attrs := []sns.AttributeEntry{
-		sns.AttributeEntry{Key: "EventEndpointCreated", Value: "arn:aws:sns:us-west-2:123456789012:topicarn"},
+	attrs := []sns.Attribute{
+		sns.Attribute{Key: "EventEndpointCreated", Value: "arn:aws:sns:us-west-2:123456789012:topicarn"},
 	}
 
-	opts := &sns.SetPlatformApplicationAttributesOpt{
-		PlatformApplicationArn: "arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp",
-		Attributes:             attrs}
-
-	resp, err := s.sns.SetPlatformApplicationAttributes(opts)
+	resp, err := s.sns.SetPlatformApplicationAttributes("arn:aws:sns:us-west-2:123456789012:app/GCM/gcmpushapp", attrs)
 	req := testServer.WaitRequest()
 
-	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.Method, check.Equals, "POST")
 	c.Assert(req.URL.Path, check.Equals, "/")
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 
-	c.Assert(resp.RequestId, check.Equals, "cf577bcc-b3dc-5463-88f1-3180b9412395")
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "cf577bcc-b3dc-5463-88f1-3180b9412395")
 
 	c.Assert(err, check.IsNil)
 }
