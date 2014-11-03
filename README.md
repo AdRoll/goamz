@@ -27,10 +27,10 @@ github.com/crowdmob/goamz/iam
 github.com/crowdmob/goamz/kinesis
 github.com/crowdmob/goamz/s3
 github.com/crowdmob/goamz/sqs
+github.com/crowdmob/goamz/sns
 
 github.com/crowdmob/goamz/exp/mturk
 github.com/crowdmob/goamz/exp/sdb
-github.com/crowdmob/goamz/exp/sns
 ```
 
 Packages under `exp/` are still in an experimental or unfinished/unpolished state.

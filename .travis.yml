@@ -19,3 +19,4 @@ script:
   - go test -v ./sqs/
   - go test -v ./autoscaling/
   - go test -v ./rds/
+  - go test -v ./sns/

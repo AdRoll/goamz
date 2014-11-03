@@ -128,6 +128,30 @@ var TestConfirmSubscriptionXmlOK = `
 </ConfirmSubscriptionResponse>
 `
 
+var TestGetSubscriptionAttributesXmlOK = `
+<GetSubscriptionAttributesResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
+  <GetSubscriptionAttributesResult>
+    <Attributes>
+      <entry>
+        <key>Owner</key>
+        <value>123456789012</value>
+      </entry>
+    </Attributes>
+  </GetSubscriptionAttributesResult>
+  <ResponseMetadata>
+    <RequestId>95bfab85-1300-403f-a86e-2e78f095a05d</RequestId>
+  </ResponseMetadata>
+</GetSubscriptionAttributesResponse>
+`
+
+var TestSetSubscriptionAttributesXmlOK = `
+<SetSubscriptionAttributesResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
+  <ResponseMetadata>
+    <RequestId>21382310-78db-4f88-bae0-a2c38ed5fe32</RequestId>
+  </ResponseMetadata>
+</SetSubscriptionAttributesResponse>
+`
+
 var TestAddPermissionXmlOK = `
 <AddPermissionResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
   <ResponseMetadata>
