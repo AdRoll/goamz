@@ -1450,3 +1450,39 @@ func (ec2 *EC2) DescribeReservedInstances(instIds []string, filter *Filter) (res
 	}
 	return resp, nil
 }
+
+type SystemStateStruct struct {
+	StatusName string `xml:"status"`
+	Name       string `xml:"details>item>name"`
+	Status     string `xml:"details>item>status"`
+	Since      string `xml:"details>item>impairedSince"`
+}
+type EventSetStruct struct {
+	EventCode   string `xml:"item>code"`
+	Description string `xml:"item>description"`
+	NotBefore   string `xml:"item>notBefore"`
+	NotAfter    string `xml:"item>notAfter"`
+}
+type InstanceStatus struct {
+	InstanceId       string            `xml:"instanceId"`
+	AvailabilityZone string            `xml:"availabilityZone"`
+	InstanceState    SystemStateStruct `xml:"instanceState"`
+	SystemStatus     SystemStateStruct `xml:"systemStatus"`
+	EventDetails     EventSetStruct    `xml:"eventsSet"`
+}
+type DescribeInstanceStatusResponse struct {
+	RequestId        string           `xml:"requestId"`
+	InstanceStatuses []InstanceStatus `xml:"instanceStatusSet>item"`
+}
+
+func (ec2 *EC2) DescribeInstanceStatus(instIds []string, filter *Filter) (resp *DescribeInstanceStatusResponse, err error) {
+	params := makeParams("DescribeInstanceStatus")
+	addParamsList(params, "InstanceId", instIds)
+	filter.addParams(params)
+	resp = &DescribeInstanceStatusResponse{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
