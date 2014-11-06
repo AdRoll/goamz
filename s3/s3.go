@@ -949,7 +949,7 @@ func partiallyEscapedPath(path string) string {
 			}
 		}
 	}
-	return strings.Join(pathEscapedAndSplit, "/")
+	return strings.Replace(strings.Join(pathEscapedAndSplit, "/"), "+", "%2B", -1)
 }
 
 // prepare sets up req to be delivered to S3.
