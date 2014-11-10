@@ -1545,3 +1545,26 @@ func (ec2 *EC2) DescribeVolumes(volIds []string, filter *Filter) (resp *Describe
 	}
 	return resp, err
 }
+
+type AttachVolumeResp struct {
+	requestId  string `xml:"requestId"`
+	volumeId   string `xml:"volumeId"`
+	instanceId string `xml:"instanceId"`
+	deviceName string `xml:"device"`
+	devStatus  string `xml:"status"`
+	attachTime string `xml:"attachTime"`
+}
+
+func (ec2 *EC2) AttachVolume(volId string, InstId string, devName string) (resp *AttachVolumeResp, err error) {
+	params := makeParams("AttachVolume")
+	params["VolumeId"] = volId
+	params["InstanceId"] = InstId
+	params["Device"] = devName
+
+	resp = &AttachVolumeResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
