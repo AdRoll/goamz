@@ -115,6 +115,17 @@ func (s *S) TestGet(c *check.C) {
 	c.Assert(string(data), check.Equals, "content")
 }
 
+func (s *S) TestGetWithPlus(c *check.C) {
+	testServer.Response(200, nil, "content")
+
+	b := s.s3.Bucket("bucket")
+	_, err := b.Get("has+plus")
+
+	req := testServer.WaitRequest()
+	c.Assert(err, check.IsNil)
+	c.Assert(req.RequestURI, check.Equals, "http://localhost:4444/bucket/has%2Bplus")
+}
+
 func (s *S) TestURL(c *check.C) {
 	testServer.Response(200, nil, "content")
 

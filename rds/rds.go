@@ -2,13 +2,20 @@ package rds
 
 import (
 	"encoding/xml"
-	"github.com/crowdmob/goamz/aws"
+	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"net/http/httputil"
 	"strconv"
+	"time"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
-const debug = true
+const debug = false
 
 const (
 	ServiceName = "rds"
@@ -18,6 +25,8 @@ const (
 // The RDS type encapsulates operations within a specific EC2 region.
 type RDS struct {
 	Service aws.AWSService
+	Auth    aws.Auth
+	Region  aws.Region
 }
 
 // New creates a new RDS Client.
@@ -28,6 +37,8 @@ func New(auth aws.Auth, region aws.Region) (*RDS, error) {
 	}
 	return &RDS{
 		Service: service,
+		Auth:    auth,
+		Region:  region,
 	}, nil
 }
 
@@ -93,4 +104,89 @@ func (rds *RDS) DescribeDBInstances(id string, maxRecords int, marker string) (*
 	resp := &DescribeDBInstancesResponse{}
 	err := rds.query("POST", "/", params, resp)
 	return resp, err
+}
+
+type DownloadDBLogFilePortionResponse struct {
+	Marker                string `xml:"DownloadDBLogFilePortionResult>Marker"`
+	LogFileData           string `xml:"DownloadDBLogFilePortionResult>LogFileData"`
+	AdditionalDataPending string `xml:"DownloadDBLogFilePortionResult>AdditionalDataPending"`
+	RequestId             string `xml:"ResponseMetadata>RequestId"`
+}
+
+// DownloadDBLogFilePortion - Downloads all or a portion of the specified log file
+//
+// See http://goo.gl/Gfpz9l for more details.
+func (rds *RDS) DownloadDBLogFilePortion(id, filename, marker string, numberOfLines int) (*DownloadDBLogFilePortionResponse, error) {
+
+	params := aws.MakeParams("DownloadDBLogFilePortion")
+
+	params["DBInstanceIdentifier"] = id
+	params["LogFileName"] = filename
+
+	if marker != "" {
+		params["Marker"] = marker
+	}
+	if numberOfLines != 0 {
+		params["NumberOfLines"] = strconv.Itoa(numberOfLines)
+	}
+
+	resp := &DownloadDBLogFilePortionResponse{}
+	err := rds.query("POST", "/", params, resp)
+	return resp, err
+}
+
+// DownloadCompleteDBLogFile - Downloads the contents of the specified database log file
+//
+// See http://goo.gl/plC66B for more details.
+
+func (rds *RDS) DownloadCompleteDBLogFile(id, filename string) (io.ReadCloser, error) {
+	url := fmt.Sprintf(
+		"%s/v13/downloadCompleteLogFile/%s/%s",
+		rds.Region.RDSEndpoint.Endpoint,
+		id,
+		filename,
+	)
+	hreq, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		if debug {
+			log.Printf("Error http.NewRequest GET %s", url)
+		}
+		return nil, err
+	}
+	token := rds.Auth.Token()
+	if token != "" {
+		hreq.Header.Set("X-Amz-Security-Token", token)
+	}
+	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
+	signer := aws.NewV4Signer(rds.Auth, "rds", rds.Region)
+	signer.Sign(hreq)
+	resp, err := http.DefaultClient.Do(hreq)
+	if err != nil {
+		if debug {
+			log.Print("Error calling Amazon")
+		}
+		return nil, err
+	}
+	if resp.StatusCode == 200 {
+		return resp.Body, nil
+	} else {
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if debug {
+				log.Printf("Could not read response body")
+			}
+			return nil, err
+		}
+		msg := fmt.Sprintf(
+			"Responce:\n\tStatusCode: %d\n\tBody: %s\n",
+			resp.StatusCode,
+			string(body),
+		)
+		if debug {
+			log.Printf(msg)
+		}
+		err = errors.New(msg)
+		return nil, err
+	}
 }

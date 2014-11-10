@@ -66,6 +66,8 @@ type Region struct {
 	AutoScalingEndpoint    string
 	RDSEndpoint            ServiceInfo
 	KinesisEndpoint        string
+	STSEndpoint            string
+	CloudFormationEndpoint string
 }
 
 var Regions = map[string]Region{
@@ -203,6 +205,16 @@ func (a *Auth) Expiration() time.Time {
 	return a.expiration
 }
 
+// To be used with other APIs that return auth credentials such as STS
+func NewAuth(accessKey, secretKey, token string, expiration time.Time) *Auth {
+	return &Auth{
+		AccessKey:  accessKey,
+		SecretKey:  secretKey,
+		token:      token,
+		expiration: expiration,
+	}
+}
+
 // ResponseMetadata
 type ResponseMetadata struct {
 	RequestId string // A unique ID for tracking the request
@@ -241,6 +253,9 @@ type credentials struct {
 	Expiration      string
 }
 
+// GetMetaData retrieves instance metadata about the current machine.
+//
+// See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html for more details.
 func GetMetaData(path string) (contents []byte, err error) {
 	c := http.Client{
 		Transport: &http.Transport{
@@ -281,7 +296,10 @@ func GetRegion(regionName string) (region Region) {
 	return
 }
 
-func getInstanceCredentials() (cred credentials, err error) {
+// GetInstanceCredentials creates an Auth based on the instance's role credentials.
+// If the running instance is not in EC2 or does not have a valid IAM role, an error will be returned.
+// For more info about setting up IAM roles, see http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+func GetInstanceCredentials() (cred credentials, err error) {
 	credentialPath := "iam/security-credentials/"
 
 	// Get the instance role
@@ -316,7 +334,7 @@ func GetAuth(accessKey string, secretKey, token string, expiration time.Time) (a
 	}
 
 	// Next try getting auth from the instance role
-	cred, err := getInstanceCredentials()
+	cred, err := GetInstanceCredentials()
 	if err == nil {
 		// Found auth, return
 		auth.AccessKey = cred.AccessKeyId

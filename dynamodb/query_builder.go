@@ -39,6 +39,12 @@ func (q *Query) AddExclusiveStartKey(t *Table, key *Key) {
 	q.buffer["ExclusiveStartKey"] = keyAttributes(t, key)
 }
 
+func (q *Query) AddExclusiveStartTableName(table string) {
+	if table != "" {
+		q.buffer["ExclusiveStartTableName"] = table
+	}
+}
+
 func keyAttributes(t *Table, key *Key) msi {
 	k := t.Key
 

@@ -18,7 +18,6 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"github.com/crowdmob/goamz/aws"
 	"io"
 	"io/ioutil"
 	"log"
@@ -29,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
 const debug = false
@@ -524,6 +525,9 @@ type ListResp struct {
 	IsTruncated    bool
 	Contents       []Key
 	CommonPrefixes []string `xml:">Prefix"`
+	// if IsTruncated is true, pass NextMarker as marker argument to List()
+	// to get the next set of keys
+	NextMarker string
 }
 
 // The Key type represents an item stored in an S3 bucket.
@@ -616,6 +620,14 @@ func (b *Bucket) List(prefix, delim, marker string, max int) (result *ListResp, 
 	}
 	if err != nil {
 		return nil, err
+	}
+	// if NextMarker is not returned, it should be set to the name of last key,
+	// so let's do it so that each caller doesn't have to
+	if result.IsTruncated && result.NextMarker == "" {
+		n := len(result.Contents)
+		if n > 0 {
+			result.NextMarker = result.Contents[n-1].Key
+		}
 	}
 	return result, nil
 }
@@ -727,10 +739,25 @@ func (b *Bucket) URL(path string) string {
 // SignedURL returns a signed URL that allows anyone holding the URL
 // to retrieve the object at path. The signature is valid until expires.
 func (b *Bucket) SignedURL(path string, expires time.Time) string {
+	return b.SignedURLWithArgs(path, expires, nil, nil)
+}
+
+// SignedURLWithArgs returns a signed URL that allows anyone holding the URL
+// to retrieve the object at path. The signature is valid until expires.
+func (b *Bucket) SignedURLWithArgs(path string, expires time.Time, params url.Values, headers http.Header) string {
+	var uv = url.Values{}
+
+	if params != nil {
+		uv = params
+	}
+
+	uv.Set("Expires", strconv.FormatInt(expires.Unix(), 10))
+
 	req := &request{
-		bucket: b.Name,
-		path:   path,
-		params: url.Values{"Expires": {strconv.FormatInt(expires.Unix(), 10)}},
+		bucket:  b.Name,
+		path:    path,
+		params:  uv,
+		headers: headers,
 	}
 	err := b.S3.prepare(req)
 	if err != nil {
@@ -922,7 +949,7 @@ func partiallyEscapedPath(path string) string {
 			}
 		}
 	}
-	return strings.Join(pathEscapedAndSplit, "/")
+	return strings.Replace(strings.Join(pathEscapedAndSplit, "/"), "+", "%2B", -1)
 }
 
 // prepare sets up req to be delivered to S3.
