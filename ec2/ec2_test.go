@@ -1040,3 +1040,15 @@ func (s *S) TestDescribeVolumes(c *check.C) {
 	c.Assert(v0.AttachmentSet.Device, check.Equals, "/dev/sdh")
 	c.Assert(v0.AttachmentSet.Status, check.Equals, "attached")
 }
+
+func (s *S) TestAttachVolume(c *check.C) {
+	testServer.Response(200, nil, AttachVolumeExample)
+
+	resp, err := s.ec2.AttachVolume("v-1", "i-1", "/dev/sdz")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"AttachVolume"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+}
