@@ -1524,7 +1524,7 @@ type VolumeStruct struct {
 	AvailabilityZone string              `xml:"availabilityZone"`
 	Status           string              `xml:"status"`
 	CreateTime       string              `xml:"createTime"`
-	AttachmentSet    AttachmentSetStruct `xml:"attachmentSet"`
+	AttachmentSet    AttachmentSetStruct `xml:"attachmentSet>item"`
 	VolumeType       string              `xml:"volumeType"`
 	Encrypted        string              `xml:"encrypted"`
 }
