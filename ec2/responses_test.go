@@ -885,4 +885,172 @@ var (
   <return>true</return>
 </DeregisterImageResponse>
 `
+	DescribeInstanceStatusExample = `
+<DescribeInstanceStatusResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+    <requestId>3be1508e-c444-4fef-89cc-0b1223c4f02fEXAMPLE</requestId>
+    <instanceStatusSet>
+        <item>
+            <instanceId>i-1a2b3c4d</instanceId>
+            <availabilityZone>us-east-1d</availabilityZone>
+            <instanceState>
+                <code>16</code>
+                <name>running</name>
+            </instanceState>
+            <systemStatus>
+                <status>impaired</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>failed</status>
+                        <impairedSince>YYYY-MM-DDTHH:MM:SS.000Z</impairedSince>
+                    </item>
+                </details>
+            </systemStatus>
+            <instanceStatus>
+                <status>impaired</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>failed</status>
+                        <impairedSince>YYYY-MM-DDTHH:MM:SS.000Z</impairedSince>
+                    </item>
+                </details>
+            </instanceStatus>
+            <eventsSet>
+              <item>
+                <code>instance-retirement</code>
+                <description>The instance is running on degraded hardware</description>
+                <notBefore>YYYY-MM-DDTHH:MM:SS+0000</notBefore>
+                <notAfter>YYYY-MM-DDTHH:MM:SS+0000</notAfter>
+              </item>
+            </eventsSet>
+        </item>
+        <item>
+            <instanceId>i-2a2b3c4d</instanceId>
+            <availabilityZone>us-east-1d</availabilityZone>
+            <instanceState>
+                <code>16</code>
+                <name>running</name>
+            </instanceState>
+            <systemStatus>
+                <status>ok</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>passed</status>
+                    </item>
+                </details>
+            </systemStatus>
+            <instanceStatus>
+                <status>ok</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>passed</status>
+                    </item>
+                </details>
+            </instanceStatus>
+            <eventsSet>
+              <item>
+                <code>instance-reboot</code>
+                <description>The instance is scheduled for a reboot</description>
+                <notBefore>YYYY-MM-DDTHH:MM:SS+0000</notBefore>
+                <notAfter>YYYY-MM-DDTHH:MM:SS+0000</notAfter>
+              </item>
+            </eventsSet>
+        </item>
+        <item>
+            <instanceId>i-3a2b3c4d</instanceId>
+            <availabilityZone>us-east-1c</availabilityZone>
+            <instanceState>
+                <code>16</code>
+                <name>running</name>
+            </instanceState>
+            <systemStatus>
+                <status>ok</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>passed</status>
+                    </item>
+                </details>
+            </systemStatus>
+            <instanceStatus>
+                <status>ok</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>passed</status>
+                    </item>
+                </details>
+            </instanceStatus>
+        </item>
+        <item>
+            <instanceId>i-4a2b3c4d</instanceId>
+            <availabilityZone>us-east-1c</availabilityZone>
+            <instanceState>
+                <code>16</code>
+                <name>running</name>
+            </instanceState>
+            <systemStatus>
+                <status>ok</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>passed</status>
+                    </item>
+                </details>
+            </systemStatus>
+            <instanceStatus>
+                <status>insufficient-data</status>
+                <details>
+                    <item>
+                        <name>reachability</name>
+                        <status>insufficient-data</status>
+                    </item>
+                </details>
+            </instanceStatus>
+         </item>
+    </instanceStatusSet>
+</DescribeInstanceStatusResponse>
+`
+
+	DescribeVolumesExample = `
+<DescribeVolumesResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <volumeSet>
+      <item>
+         <volumeId>vol-1a2b3c4d</volumeId>
+         <size>80</size>
+         <snapshotId/>
+         <availabilityZone>us-east-1a</availabilityZone>
+         <status>in-use</status>
+         <createTime>YYYY-MM-DDTHH:MM:SS.SSSZ</createTime>
+         <attachmentSet>
+            <item>
+               <volumeId>vol-1a2b3c4d</volumeId>
+               <instanceId>i-1a2b3c4d</instanceId>
+               <device>/dev/sdh</device>
+               <status>attached</status>
+               <attachTime>YYYY-MM-DDTHH:MM:SS.SSSZ</attachTime>
+               <deleteOnTermination>false</deleteOnTermination>
+            </item>
+         </attachmentSet>
+         <volumeType>standard</volumeType>
+         <encrypted>true</encrypted>
+      </item>
+   </volumeSet>
+</DescribeVolumesResponse>
+`
+
+	AttachVolumeExample = `
+<AttachVolumeResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+  <volumeId>vol-1a2b3c4d</volumeId>
+  <instanceId>i-1a2b3c4d</instanceId>
+  <device>/dev/sdh</device>
+  <status>attaching</status>
+  <attachTime>YYYY-MM-DDTHH:MM:SS.000Z</attachTime>
+</AttachVolumeResponse>
+`
 )

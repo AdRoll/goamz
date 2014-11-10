@@ -1004,3 +1004,51 @@ func (s *S) TestDeregisterImage(c *check.C) {
 	c.Assert(resp.Response, check.Equals, true)
 
 }
+
+func (s *S) TestDescribeInstanceStatus(c *check.C) {
+	testServer.Response(200, nil, DescribeInstanceStatusExample)
+
+	resp, err := s.ec2.DescribeInstanceStatus([]string{"i-1a2b3c4d", "i-2a2b3c4d"}, nil)
+
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeInstanceStatus"})
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "3be1508e-c444-4fef-89cc-0b1223c4f02fEXAMPLE")
+	c.Assert(resp.InstanceStatuses, check.HasLen, 4)
+	r0 := resp.InstanceStatuses[0]
+	c.Assert(r0.InstanceId, check.Equals, "i-1a2b3c4d")
+}
+
+func (s *S) TestDescribeVolumes(c *check.C) {
+	testServer.Response(200, nil, DescribeVolumesExample)
+
+	resp, err := s.ec2.DescribeVolumes([]string{"vol-1a2b3c4d"}, nil)
+
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeVolumes"})
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Volumes, check.HasLen, 1)
+	v0 := resp.Volumes[0]
+	c.Assert(v0.AvailabilityZone, check.Equals, "us-east-1a")
+	c.Assert(v0.Size, check.Equals, 80)
+	c.Assert(v0.Status, check.Equals, "in-use")
+	c.Assert(v0.AttachmentSet.VolumeId, check.Equals, "vol-1a2b3c4d")
+	c.Assert(v0.AttachmentSet.InstanceId, check.Equals, "i-1a2b3c4d")
+	c.Assert(v0.AttachmentSet.Device, check.Equals, "/dev/sdh")
+	c.Assert(v0.AttachmentSet.Status, check.Equals, "attached")
+}
+
+func (s *S) TestAttachVolume(c *check.C) {
+	testServer.Response(200, nil, AttachVolumeExample)
+
+	resp, err := s.ec2.AttachVolume("v-1", "i-1", "/dev/sdz")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"AttachVolume"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+}
