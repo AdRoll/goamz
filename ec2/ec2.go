@@ -1547,12 +1547,12 @@ func (ec2 *EC2) DescribeVolumes(volIds []string, filter *Filter) (resp *Describe
 }
 
 type AttachVolumeResp struct {
-	requestId  string `xml:"requestId"`
-	volumeId   string `xml:"volumeId"`
-	instanceId string `xml:"instanceId"`
-	deviceName string `xml:"device"`
-	devStatus  string `xml:"status"`
-	attachTime string `xml:"attachTime"`
+	RequestId  string `xml:"requestId"`
+	VolumeId   string `xml:"volumeId"`
+	InstanceId string `xml:"instanceId"`
+	Device     string `xml:"device"`
+	Status     string `xml:"status"`
+	AttachTime string `xml:"attachTime"`
 }
 
 func (ec2 *EC2) AttachVolume(volId string, InstId string, devName string) (resp *AttachVolumeResp, err error) {
