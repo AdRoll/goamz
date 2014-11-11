@@ -1594,3 +1594,28 @@ func (ec2 *EC2) DescribeVpcs(vpcIds []string, filter *Filter) (resp *DescribeVpc
 	}
 	return resp, err
 }
+
+type VpnConnectionStruct struct {
+	VpnConnectionId   string `xml:"vpnConnectionId"`
+	State             string `xml:"state"`
+	Type              string `xml:"type"`
+	CustomerGatewayId string `xml:"customerGatewayId"`
+	VpnGatewayId      string `xml:"vpnGatewayId"`
+}
+
+type DescribeVpnConnectionsResp struct {
+	RequestId      string                `xml:"requestId"`
+	VpnConnections []VpnConnectionStruct `xml:"vpnConnectionSet>item"`
+}
+
+func (ec2 *EC2) DescribeVpnConnections(VpnConnectionIds []string, filter *Filter) (resp *DescribeVpnConnectionsResp, err error) {
+	params := makeParams("DescribeVpnConnections")
+	addParamsList(params, "VpnConnectionId", VpnConnectionIds)
+	filter.addParams(params)
+	resp = &DescribeVpnConnectionsResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}

@@ -1072,3 +1072,22 @@ func (s *S) TestDescribeVpcs(c *check.C) {
 	c.Assert(v0.InstanceTenancy, check.Equals, "default")
 	c.Assert(v0.IsDefault, check.Equals, false)
 }
+
+func (s *S) TestDescribeVpnConnections(c *check.C) {
+	testServer.Response(200, nil, DescribeVpnConnectionsExample)
+
+	resp, err := s.ec2.DescribeVpnConnections([]string{"vpn-44a8938f"}, nil)
+
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeVpnConnections"})
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.VpnConnections, check.HasLen, 1)
+	v0 := resp.VpnConnections[0]
+	c.Assert(v0.VpnConnectionId, check.Equals, "vpn-44a8938f")
+	c.Assert(v0.State, check.Equals, "available")
+	c.Assert(v0.Type, check.Equals, "ipsec.1")
+	c.Assert(v0.CustomerGatewayId, check.Equals, "cgw-b4dc3961")
+	c.Assert(v0.VpnGatewayId, check.Equals, "vgw-8db04f81")
+}

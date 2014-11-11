@@ -1070,4 +1070,23 @@ var (
   </vpcSet>
 </DescribeVpcsResponse>
 `
+
+	DescribeVpnConnectionsExample = `
+<DescribeVpnConnectionsResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+  <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
+  <vpnConnectionSet>
+    <item>
+      <vpnConnectionId>vpn-44a8938f</vpnConnectionId>
+      <state>available</state>
+      <customerGatewayConfiguration>
+          ...Customer gateway configuration data in escaped XML format...
+      </customerGatewayConfiguration>     
+      <type>ipsec.1</type>
+      <customerGatewayId>cgw-b4dc3961</customerGatewayId>
+      <vpnGatewayId>vgw-8db04f81</vpnGatewayId>
+      <tagSet/>
+    </item>
+  </vpnConnectionSet>
+</DescribeVpnConnectionsResponse>
+`
 )
