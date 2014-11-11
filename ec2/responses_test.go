@@ -1053,4 +1053,40 @@ var (
   <attachTime>YYYY-MM-DDTHH:MM:SS.000Z</attachTime>
 </AttachVolumeResponse>
 `
+
+	DescribeVpcsExample = `
+<DescribeVpcsResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+  <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
+  <vpcSet>
+    <item>
+      <vpcId>vpc-1a2b3c4d</vpcId>
+      <state>available</state>
+      <cidrBlock>10.0.0.0/23</cidrBlock>    
+      <dhcpOptionsId>dopt-7a8b9c2d</dhcpOptionsId> 
+      <instanceTenancy>default</instanceTenancy>
+      <isDefault>false</isDefault>
+      <tagSet/>
+    </item>
+  </vpcSet>
+</DescribeVpcsResponse>
+`
+
+	DescribeVpnConnectionsExample = `
+<DescribeVpnConnectionsResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+  <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
+  <vpnConnectionSet>
+    <item>
+      <vpnConnectionId>vpn-44a8938f</vpnConnectionId>
+      <state>available</state>
+      <customerGatewayConfiguration>
+          ...Customer gateway configuration data in escaped XML format...
+      </customerGatewayConfiguration>     
+      <type>ipsec.1</type>
+      <customerGatewayId>cgw-b4dc3961</customerGatewayId>
+      <vpnGatewayId>vgw-8db04f81</vpnGatewayId>
+      <tagSet/>
+    </item>
+  </vpnConnectionSet>
+</DescribeVpnConnectionsResponse>
+`
 )

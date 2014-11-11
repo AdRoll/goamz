@@ -1018,6 +1018,10 @@ func (s *S) TestDescribeInstanceStatus(c *check.C) {
 	c.Assert(resp.InstanceStatuses, check.HasLen, 4)
 	r0 := resp.InstanceStatuses[0]
 	c.Assert(r0.InstanceId, check.Equals, "i-1a2b3c4d")
+	c.Assert(r0.InstanceState, check.Equals, "running")
+	c.Assert(r0.SystemStatus.StatusName, check.Equals, "impaired")
+	c.Assert(r0.SystemStatus.Status, check.Equals, "failed")
+	c.Assert(r0.InstanceStatus.StatusName, check.Equals, "impaired")
 }
 
 func (s *S) TestDescribeVolumes(c *check.C) {
@@ -1051,4 +1055,43 @@ func (s *S) TestAttachVolume(c *check.C) {
 
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+}
+
+func (s *S) TestDescribeVpcs(c *check.C) {
+	testServer.Response(200, nil, DescribeVpcsExample)
+
+	resp, err := s.ec2.DescribeVpcs([]string{"vpc-1a2b3c4d"}, nil)
+
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeVpcs"})
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.Vpcs, check.HasLen, 1)
+	v0 := resp.Vpcs[0]
+	c.Assert(v0.VpcId, check.Equals, "vpc-1a2b3c4d")
+	c.Assert(v0.State, check.Equals, "available")
+	c.Assert(v0.CidrBlock, check.Equals, "10.0.0.0/23")
+	c.Assert(v0.DhcpOptionsId, check.Equals, "dopt-7a8b9c2d")
+	c.Assert(v0.InstanceTenancy, check.Equals, "default")
+	c.Assert(v0.IsDefault, check.Equals, false)
+}
+
+func (s *S) TestDescribeVpnConnections(c *check.C) {
+	testServer.Response(200, nil, DescribeVpnConnectionsExample)
+
+	resp, err := s.ec2.DescribeVpnConnections([]string{"vpn-44a8938f"}, nil)
+
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeVpnConnections"})
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.VpnConnections, check.HasLen, 1)
+	v0 := resp.VpnConnections[0]
+	c.Assert(v0.VpnConnectionId, check.Equals, "vpn-44a8938f")
+	c.Assert(v0.State, check.Equals, "available")
+	c.Assert(v0.Type, check.Equals, "ipsec.1")
+	c.Assert(v0.CustomerGatewayId, check.Equals, "cgw-b4dc3961")
+	c.Assert(v0.VpnGatewayId, check.Equals, "vgw-8db04f81")
 }

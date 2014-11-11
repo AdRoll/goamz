@@ -1487,7 +1487,8 @@ type EventSetStruct struct {
 type InstanceStatus struct {
 	InstanceId       string            `xml:"instanceId"`
 	AvailabilityZone string            `xml:"availabilityZone"`
-	InstanceState    SystemStateStruct `xml:"instanceState"`
+	InstanceState    string            `xml:"instanceState>name"`
+	InstanceStatus   SystemStateStruct `xml:"instanceStatus"`
 	SystemStatus     SystemStateStruct `xml:"systemStatus"`
 	EventDetails     EventSetStruct    `xml:"eventsSet"`
 }
@@ -1562,6 +1563,57 @@ func (ec2 *EC2) AttachVolume(volId string, InstId string, devName string) (resp 
 	params["Device"] = devName
 
 	resp = &AttachVolumeResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
+
+type VpcStruct struct {
+	VpcId           string `xml:"vpcId"`
+	State           string `xml:"state"`
+	CidrBlock       string `xml:"cidrBlock"`
+	DhcpOptionsId   string `xml:"dhcpOptionsId"`
+	InstanceTenancy string `xml:"instanceTenancy"`
+	IsDefault       bool   `xml:"isDefault"`
+}
+
+type DescribeVpcsResp struct {
+	RequestId string      `xml:"requestId"`
+	Vpcs      []VpcStruct `xml:"vpcSet>item"`
+}
+
+func (ec2 *EC2) DescribeVpcs(vpcIds []string, filter *Filter) (resp *DescribeVpcsResp, err error) {
+	params := makeParams("DescribeVpcs")
+	addParamsList(params, "vpcId", vpcIds)
+	filter.addParams(params)
+	resp = &DescribeVpcsResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
+
+type VpnConnectionStruct struct {
+	VpnConnectionId   string `xml:"vpnConnectionId"`
+	State             string `xml:"state"`
+	Type              string `xml:"type"`
+	CustomerGatewayId string `xml:"customerGatewayId"`
+	VpnGatewayId      string `xml:"vpnGatewayId"`
+}
+
+type DescribeVpnConnectionsResp struct {
+	RequestId      string                `xml:"requestId"`
+	VpnConnections []VpnConnectionStruct `xml:"vpnConnectionSet>item"`
+}
+
+func (ec2 *EC2) DescribeVpnConnections(VpnConnectionIds []string, filter *Filter) (resp *DescribeVpnConnectionsResp, err error) {
+	params := makeParams("DescribeVpnConnections")
+	addParamsList(params, "VpnConnectionId", VpnConnectionIds)
+	filter.addParams(params)
+	resp = &DescribeVpnConnectionsResp{}
 	err = ec2.query(params, resp)
 	if err != nil {
 		return nil, err
