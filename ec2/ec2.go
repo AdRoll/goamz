@@ -1487,7 +1487,7 @@ type EventSetStruct struct {
 type InstanceStatus struct {
 	InstanceId       string            `xml:"instanceId"`
 	AvailabilityZone string            `xml:"availabilityZone"`
-	InstanceState    SystemStateStruct `xml:"instanceState"`
+	InstanceStatus   SystemStateStruct `xml:"instanceStatus"`
 	SystemStatus     SystemStateStruct `xml:"systemStatus"`
 	EventDetails     EventSetStruct    `xml:"eventsSet"`
 }
