@@ -1568,3 +1568,29 @@ func (ec2 *EC2) AttachVolume(volId string, InstId string, devName string) (resp 
 	}
 	return resp, err
 }
+
+type VpcStruct struct {
+	VpcId           string `xml:"vpcId"`
+	State           string `xml:"state"`
+	CidrBlock       string `xml:"cidrBlock"`
+	DhcpOptionsId   string `xml:"dhcpOptionsId"`
+	InstanceTenancy string `xml:"instanceTenancy"`
+	IsDefault       bool   `xml:"isDefault"`
+}
+
+type DescribeVpcsResp struct {
+	RequestId string      `xml:"requestId"`
+	Vpcs      []VpcStruct `xml:"vpcSet>item"`
+}
+
+func (ec2 *EC2) DescribeVpcs(vpcIds []string, filter *Filter) (resp *DescribeVpcsResp, err error) {
+	params := makeParams("DescribeVpcs")
+	addParamsList(params, "vpcId", vpcIds)
+	filter.addParams(params)
+	resp = &DescribeVpcsResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
