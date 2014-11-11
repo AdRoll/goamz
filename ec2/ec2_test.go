@@ -1018,6 +1018,7 @@ func (s *S) TestDescribeInstanceStatus(c *check.C) {
 	c.Assert(resp.InstanceStatuses, check.HasLen, 4)
 	r0 := resp.InstanceStatuses[0]
 	c.Assert(r0.InstanceId, check.Equals, "i-1a2b3c4d")
+	c.Assert(r0.InstanceState, check.Equals, "running")
 	c.Assert(r0.SystemStatus.StatusName, check.Equals, "impaired")
 	c.Assert(r0.SystemStatus.Status, check.Equals, "failed")
 	c.Assert(r0.InstanceStatus.StatusName, check.Equals, "impaired")
