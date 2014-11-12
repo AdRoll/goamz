@@ -1110,4 +1110,22 @@ var (
   </vpnGatewaySet>
 </DescribeVpnGatewaysResponse>
 `
+
+	DescribeInternetGatewaysExample = `
+<DescribeInternetGatewaysResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <internetGatewaySet>  
+      <item>
+         <internetGatewayId>igw-eaad4883EXAMPLE</internetGatewayId>
+         <attachmentSet>
+            <item>
+               <vpcId>vpc-11ad4878</vpcId>
+               <state>available</state>
+            </item>
+         </attachmentSet>
+         <tagSet/>
+      </item>
+   </internetGatewaySet>
+</DescribeInternetGatewaysResponse>
+`
 )

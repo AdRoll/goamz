@@ -1645,3 +1645,25 @@ func (ec2 *EC2) DescribeVpnGateways(VpnGatewayIds []string, filter *Filter) (res
 	}
 	return resp, err
 }
+
+type InternetGatewayStruct struct {
+	InternetGatewayId string `xml:"internetGatewayId"`
+	AttachedVpcId     string `xml:"attachmentSet>item>vpcId"`
+	AttachState       string `xml:"attachmentSet>item>state"`
+}
+
+type DescribeInternetGatewaysResp struct {
+	RequestId       string                  `xml:"requestId"`
+	InternetGateway []InternetGatewayStruct `xml:"internetGatewaySet>item"`
+}
+
+func (ec2 *EC2) DescribeInternetGateways(InternetGatewayIds []string, filter *Filter) (resp *DescribeInternetGatewaysResp, err error) {
+	params := makeParams("DescribeInternetGateways")
+	addParamsList(params, "DescribeInternetGateways", InternetGatewayIds)
+	filter.addParams(params)
+	resp = &DescribeInternetGatewaysResp{}
+	if err = ec2.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, err
+}

@@ -1115,3 +1115,20 @@ func (s *S) TestDescribeVpnGateways(c *check.C) {
 	c.Assert(g0.AttachedVpcId, check.Equals, "vpc-1a2b3c4d")
 	c.Assert(g0.AttachState, check.Equals, "attached")
 }
+
+func (s *S) TestDescribeInternetGateways(c *check.C) {
+	testServer.Response(200, nil, DescribeInternetGatewaysExample)
+
+	resp, err := s.ec2.DescribeInternetGateways([]string{"igw-eaad4883EXAMPLE"}, nil)
+
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeInternetGateways"})
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.InternetGateway, check.HasLen, 1)
+	g0 := resp.InternetGateway[0]
+	c.Assert(g0.InternetGatewayId, check.Equals, "igw-eaad4883EXAMPLE")
+	c.Assert(g0.AttachedVpcId, check.Equals, "vpc-11ad4878")
+	c.Assert(g0.AttachState, check.Equals, "available")
+}
