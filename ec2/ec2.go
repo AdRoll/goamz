@@ -1620,3 +1620,28 @@ func (ec2 *EC2) DescribeVpnConnections(VpnConnectionIds []string, filter *Filter
 	}
 	return resp, err
 }
+
+type VpnGatewayStruct struct {
+	VpnGatewayId     string `xml:"vpnGatewayId"`
+	State            string `xml:"state"`
+	Type             string `xml:"type"`
+	AvailabilityZone string `xml:"availabilityZone"`
+	AttachedVpcId    string `xml:"attachments>item>vpcId"`
+	AttachState      string `xml:"attachments>item>state"`
+}
+
+type DescribeVpnGatewaysResp struct {
+	RequestId  string             `xml:"requestId"`
+	VpnGateway []VpnGatewayStruct `xml:"vpnGatewaySet>item"`
+}
+
+func (ec2 *EC2) DescribeVpnGateways(VpnGatewayIds []string, filter *Filter) (resp *DescribeVpnGatewaysResp, err error) {
+	params := makeParams("DescribeVpnGateways")
+	addParamsList(params, "VpnGatewayIds", VpnGatewayIds)
+	filter.addParams(params)
+	resp = &DescribeVpnGatewaysResp{}
+	if err = ec2.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, err
+}
