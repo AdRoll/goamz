@@ -316,3 +316,23 @@ func (s *S) TestConfigureHealthCheckBadRequest(c *check.C) {
 	c.Assert(err, check.NotNil)
 	c.Assert(err, check.ErrorMatches, ".*foolb.*(LoadBalancerNotFound).*")
 }
+
+func (s *S) TestDescribeLoadBalancerAttributes(c *check.C) {
+	testServer.PrepareResponse(200, nil, DescribeLoadBalancerAttributes)
+	resp, err := s.elb.DescribeLoadBalancerAttributes("my-test-loadbalancer")
+	c.Assert(err, check.IsNil)
+	values := testServer.WaitRequest().URL.Query()
+	c.Assert(values.Get("Version"), check.Equals, "2012-06-01")
+	c.Assert(values.Get("Signature"), check.Not(check.Equals), "")
+	c.Assert(values.Get("Timestamp"), check.Not(check.Equals), "")
+	c.Assert(values.Get("Action"), check.Equals, "DescribeLoadBalancerAttributes")
+	c.Assert(values.Get("LoadBalancerName"), check.Equals, "my-test-loadbalancer")
+	c.Assert(resp.AccessLogEnabled, check.Equals, true)
+	c.Assert(resp.AccessLogS3Bucket, check.Equals, "my-loadbalancer-logs")
+	c.Assert(resp.AccessLogS3Prefix, check.Equals, "testprefix")
+	c.Assert(resp.AccessLogEmitInterval, check.Equals, 5)
+	c.Assert(resp.IdleTimeout, check.Equals, 30)
+	c.Assert(resp.CrossZoneLoadbalancing, check.Equals, true)
+	c.Assert(resp.ConnectionDrainingTimeout, check.Equals, 60)
+	c.Assert(resp.ConnectionDrainingEnabled, check.Equals, true)
+}

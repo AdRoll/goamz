@@ -203,3 +203,31 @@ var ConfigureHealthCheckBadRequest = `
     <RequestId>2d9fe4a5-5697-11e2-9415-e325c02171d7</RequestId>
 </ErrorResponse>
 `
+
+var DescribeLoadBalancerAttributes = `
+<DescribeLoadBalancerAttributesResponse  xmlns="http://elasticloadbalancing.amazonaws.com/doc/2012-06-01/">
+ <DescribeLoadBalancerAttributesResult>
+    <LoadBalancerAttributes>
+    <AccessLog>
+        <Enabled>true</Enabled>
+        <S3BucketName>my-loadbalancer-logs</S3BucketName>
+        <S3BucketPrefix>testprefix</S3BucketPrefix>
+        <EmitInterval>5</EmitInterval>
+      </AccessLog>
+      <ConnectionSettings>
+        <IdleTimeout>30</IdleTimeout>
+      </ConnectionSettings>
+      <CrossZoneLoadBalancing>
+        <Enabled>true</Enabled>
+      </CrossZoneLoadBalancing>
+      <ConnectionDraining>
+        <Enabled>true</Enabled>
+        <Timeout>60</Timeout>
+     </ConnectionDraining> 
+    </LoadBalancerAttributes>
+  </DescribeLoadBalancerAttributesResult>
+<ResponseMetadata>
+    <RequestId>83c88b9d-12b7-11e3-8b82-87b12EXAMPLE</RequestId>
+</ResponseMetadata>
+</DescribeLoadBalancerAttributesResponse>
+`
