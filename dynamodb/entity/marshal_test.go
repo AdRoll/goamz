@@ -1,8 +1,11 @@
 package entity
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"math"
+	"reflect"
 	"testing"
 	"unsafe"
 )
@@ -20,14 +23,25 @@ func testMarshalError(t *testing.T, v interface{}, expected error) {
 	}
 }
 
-func testMarshal(t *testing.T, v interface{}, expected string) {
+func testMarshal(t *testing.T, v interface{}, expectedString string) {
 	b, err := Marshal(v)
 	if err != nil {
-		t.Errorf("Expected %s, got error '%s'", expected, err.Error())
+		t.Errorf("Expected %s, got error '%s'", expectedString, err.Error())
 	}
-	actual := string(b)
-	if actual != expected {
-		t.Errorf("Expected %s, got %s", expected, actual)
+	actualString := string(b)
+	// Since JSON is unordered, we can't do a simple string compare. Instead, we
+	// deserialize into maps, and do a recursive comparison of the elements.
+	var actual, expected map[string]interface{}
+	if err := json.Unmarshal(b, &actual); err != nil {
+		t.Errorf("Got error '%s' unmarshalling %s", err.Error(), actualString)
+	}
+	var buf bytes.Buffer
+	buf.WriteString(expectedString)
+	if err := json.Unmarshal(buf.Bytes(), &expected); err != nil {
+		t.Errorf("Got error '%s' unmarshalling %s", err.Error(), expectedString)
+	}
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("Expected %s, got %s", expectedString, actualString)
 	}
 }
 
@@ -65,12 +79,8 @@ type complexStruct struct {
 
 func TestMarshalStruct(t *testing.T) {
 	simple := simpleStruct{4, "this is a string"}
-	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
-	// deserialized objects.
 	testMarshal(t, simple, `{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}}`)
 	complex := complexStruct{11, "blah", simple}
-	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
-	// deserialized objects.
 	testMarshal(t, complex, `{"M":{"Int":{"N":"11"},"String":{"S":"blah"},"Simple":{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}}}}`)
 }
 
@@ -78,16 +88,12 @@ func TestMarshalMap(t *testing.T) {
 	m1 := map[string]interface{}{
 		"Int":    4,
 		"String": "this is a string"}
-	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
-	// deserialized objects.
 	testMarshal(t, m1, `{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}}`)
 	m2 := map[string]interface{}{
 		"Map": map[string]interface{}{
 			"Int":    4,
 			"String": "this is a string"},
 		"Nil": nil}
-	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
-	// deserialized objects.
 	testMarshal(t, m2, `{"M":{"Map":{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}},"Nil":{"NULL":"true"}}}`)
 }
 
