@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/crowdmob/goamz/aws"
+	"github.com/rightscale/goamz/aws"
 )
 
 // The STS type encapsulates operations within a specific EC2 region.

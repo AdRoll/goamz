@@ -1,7 +1,7 @@
 package ec2
 
 import (
-	"github.com/crowdmob/goamz/aws"
+	"github.com/rightscale/goamz/aws"
 	"time"
 )
 

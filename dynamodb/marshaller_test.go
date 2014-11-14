@@ -1,7 +1,7 @@
 package dynamodb_test
 
 import (
-	"github.com/crowdmob/goamz/dynamodb"
+	"github.com/rightscale/goamz/dynamodb"
 	"gopkg.in/check.v1"
 	"time"
 )

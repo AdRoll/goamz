@@ -10,7 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/crowdmob/goamz/kinesis"
+	"github.com/rightscale/goamz/kinesis"
 	"path/filepath"
 	"reflect"
 	"runtime"

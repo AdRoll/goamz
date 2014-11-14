@@ -2,9 +2,9 @@ package elb_test
 
 import (
 	"flag"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/ec2"
-	"github.com/crowdmob/goamz/elb"
+	"github.com/rightscale/goamz/aws"
+	"github.com/rightscale/goamz/ec2"
+	"github.com/rightscale/goamz/elb"
 	"gopkg.in/check.v1"
 )
 

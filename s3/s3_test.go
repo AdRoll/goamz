@@ -2,9 +2,9 @@ package s3_test
 
 import (
 	"bytes"
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/s3"
-	"github.com/crowdmob/goamz/testutil"
+	"github.com/rightscale/goamz/aws"
+	"github.com/rightscale/goamz/s3"
+	"github.com/rightscale/goamz/testutil"
 	"gopkg.in/check.v1"
 	"io/ioutil"
 	"net/http"
