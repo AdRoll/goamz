@@ -22,17 +22,8 @@ func Marshal(v interface{}) (b []byte, err error) {
 			err = r.(error)
 		}
 	}()
-	rv := reflect.ValueOf(v)
-	t := rv.Type()
 	var buf bytes.Buffer
-	switch t.Kind() {
-	case reflect.Struct:
-		marshalStruct(&buf, rv, true)
-	case reflect.Map:
-		marshalMap(&buf, rv, true)
-	default:
-		return nil, errors.New("top level object must be a struct or map")
-	}
+	marshal(&buf, reflect.ValueOf(v))
 	return buf.Bytes(), nil
 }
 
@@ -52,9 +43,9 @@ func marshal(buf *bytes.Buffer, v reflect.Value) {
 	case reflect.Interface:
 		marshalInterface(buf, v)
 	case reflect.Struct:
-		marshalStruct(buf, v, false)
+		marshalStruct(buf, v)
 	case reflect.Map:
-		marshalMap(buf, v, false)
+		marshalMap(buf, v)
 	case reflect.Slice:
 		marshalSlice(buf, v)
 	case reflect.Array:
@@ -102,12 +93,8 @@ func marshalFloat(buf *bytes.Buffer, v reflect.Value) {
 	buf.WriteString(fmt.Sprintf(`{"N":"%s"}`, string(b)))
 }
 
-func marshalStruct(buf *bytes.Buffer, v reflect.Value, outer bool) {
-	if outer {
-		buf.WriteByte('{')
-	} else {
-		buf.WriteString(`{"M":{`)
-	}
+func marshalStruct(buf *bytes.Buffer, v reflect.Value) {
+	buf.WriteString(`{"M":{`)
 	t := v.Type()
 	n := t.NumField()
 	if n > 0 {
@@ -123,26 +110,15 @@ func marshalStruct(buf *bytes.Buffer, v reflect.Value, outer bool) {
 			marshal(buf, v.FieldByIndex(f.Index))
 		}
 	}
-	if outer {
-		buf.WriteByte('}')
-	} else {
-		buf.WriteString(`}}`)
-	}
+	buf.WriteString(`}}`)
 }
 
-func marshalMap(buf *bytes.Buffer, v reflect.Value, outer bool) {
+func marshalMap(buf *bytes.Buffer, v reflect.Value) {
 	if v.IsNil() {
-		if outer {
-			panic(errors.New("outer map is nil"))
-		}
 		buf.WriteString(`{"NULL":"true"}`)
 		return
 	}
-	if outer {
-		buf.WriteByte('{')
-	} else {
-		buf.WriteString(`{"M":{`)
-	}
+	buf.WriteString(`{"M":{`)
 	first := true
 	for _, k := range v.MapKeys() {
 		if first {
@@ -155,11 +131,7 @@ func marshalMap(buf *bytes.Buffer, v reflect.Value, outer bool) {
 		buf.WriteString(fmt.Sprintf(`"%s":`, k.Convert(reflect.TypeOf(s)).String()))
 		marshal(buf, v.MapIndex(k))
 	}
-	if outer {
-		buf.WriteByte('}')
-	} else {
-		buf.WriteString(`}}`)
-	}
+	buf.WriteString(`}}`)
 }
 
 func marshalSlice(buf *bytes.Buffer, v reflect.Value) {
