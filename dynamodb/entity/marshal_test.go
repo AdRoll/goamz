@@ -97,6 +97,23 @@ func TestMarshalMap(t *testing.T) {
 	testMarshal(t, m2, `{"M":{"Map":{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}},"Nil":{"NULL":"true"}}}`)
 }
 
+func TestMarshalArray(t *testing.T) {
+	var a [5]interface{}
+	a[0] = 3.14
+	a[1] = -2
+	a[2] = true
+	a[3] = "and a string!"
+	a[4] = nil
+	testMarshal(t, a, `{"L":[{"N":"3.14"},{"N":"-2"},{"BOOL":true},{"S":"and a string!"},{"NULL":"true"}]}`)
+	// Test again treating the array as a slice.
+	var s []interface{} = a[:]
+	testMarshal(t, s, `{"L":[{"N":"3.14"},{"N":"-2"},{"BOOL":true},{"S":"and a string!"},{"NULL":"true"}]}`)
+}
+
+func TestMarshalSlice(t *testing.T) {
+	s := []interface{}{3.14, -2, true, "and a string!", nil}
+	testMarshal(t, s, `{"L":[{"N":"3.14"},{"N":"-2"},{"BOOL":true},{"S":"and a string!"},{"NULL":"true"}]}`)
+}
 func TestMarshalPtr(t *testing.T) {
 	// Pointers aren't supported, this should be an error (and not a panic).
 	m := make([]int, 1)

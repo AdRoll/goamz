@@ -49,9 +49,9 @@ func marshal(buf *bytes.Buffer, v reflect.Value) {
 	case reflect.Map:
 		marshalMap(buf, v)
 	case reflect.Slice:
-		fallthrough
+		marshalSlice(buf, v)
 	case reflect.Array:
-		fallthrough
+		marshalArray(buf, v)
 	case reflect.Ptr, reflect.Uintptr:
 		fallthrough
 	default:
@@ -106,7 +106,7 @@ func marshalStruct(buf *bytes.Buffer, v reflect.Value) {
 			if first {
 				first = false
 			} else {
-				buf.WriteString(`,`)
+				buf.WriteByte(',')
 			}
 			buf.WriteString(fmt.Sprintf(`"%s":`, f.Name))
 			marshal(buf, v.FieldByIndex(f.Index))
@@ -116,6 +116,10 @@ func marshalStruct(buf *bytes.Buffer, v reflect.Value) {
 }
 
 func marshalMap(buf *bytes.Buffer, v reflect.Value) {
+	if v.IsNil() {
+		buf.WriteString(`{"NULL":"true"}`)
+		return
+	}
 	buf.WriteString(`{"M":{`)
 	first := true
 	for _, k := range v.MapKeys() {
@@ -130,4 +134,24 @@ func marshalMap(buf *bytes.Buffer, v reflect.Value) {
 		marshal(buf, v.MapIndex(k))
 	}
 	buf.WriteString(`}}`)
+}
+
+func marshalSlice(buf *bytes.Buffer, v reflect.Value) {
+	if v.IsNil() {
+		buf.WriteString(`{"NULL":"true"}`)
+		return
+	}
+	marshalArray(buf, v)
+}
+
+func marshalArray(buf *bytes.Buffer, v reflect.Value) {
+	buf.WriteString(`{"L":[`)
+	n := v.Len()
+	for i := 0; i < n; i++ {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		marshal(buf, v.Index(i))
+	}
+	buf.WriteString(`]}`)
 }
