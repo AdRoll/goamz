@@ -58,7 +58,10 @@ func TestMarshalInt(t *testing.T) {
 
 func TestMarshalFloat(t *testing.T) {
 	testMarshal(t, 3.14, `{"N":"3.14"}`)
-	testMarshal(t, -99.99, `{"N":"-99.99"}`)
+	var f32 float32 = -99.99
+	testMarshal(t, f32, `{"N":"-99.98999786376953"}`)
+	var f64 float64 = math.MaxFloat32 + 1
+	testMarshal(t, f64, `{"N":"3.4028234663852886e+38"}`)
 }
 
 func TestMarshalString(t *testing.T) {

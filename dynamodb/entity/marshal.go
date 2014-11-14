@@ -36,9 +36,7 @@ func marshal(buf *bytes.Buffer, v reflect.Value) {
 		fallthrough
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		marshalInt(buf, v)
-	case reflect.Float32:
-		fallthrough
-	case reflect.Float64:
+	case reflect.Float32, reflect.Float64:
 		marshalFloat(buf, v)
 	case reflect.String:
 		marshalString(buf, v)
