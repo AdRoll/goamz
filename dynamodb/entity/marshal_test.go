@@ -23,7 +23,7 @@ func testMarshalError(t *testing.T, v interface{}, expected error) {
 func testMarshal(t *testing.T, v interface{}, expected string) {
 	b, err := Marshal(v)
 	if err != nil {
-		t.Errorf("Expected %s, got error %s", expected, err.Error())
+		t.Errorf("Expected %s, got error '%s'", expected, err.Error())
 	}
 	actual := string(b)
 	if actual != expected {
@@ -50,6 +50,45 @@ func TestMarshalFloat(t *testing.T) {
 func TestMarshalString(t *testing.T) {
 	testMarshal(t, "this is a string", `{"S":"this is a string"}`)
 	testMarshal(t, `"this is a string"`, `{"S":"\"this is a string\""}`)
+}
+
+type simpleStruct struct {
+	Int    int
+	String string
+}
+
+type complexStruct struct {
+	Int    int
+	String string
+	Simple simpleStruct
+}
+
+func TestMarshalStruct(t *testing.T) {
+	simple := simpleStruct{4, "this is a string"}
+	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
+	// deserialized objects.
+	testMarshal(t, simple, `{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}}`)
+	complex := complexStruct{11, "blah", simple}
+	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
+	// deserialized objects.
+	testMarshal(t, complex, `{"M":{"Int":{"N":"11"},"String":{"S":"blah"},"Simple":{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}}}}`)
+}
+
+func TestMarshalMap(t *testing.T) {
+	m1 := map[string]interface{}{
+		"Int":    4,
+		"String": "this is a string"}
+	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
+	// deserialized objects.
+	testMarshal(t, m1, `{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}}`)
+	m2 := map[string]interface{}{
+		"Map": map[string]interface{}{
+			"Int":    4,
+			"String": "this is a string"},
+		"Nil": nil}
+	// TODO: JSON isn't ordered, so this test can fail. Need to compare the
+	// deserialized objects.
+	testMarshal(t, m2, `{"M":{"Map":{"M":{"Int":{"N":"4"},"String":{"S":"this is a string"}}},"Nil":{"NULL":"true"}}}`)
 }
 
 func TestMarshalPtr(t *testing.T) {

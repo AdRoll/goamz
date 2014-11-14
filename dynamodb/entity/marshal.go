@@ -42,15 +42,17 @@ func marshal(buf *bytes.Buffer, v reflect.Value) {
 		marshalFloat(buf, v)
 	case reflect.String:
 		marshalString(buf, v)
+	case reflect.Interface:
+		marshalInterface(buf, v)
 	case reflect.Struct:
-		fallthrough
+		marshalStruct(buf, v)
 	case reflect.Map:
-		fallthrough
+		marshalMap(buf, v)
 	case reflect.Slice:
 		fallthrough
 	case reflect.Array:
 		fallthrough
-	case reflect.Interface, reflect.Ptr, reflect.Uintptr:
+	case reflect.Ptr, reflect.Uintptr:
 		fallthrough
 	default:
 		panic(errors.New(fmt.Sprintf(`the type %s is not supported`, t.Kind())))
@@ -73,6 +75,14 @@ func marshalString(buf *bytes.Buffer, v reflect.Value) {
 	buf.WriteString(fmt.Sprintf(`{"S":%s}`, string(b)))
 }
 
+func marshalInterface(buf *bytes.Buffer, v reflect.Value) {
+	if v.IsNil() {
+		buf.WriteString(`{"NULL":"true"}`)
+		return
+	}
+	marshal(buf, v.Elem())
+}
+
 func marshalInt(buf *bytes.Buffer, v reflect.Value) {
 	buf.WriteString(fmt.Sprintf(`{"N":"%d"}`, v.Int()))
 }
@@ -83,4 +93,41 @@ func marshalFloat(buf *bytes.Buffer, v reflect.Value) {
 		panic(err)
 	}
 	buf.WriteString(fmt.Sprintf(`{"N":"%s"}`, string(b)))
+}
+
+func marshalStruct(buf *bytes.Buffer, v reflect.Value) {
+	buf.WriteString(`{"M":{`)
+	t := v.Type()
+	n := t.NumField()
+	if n > 0 {
+		first := true
+		for i := 0; i < n; i++ {
+			f := t.Field(i)
+			if first {
+				first = false
+			} else {
+				buf.WriteString(`,`)
+			}
+			buf.WriteString(fmt.Sprintf(`"%s":`, f.Name))
+			marshal(buf, v.FieldByIndex(f.Index))
+		}
+	}
+	buf.WriteString(`}}`)
+}
+
+func marshalMap(buf *bytes.Buffer, v reflect.Value) {
+	buf.WriteString(`{"M":{`)
+	first := true
+	for _, k := range v.MapKeys() {
+		if first {
+			first = false
+		} else {
+			buf.WriteString(`,`)
+		}
+		// Get the key as a string.
+		var s string
+		buf.WriteString(fmt.Sprintf(`"%s":`, k.Convert(reflect.TypeOf(s)).String()))
+		marshal(buf, v.MapIndex(k))
+	}
+	buf.WriteString(`}}`)
 }
