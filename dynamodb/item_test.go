@@ -288,6 +288,25 @@ func (s *ItemSuite) TestPutGetDeleteItem(c *check.C) {
 	c.Check(err.Error(), check.Matches, "Item not found")
 }
 
+func (s *ItemSuite) TestPutGetDeleteEntity(c *check.C) {
+	if s.WithRange {
+		// HashKey only for now
+		return
+	}
+
+	entity := map[string]interface{}{
+		"TestHashKey": "NewHashKeyVal",
+		"Attr1":       "Attr1Val"}
+
+	// Put
+	if ok, err := s.table.PutEntity(entity); !ok {
+		c.Fatal(err)
+	}
+
+	// TODO: get entity
+	// TODO: delete entity
+}
+
 func (s *ItemSuite) TestUpdateItem(c *check.C) {
 	attrs := []Attribute{
 		*NewNumericAttribute("count", "0"),

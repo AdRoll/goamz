@@ -6,12 +6,32 @@ import (
 	"errors"
 	"math"
 	"reflect"
+	"runtime"
 	"testing"
 	"unsafe"
 )
 
+// Includes the panic trapping from Marshal
+func marshalWrapper(v interface{}) (b []byte, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			if s, ok := r.(string); ok {
+				panic(s)
+			}
+			b = nil
+			err = r.(error)
+		}
+	}()
+	var buf bytes.Buffer
+	marshal(&buf, reflect.ValueOf(v))
+	return buf.Bytes(), nil
+}
+
 func testMarshalError(t *testing.T, v interface{}, expected error) {
-	b, err := Marshal(v)
+	b, err := marshalWrapper(v)
 	if err == nil {
 		t.Errorf("Expected error '%s', got %s", expected.Error(), string(b))
 	}
@@ -24,7 +44,7 @@ func testMarshalError(t *testing.T, v interface{}, expected error) {
 }
 
 func testMarshal(t *testing.T, v interface{}, expectedString string) {
-	b, err := Marshal(v)
+	b, err := marshalWrapper(v)
 	if err != nil {
 		t.Errorf("Expected %s, got error '%s'", expectedString, err.Error())
 	}

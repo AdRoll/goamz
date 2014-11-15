@@ -2,6 +2,8 @@ package dynamodb
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/cbroglie/goamz/dynamodb/entity"
 	"sort"
 )
 
@@ -229,8 +231,21 @@ func buildComparisons(comparisons []AttributeComparison) msi {
 }
 
 // The primary key must be included in attributes.
-func (q *Query) AddItem(attributes []Attribute) {
+func (q *Query) AddItem(attributes []Attribute) error {
+	if _, ok := q.buffer["Item"]; ok {
+		return errors.New("Cannot call AddItem/AddEntity multiple times")
+	}
 	q.buffer["Item"] = attributeList(attributes)
+	return nil
+}
+
+// The primary key must be included in the entity.
+func (q *Query) AddEntity(entity *entity.Entity) error {
+	if _, ok := q.buffer["Item"]; ok {
+		return errors.New("Cannot call AddItem/AddEntity multiple times")
+	}
+	q.buffer["Item"] = entity
+	return nil
 }
 
 func (q *Query) AddUpdates(attributes []Attribute, action string) {

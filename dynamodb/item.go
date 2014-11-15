@@ -4,6 +4,7 @@ import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
 	"fmt"
+	"github.com/cbroglie/goamz/dynamodb/entity"
 	"log"
 	"time"
 )
@@ -173,6 +174,15 @@ func (t *Table) ConditionalPutItem(hashKey, rangeKey string, attributes, expecte
 	return t.putItem(hashKey, rangeKey, attributes, expected)
 }
 
+func (t *Table) PutEntity(data interface{}) (bool, error) {
+	q := NewQuery(t)
+	if err := q.AddEntity(entity.New(data)); err != nil {
+		return false, err
+	}
+
+	return t.runPutItemQuery(q)
+}
+
 func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
@@ -183,11 +193,17 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 	keys := t.Key.Clone(hashKey, rangeKey)
 	attributes = append(attributes, keys...)
 
-	q.AddItem(attributes)
+	if err := q.AddItem(attributes); err != nil {
+		return false, err
+	}
 	if expected != nil {
 		q.AddExpected(expected)
 	}
 
+	return t.runPutItemQuery(q)
+}
+
+func (t *Table) runPutItemQuery(q *Query) (bool, error) {
 	var jsonResponse []byte
 	var err error
 	// based on:
