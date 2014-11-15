@@ -48,7 +48,7 @@ func (batchGetItem *BatchGetItem) Execute() (map[string][]map[string]*Attribute,
 	q := NewEmptyQuery()
 	q.AddGetRequestItems(batchGetItem.Keys)
 
-	jsonResponse, err := batchGetItem.Server.queryServer("DynamoDB_20120810.BatchGetItem", q)
+	jsonResponse, err := batchGetItem.Server.queryServer(target("BatchGetItem"), q)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (batchWriteItem *BatchWriteItem) Execute() (map[string]interface{}, error) 
 	q := NewEmptyQuery()
 	q.AddWriteRequestItems(batchWriteItem.ItemActions)
 
-	jsonResponse, err := batchWriteItem.Server.queryServer("DynamoDB_20120810.BatchWriteItem", q)
+	jsonResponse, err := batchWriteItem.Server.queryServer(target("BatchWriteItem"), q)
 
 	if err != nil {
 		return nil, err
