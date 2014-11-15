@@ -3,7 +3,7 @@ package dynamodb
 import (
 	"encoding/json"
 	"errors"
-	"github.com/cbroglie/goamz/dynamodb/entity"
+	"github.com/crowdmob/goamz/dynamodb/entity"
 	"sort"
 )
 

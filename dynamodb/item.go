@@ -4,7 +4,7 @@ import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
 	"fmt"
-	"github.com/cbroglie/goamz/dynamodb/entity"
+	"github.com/crowdmob/goamz/dynamodb/entity"
 	"log"
 	"time"
 )
