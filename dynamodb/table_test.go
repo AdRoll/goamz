@@ -1,20 +1,19 @@
-package dynamodb_test
+package dynamodb
 
 import (
 	"fmt"
-	"github.com/crowdmob/goamz/dynamodb"
 	"gopkg.in/check.v1"
 )
 
 type TableSuite struct {
-	TableDescriptionT dynamodb.TableDescriptionT
+	TableDescriptionT TableDescriptionT
 	DynamoDBTest
 }
 
 func (s *TableSuite) SetUpSuite(c *check.C) {
 	setUpAuth(c)
 	s.DynamoDBTest.TableDescriptionT = s.TableDescriptionT
-	s.server = dynamodb.New(dynamodb_auth, dynamodb_region)
+	s.server = New(dynamodb_auth, dynamodb_region)
 	pk, err := s.TableDescriptionT.BuildPrimaryKey()
 	if err != nil {
 		c.Skip(err.Error())
@@ -26,17 +25,17 @@ func (s *TableSuite) SetUpSuite(c *check.C) {
 }
 
 var table_suite = &TableSuite{
-	TableDescriptionT: dynamodb.TableDescriptionT{
+	TableDescriptionT: TableDescriptionT{
 		TableName: "DynamoDBTestMyTable",
-		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
-			dynamodb.AttributeDefinitionT{"TestHashKey", "S"},
-			dynamodb.AttributeDefinitionT{"TestRangeKey", "N"},
+		AttributeDefinitions: []AttributeDefinitionT{
+			AttributeDefinitionT{"TestHashKey", "S"},
+			AttributeDefinitionT{"TestRangeKey", "N"},
 		},
-		KeySchema: []dynamodb.KeySchemaT{
-			dynamodb.KeySchemaT{"TestHashKey", "HASH"},
-			dynamodb.KeySchemaT{"TestRangeKey", "RANGE"},
+		KeySchema: []KeySchemaT{
+			KeySchemaT{"TestHashKey", "HASH"},
+			KeySchemaT{"TestRangeKey", "RANGE"},
 		},
-		ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+		ProvisionedThroughput: ProvisionedThroughputT{
 			ReadCapacityUnits:  1,
 			WriteCapacityUnits: 1,
 		},
@@ -44,31 +43,31 @@ var table_suite = &TableSuite{
 }
 
 var table_suite_gsi = &TableSuite{
-	TableDescriptionT: dynamodb.TableDescriptionT{
+	TableDescriptionT: TableDescriptionT{
 		TableName: "DynamoDBTestMyTable2",
-		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
-			dynamodb.AttributeDefinitionT{"UserId", "S"},
-			dynamodb.AttributeDefinitionT{"OSType", "S"},
-			dynamodb.AttributeDefinitionT{"IMSI", "S"},
+		AttributeDefinitions: []AttributeDefinitionT{
+			AttributeDefinitionT{"UserId", "S"},
+			AttributeDefinitionT{"OSType", "S"},
+			AttributeDefinitionT{"IMSI", "S"},
 		},
-		KeySchema: []dynamodb.KeySchemaT{
-			dynamodb.KeySchemaT{"UserId", "HASH"},
-			dynamodb.KeySchemaT{"OSType", "RANGE"},
+		KeySchema: []KeySchemaT{
+			KeySchemaT{"UserId", "HASH"},
+			KeySchemaT{"OSType", "RANGE"},
 		},
-		ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+		ProvisionedThroughput: ProvisionedThroughputT{
 			ReadCapacityUnits:  1,
 			WriteCapacityUnits: 1,
 		},
-		GlobalSecondaryIndexes: []dynamodb.GlobalSecondaryIndexT{
-			dynamodb.GlobalSecondaryIndexT{
+		GlobalSecondaryIndexes: []GlobalSecondaryIndexT{
+			GlobalSecondaryIndexT{
 				IndexName: "IMSIIndex",
-				KeySchema: []dynamodb.KeySchemaT{
-					dynamodb.KeySchemaT{"IMSI", "HASH"},
+				KeySchema: []KeySchemaT{
+					KeySchemaT{"IMSI", "HASH"},
 				},
-				Projection: dynamodb.ProjectionT{
+				Projection: ProjectionT{
 					ProjectionType: "KEYS_ONLY",
 				},
-				ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+				ProvisionedThroughput: ProvisionedThroughputT{
 					ReadCapacityUnits:  1,
 					WriteCapacityUnits: 1,
 				},
