@@ -230,6 +230,25 @@ func (t *Table) ConditionalDeleteItem(key *Key, expected []Attribute) (bool, err
 	return t.deleteItem(key, expected)
 }
 
+func (t *Table) ConditionExpressionUpdateAttributes(key *Key, update []ExpressionAttribute, condition string) (bool, error) {
+	q := NewQuery(t)
+	q.AddKey(t, key)
+	q.AddUpdateExpression(update)
+	q.AddConditionExpression(condition)
+
+	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
 	return t.modifyAttributes(key, attributes, nil, "ADD")
 }

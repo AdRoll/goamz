@@ -3,6 +3,7 @@ package dynamodb
 import (
 	"encoding/json"
 	"sort"
+	"strings"
 )
 
 type msi map[string]interface{}
@@ -252,6 +253,49 @@ func (q *Query) AddUpdates(attributes []Attribute, action string) {
 	q.buffer["AttributeUpdates"] = updates
 }
 
+func (q *Query) AddUpdateExpression(attrs []ExpressionAttribute) {
+	exprAttrNames := msi{}
+	exprAttrValues := msi{}
+	exprAttrActions := map[string][]string{}
+
+	for _, attr := range attrs {
+		exprAttrNames[attr.ExpressionName] = attr.Name
+
+		if _, found := exprAttrActions[attr.Action]; !found {
+			exprAttrActions[attr.Action] = []string{}
+		}
+
+		stmt := ""
+		switch attr.Action {
+		case "SET":
+			stmt = attr.ExpressionName + " = " + attr.ExpressionValueName
+			exprAttrValues[attr.ExpressionValueName] = msi{attr.Type: attr.Value}
+		case "REMOVE":
+			stmt = attr.ExpressionName
+		case "ADD", "DELETE":
+			stmt = attr.ExpressionName + " " + attr.ExpressionValueName
+			exprAttrValues[attr.ExpressionValueName] = msi{attr.Type: attr.Value}
+		default:
+			panic("invalid UpdateExpression action: " + attr.Action)
+		}
+
+		exprAttrActions[attr.Action] = append(exprAttrActions[attr.Action], stmt)
+	}
+
+	exprUpdates := []string{}
+	for action, exprs := range exprAttrActions {
+		exprUpdates = append(exprUpdates, action+" "+strings.Join(exprs, ", "))
+	}
+
+	q.buffer["UpdateExpression"] = strings.Join(exprUpdates, " ")
+
+	q.buffer["ExpressionAttributeNames"] = exprAttrNames
+
+	if len(exprAttrValues) > 0 {
+		q.buffer["ExpressionAttributeValues"] = exprAttrValues
+	}
+}
+
 func (q *Query) AddExpected(attributes []Attribute) {
 	expected := msi{}
 	for _, a := range attributes {
@@ -266,6 +310,12 @@ func (q *Query) AddExpected(attributes []Attribute) {
 		expected[a.Name] = value
 	}
 	q.buffer["Expected"] = expected
+}
+
+func (q *Query) AddConditionExpression(expression string) {
+	if expression != "" {
+		q.buffer["ConditionExpression"] = expression
+	}
 }
 
 func attributeList(attributes []Attribute) msi {

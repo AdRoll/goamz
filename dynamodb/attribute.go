@@ -1,13 +1,18 @@
 package dynamodb
 
 import (
+	"regexp"
 	"strconv"
 )
 
 const (
-	TYPE_STRING = "S"
-	TYPE_NUMBER = "N"
-	TYPE_BINARY = "B"
+	TYPE_BOOLEAN = "BOOL"
+	TYPE_STRING  = "S"
+	TYPE_NUMBER  = "N"
+	TYPE_BINARY  = "B"
+
+	TYPE_LIST = "L"
+	TYPE_MAP  = "M"
 
 	TYPE_STRING_SET = "SS"
 	TYPE_NUMBER_SET = "NS"
@@ -91,6 +96,39 @@ func NewBinaryAttributeComparison(attributeName string, comparisonOperator strin
 		[]Attribute{*valueToCompare},
 	}
 }
+
+//-----------------------------------------------------------------------------
+// Expression Attribute
+//-----------------------------------------------------------------------------
+
+var filterExpressionName = regexp.MustCompile(`\W`)
+
+type ExpressionAttribute struct {
+	Action string
+
+	Name  string
+	Type  string
+	Value interface{}
+
+	ExpressionName      string
+	ExpressionValueName string
+}
+
+func NewExpressionAttribute(action, name, atype string, value interface{}) *ExpressionAttribute {
+	expra := ExpressionAttribute{Action: action, Name: name, Type: atype, Value: value}
+
+	// generate expression name
+	exprName := filterExpressionName.ReplaceAllString(name, "")
+
+	expra.ExpressionName = "#" + exprName
+	expra.ExpressionValueName = ":" + exprName
+
+	return &expra
+}
+
+//-----------------------------------------------------------------------------
+// Attribute
+//-----------------------------------------------------------------------------
 
 func NewStringAttribute(name string, value string) *Attribute {
 	return &Attribute{
