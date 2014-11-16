@@ -303,7 +303,23 @@ func (s *ItemSuite) TestPutGetDeleteEntity(c *check.C) {
 		c.Fatal(err)
 	}
 
-	// TODO: get entity
+	// Get
+	var result interface{}
+	if err := s.table.GetEntity(&Key{HashKey: "NewHashKeyVal"}, &result); err != nil {
+		c.Fatal(err)
+	}
+
+	if val, ok := result.(map[string]interface{})["TestHashKey"]; ok {
+		c.Check(val, check.DeepEquals, entity["TestHashKey"])
+	} else {
+		c.Error("Expect TestHashKey to be found")
+	}
+	if val, ok := result.(map[string]interface{})["Attr1"]; ok {
+		c.Check(val, check.DeepEquals, entity["Attr1"])
+	} else {
+		c.Error("Expect Attr1 to be found")
+	}
+
 	// TODO: delete entity
 }
 
