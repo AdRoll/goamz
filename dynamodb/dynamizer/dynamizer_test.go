@@ -124,7 +124,9 @@ func TestStruct(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	compareObjects(t, expected, actual)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Did not get back the expected typed struct")
+	}
 }
 
 // What we're trying to do here is compare the JSON encoded values, but we can't
