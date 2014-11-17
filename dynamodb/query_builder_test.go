@@ -152,7 +152,7 @@ func (s *QueryBuilderSuite) TestAddExpectedQuery(c *check.C) {
 	table := s.server.NewTable("sites", key)
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test"})
+	q.AddKey(&Key{HashKey: "test"})
 
 	expected := []Attribute{
 		*NewStringAttribute("domain", "expectedTest").SetExists(true),
@@ -198,7 +198,7 @@ func (s *QueryBuilderSuite) TestGetItemQuery(c *check.C) {
 	table := s.server.NewTable("sites", key)
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test"})
+	q.AddKey(&Key{HashKey: "test"})
 
 	{
 		queryJson, err := simplejson.NewJson([]byte(q.String()))
@@ -258,7 +258,7 @@ func (s *QueryBuilderSuite) TestUpdateQuery(c *check.C) {
 	attributes := []Attribute{*countAttribute}
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test", RangeKey: "1234"})
+	q.AddKey(&Key{HashKey: "test", RangeKey: "1234"})
 	q.AddUpdates(attributes, "ADD")
 
 	queryJson, err := simplejson.NewJson([]byte(q.String()))
@@ -298,7 +298,7 @@ func (s *QueryBuilderSuite) TestAddUpdates(c *check.C) {
 	table := s.server.NewTable("sites", key)
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test"})
+	q.AddKey(&Key{HashKey: "test"})
 
 	attr := NewStringSetAttribute("StringSet", []string{"str", "str2"})
 

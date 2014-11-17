@@ -65,7 +65,7 @@ func (t *Table) FetchResultCallbackIterator(query Query, cb func(map[string]*Att
 		if lastEvaluatedKey == nil {
 			break
 		}
-		query.AddExclusiveStartKey(t, lastEvaluatedKey)
+		query.AddExclusiveStartKey(lastEvaluatedKey)
 	}
 
 	return nil
@@ -87,7 +87,7 @@ func (t *Table) ParallelScanPartialLimit(attributeComparisons []AttributeCompari
 	q := NewQuery(t)
 	q.AddScanFilter(attributeComparisons)
 	if exclusiveStartKey != nil {
-		q.AddExclusiveStartKey(t, exclusiveStartKey)
+		q.AddExclusiveStartKey(exclusiveStartKey)
 	}
 	if totalSegments > 0 {
 		q.AddParallelScanConfiguration(segment, totalSegments)

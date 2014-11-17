@@ -8,8 +8,8 @@ import (
 )
 
 type Query interface {
-	AddKey(t *Table, key *Key) error
-	AddExclusiveStartKey(t *Table, key *Key) error
+	AddKey(key *Key) error
+	AddExclusiveStartKey(key *Key) error
 	AddExclusiveStartTableName(table string) error
 	SetConsistentRead(c bool) error
 	String() string

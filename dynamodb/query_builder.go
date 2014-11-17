@@ -2,28 +2,33 @@ package dynamodb
 
 import (
 	"encoding/json"
+	"errors"
 	"sort"
 )
 
 type msi map[string]interface{}
 type UntypedQuery struct {
 	buffer msi
+	table  *Table
 }
 
 func NewEmptyQuery() *UntypedQuery {
-	return &UntypedQuery{msi{}}
+	return &UntypedQuery{msi{}, nil}
 }
 
 func NewQuery(t *Table) *UntypedQuery {
-	q := &UntypedQuery{msi{}}
+	q := &UntypedQuery{msi{}, t}
 	q.addTable(t)
 	return q
 }
 
 // This way of specifing the key is used when doing a Get.
 // If rangeKey is "", it is assumed to not want to be used
-func (q *UntypedQuery) AddKey(t *Table, key *Key) error {
-	k := t.Key
+func (q *UntypedQuery) AddKey(key *Key) error {
+	if q.table == nil {
+		return errors.New("Table is nil")
+	}
+	k := q.table.Key
 	keymap := msi{
 		k.KeyAttribute.Name: msi{
 			k.KeyAttribute.Type: key.HashKey},
@@ -36,8 +41,11 @@ func (q *UntypedQuery) AddKey(t *Table, key *Key) error {
 	return nil
 }
 
-func (q *UntypedQuery) AddExclusiveStartKey(t *Table, key *Key) error {
-	q.buffer["ExclusiveStartKey"] = keyAttributes(t, key)
+func (q *UntypedQuery) AddExclusiveStartKey(key *Key) error {
+	if q.table == nil {
+		return errors.New("Table is nil")
+	}
+	q.buffer["ExclusiveStartKey"] = keyAttributes(q.table, key)
 	return nil
 }
 

@@ -1,9 +1,11 @@
 package dynamodb
 
-import simplejson "github.com/bitly/go-simplejson"
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	simplejson "github.com/bitly/go-simplejson"
+	"github.com/crowdmob/goamz/dynamodb/dynamizer"
 	"log"
 	"time"
 )
@@ -133,16 +135,13 @@ func (t *Table) GetItemConsistent(key *Key, consistentRead bool) (map[string]*At
 
 func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, error) {
 	q := NewQuery(t)
-	q.AddKey(t, key)
+	q.AddKey(key)
 
 	if consistentRead {
 		q.SetConsistentRead(consistentRead)
 	}
 
-	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
-	if err != nil {
-		return nil, err
-	}
+	jsonResponse, err := t.runGetItemQuery(q)
 
 	json, err := simplejson.NewJson(jsonResponse)
 	if err != nil {
@@ -162,7 +161,36 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 	}
 
 	return parseAttributes(item), nil
+}
 
+func (t *Table) GetDocument(key *Key) (interface{}, error) {
+	return t.GetDocumentConsistent(key, false)
+}
+
+func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool) (interface{}, error) {
+	q := NewDynamoQuery(t)
+	q.AddKey(key)
+
+	if consistentRead {
+		q.SetConsistentRead(consistentRead)
+	}
+
+	jsonResponse, err := t.runGetItemQuery(q)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: This is wrong
+	return jsonResponse, nil
+}
+
+func (t *Table) runGetItemQuery(q Query) ([]byte, error) {
+	// TODO: implement retry logic
+	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonResponse, nil
 }
 
 func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
@@ -202,15 +230,23 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 }
 
 func (t *Table) PutDocument(key *Key, data interface{}) (bool, error) {
+	item, err := dynamizer.ToDynamo(data)
+	if err != nil {
+		return false, err
+	}
+
 	q := NewDynamoQuery(t)
-	q.AddItem(key, data)
+	q.AddItem(key, item)
 
 	jsonResponse, err := t.runPutItemQuery(q)
 	if err != nil {
 		return false, err
 	}
 
-	_, err = simplejson.NewJson(jsonResponse)
+	// A successful PUT returns an empty JSON object. Simply checking for valid
+	// JSON here.
+	var response map[string]interface{}
+	err = json.Unmarshal(jsonResponse, &response)
 	if err != nil {
 		return false, err
 	}
@@ -258,7 +294,7 @@ func (t *Table) runPutItemQuery(q Query) ([]byte, error) {
 
 func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {
 	q := NewQuery(t)
-	q.AddKey(t, key)
+	q.AddKey(key)
 
 	if expected != nil {
 		q.AddExpected(expected)
@@ -317,7 +353,7 @@ func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, act
 	}
 
 	q := NewQuery(t)
-	q.AddKey(t, key)
+	q.AddKey(key)
 	q.AddUpdates(attributes, action)
 
 	if expected != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/crowdmob/goamz/aws"
+	"github.com/crowdmob/goamz/dynamodb/dynamizer"
 	"reflect"
 	"testing"
 )
@@ -73,9 +74,13 @@ func testPutQuery(t *testing.T, table *Table, expected string) {
 	data := map[string]interface{}{
 		"Attr1": "Attr1Val",
 		"Attr2": 12}
+	item, err := dynamizer.ToDynamo(data)
+	if err != nil {
+		t.Error(err)
+	}
 
 	q := NewDynamoQuery(table)
-	if err := q.AddItem(key, data); err != nil {
+	if err := q.AddItem(key, item); err != nil {
 		t.Error(err)
 	}
 

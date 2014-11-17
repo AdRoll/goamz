@@ -10,6 +10,7 @@ type DynamoQuery struct {
 	TableName      string               `json:",omitempty"`
 	ConsistentRead string               `json:",omitempty"`
 	Item           dynamizer.DynamoItem `json:",omitempty"`
+	Key            dynamizer.DynamoItem `json:",omitempty"`
 	table          *Table
 }
 
@@ -19,8 +20,13 @@ func NewDynamoQuery(t *Table) *DynamoQuery {
 	return q
 }
 
-func (q *DynamoQuery) AddKey(t *Table, key *Key) error {
-	panic("not implemented")
+func (q *DynamoQuery) AddKey(key *Key) error {
+	// Add in the hash/range keys.
+	keys, err := q.buildKeyMap(key)
+	if err != nil {
+		return err
+	}
+	q.Key = keys
 	return nil
 }
 
@@ -63,17 +69,11 @@ func (q *DynamoQuery) buildKeyMap(key *Key) (dynamizer.DynamoItem, error) {
 	return keyMap, nil
 }
 
-func (q *DynamoQuery) AddItem(key *Key, data interface{}) error {
-	item, err := dynamizer.ToDynamo(data)
+func (q *DynamoQuery) AddItem(key *Key, item dynamizer.DynamoItem) error {
+	// Add in the hash/range keys.
+	keys, err := q.buildKeyMap(key)
 	if err != nil {
 		return err
-	}
-
-	// Add in the hash/range keys. This is done separately from dynamizing the
-	// item in case data is a struct.
-	keys, kerr := q.buildKeyMap(key)
-	if kerr != nil {
-		return kerr
 	}
 	for k, v := range keys {
 		item[k] = v
@@ -84,7 +84,7 @@ func (q *DynamoQuery) AddItem(key *Key, data interface{}) error {
 	return nil
 }
 
-func (q *DynamoQuery) AddExclusiveStartKey(t *Table, key *Key) error {
+func (q *DynamoQuery) AddExclusiveStartKey(key *Key) error {
 	panic("not implemented")
 	return nil
 }
