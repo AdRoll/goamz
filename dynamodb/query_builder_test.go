@@ -224,7 +224,7 @@ func (s *QueryBuilderSuite) TestGetItemQuery(c *check.C) {
 
 	// Use ConsistentRead
 	{
-		q.ConsistentRead(true)
+		q.SetConsistentRead(true)
 		queryJson, err := simplejson.NewJson([]byte(q.String()))
 		if err != nil {
 			c.Fatal(err)

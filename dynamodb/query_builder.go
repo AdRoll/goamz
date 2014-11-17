@@ -64,7 +64,7 @@ func (q *UntypedQuery) AddAttributesToGet(attributes []string) {
 	q.buffer["AttributesToGet"] = attributes
 }
 
-func (q *UntypedQuery) ConsistentRead(c bool) {
+func (q *UntypedQuery) SetConsistentRead(c bool) {
 	if c == true {
 		q.buffer["ConsistentRead"] = "true" //String "true", not bool true
 	}

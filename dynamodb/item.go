@@ -136,7 +136,7 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 	q.AddKey(t, key)
 
 	if consistentRead {
-		q.ConsistentRead(consistentRead)
+		q.SetConsistentRead(consistentRead)
 	}
 
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)

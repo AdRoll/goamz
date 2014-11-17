@@ -11,7 +11,7 @@ type Query interface {
 	AddKey(t *Table, key *Key)
 	AddExclusiveStartKey(t *Table, key *Key)
 	AddExclusiveStartTableName(table string)
-	ConsistentRead(c bool)
+	SetConsistentRead(c bool)
 	String() string
 }
 
