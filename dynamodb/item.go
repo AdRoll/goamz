@@ -4,6 +4,7 @@ import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
 	"fmt"
+	"github.com/crowdmob/goamz/dynamodb/entity"
 	"log"
 	"time"
 )
@@ -139,6 +140,37 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 		q.ConsistentRead(consistentRead)
 	}
 
+	item, err := t.runGetItemQuery(q)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseAttributes(item), nil
+}
+
+func (t *Table) GetEntity(key *Key, e *interface{}) error {
+	q := NewQuery(t)
+	q.AddKey(t, key)
+
+	item, err := t.runGetItemQuery(q)
+	if err != nil {
+		return err
+	}
+
+	// On the read path we need to explicitly unmarshal the entity. The write
+	// path is handled since Entity implements MarshalJSON. It's likely that we
+	// can clean up the read path by implementing UnmarshalJSON (though we would
+	// still need to tell encoding/json that the 'Item' field is an Entity), but
+	// I'm punting on that for now.
+	err = entity.UnmarshalMap(item, e)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *Table) runGetItemQuery(q *Query) (map[string]interface{}, error) {
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
 	if err != nil {
 		return nil, err
@@ -161,8 +193,7 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 		return nil, errors.New(message)
 	}
 
-	return parseAttributes(item), nil
-
+	return item, nil
 }
 
 func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
@@ -171,6 +202,15 @@ func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute)
 
 func (t *Table) ConditionalPutItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
 	return t.putItem(hashKey, rangeKey, attributes, expected)
+}
+
+func (t *Table) PutEntity(data interface{}) (bool, error) {
+	q := NewQuery(t)
+	if err := q.AddEntity(entity.New(data)); err != nil {
+		return false, err
+	}
+
+	return t.runPutItemQuery(q)
 }
 
 func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
@@ -183,11 +223,17 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 	keys := t.Key.Clone(hashKey, rangeKey)
 	attributes = append(attributes, keys...)
 
-	q.AddItem(attributes)
+	if err := q.AddItem(attributes); err != nil {
+		return false, err
+	}
 	if expected != nil {
 		q.AddExpected(expected)
 	}
 
+	return t.runPutItemQuery(q)
+}
+
+func (t *Table) runPutItemQuery(q *Query) (bool, error) {
 	var jsonResponse []byte
 	var err error
 	// based on:
