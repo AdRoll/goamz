@@ -7,6 +7,14 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 )
 
+type Query interface {
+	AddKey(t *Table, key *Key)
+	AddExclusiveStartKey(t *Table, key *Key)
+	AddExclusiveStartTableName(table string)
+	ConsistentRead(c bool)
+	String() string
+}
+
 func (t *Table) Query(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKeyConditions(attributeComparisons)
@@ -56,7 +64,7 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, e
 	return itemCount, nil
 }
 
-func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) QueryTable(q Query) ([]map[string]*Attribute, *Key, error) {
 	jsonResponse, err := t.Server.queryServer(target("Query"), q)
 	if err != nil {
 		return nil, nil, err
@@ -93,7 +101,7 @@ func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
 
 }
 
-func RunQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
+func RunQuery(q Query, t *Table) ([]map[string]*Attribute, error) {
 
 	result, _, err := t.QueryTable(q)
 
