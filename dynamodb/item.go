@@ -188,6 +188,37 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 		q.AddExpected(expected)
 	}
 
+	jsonResponse, err := t.runPutItemQuery(q)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (t *Table) PutDocument(key *Key, data interface{}) (bool, error) {
+	q := NewDynamoQuery(t)
+	q.AddItem(key, data)
+
+	jsonResponse, err := t.runPutItemQuery(q)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = simplejson.NewJson(jsonResponse)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (t *Table) runPutItemQuery(q Query) ([]byte, error) {
 	var jsonResponse []byte
 	var err error
 	// based on:
@@ -219,15 +250,10 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 	}
 
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	_, err = simplejson.NewJson(jsonResponse)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return jsonResponse, nil
 }
 
 func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {

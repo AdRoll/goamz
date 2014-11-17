@@ -412,3 +412,24 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 		}
 	}
 }
+
+func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
+	if s.WithRange {
+		// HashKey only for now
+		return
+	}
+
+	k := &Key{HashKey: "NewHashKeyVal"}
+	data := map[string]interface{}{
+		"Attr1": "Attr1Val",
+		"Attr2": 12,
+	}
+
+	// Put
+	if ok, err := s.table.PutDocument(k, data); !ok {
+		c.Fatal(err)
+	}
+
+	// TODO: get document
+	// TODO: delete document
+}
