@@ -6,23 +6,23 @@ import (
 )
 
 type msi map[string]interface{}
-type Query struct {
+type UntypedQuery struct {
 	buffer msi
 }
 
-func NewEmptyQuery() *Query {
-	return &Query{msi{}}
+func NewEmptyQuery() *UntypedQuery {
+	return &UntypedQuery{msi{}}
 }
 
-func NewQuery(t *Table) *Query {
-	q := &Query{msi{}}
+func NewQuery(t *Table) *UntypedQuery {
+	q := &UntypedQuery{msi{}}
 	q.addTable(t)
 	return q
 }
 
 // This way of specifing the key is used when doing a Get.
 // If rangeKey is "", it is assumed to not want to be used
-func (q *Query) AddKey(t *Table, key *Key) {
+func (q *UntypedQuery) AddKey(t *Table, key *Key) {
 	k := t.Key
 	keymap := msi{
 		k.KeyAttribute.Name: msi{
@@ -35,11 +35,11 @@ func (q *Query) AddKey(t *Table, key *Key) {
 	q.buffer["Key"] = keymap
 }
 
-func (q *Query) AddExclusiveStartKey(t *Table, key *Key) {
+func (q *UntypedQuery) AddExclusiveStartKey(t *Table, key *Key) {
 	q.buffer["ExclusiveStartKey"] = keyAttributes(t, key)
 }
 
-func (q *Query) AddExclusiveStartTableName(table string) {
+func (q *UntypedQuery) AddExclusiveStartTableName(table string) {
 	if table != "" {
 		q.buffer["ExclusiveStartTableName"] = table
 	}
@@ -56,7 +56,7 @@ func keyAttributes(t *Table, key *Key) msi {
 	return out
 }
 
-func (q *Query) AddAttributesToGet(attributes []string) {
+func (q *UntypedQuery) AddAttributesToGet(attributes []string) {
 	if len(attributes) == 0 {
 		return
 	}
@@ -64,13 +64,13 @@ func (q *Query) AddAttributesToGet(attributes []string) {
 	q.buffer["AttributesToGet"] = attributes
 }
 
-func (q *Query) ConsistentRead(c bool) {
+func (q *UntypedQuery) ConsistentRead(c bool) {
 	if c == true {
 		q.buffer["ConsistentRead"] = "true" //String "true", not bool true
 	}
 }
 
-func (q *Query) AddGetRequestItems(tableKeys map[*Table][]Key) {
+func (q *UntypedQuery) AddGetRequestItems(tableKeys map[*Table][]Key) {
 	requestitems := msi{}
 	for table, keys := range tableKeys {
 		keyslist := []msi{}
@@ -82,7 +82,7 @@ func (q *Query) AddGetRequestItems(tableKeys map[*Table][]Key) {
 	q.buffer["RequestItems"] = requestitems
 }
 
-func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attribute) {
+func (q *UntypedQuery) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attribute) {
 	b := q.buffer
 
 	b["RequestItems"] = func() msi {
@@ -114,7 +114,7 @@ func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attrib
 	}()
 }
 
-func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
+func (q *UntypedQuery) AddCreateRequestTable(description TableDescriptionT) {
 	b := q.buffer
 
 	attDefs := []interface{}{}
@@ -165,31 +165,31 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 	}
 }
 
-func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {
+func (q *UntypedQuery) AddDeleteRequestTable(description TableDescriptionT) {
 	b := q.buffer
 	b["TableName"] = description.TableName
 }
 
-func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
+func (q *UntypedQuery) AddKeyConditions(comparisons []AttributeComparison) {
 	q.buffer["KeyConditions"] = buildComparisons(comparisons)
 }
 
-func (q *Query) AddQueryFilter(comparisons []AttributeComparison) {
+func (q *UntypedQuery) AddQueryFilter(comparisons []AttributeComparison) {
 	q.buffer["QueryFilter"] = buildComparisons(comparisons)
 }
 
-func (q *Query) AddLimit(limit int64) {
+func (q *UntypedQuery) AddLimit(limit int64) {
 	q.buffer["Limit"] = limit
 }
-func (q *Query) AddSelect(value string) {
+func (q *UntypedQuery) AddSelect(value string) {
 	q.buffer["Select"] = value
 }
 
-func (q *Query) AddIndex(value string) {
+func (q *UntypedQuery) AddIndex(value string) {
 	q.buffer["IndexName"] = value
 }
 
-func (q *Query) AddScanIndexForward(val bool) {
+func (q *UntypedQuery) AddScanIndexForward(val bool) {
 	if val {
 		q.buffer["ScanIndexForward"] = "true"
 	} else {
@@ -202,11 +202,11 @@ func (q *Query) AddScanIndexForward(val bool) {
        "AttributeName1":{"AttributeValueList":[{"S":"AttributeValue"}],"ComparisonOperator":"EQ"}
    },
 */
-func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
+func (q *UntypedQuery) AddScanFilter(comparisons []AttributeComparison) {
 	q.buffer["ScanFilter"] = buildComparisons(comparisons)
 }
 
-func (q *Query) AddParallelScanConfiguration(segment int, totalSegments int) {
+func (q *UntypedQuery) AddParallelScanConfiguration(segment int, totalSegments int) {
 	q.buffer["Segment"] = segment
 	q.buffer["TotalSegments"] = totalSegments
 }
@@ -229,11 +229,11 @@ func buildComparisons(comparisons []AttributeComparison) msi {
 }
 
 // The primary key must be included in attributes.
-func (q *Query) AddItem(attributes []Attribute) {
+func (q *UntypedQuery) AddItem(attributes []Attribute) {
 	q.buffer["Item"] = attributeList(attributes)
 }
 
-func (q *Query) AddUpdates(attributes []Attribute, action string) {
+func (q *UntypedQuery) AddUpdates(attributes []Attribute, action string) {
 	updates := msi{}
 	for _, a := range attributes {
 		au := msi{
@@ -252,7 +252,7 @@ func (q *Query) AddUpdates(attributes []Attribute, action string) {
 	q.buffer["AttributeUpdates"] = updates
 }
 
-func (q *Query) AddExpected(attributes []Attribute) {
+func (q *UntypedQuery) AddExpected(attributes []Attribute) {
 	expected := msi{}
 	for _, a := range attributes {
 		value := msi{}
@@ -277,15 +277,15 @@ func attributeList(attributes []Attribute) msi {
 	return b
 }
 
-func (q *Query) addTable(t *Table) {
+func (q *UntypedQuery) addTable(t *Table) {
 	q.addTableByName(t.Name)
 }
 
-func (q *Query) addTableByName(tableName string) {
+func (q *UntypedQuery) addTableByName(tableName string) {
 	q.buffer["TableName"] = tableName
 }
 
-func (q *Query) String() string {
+func (q *UntypedQuery) String() string {
 	bytes, _ := json.Marshal(q.buffer)
 	return string(bytes)
 }
