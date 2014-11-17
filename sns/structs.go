@@ -56,7 +56,7 @@ type PlatformEndpointOptions struct {
 // ============ Response ============
 
 type ListTopicsResponse struct {
-	NextToken        string
+	NextToken        string  `xml:"ListTopicsResult>NextToken"`
 	Topics           []Topic `xml:"ListTopicsResult>Topics>member"`
 	ResponseMetadata aws.ResponseMetadata
 	Error            aws.Error
@@ -72,7 +72,7 @@ type DeleteTopicResponse struct {
 }
 
 type ListSubscriptionsResponse struct {
-	NextToken        string
+	NextToken        string         `xml:"ListSubscriptionsResult>NextToken"`
 	Subscriptions    []Subscription `xml:"ListSubscriptionsResult>Subscriptions>member"`
 	ResponseMetadata aws.ResponseMetadata
 }
@@ -123,7 +123,7 @@ type RemovePermissionResponse struct {
 }
 
 type ListSubscriptionByTopicResponse struct {
-	NextToken        string
+	NextToken        string         `xml:"ListSubscriptionsByTopicResult>NextToken"`
 	Subscriptions    []Subscription `xml:"ListSubscriptionsByTopicResult>Subscriptions>member"`
 	ResponseMetadata aws.ResponseMetadata
 }
@@ -157,13 +157,13 @@ type GetPlatformApplicationAttributesResponse struct {
 }
 
 type ListEndpointsByPlatformApplicationResponse struct {
-	NextToken        string
+	NextToken        string     `xml:"ListEndpointsByPlatformApplicationResult>NextToken"`
 	Endpoints        []Endpoint `xml:"ListEndpointsByPlatformApplicationResult>Endpoints>member"`
 	ResponseMetadata aws.ResponseMetadata
 }
 
 type ListPlatformApplicationsResponse struct {
-	NextToken            string
+	NextToken            string                `xml:"ListPlatformApplicationsResult>NextToken"`
 	PlatformApplications []PlatformApplication `xml:"ListPlatformApplicationsResult>PlatformApplications>member"`
 	ResponseMetadata     aws.ResponseMetadata
 }
