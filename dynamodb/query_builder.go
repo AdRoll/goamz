@@ -22,7 +22,7 @@ func NewQuery(t *Table) *UntypedQuery {
 
 // This way of specifing the key is used when doing a Get.
 // If rangeKey is "", it is assumed to not want to be used
-func (q *UntypedQuery) AddKey(t *Table, key *Key) {
+func (q *UntypedQuery) AddKey(t *Table, key *Key) error {
 	k := t.Key
 	keymap := msi{
 		k.KeyAttribute.Name: msi{
@@ -33,16 +33,19 @@ func (q *UntypedQuery) AddKey(t *Table, key *Key) {
 	}
 
 	q.buffer["Key"] = keymap
+	return nil
 }
 
-func (q *UntypedQuery) AddExclusiveStartKey(t *Table, key *Key) {
+func (q *UntypedQuery) AddExclusiveStartKey(t *Table, key *Key) error {
 	q.buffer["ExclusiveStartKey"] = keyAttributes(t, key)
+	return nil
 }
 
-func (q *UntypedQuery) AddExclusiveStartTableName(table string) {
+func (q *UntypedQuery) AddExclusiveStartTableName(table string) error {
 	if table != "" {
 		q.buffer["ExclusiveStartTableName"] = table
 	}
+	return nil
 }
 
 func keyAttributes(t *Table, key *Key) msi {
@@ -64,10 +67,11 @@ func (q *UntypedQuery) AddAttributesToGet(attributes []string) {
 	q.buffer["AttributesToGet"] = attributes
 }
 
-func (q *UntypedQuery) SetConsistentRead(c bool) {
+func (q *UntypedQuery) SetConsistentRead(c bool) error {
 	if c == true {
 		q.buffer["ConsistentRead"] = "true" //String "true", not bool true
 	}
+	return nil
 }
 
 func (q *UntypedQuery) AddGetRequestItems(tableKeys map[*Table][]Key) {
