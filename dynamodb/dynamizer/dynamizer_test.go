@@ -33,13 +33,13 @@ var dynamizerTestInputs = []dynamizerTestInput{
 		expected: `{"string":{"S":"some string"}}`},
 	dynamizerTestInput{
 		input:    map[string]interface{}{"bool": true},
-		expected: `{"bool":{"BOOL":"true"}}`},
+		expected: `{"bool":{"BOOL":true}}`},
 	dynamizerTestInput{
 		input:    map[string]interface{}{"bool": false},
-		expected: `{"bool":{"BOOL":"false"}}`},
+		expected: `{"bool":{"BOOL":false}}`},
 	dynamizerTestInput{
 		input:    map[string]interface{}{"null": nil},
-		expected: `{"null":{"NULL":"true"}}`},
+		expected: `{"null":{"NULL":true}}`},
 	dynamizerTestInput{
 		input:    map[string]interface{}{"float": 3.14},
 		expected: `{"float":{"N":"3.14"}}`},
@@ -55,7 +55,7 @@ var dynamizerTestInputs = []dynamizerTestInput{
 	// List
 	dynamizerTestInput{
 		input:    map[string]interface{}{"list": []interface{}{"a string", 12, 3.14, true, nil, false}},
-		expected: `{"list":{"L":[{"S":"a string"},{"N":"12"},{"N":"3.14"},{"BOOL":"true"},{"NULL":"true"},{"BOOL":"false"}]}}`},
+		expected: `{"list":{"L":[{"S":"a string"},{"N":"12"},{"N":"3.14"},{"BOOL":true},{"NULL":true},{"BOOL":false}]}}`},
 	// Map
 	dynamizerTestInput{
 		input:    map[string]interface{}{"map": map[string]interface{}{"nestedint": 12}},
@@ -66,16 +66,16 @@ var dynamizerTestInputs = []dynamizerTestInput{
 	// Structs
 	dynamizerTestInput{
 		input:    mySimpleStruct{},
-		expected: `{"Bool":{"BOOL":"false"},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":"true"},"String":{"S":""}}`},
+		expected: `{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}`},
 	dynamizerTestInput{
 		input:    &mySimpleStruct{},
-		expected: `{"Bool":{"BOOL":"false"},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":"true"},"String":{"S":""}}`},
+		expected: `{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}`},
 	dynamizerTestInput{
 		input:    myComplexStruct{},
-		expected: `{"Simple":{"NULL":"true"}}`},
+		expected: `{"Simple":{"NULL":true}}`},
 	dynamizerTestInput{
 		input:    myComplexStruct{Simple: []mySimpleStruct{mySimpleStruct{}, mySimpleStruct{}}},
-		expected: `{"Simple":{"L":[{"M":{"Bool":{"BOOL":"false"},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":"true"},"String":{"S":""}}},{"M":{"Bool":{"BOOL":"false"},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":"true"},"String":{"S":""}}}]}}`}}
+		expected: `{"Simple":{"L":[{"M":{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}},{"M":{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}}]}}`}}
 
 func TestToDynamo(t *testing.T) {
 	for _, test := range dynamizerTestInputs {

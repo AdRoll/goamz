@@ -15,10 +15,10 @@ import (
 // Since the intention is to use this with JSON documents (or structs
 // representing JSON documents), the binary and set types have been omitted.
 type DynamoAttribute struct {
-	S    *string                     `json:",omitempty"` // a pointer so we can represent the empty string
+	S    *string                     `json:",omitempty"` // pointer so we can represent the zero-value
 	N    string                      `json:",omitempty"`
-	BOOL string                      `json:",omitempty"`
-	NULL string                      `json:",omitempty"`
+	BOOL *bool                       `json:",omitempty"` // pointer so we can represent the zero-value
+	NULL bool                        `json:",omitempty"`
 	M    map[string]*DynamoAttribute `json:",omitempty"`
 	L    []*DynamoAttribute          `json:",omitempty"`
 }
@@ -144,7 +144,7 @@ func dynamize(in interface{}) *DynamoAttribute {
 	a := &DynamoAttribute{}
 
 	if in == nil {
-		a.NULL = "true"
+		a.NULL = true
 		return a
 	}
 
@@ -168,11 +168,8 @@ func dynamize(in interface{}) *DynamoAttribute {
 	v := reflect.ValueOf(in)
 	switch v.Kind() {
 	case reflect.Bool:
-		if v.Bool() {
-			a.BOOL = "true"
-		} else {
-			a.BOOL = "false"
-		}
+		a.BOOL = new(bool)
+		*a.BOOL = v.Bool()
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		a.N = strconv.FormatInt(v.Int(), 10)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -202,15 +199,11 @@ func undynamize(a *DynamoAttribute) interface{} {
 		return n
 	}
 
-	if a.BOOL != "" {
-		if a.BOOL == "true" {
-			return true
-		} else {
-			return false
-		}
+	if a.BOOL != nil {
+		return *a.BOOL
 	}
 
-	if a.NULL != "" {
+	if a.NULL {
 		return nil
 	}
 
