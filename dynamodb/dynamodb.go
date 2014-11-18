@@ -12,12 +12,13 @@ import (
 )
 
 type Server struct {
-	Auth   aws.Auth
-	Region aws.Region
+	Auth       aws.Auth
+	Region     aws.Region
+	httpClient *http.Client
 }
 
 func New(auth aws.Auth, region aws.Region) *Server {
-	return &Server{auth, region}
+	return &Server{auth, region, http.DefaultClient}
 }
 
 /*
@@ -76,6 +77,10 @@ func buildError(r *http.Response, jsonBody []byte) error {
 	return &ddbError
 }
 
+func (s *Server) SetHttpClient(client *http.Client) {
+	s.httpClient = client
+}
+
 func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	data := strings.NewReader(query.String())
 	hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
@@ -95,7 +100,7 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 	signer := aws.NewV4Signer(s.Auth, "dynamodb", s.Region)
 	signer.Sign(hreq)
 
-	resp, err := http.DefaultClient.Do(hreq)
+	resp, err := s.httpClient.Do(hreq)
 
 	if err != nil {
 		log.Printf("Error calling Amazon")
