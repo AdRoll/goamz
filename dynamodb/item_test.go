@@ -414,12 +414,11 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 }
 
 func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
+	k := &Key{HashKey: "NewHashKeyVal"}
 	if s.WithRange {
-		// HashKey only for now
-		return
+		k.RangeKey = "1"
 	}
 
-	k := &Key{HashKey: "NewHashKeyVal"}
 	in := map[string]interface{}{
 		"Attr1": "Attr1Val",
 		"Attr2": float64(12),
@@ -443,4 +442,48 @@ func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
 	}
 	err := s.table.GetDocument(k, &out)
 	c.Check(err.Error(), check.Matches, "Item not found")
+}
+
+func (s *ItemSuite) TestPutGetDeleteDocumentTyped(c *check.C) {
+	k := &Key{HashKey: "NewHashKeyVal"}
+	if s.WithRange {
+		k.RangeKey = "1"
+	}
+
+	type myInnterStruct struct {
+		List []interface{}
+	}
+	type myStruct struct {
+		Attr1  string
+		Attr2  int
+		Nested myInnterStruct
+	}
+	in := myStruct{Attr1: "Attr1Val", Attr2: 12, Nested: myInnterStruct{[]interface{}{true, false, nil, "some string", 3.14}}}
+
+	for i := 0; i < 2; i++ {
+		// Put - test both struct and pointer to struct
+		if i == 0 {
+			if err := s.table.PutDocument(k, in); err != nil {
+				c.Fatal(err)
+			}
+		} else {
+			if err := s.table.PutDocument(k, &in); err != nil {
+				c.Fatal(err)
+			}
+		}
+
+		// Get
+		var out myStruct
+		if err := s.table.GetDocument(k, &out); err != nil {
+			c.Fatal(err)
+		}
+		c.Check(out, check.DeepEquals, in)
+
+		// Delete
+		if err := s.table.DeleteDocument(k); err != nil {
+			c.Fatal(err)
+		}
+		err := s.table.GetDocument(k, &out)
+		c.Check(err.Error(), check.Matches, "Item not found")
+	}
 }
