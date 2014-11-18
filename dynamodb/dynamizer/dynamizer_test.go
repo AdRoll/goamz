@@ -157,6 +157,5 @@ func compareObjects(t *testing.T, expected interface{}, actual interface{}) {
 	}
 	if !reflect.DeepEqual(expectedUntyped, actualUntyped) {
 		t.Errorf("Expected %s, got %s", string(expectedBytes), string(actualBytes))
-		//t.Errorf("Expected %+v, got %+v", expected, actual)
 	}
 }
