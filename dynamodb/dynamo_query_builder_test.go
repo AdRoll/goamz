@@ -35,6 +35,7 @@ func TestDynamoQuery(t *testing.T) {
 	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":"true","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testGetQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testPutQuery(t, table, `{"TableName":"DynamoDBTestMyTable","Item":{"Attr1":{"S":"Attr1Val"},"Attr2":{"N":"12"},"TestHashKey":{"S":"NewHashKeyVal"}}}`)
+	testDeleteQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 }
 
 func TestDynamoQueryWithRange(t *testing.T) {
@@ -65,6 +66,7 @@ func TestDynamoQueryWithRange(t *testing.T) {
 	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":"true","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testGetQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testPutQuery(t, table, `{"TableName":"DynamoDBTestMyTable","Item":{"Attr1":{"S":"Attr1Val"},"Attr2":{"N":"12"},"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
+	testDeleteQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 }
 
 func testPutQuery(t *testing.T, table *Table, expected string) {
@@ -105,6 +107,23 @@ func testGetQuery(t *testing.T, table *Table, consistent bool, expected string) 
 		t.Error(err)
 	}
 	if err := q.SetConsistentRead(consistent); err != nil {
+		t.Error(err)
+	}
+
+	actual := q.String()
+	compareJSONStrings(t, expected, actual)
+}
+
+func testDeleteQuery(t *testing.T, table *Table, consistent bool, expected string) {
+	var key *Key
+	if table.Key.HasRange() {
+		key = &Key{HashKey: "NewHashKeyVal", RangeKey: "12"}
+	} else {
+		key = &Key{HashKey: "NewHashKeyVal"}
+	}
+
+	q := NewDynamoQuery(table)
+	if err := q.AddKey(key); err != nil {
 		t.Error(err)
 	}
 

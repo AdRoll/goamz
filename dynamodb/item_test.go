@@ -437,5 +437,10 @@ func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
 	}
 	c.Check(out, check.DeepEquals, in)
 
-	// TODO: delete document
+	// Delete
+	if err := s.table.DeleteDocument(k); err != nil {
+		c.Fatal(err)
+	}
+	err := s.table.GetDocument(k, &out)
+	c.Check(err.Error(), check.Matches, "Item not found")
 }

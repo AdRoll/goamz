@@ -187,6 +187,11 @@ func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool, v interface
 		return err
 	}
 
+	// If Item is nil the item doesn't exist.
+	if response.Item == nil {
+		return ErrNotFound
+	}
+
 	// Delete the keys from the response.
 	delete(response.Item, t.Key.KeyAttribute.Name)
 	if t.Key.HasRange() {
@@ -319,7 +324,7 @@ func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {
 		q.AddExpected(expected)
 	}
 
-	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
+	jsonResponse, err := t.runDeleteItemQuery(q)
 
 	if err != nil {
 		return false, err
@@ -333,12 +338,42 @@ func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {
 	return true, nil
 }
 
+func (t *Table) runDeleteItemQuery(q Query) ([]byte, error) {
+	// TODO: implement retry logic
+	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
+	if err != nil {
+		return nil, err
+	}
+
+	return jsonResponse, nil
+}
+
 func (t *Table) DeleteItem(key *Key) (bool, error) {
 	return t.deleteItem(key, nil)
 }
 
 func (t *Table) ConditionalDeleteItem(key *Key, expected []Attribute) (bool, error) {
 	return t.deleteItem(key, expected)
+}
+
+func (t *Table) DeleteDocument(key *Key) error {
+	q := NewDynamoQuery(t)
+	q.AddKey(key)
+
+	jsonResponse, err := t.runDeleteItemQuery(q)
+	if err != nil {
+		return err
+	}
+
+	// A successful DELETE returns an empty JSON object. Simply checking for
+	// valid JSON here.
+	var response map[string]interface{}
+	err = json.Unmarshal(jsonResponse, &response)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
