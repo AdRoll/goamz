@@ -50,11 +50,18 @@ func ToDynamo(in interface{}) (item DynamoItem, err error) {
 	case reflect.Struct:
 		item = dynamizeStruct(in)
 	case reflect.Map:
+		if v.Type().Key().Kind() != reflect.String {
+			return nil, errors.New("item must be a map[string]interface{} or struct (or a non-nil pointer to one), got " + v.Type().String())
+		}
 		item = dynamizeMap(in)
+	case reflect.Ptr:
+		if v.IsNil() {
+			return nil, errors.New("item must not be nil")
+		}
+		return ToDynamo(v.Elem().Interface())
 	default:
-		return nil, errors.New("Top level object must be a struct or map")
+		return nil, errors.New("item must be a map[string]interface{} or struct (or a non-nil pointer to one), got " + v.Type().String())
 	}
-
 	return item, nil
 }
 
@@ -84,7 +91,7 @@ func FromDynamo(item DynamoItem, v interface{}) (err error) {
 
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct")
+		return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct, got " + rv.Type().String())
 	}
 
 	switch rv.Elem().Kind() {
@@ -99,11 +106,11 @@ func FromDynamo(item DynamoItem, v interface{}) (err error) {
 		return json.Unmarshal(b, v)
 	case reflect.Map:
 		if rv.Elem().Type().Key().Kind() != reflect.String {
-			return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct")
+			return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct, got " + rv.Type().String())
 		}
 		rv.Elem().Set(reflect.ValueOf(m))
 	default:
-		return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct")
+		return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct, got " + rv.Type().String())
 	}
 
 	return nil
@@ -176,7 +183,7 @@ func dynamize(in interface{}) *DynamoAttribute {
 		a.S = new(string)
 		*a.S = v.String()
 	default:
-		panic(fmt.Sprintf(`the type %s is not supported`, v.Kind()))
+		panic(fmt.Sprintf(`the type %s is not supported`, v.Type().String()))
 	}
 
 	return a
@@ -223,5 +230,5 @@ func undynamize(a *DynamoAttribute) interface{} {
 		return l
 	}
 
-	panic(fmt.Sprintf("unsupported dynamo attribute %+v", a))
+	panic(fmt.Sprintf("unsupported dynamo attribute %#v", a))
 }

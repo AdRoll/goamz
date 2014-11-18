@@ -60,9 +60,15 @@ var dynamizerTestInputs = []dynamizerTestInput{
 	dynamizerTestInput{
 		input:    map[string]interface{}{"map": map[string]interface{}{"nestedint": 12}},
 		expected: `{"map":{"M":{"nestedint":{"N":"12"}}}}`},
+	dynamizerTestInput{
+		input:    &map[string]interface{}{"map": map[string]interface{}{"nestedint": 12}},
+		expected: `{"map":{"M":{"nestedint":{"N":"12"}}}}`},
 	// Structs
 	dynamizerTestInput{
 		input:    mySimpleStruct{},
+		expected: `{"Bool":{"BOOL":"false"},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":"true"},"String":{"S":""}}`},
+	dynamizerTestInput{
+		input:    &mySimpleStruct{},
 		expected: `{"Bool":{"BOOL":"false"},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":"true"},"String":{"S":""}}`},
 	dynamizerTestInput{
 		input:    myComplexStruct{},
