@@ -163,11 +163,11 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 	return parseAttributes(item), nil
 }
 
-func (t *Table) GetDocument(key *Key) (interface{}, error) {
-	return t.GetDocumentConsistent(key, false)
+func (t *Table) GetDocument(key *Key, v interface{}) error {
+	return t.GetDocumentConsistent(key, false, v)
 }
 
-func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool) (interface{}, error) {
+func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool, v interface{}) error {
 	q := NewDynamoQuery(t)
 	q.AddKey(key)
 
@@ -177,10 +177,29 @@ func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool) (interface{
 
 	jsonResponse, err := t.runGetItemQuery(q)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// TODO: This is wrong
-	return jsonResponse, nil
+
+	// Deserialize from []byte to JSON.
+	var response DynamoResponse
+	err = json.Unmarshal(jsonResponse, &response)
+	if err != nil {
+		return err
+	}
+
+	// Delete the keys from the response.
+	delete(response.Item, t.Key.KeyAttribute.Name)
+	if t.Key.HasRange() {
+		delete(response.Item, t.Key.RangeAttribute.Name)
+	}
+
+	// Convert back to standard struct/JSON object.
+	err = dynamizer.FromDynamo(response.Item, v)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (t *Table) runGetItemQuery(q Query) ([]byte, error) {
@@ -229,10 +248,10 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 	return true, nil
 }
 
-func (t *Table) PutDocument(key *Key, data interface{}) (bool, error) {
+func (t *Table) PutDocument(key *Key, data interface{}) error {
 	item, err := dynamizer.ToDynamo(data)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	q := NewDynamoQuery(t)
@@ -240,7 +259,7 @@ func (t *Table) PutDocument(key *Key, data interface{}) (bool, error) {
 
 	jsonResponse, err := t.runPutItemQuery(q)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	// A successful PUT returns an empty JSON object. Simply checking for valid
@@ -248,10 +267,10 @@ func (t *Table) PutDocument(key *Key, data interface{}) (bool, error) {
 	var response map[string]interface{}
 	err = json.Unmarshal(jsonResponse, &response)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 func (t *Table) runPutItemQuery(q Query) ([]byte, error) {

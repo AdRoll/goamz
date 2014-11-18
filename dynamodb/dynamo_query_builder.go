@@ -14,6 +14,10 @@ type DynamoQuery struct {
 	table          *Table
 }
 
+type DynamoResponse struct {
+	Item dynamizer.DynamoItem `json:",omitempty"`
+}
+
 func NewDynamoQuery(t *Table) *DynamoQuery {
 	q := &DynamoQuery{table: t}
 	q.TableName = t.Name
@@ -98,7 +102,7 @@ func (q *DynamoQuery) SetConsistentRead(consistent bool) error {
 	if consistent {
 		q.ConsistentRead = "true" // string, not boolean
 	} else {
-		q.ConsistentRead = "false" // string, not boolean
+		q.ConsistentRead = "" // omit for false
 	}
 	return nil
 }

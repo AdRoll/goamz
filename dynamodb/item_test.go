@@ -420,16 +420,22 @@ func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
 	}
 
 	k := &Key{HashKey: "NewHashKeyVal"}
-	data := map[string]interface{}{
+	in := map[string]interface{}{
 		"Attr1": "Attr1Val",
-		"Attr2": 12,
+		"Attr2": float64(12),
 	}
 
 	// Put
-	if ok, err := s.table.PutDocument(k, data); !ok {
+	if err := s.table.PutDocument(k, in); err != nil {
 		c.Fatal(err)
 	}
 
-	// TODO: get document
+	// Get
+	var out map[string]interface{}
+	if err := s.table.GetDocument(k, &out); err != nil {
+		c.Fatal(err)
+	}
+	c.Check(out, check.DeepEquals, in)
+
 	// TODO: delete document
 }
