@@ -3,7 +3,6 @@ package dynamodb
 import (
 	"encoding/json"
 	"sort"
-	"strings"
 )
 
 type msi map[string]interface{}
@@ -253,47 +252,34 @@ func (q *Query) AddUpdates(attributes []Attribute, action string) {
 	q.buffer["AttributeUpdates"] = updates
 }
 
-func (q *Query) AddUpdateExpression(attrs []ExpressionAttribute) {
-	exprAttrNames := msi{}
-	exprAttrValues := msi{}
-	exprAttrActions := map[string][]string{}
+func (q *Query) AddUpdateExpression(update string) {
+	q.buffer["UpdateExpression"] = update
+}
 
+func (q *Query) AddExpressionAttributeNames(attrs []ExpressionAttributeName) {
+	if len(attrs) == 0 {
+		return
+	}
+
+	exprNames := msi{}
 	for _, attr := range attrs {
-		exprAttrNames[attr.ExpressionName] = attr.Name
-
-		if _, found := exprAttrActions[attr.Action]; !found {
-			exprAttrActions[attr.Action] = []string{}
-		}
-
-		stmt := ""
-		switch attr.Action {
-		case "SET":
-			stmt = attr.ExpressionName + " = " + attr.ExpressionValueName
-			exprAttrValues[attr.ExpressionValueName] = msi{attr.Type: attr.Value}
-		case "REMOVE":
-			stmt = attr.ExpressionName
-		case "ADD", "DELETE":
-			stmt = attr.ExpressionName + " " + attr.ExpressionValueName
-			exprAttrValues[attr.ExpressionValueName] = msi{attr.Type: attr.Value}
-		default:
-			panic("invalid UpdateExpression action: " + attr.Action)
-		}
-
-		exprAttrActions[attr.Action] = append(exprAttrActions[attr.Action], stmt)
+		exprNames[attr.Name] = attr.Value
 	}
 
-	exprUpdates := []string{}
-	for action, exprs := range exprAttrActions {
-		exprUpdates = append(exprUpdates, action+" "+strings.Join(exprs, ", "))
+	q.buffer["ExpressionAttributeNames"] = exprNames
+}
+
+func (q *Query) AddExpressionAttributeValues(attrs []ExpressionAttributeValue) {
+	if len(attrs) == 0 {
+		return
 	}
 
-	q.buffer["UpdateExpression"] = strings.Join(exprUpdates, " ")
-
-	q.buffer["ExpressionAttributeNames"] = exprAttrNames
-
-	if len(exprAttrValues) > 0 {
-		q.buffer["ExpressionAttributeValues"] = exprAttrValues
+	exprValues := msi{}
+	for _, attr := range attrs {
+		exprValues[attr.Name] = msi{attr.Type: attr.Value}
 	}
+
+	q.buffer["ExpressionAttributeValues"] = exprValues
 }
 
 func (q *Query) AddExpected(attributes []Attribute) {

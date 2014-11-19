@@ -230,23 +230,22 @@ func (t *Table) ConditionalDeleteItem(key *Key, expected []Attribute) (bool, err
 	return t.deleteItem(key, expected)
 }
 
-func (t *Table) ConditionExpressionUpdateAttributes(key *Key, update []ExpressionAttribute, condition string) (bool, error) {
+func (t *Table) ConditionExpressionUpdateAttributes(key *Key,
+	update, condition string,
+	exprNames []ExpressionAttributeName, exprValues []ExpressionAttributeValue) (bool, error) {
+
+	if update == "" {
+		return false, errors.New("UpdateExpression must not be empty")
+	}
+
 	q := NewQuery(t)
 	q.AddKey(t, key)
 	q.AddUpdateExpression(update)
 	q.AddConditionExpression(condition)
+	q.AddExpressionAttributeNames(exprNames)
+	q.AddExpressionAttributeValues(exprValues)
 
-	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
-	if err != nil {
-		return false, err
-	}
-
-	_, err = simplejson.NewJson(jsonResponse)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return t.requestAttributesUpdate(q)
 }
 
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
@@ -274,7 +273,6 @@ func (t *Table) ConditionalDeleteAttributes(key *Key, attributes, expected []Att
 }
 
 func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, action string) (bool, error) {
-
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
 	}
@@ -287,8 +285,11 @@ func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, act
 		q.AddExpected(expected)
 	}
 
-	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
+	return t.requestAttributesUpdate(q)
+}
 
+func (t *Table) requestAttributesUpdate(q *Query) (bool, error) {
+	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
 	if err != nil {
 		return false, err
 	}
