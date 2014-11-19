@@ -105,6 +105,27 @@ var EUWest = Region{
 	"https://cloudformation.eu-west-1.amazonaws.com",
 }
 
+var EUCentral = Region{
+	"eu-central-1",
+	"https://ec2.eu-central-1.amazonaws.com",
+	"https://s3-eu-central-1.amazonaws.com",
+	"",
+	true,
+	true,
+	"https://sdb.eu-central-1.amazonaws.com",
+	"https://sns.eu-central-1.amazonaws.com",
+	"https://sqs.eu-central-1.amazonaws.com",
+	"https://iam.amazonaws.com",
+	"https://elasticloadbalancing.eu-central-1.amazonaws.com",
+	"https://dynamodb.eu-central-1.amazonaws.com",
+	ServiceInfo{"https://monitoring.eu-central-1.amazonaws.com", V2Signature},
+	"https://autoscaling.eu-central-1.amazonaws.com",
+	ServiceInfo{"https://rds.eu-central-1.amazonaws.com", V2Signature},
+	"https://kinesis.eu-central-1.amazonaws.com",
+	"https://sts.amazonaws.com",
+	"https://cloudformation.eu-central-1.amazonaws.com",
+}
+
 var APSoutheast = Region{
 	"ap-southeast-1",
 	"https://ec2.ap-southeast-1.amazonaws.com",
