@@ -1,6 +1,7 @@
 package dynamizer
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -123,11 +124,15 @@ func dynamizeStruct(in interface{}) DynamoItem {
 	if err != nil {
 		panic(err)
 	}
+
 	var m map[string]interface{}
-	err = json.Unmarshal(b, &m)
+	decoder := json.NewDecoder(bytes.NewReader(b))
+	decoder.UseNumber()
+	err = decoder.Decode(&m)
 	if err != nil {
 		panic(err)
 	}
+
 	return dynamizeMap(m)
 }
 
@@ -177,8 +182,12 @@ func dynamize(in interface{}) *DynamoAttribute {
 	case reflect.Float32, reflect.Float64:
 		a.N = strconv.FormatFloat(v.Float(), 'f', -1, 64)
 	case reflect.String:
-		a.S = new(string)
-		*a.S = v.String()
+		if n, ok := in.(json.Number); ok {
+			a.N = n.String()
+		} else {
+			a.S = new(string)
+			*a.S = v.String()
+		}
 	default:
 		panic(fmt.Sprintf(`the type %s is not supported`, v.Type().String()))
 	}
@@ -192,6 +201,14 @@ func undynamize(a *DynamoAttribute) interface{} {
 	}
 
 	if a.N != "" {
+		// Number is tricky b/c we don't know which numeric type to use. Here we
+		// simply try the different types from most to least restrictive.
+		if n, err := strconv.ParseInt(a.N, 10, 64); err == nil {
+			return int(n)
+		}
+		if n, err := strconv.ParseUint(a.N, 10, 64); err == nil {
+			return uint(n)
+		}
 		n, err := strconv.ParseFloat(a.N, 64)
 		if err != nil {
 			panic(err)

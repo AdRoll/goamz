@@ -421,7 +421,7 @@ func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
 
 	in := map[string]interface{}{
 		"Attr1": "Attr1Val",
-		"Attr2": float64(12),
+		"Attr2": 12,
 	}
 
 	// Put
@@ -455,10 +455,10 @@ func (s *ItemSuite) TestPutGetDeleteDocumentTyped(c *check.C) {
 	}
 	type myStruct struct {
 		Attr1  string
-		Attr2  int
+		Attr2  int64
 		Nested myInnterStruct
 	}
-	in := myStruct{Attr1: "Attr1Val", Attr2: 12, Nested: myInnterStruct{[]interface{}{true, false, nil, "some string", 3.14}}}
+	in := myStruct{Attr1: "Attr1Val", Attr2: 1000000, Nested: myInnterStruct{[]interface{}{true, false, nil, "some string", 3.14}}}
 
 	for i := 0; i < 2; i++ {
 		// Put - test both struct and pointer to struct

@@ -11,6 +11,7 @@ import (
 type mySimpleStruct struct {
 	String  string
 	Int     int
+	Uint    uint
 	Float32 float32
 	Float64 float64
 	Bool    bool
@@ -66,16 +67,17 @@ var dynamizerTestInputs = []dynamizerTestInput{
 	// Structs
 	dynamizerTestInput{
 		input:    mySimpleStruct{},
-		expected: `{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}`},
+		expected: `{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""},"Uint":{"N":"0"}}`},
 	dynamizerTestInput{
 		input:    &mySimpleStruct{},
-		expected: `{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}`},
+		expected: `{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""},"Uint":{"N":"0"}}`},
 	dynamizerTestInput{
 		input:    myComplexStruct{},
 		expected: `{"Simple":{"NULL":true}}`},
 	dynamizerTestInput{
 		input:    myComplexStruct{Simple: []mySimpleStruct{mySimpleStruct{}, mySimpleStruct{}}},
-		expected: `{"Simple":{"L":[{"M":{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}},{"M":{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""}}}]}}`}}
+		expected: `{"Simple":{"L":[{"M":{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""},"Uint":{"N":"0"}}},{"M":{"Bool":{"BOOL":false},"Float32":{"N":"0"},"Float64":{"N":"0"},"Int":{"N":"0"},"Null":{"NULL":true},"String":{"S":""},"Uint":{"N":"0"}}}]}}`},
+}
 
 func TestToDynamo(t *testing.T) {
 	for _, test := range dynamizerTestInputs {
@@ -120,7 +122,7 @@ func testFromDynamo(t *testing.T, inputString string, expected interface{}) {
 
 func TestStruct(t *testing.T) {
 	// Test that we get a typed struct back
-	expected := mySimpleStruct{String: "this is a string", Int: 12, Float64: 3.14}
+	expected := mySimpleStruct{String: "this is a string", Int: 1000000, Uint: 18446744073709551615, Float64: 3.14}
 	dynamized, err := ToDynamo(expected)
 	if err != nil {
 		t.Error(err)
