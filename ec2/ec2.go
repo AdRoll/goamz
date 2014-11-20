@@ -1104,13 +1104,10 @@ type CreateSecurityGroupResp struct {
 // name and description.
 //
 // See http://goo.gl/Eo7Yl for more details.
-func (ec2 *EC2) CreateSecurityGroup(name, description string, VpcId string) (resp *CreateSecurityGroupResp, err error) {
+func (ec2 *EC2) CreateSecurityGroup(name, description string) (resp *CreateSecurityGroupResp, err error) {
 	params := makeParams("CreateSecurityGroup")
 	params["GroupName"] = name
 	params["GroupDescription"] = description
-	if VpcId != nil {
-		params["VpcId"] = VpcId
-	}
 
 	resp = &CreateSecurityGroupResp{}
 	err = ec2.query(params, resp)
@@ -1544,7 +1541,9 @@ type DescribeVolumesResp struct {
 // See http://goo.gl/7a7LWz
 func (ec2 *EC2) DescribeVolumes(volIds []string, filter *Filter) (resp *DescribeVolumesResp, err error) {
 	params := makeParams("DescribeVolumes")
-	addParamsList(params, "VolumeIds", volIds)
+	for i, id := range volIds {
+		params["VolumeId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVolumesResp{}
 	err = ec2.query(params, resp)
