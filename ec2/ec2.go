@@ -1500,6 +1500,8 @@ type DescribeInstanceStatusResponse struct {
 	InstanceStatuses []InstanceStatus `xml:"instanceStatusSet>item"`
 }
 
+// Describes the status of one or more instances, including any scheduled events.
+// See http://goo.gl/XNBn3G
 func (ec2 *EC2) DescribeInstanceStatus(instIds []string, filter *Filter) (resp *DescribeInstanceStatusResponse, err error) {
 	params := makeParams("DescribeInstanceStatus")
 	addParamsList(params, "InstanceId", instIds)
@@ -1538,6 +1540,8 @@ type DescribeVolumesResp struct {
 	Volumes   []VolumeStruct `xml:"volumeSet>item"`
 }
 
+// Describes the specified Amazon EBS volumes.
+// See http://goo.gl/7a7LWz
 func (ec2 *EC2) DescribeVolumes(volIds []string, filter *Filter) (resp *DescribeVolumesResp, err error) {
 	params := makeParams("DescribeVolumes")
 	addParamsList(params, "VolumeIds", volIds)
@@ -1559,6 +1563,8 @@ type AttachVolumeResp struct {
 	AttachTime string `xml:"attachTime"`
 }
 
+// Attaches an Amazon EBS volume to a running or stopped instance and exposes it to the instance with the specified device name.
+// See http://goo.gl/lWT1EL
 func (ec2 *EC2) AttachVolume(volId string, InstId string, devName string) (resp *AttachVolumeResp, err error) {
 	params := makeParams("AttachVolume")
 	params["VolumeId"] = volId
@@ -1587,6 +1593,8 @@ type DescribeVpcsResp struct {
 	Vpcs      []VpcStruct `xml:"vpcSet>item"`
 }
 
+// Describes one or more of your VPCs.
+// See http://goo.gl/ur2dwp
 func (ec2 *EC2) DescribeVpcs(vpcIds []string, filter *Filter) (resp *DescribeVpcsResp, err error) {
 	params := makeParams("DescribeVpcs")
 	addParamsList(params, "vpcId", vpcIds)
@@ -1612,6 +1620,8 @@ type DescribeVpnConnectionsResp struct {
 	VpnConnections []VpnConnectionStruct `xml:"vpnConnectionSet>item"`
 }
 
+// Describes one or more of your VPN connections.
+// See http://goo.gl/3HPKpS
 func (ec2 *EC2) DescribeVpnConnections(VpnConnectionIds []string, filter *Filter) (resp *DescribeVpnConnectionsResp, err error) {
 	params := makeParams("DescribeVpnConnections")
 	addParamsList(params, "VpnConnectionId", VpnConnectionIds)
@@ -1638,6 +1648,8 @@ type DescribeVpnGatewaysResp struct {
 	VpnGateway []VpnGatewayStruct `xml:"vpnGatewaySet>item"`
 }
 
+// Describes one or more of your virtual private gateways.
+// See http://goo.gl/JTJgbY
 func (ec2 *EC2) DescribeVpnGateways(VpnGatewayIds []string, filter *Filter) (resp *DescribeVpnGatewaysResp, err error) {
 	params := makeParams("DescribeVpnGateways")
 	addParamsList(params, "VpnGatewayIds", VpnGatewayIds)
