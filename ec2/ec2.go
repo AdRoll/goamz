@@ -1596,7 +1596,9 @@ type DescribeVpcsResp struct {
 // See http://goo.gl/ur2dwp
 func (ec2 *EC2) DescribeVpcs(vpcIds []string, filter *Filter) (resp *DescribeVpcsResp, err error) {
 	params := makeParams("DescribeVpcs")
-	addParamsList(params, "vpcId", vpcIds)
+	for i, id := range vpcIds {
+		params["vpcId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVpcsResp{}
 	err = ec2.query(params, resp)
@@ -1623,7 +1625,9 @@ type DescribeVpnConnectionsResp struct {
 // See http://goo.gl/3HPKpS
 func (ec2 *EC2) DescribeVpnConnections(VpnConnectionIds []string, filter *Filter) (resp *DescribeVpnConnectionsResp, err error) {
 	params := makeParams("DescribeVpnConnections")
-	addParamsList(params, "VpnConnectionId", VpnConnectionIds)
+	for i, id := range VpnConnectionIds {
+		params["VpnConnectionId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVpnConnectionsResp{}
 	err = ec2.query(params, resp)
@@ -1651,7 +1655,9 @@ type DescribeVpnGatewaysResp struct {
 // See http://goo.gl/JTJgbY
 func (ec2 *EC2) DescribeVpnGateways(VpnGatewayIds []string, filter *Filter) (resp *DescribeVpnGatewaysResp, err error) {
 	params := makeParams("DescribeVpnGateways")
-	addParamsList(params, "VpnGatewayIds", VpnGatewayIds)
+	for i, id := range VpnGatewayIds {
+		params["VpnGatewayId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVpnGatewaysResp{}
 	if err = ec2.query(params, resp); err != nil {
@@ -1673,7 +1679,9 @@ type DescribeInternetGatewaysResp struct {
 
 func (ec2 *EC2) DescribeInternetGateways(InternetGatewayIds []string, filter *Filter) (resp *DescribeInternetGatewaysResp, err error) {
 	params := makeParams("DescribeInternetGateways")
-	addParamsList(params, "InternetGatewayId", InternetGatewayIds)
+	for i, id := range InternetGatewayIds {
+		params["InternetGatewayId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeInternetGatewaysResp{}
 	if err = ec2.query(params, resp); err != nil {
