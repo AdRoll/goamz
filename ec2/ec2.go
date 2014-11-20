@@ -1673,7 +1673,7 @@ type DescribeInternetGatewaysResp struct {
 
 func (ec2 *EC2) DescribeInternetGateways(InternetGatewayIds []string, filter *Filter) (resp *DescribeInternetGatewaysResp, err error) {
 	params := makeParams("DescribeInternetGateways")
-	addParamsList(params, "DescribeInternetGateways", InternetGatewayIds)
+	addParamsList(params, "InternetGatewayId", InternetGatewayIds)
 	filter.addParams(params)
 	resp = &DescribeInternetGatewaysResp{}
 	if err = ec2.query(params, resp); err != nil {

@@ -1,12 +1,11 @@
-package dynamodb_test
+package dynamodb
 
 import (
-	"github.com/crowdmob/goamz/dynamodb"
 	"gopkg.in/check.v1"
 )
 
 type ItemSuite struct {
-	TableDescriptionT dynamodb.TableDescriptionT
+	TableDescriptionT TableDescriptionT
 	DynamoDBTest
 	WithRange bool
 }
@@ -14,7 +13,7 @@ type ItemSuite struct {
 func (s *ItemSuite) SetUpSuite(c *check.C) {
 	setUpAuth(c)
 	s.DynamoDBTest.TableDescriptionT = s.TableDescriptionT
-	s.server = dynamodb.New(dynamodb_auth, dynamodb_region)
+	s.server = New(dynamodb_auth, dynamodb_region)
 	pk, err := s.TableDescriptionT.BuildPrimaryKey()
 	if err != nil {
 		c.Skip(err.Error())
@@ -31,17 +30,17 @@ func (s *ItemSuite) SetUpSuite(c *check.C) {
 }
 
 var item_suite = &ItemSuite{
-	TableDescriptionT: dynamodb.TableDescriptionT{
+	TableDescriptionT: TableDescriptionT{
 		TableName: "DynamoDBTestMyTable",
-		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
-			dynamodb.AttributeDefinitionT{"TestHashKey", "S"},
-			dynamodb.AttributeDefinitionT{"TestRangeKey", "N"},
+		AttributeDefinitions: []AttributeDefinitionT{
+			AttributeDefinitionT{"TestHashKey", "S"},
+			AttributeDefinitionT{"TestRangeKey", "N"},
 		},
-		KeySchema: []dynamodb.KeySchemaT{
-			dynamodb.KeySchemaT{"TestHashKey", "HASH"},
-			dynamodb.KeySchemaT{"TestRangeKey", "RANGE"},
+		KeySchema: []KeySchemaT{
+			KeySchemaT{"TestHashKey", "HASH"},
+			KeySchemaT{"TestRangeKey", "RANGE"},
 		},
-		ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+		ProvisionedThroughput: ProvisionedThroughputT{
 			ReadCapacityUnits:  1,
 			WriteCapacityUnits: 1,
 		},
@@ -50,15 +49,15 @@ var item_suite = &ItemSuite{
 }
 
 var item_without_range_suite = &ItemSuite{
-	TableDescriptionT: dynamodb.TableDescriptionT{
+	TableDescriptionT: TableDescriptionT{
 		TableName: "DynamoDBTestMyTable",
-		AttributeDefinitions: []dynamodb.AttributeDefinitionT{
-			dynamodb.AttributeDefinitionT{"TestHashKey", "S"},
+		AttributeDefinitions: []AttributeDefinitionT{
+			AttributeDefinitionT{"TestHashKey", "S"},
 		},
-		KeySchema: []dynamodb.KeySchemaT{
-			dynamodb.KeySchemaT{"TestHashKey", "HASH"},
+		KeySchema: []KeySchemaT{
+			KeySchemaT{"TestHashKey", "HASH"},
 		},
-		ProvisionedThroughput: dynamodb.ProvisionedThroughputT{
+		ProvisionedThroughput: ProvisionedThroughputT{
 			ReadCapacityUnits:  1,
 			WriteCapacityUnits: 1,
 		},
@@ -75,10 +74,10 @@ func (s *ItemSuite) TestConditionalAddAttributesItem(c *check.C) {
 		return
 	}
 
-	attrs := []dynamodb.Attribute{
-		*dynamodb.NewNumericAttribute("AttrN", "10"),
+	attrs := []Attribute{
+		*NewNumericAttribute("AttrN", "10"),
 	}
-	pk := &dynamodb.Key{HashKey: "NewHashKeyVal"}
+	pk := &Key{HashKey: "NewHashKeyVal"}
 
 	// Put
 	if ok, err := s.table.PutItem("NewHashKeyVal", "", attrs); !ok {
@@ -87,9 +86,9 @@ func (s *ItemSuite) TestConditionalAddAttributesItem(c *check.C) {
 
 	{
 		// Put with condition failed
-		expected := []dynamodb.Attribute{
-			*dynamodb.NewNumericAttribute("AttrN", "0").SetExists(true),
-			*dynamodb.NewStringAttribute("AttrNotExists", "").SetExists(false),
+		expected := []Attribute{
+			*NewNumericAttribute("AttrN", "0").SetExists(true),
+			*NewStringAttribute("AttrNotExists", "").SetExists(false),
 		}
 		// Add attributes with condition failed
 		if ok, err := s.table.ConditionalAddAttributes(pk, attrs, expected); ok {
@@ -107,10 +106,10 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 		return
 	}
 
-	attrs := []dynamodb.Attribute{
-		*dynamodb.NewStringAttribute("Attr1", "Attr1Val"),
+	attrs := []Attribute{
+		*NewStringAttribute("Attr1", "Attr1Val"),
 	}
-	pk := &dynamodb.Key{HashKey: "NewHashKeyVal"}
+	pk := &Key{HashKey: "NewHashKeyVal"}
 
 	// Put
 	if ok, err := s.table.PutItem("NewHashKeyVal", "", attrs); !ok {
@@ -119,9 +118,9 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 
 	{
 		// Put with condition failed
-		expected := []dynamodb.Attribute{
-			*dynamodb.NewStringAttribute("Attr1", "expectedAttr1Val").SetExists(true),
-			*dynamodb.NewStringAttribute("AttrNotExists", "").SetExists(false),
+		expected := []Attribute{
+			*NewStringAttribute("Attr1", "expectedAttr1Val").SetExists(true),
+			*NewStringAttribute("AttrNotExists", "").SetExists(false),
 		}
 		if ok, err := s.table.ConditionalPutItem("NewHashKeyVal", "", attrs, expected); ok {
 			c.Errorf("Expect condition does not meet.")
@@ -145,30 +144,30 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 	}
 
 	{
-		expected := []dynamodb.Attribute{
-			*dynamodb.NewStringAttribute("Attr1", "Attr1Val").SetExists(true),
+		expected := []Attribute{
+			*NewStringAttribute("Attr1", "Attr1Val").SetExists(true),
 		}
 
 		// Add attributes with condition met
-		addNewAttrs := []dynamodb.Attribute{
-			*dynamodb.NewNumericAttribute("AddNewAttr1", "10"),
-			*dynamodb.NewNumericAttribute("AddNewAttr2", "20"),
+		addNewAttrs := []Attribute{
+			*NewNumericAttribute("AddNewAttr1", "10"),
+			*NewNumericAttribute("AddNewAttr2", "20"),
 		}
 		if ok, err := s.table.ConditionalAddAttributes(pk, addNewAttrs, nil); !ok {
 			c.Errorf("Expect condition met. %s", err)
 		}
 
 		// Update attributes with condition met
-		updateAttrs := []dynamodb.Attribute{
-			*dynamodb.NewNumericAttribute("AddNewAttr1", "100"),
+		updateAttrs := []Attribute{
+			*NewNumericAttribute("AddNewAttr1", "100"),
 		}
 		if ok, err := s.table.ConditionalUpdateAttributes(pk, updateAttrs, expected); !ok {
 			c.Errorf("Expect condition met. %s", err)
 		}
 
 		// Delete attributes with condition met
-		deleteAttrs := []dynamodb.Attribute{
-			*dynamodb.NewNumericAttribute("AddNewAttr2", ""),
+		deleteAttrs := []Attribute{
+			*NewNumericAttribute("AddNewAttr2", ""),
 		}
 		if ok, err := s.table.ConditionalDeleteAttributes(pk, deleteAttrs, expected); !ok {
 			c.Errorf("Expect condition met. %s", err)
@@ -181,7 +180,7 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 		}
 
 		if val, ok := item["AddNewAttr1"]; ok {
-			c.Check(val, check.DeepEquals, dynamodb.NewNumericAttribute("AddNewAttr1", "100"))
+			c.Check(val, check.DeepEquals, NewNumericAttribute("AddNewAttr1", "100"))
 		} else {
 			c.Error("Expect AddNewAttr1 attribute to be added and updated")
 		}
@@ -193,11 +192,11 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 
 	{
 		// Put with condition met
-		expected := []dynamodb.Attribute{
-			*dynamodb.NewStringAttribute("Attr1", "Attr1Val").SetExists(true),
+		expected := []Attribute{
+			*NewStringAttribute("Attr1", "Attr1Val").SetExists(true),
 		}
-		newattrs := []dynamodb.Attribute{
-			*dynamodb.NewStringAttribute("Attr1", "Attr2Val"),
+		newattrs := []Attribute{
+			*NewStringAttribute("Attr1", "Attr2Val"),
 		}
 		if ok, err := s.table.ConditionalPutItem("NewHashKeyVal", "", newattrs, expected); !ok {
 			c.Errorf("Expect condition met. %s", err)
@@ -210,7 +209,7 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 		}
 
 		if val, ok := item["Attr1"]; ok {
-			c.Check(val, check.DeepEquals, dynamodb.NewStringAttribute("Attr1", "Attr2Val"))
+			c.Check(val, check.DeepEquals, NewStringAttribute("Attr1", "Attr2Val"))
 		} else {
 			c.Error("Expect Attr1 attribute to be updated")
 		}
@@ -218,8 +217,8 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 
 	{
 		// Delete with condition failed
-		expected := []dynamodb.Attribute{
-			*dynamodb.NewStringAttribute("Attr1", "expectedAttr1Val").SetExists(true),
+		expected := []Attribute{
+			*NewStringAttribute("Attr1", "expectedAttr1Val").SetExists(true),
 		}
 		if ok, err := s.table.ConditionalDeleteItem(pk, expected); ok {
 			c.Errorf("Expect condition does not meet.")
@@ -230,8 +229,8 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 
 	{
 		// Delete with condition met
-		expected := []dynamodb.Attribute{
-			*dynamodb.NewStringAttribute("Attr1", "Attr2Val").SetExists(true),
+		expected := []Attribute{
+			*NewStringAttribute("Attr1", "Attr2Val").SetExists(true),
 		}
 		if ok, _ := s.table.ConditionalDeleteItem(pk, expected); !ok {
 			c.Errorf("Expect condition met.")
@@ -244,8 +243,8 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 }
 
 func (s *ItemSuite) TestPutGetDeleteItem(c *check.C) {
-	attrs := []dynamodb.Attribute{
-		*dynamodb.NewStringAttribute("Attr1", "Attr1Val"),
+	attrs := []Attribute{
+		*NewStringAttribute("Attr1", "Attr1Val"),
 	}
 
 	var rk string
@@ -259,21 +258,21 @@ func (s *ItemSuite) TestPutGetDeleteItem(c *check.C) {
 	}
 
 	// Get to verify Put operation
-	pk := &dynamodb.Key{HashKey: "NewHashKeyVal", RangeKey: rk}
+	pk := &Key{HashKey: "NewHashKeyVal", RangeKey: rk}
 	item, err := s.table.GetItem(pk)
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	if val, ok := item["TestHashKey"]; ok {
-		c.Check(val, check.DeepEquals, dynamodb.NewStringAttribute("TestHashKey", "NewHashKeyVal"))
+		c.Check(val, check.DeepEquals, NewStringAttribute("TestHashKey", "NewHashKeyVal"))
 	} else {
 		c.Error("Expect TestHashKey to be found")
 	}
 
 	if s.WithRange {
 		if val, ok := item["TestRangeKey"]; ok {
-			c.Check(val, check.DeepEquals, dynamodb.NewNumericAttribute("TestRangeKey", "1"))
+			c.Check(val, check.DeepEquals, NewNumericAttribute("TestRangeKey", "1"))
 		} else {
 			c.Error("Expect TestRangeKey to be found")
 		}
@@ -290,8 +289,8 @@ func (s *ItemSuite) TestPutGetDeleteItem(c *check.C) {
 }
 
 func (s *ItemSuite) TestUpdateItem(c *check.C) {
-	attrs := []dynamodb.Attribute{
-		*dynamodb.NewNumericAttribute("count", "0"),
+	attrs := []Attribute{
+		*NewNumericAttribute("count", "0"),
 	}
 
 	var rk string
@@ -304,10 +303,10 @@ func (s *ItemSuite) TestUpdateItem(c *check.C) {
 	}
 
 	// UpdateItem with Add
-	attrs = []dynamodb.Attribute{
-		*dynamodb.NewNumericAttribute("count", "10"),
+	attrs = []Attribute{
+		*NewNumericAttribute("count", "10"),
 	}
-	pk := &dynamodb.Key{HashKey: "NewHashKeyVal", RangeKey: rk}
+	pk := &Key{HashKey: "NewHashKeyVal", RangeKey: rk}
 	if ok, err := s.table.AddAttributes(pk, attrs); !ok {
 		c.Error(err)
 	}
@@ -317,15 +316,15 @@ func (s *ItemSuite) TestUpdateItem(c *check.C) {
 		c.Error(err)
 	} else {
 		if val, ok := item["count"]; ok {
-			c.Check(val, check.DeepEquals, dynamodb.NewNumericAttribute("count", "10"))
+			c.Check(val, check.DeepEquals, NewNumericAttribute("count", "10"))
 		} else {
 			c.Error("Expect count to be found")
 		}
 	}
 
 	// UpdateItem with Put
-	attrs = []dynamodb.Attribute{
-		*dynamodb.NewNumericAttribute("count", "100"),
+	attrs = []Attribute{
+		*NewNumericAttribute("count", "100"),
 	}
 	if ok, err := s.table.UpdateAttributes(pk, attrs); !ok {
 		c.Error(err)
@@ -336,15 +335,15 @@ func (s *ItemSuite) TestUpdateItem(c *check.C) {
 		c.Fatal(err)
 	} else {
 		if val, ok := item["count"]; ok {
-			c.Check(val, check.DeepEquals, dynamodb.NewNumericAttribute("count", "100"))
+			c.Check(val, check.DeepEquals, NewNumericAttribute("count", "100"))
 		} else {
 			c.Error("Expect count to be found")
 		}
 	}
 
 	// UpdateItem with Delete
-	attrs = []dynamodb.Attribute{
-		*dynamodb.NewNumericAttribute("count", ""),
+	attrs = []Attribute{
+		*NewNumericAttribute("count", ""),
 	}
 	if ok, err := s.table.DeleteAttributes(pk, attrs); !ok {
 		c.Error(err)
@@ -361,8 +360,8 @@ func (s *ItemSuite) TestUpdateItem(c *check.C) {
 }
 
 func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
-	attrs := []dynamodb.Attribute{
-		*dynamodb.NewStringSetAttribute("list", []string{"A", "B"}),
+	attrs := []Attribute{
+		*NewStringSetAttribute("list", []string{"A", "B"}),
 	}
 
 	var rk string
@@ -375,10 +374,10 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 	}
 
 	// UpdateItem with Add
-	attrs = []dynamodb.Attribute{
-		*dynamodb.NewStringSetAttribute("list", []string{"C"}),
+	attrs = []Attribute{
+		*NewStringSetAttribute("list", []string{"C"}),
 	}
-	pk := &dynamodb.Key{HashKey: "NewHashKeyVal", RangeKey: rk}
+	pk := &Key{HashKey: "NewHashKeyVal", RangeKey: rk}
 	if ok, err := s.table.AddAttributes(pk, attrs); !ok {
 		c.Error(err)
 	}
@@ -388,15 +387,15 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 		c.Error(err)
 	} else {
 		if val, ok := item["list"]; ok {
-			c.Check(val, check.DeepEquals, dynamodb.NewStringSetAttribute("list", []string{"A", "B", "C"}))
+			c.Check(val, check.DeepEquals, NewStringSetAttribute("list", []string{"A", "B", "C"}))
 		} else {
 			c.Error("Expect count to be found")
 		}
 	}
 
 	// UpdateItem with Delete
-	attrs = []dynamodb.Attribute{
-		*dynamodb.NewStringSetAttribute("list", []string{"A"}),
+	attrs = []Attribute{
+		*NewStringSetAttribute("list", []string{"A"}),
 	}
 	if ok, err := s.table.DeleteAttributes(pk, attrs); !ok {
 		c.Error(err)
@@ -407,7 +406,7 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 		c.Error(err)
 	} else {
 		if val, ok := item["list"]; ok {
-			c.Check(val, check.DeepEquals, dynamodb.NewStringSetAttribute("list", []string{"B", "C"}))
+			c.Check(val, check.DeepEquals, NewStringSetAttribute("list", []string{"B", "C"}))
 		} else {
 			c.Error("Expect list to be remained")
 		}
