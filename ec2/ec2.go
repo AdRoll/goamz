@@ -1689,3 +1689,26 @@ func (ec2 *EC2) DescribeInternetGateways(InternetGatewayIds []string, filter *Fi
 	}
 	return resp, err
 }
+
+type AttributeSet struct {
+	AttributeName  string   `xml:"attributeName"`
+	AttributeValue []string `xml:"attributeValueSet>item>attributeValue"`
+}
+
+type DescribeAccountAttributeResp struct {
+	RequestId     string         `xml:"requestId"`
+	AttributeList []AttributeSet `xml:"accountAttributeSet>item"`
+}
+
+func (ec2 *EC2) DescribeAccountAttributes(AttributeNames []string, filter *Filter) (resp *DescribeAccountAttributeResp, err error) {
+	params := makeParams("DescribeAccountAttributes")
+	for i, AttrName := range AttributeNames {
+		params["AttributeName."+strconv.Itoa(i+1)] = AttrName
+	}
+	filter.addParams(params)
+	resp = &DescribeAccountAttributeResp{}
+	if err = ec2.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, err
+}

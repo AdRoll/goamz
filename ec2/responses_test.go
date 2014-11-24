@@ -1128,4 +1128,23 @@ var (
    </internetGatewaySet>
 </DescribeInternetGatewaysResponse>
 `
+
+	DescribeAccountAttributesExample = `
+<DescribeAccountAttributesResponse xmlns="http://ec2.amazonaws.com/doc/2014-10-01/">
+  <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
+  <accountAttributeSet>
+    <item>
+      <attributeName>supported-platforms</attributeName>
+      <attributeValueSet>
+        <item>
+          <attributeValue>EC2</attributeValue>
+        </item>
+        <item>
+          <attributeValue>VPC</attributeValue> 
+        </item>
+      </attributeValueSet>
+    </item>
+  </accountAttributeSet>
+</DescribeAccountAttributesResponse>
+`
 )

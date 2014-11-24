@@ -1132,3 +1132,22 @@ func (s *S) TestDescribeInternetGateways(c *check.C) {
 	c.Assert(g0.AttachedVpcId, check.Equals, "vpc-11ad4878")
 	c.Assert(g0.AttachState, check.Equals, "available")
 }
+
+func (s *S) TestDescribeAccountAttriutes(c *check.C) {
+	testServer.Response(200, nil, DescribeAccountAttributesExample)
+
+	resp, err := s.ec2.DescribeAccountAttributes([]string{"supported-platforms"}, nil)
+
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeAccountAttributes"})
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+	c.Assert(resp.AttributeList, check.HasLen, 1)
+	a0 := resp.AttributeList[0]
+	c.Assert(a0.AttributeName, check.Equals, "supported-platforms")
+	v0 := a0.AttributeValue[0]
+	v1 := a0.AttributeValue[1]
+	c.Assert(v0, check.Equals, "EC2")
+	c.Assert(v1, check.Equals, "VPC")
+}
