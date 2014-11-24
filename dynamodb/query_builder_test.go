@@ -167,15 +167,14 @@ func (s *QueryBuilderSuite) TestAddExpectedQuery(c *check.C) {
 
 	expectedJson, err := simplejson.NewJson([]byte(`
 	{
-		"Expected": {
-			"domain": {
-				"Exists": "true",
-				"Value": {
-					"S": "expectedTest"
-				}
-			},
-			"testKey": {
-				"Exists": "false"
+		"ConditionExpression": "#Expected0 = :Expected0 AND attribute_not_exists (#Expected1)",
+		"ExpressionAttributeNames": {
+			"#Expected0": "domain",
+			"#Expected1": "testKey"
+		},
+		"ExpressionAttributeValues": {
+			":Expected0": {
+				"S":"expectedTest"
 			}
 		},
 		"Key": {
@@ -267,12 +266,13 @@ func (s *QueryBuilderSuite) TestUpdateQuery(c *check.C) {
 	}
 	expectedJson, err := simplejson.NewJson([]byte(`
 {
-	"AttributeUpdates": {
-		"count": {
-			"Action": "ADD",
-			"Value": {
-				"N": "4"
-			}
+	"UpdateExpression":"ADD #Updates0 :Updates0",
+	"ExpressionAttributeNames": {
+		"#Updates0": "count"
+	},
+	"ExpressionAttributeValues": {
+		":Updates0": {
+			"N": "4"
 		}
 	},
 	"Key": {
@@ -310,12 +310,13 @@ func (s *QueryBuilderSuite) TestAddUpdates(c *check.C) {
 	}
 	expectedJson, err := simplejson.NewJson([]byte(`
 {
-	"AttributeUpdates": {
-		"StringSet": {
-			"Action": "ADD",
-			"Value": {
-				"SS": ["str", "str2"]
-			}
+	"UpdateExpression": "ADD #Updates0 :Updates0",
+	"ExpressionAttributeNames": {
+		"#Updates0": "StringSet"
+	},
+	"ExpressionAttributeValues": {
+		":Updates0": {
+			"SS": ["str", "str2"]
 		}
 	},
 	"Key": {
