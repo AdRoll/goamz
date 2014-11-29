@@ -1570,6 +1570,64 @@ func (ec2 *EC2) AttachVolume(volId string, InstId string, devName string) (resp 
 	return resp, err
 }
 
+type CreateVolumeOptions struct {
+	Size             string
+	SnapshotId       string
+	AvailabilityZone string
+	VolumeType       string
+	IOPS             int
+	Encrypted        bool
+	KmsKeyId         string
+}
+
+type CreateVolumeResp struct {
+	RequestId        string `xml:"requestId"`
+	VolumeId         string `xml:"volumeId"`
+	Size             string `xml:"size"`
+	SnapshotId       string `xml:"snapshotId"`
+	AvailabilityZone string `xml:"availabilityZone"`
+	Status           string `xml:"status"`
+	CreateTime       string `xml:"createTime"`
+	VolumeType       string `xml:"volumeType"`
+	IOPS             int    `xml:"iops"`
+	Encrypted        bool   `xml:"encrypted"`
+	KmsKeyId         string `xml:"kmsKeyId"`
+}
+
+// CreateVolume creates an Amazon EBS volume that can be attached to an instance in the same Availability Zone.
+//
+// See http://goo.gl/DERo1w for more details.
+func (ec2 *EC2) CreateVolume(options CreateVolumeOptions) (resp *CreateVolumeResp, err error) {
+	params := makeParams("CreateVolume")
+	params["AvailabilityZone"] = options.AvailabilityZone
+
+	if options.Size != "" {
+		params["Size"] = options.Size
+	}
+	if options.SnapshotId != "" {
+		params["SnapshotId"] = options.SnapshotId
+	}
+	if options.SnapshotId != "" {
+		params["VolumeType"] = options.VolumeType
+	}
+	if options.IOPS > 0 {
+		params["Iops"] = strconv.Itoa(options.IOPS)
+	}
+	if options.Encrypted {
+		params["Encrypted"] = "true"
+	}
+	if options.KmsKeyId != "" {
+		params["KmsKeyId"] = options.KmsKeyId
+	}
+
+	resp = &CreateVolumeResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, err
+}
+
 type VpcStruct struct {
 	VpcId           string `xml:"vpcId"`
 	State           string `xml:"state"`
