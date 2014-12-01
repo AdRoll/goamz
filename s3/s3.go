@@ -641,8 +641,8 @@ type VersionsResp struct {
 	MaxKeys         int
 	Delimiter       string
 	IsTruncated     bool
-	Versions        []Version
-	CommonPrefixes  []string `xml:">Prefix"`
+	Versions        []Version `xml:"Version"`
+	CommonPrefixes  []string  `xml:">Prefix"`
 }
 
 // The Version type represents an object version stored in an S3 bucket.
