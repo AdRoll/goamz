@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
 )
@@ -166,20 +165,4 @@ func parseKey(t *Table, s map[string]interface{}) *Key {
 	}
 
 	return k
-}
-
-func exponentialBackoff(f func() error, maxRetry uint) error {
-	var err error
-	currentRetry := uint(0)
-	for {
-		if err = f(); err == nil {
-			return nil
-		}
-
-		if currentRetry >= maxRetry {
-			return err
-		}
-		time.Sleep((1 << currentRetry) * 50 * time.Millisecond)
-		currentRetry++
-	}
 }
