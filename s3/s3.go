@@ -814,11 +814,16 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 
 // PostFormArgs returns the action and input fields needed to allow anonymous
 // uploads to a bucket within the expiration limit
-func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (action string, fields map[string]string) {
+// Additional conditions can be specified with conds
+func (b *Bucket) PostFormArgsEx(path string, expires time.Time, redirect string, conds []string) (action string, fields map[string]string) {
 	conditions := make([]string, 0)
 	fields = map[string]string{
 		"AWSAccessKeyId": b.Auth.AccessKey,
 		"key":            path,
+	}
+
+	if conds != nil {
+		conditions = append(conditions, conds...)
 	}
 
 	conditions = append(conditions, fmt.Sprintf("{\"key\": \"%s\"}", path))
@@ -840,6 +845,12 @@ func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (
 
 	action = fmt.Sprintf("%s/%s/", b.S3.Region.S3Endpoint, b.Name)
 	return
+}
+
+// PostFormArgs returns the action and input fields needed to allow anonymous
+// uploads to a bucket within the expiration limit
+func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (action string, fields map[string]string) {
+	return b.PostFormArgsEx(path, expires, redirect, nil)
 }
 
 type request struct {
