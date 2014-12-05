@@ -35,14 +35,16 @@ type HostedZone struct {
 	XMLName                xml.Name `xml:"HostedZone"`
 	Id                     string
 	Name                   string
+	VPC                    HostedZoneVPC `xml:"VPC,omitempty"` // used on CreateHostedZone
 	CallerReference        string
 	Config                 Config
 	ResourceRecordSetCount int
 }
 
 type Config struct {
-	XMLName xml.Name `xml:"Config"`
-	Comment string
+	XMLName     xml.Name `xml:"Config"`
+	Comment     string
+	PrivateZone bool
 }
 
 // Structs for getting the existing Hosted Zones
@@ -61,6 +63,7 @@ type CreateHostedZoneRequest struct {
 	Xmlns            string   `xml:"xmlns,attr"`
 	Name             string
 	CallerReference  string
+	VPC              HostedZoneVPC
 	HostedZoneConfig HostedZoneConfig
 }
 
@@ -82,9 +85,29 @@ type ChangeResourceRecordSetsRequest struct {
 	Changes []Change `xml:"ChangeBatch>Changes>Change"`
 }
 
+type AssociateVPCWithHostedZoneRequest struct {
+	XMLName xml.Name `xml:"AssociateVPCWithHostedZoneRequest"`
+	Xmlns   string   `xml:"xmlns,attr"`
+	VPC     HostedZoneVPC
+	Comment string
+}
+
+type DisassociateVPCWithHostedZoneRequest struct {
+	XMLName xml.Name `xml:"DisassociateVPCWithHostedZoneRequest"`
+	Xmlns   string   `xml:"xmlns,attr"`
+	VPC     HostedZoneVPC
+	Comment string
+}
+
 type HostedZoneConfig struct {
 	XMLName xml.Name `xml:"HostedZoneConfig"`
 	Comment string
+}
+
+type HostedZoneVPC struct {
+	XMLName   xml.Name `xml:"VPC"`
+	VPCId     string
+	VPCRegion string
 }
 
 type CreateHostedZoneResponse struct {
@@ -165,10 +188,23 @@ type GetHostedZoneResponse struct {
 	XMLName       xml.Name `xml:"GetHostedZoneResponse"`
 	HostedZone    HostedZone
 	DelegationSet DelegationSet
+	VPCs          []HostedZoneVPC `xml:"VPCs>VPC"`
 }
 
 type DeleteHostedZoneResponse struct {
 	XMLName    xml.Name `xml:"DeleteHostedZoneResponse"`
+	Xmlns      string   `xml:"xmlns,attr"`
+	ChangeInfo ChangeInfo
+}
+
+type AssociateVPCWithHostedZoneResponse struct {
+	XMLName    xml.Name `xml:"AssociateVPCWithHostedZoneResponse"`
+	Xmlns      string   `xml:"xmlns,attr"`
+	ChangeInfo ChangeInfo
+}
+
+type DisassociateVPCWithHostedZoneResponse struct {
+	XMLName    xml.Name `xml:"DisassociateVPCWithHostedZoneResponse"`
 	Xmlns      string   `xml:"xmlns,attr"`
 	ChangeInfo ChangeInfo
 }
@@ -296,6 +332,36 @@ func (r *Route53) DeleteHostedZone(id string) (result *DeleteHostedZoneResponse,
 
 	result = new(DeleteHostedZoneResponse)
 	err = r.query("DELETE", path, nil, result)
+
+	return
+}
+
+// AssociateVPCWithHostedZone associates a VPC with specified private hosted zone
+func (r *Route53) AssociateVPCWithHostedZone(zoneid string, req *AssociateVPCWithHostedZoneRequest) (result *AssociateVPCWithHostedZoneResponse, err error) {
+	xmlBytes, err := xml.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	xmlBytes = []byte(xml.Header + string(xmlBytes))
+	path := fmt.Sprintf("%s/%s/associatevpc", r.Endpoint, zoneid)
+	result = new(AssociateVPCWithHostedZoneResponse)
+	err = r.query("POST", path, bytes.NewBuffer(xmlBytes), result)
+
+	return
+}
+
+// DisassociateVPCWithHostedZone disassociates a VPC from specified private hosted zone
+func (r *Route53) DisassociateVPCWithHostedZone(zoneid string, req *DisassociateVPCWithHostedZoneRequest) (result *DisassociateVPCWithHostedZoneResponse, err error) {
+	xmlBytes, err := xml.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	xmlBytes = []byte(xml.Header + string(xmlBytes))
+	path := fmt.Sprintf("%s/%s/disassociatevpc", r.Endpoint, zoneid)
+	result = new(DisassociateVPCWithHostedZoneResponse)
+	err = r.query("POST", path, bytes.NewBuffer(xmlBytes), result)
 
 	return
 }

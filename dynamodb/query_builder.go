@@ -3,7 +3,9 @@ package dynamodb
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
+	"strings"
 )
 
 type msi map[string]interface{}
@@ -245,46 +247,166 @@ func (q *UntypedQuery) AddItem(attributes []Attribute) {
 	q.buffer["Item"] = attributeList(attributes)
 }
 
-func (q *UntypedQuery) AddUpdates(attributes []Attribute, action string) {
-	updates := msi{}
-	for _, a := range attributes {
-		au := msi{
-			"Value": msi{
-				a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()],
-			},
-			"Action": action,
-		}
-		// Delete 'Value' from AttributeUpdates if Type is not Set
-		if action == "DELETE" && !a.SetType() {
-			delete(au, "Value")
-		}
-		updates[a.Name] = au
-	}
+// New syntax for conditions, filtering, and projection:
+// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.html
+// Replaces the legacy conditional parameters:
+// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.html
+//
+// Note that some DynamoDB actions can take two kinds of expression;
+// for example, UpdateItem can have both a ConditionalExpression and UpdateExpression,
+// while Scan can have both a FilterExpression and ProjectionExpression,
+// so the Add*Expression() functions need to share the ExpressionAttributeNames
+// and ExpressionAttribute values query attributes.
+type Expression struct {
+	Text            string
+	AttributeNames  map[string]string
+	AttributeValues []Attribute
+}
 
-	q.buffer["AttributeUpdates"] = updates
+func (q *UntypedQuery) addExpressionAttributeNames(e *Expression) {
+	expressionAttributeNames := msi{}
+	if existing, ok := q.buffer["ExpressionAttributeNames"]; ok {
+		for k, v := range existing.(msi) {
+			expressionAttributeNames[k] = v
+		}
+	}
+	for k, v := range e.AttributeNames {
+		expressionAttributeNames[k] = v
+	}
+	if len(expressionAttributeNames) > 0 {
+		q.buffer["ExpressionAttributeNames"] = expressionAttributeNames
+	}
+}
+
+func (q *UntypedQuery) addExpressionAttributeValues(e *Expression) {
+	expressionAttributeValues := msi{}
+	if existing, ok := q.buffer["ExpressionAttributeValues"]; ok {
+		for k, v := range existing.(msi) {
+			expressionAttributeValues[k] = v
+		}
+	}
+	for k, v := range attributeList(e.AttributeValues) {
+		expressionAttributeValues[k] = v
+	}
+	if len(expressionAttributeValues) > 0 {
+		q.buffer["ExpressionAttributeValues"] = expressionAttributeValues
+	}
+}
+
+func (q *UntypedQuery) AddConditionExpression(e *Expression) {
+	q.buffer["ConditionExpression"] = e.Text
+	q.addExpressionAttributeNames(e)
+	q.addExpressionAttributeValues(e)
+}
+
+func (q *UntypedQuery) AddFilterExpression(e *Expression) {
+	q.buffer["FilterExpression"] = e.Text
+	q.addExpressionAttributeNames(e)
+	q.addExpressionAttributeValues(e)
+}
+
+func (q *UntypedQuery) AddProjectionExpression(e *Expression) {
+	q.buffer["ProjectionExpression"] = e.Text
+	q.addExpressionAttributeNames(e)
+	// projection expressions don't have expression attribute values
+}
+
+func (q *UntypedQuery) AddUpdateExpression(e *Expression) {
+	q.buffer["UpdateExpression"] = e.Text
+	q.addExpressionAttributeNames(e)
+	q.addExpressionAttributeValues(e)
+}
+
+func (q *UntypedQuery) AddUpdates(attributes []Attribute, action string) {
+	// You can't mix expressions and older mechanisms,
+	// so this reimplements AttributeUpdates using UpdateExpression.
+	e := &Expression{
+		AttributeNames: map[string]string{},
+	}
+	sections := map[string][]string{
+		"SET":    []string{},
+		"ADD":    []string{},
+		"DELETE": []string{},
+		"REMOVE": []string{},
+	}
+	attrIndex := 0
+	for _, a := range attributes {
+		namePlaceholder := fmt.Sprintf("#Updates%d", attrIndex)
+		valuePlaceholder := fmt.Sprintf(":Updates%d", attrIndex)
+		attrIndex++
+
+		e.AttributeNames[namePlaceholder] = a.Name
+		renamedAttr := a
+		renamedAttr.Name = valuePlaceholder
+
+		section := ""
+		update := ""
+		switch action {
+		case "PUT":
+			section = "SET"
+			update = fmt.Sprintf("%s=%s", namePlaceholder, valuePlaceholder)
+			e.AttributeValues = append(e.AttributeValues, renamedAttr)
+		case "ADD":
+			section = "ADD"
+			update = fmt.Sprintf("%s %s", namePlaceholder, valuePlaceholder)
+			e.AttributeValues = append(e.AttributeValues, renamedAttr)
+		case "DELETE":
+			if a.SetType() {
+				section = "DELETE"
+				update = fmt.Sprintf("%s %s", namePlaceholder, valuePlaceholder)
+				e.AttributeValues = append(e.AttributeValues, renamedAttr)
+			} else {
+				section = "REMOVE"
+				update = namePlaceholder
+			}
+		default:
+			panic("Unsupported action: " + action)
+		}
+		sections[section] = append(sections[section], update)
+	}
+	sectionText := []string{}
+	for section, updates := range sections {
+		if len(updates) > 0 {
+			sectionText = append(sectionText, fmt.Sprintf("%s %s", section, strings.Join(updates, ", ")))
+		}
+	}
+	e.Text = strings.Join(sectionText, " ")
+	q.AddUpdateExpression(e)
 }
 
 func (q *UntypedQuery) AddExpected(attributes []Attribute) {
-	expected := msi{}
-	for _, a := range attributes {
-		value := msi{}
-		if a.Exists != "" {
-			value["Exists"] = a.Exists
-		}
-		// If set Exists to false, we must remove Value
-		if value["Exists"] != "false" {
-			value["Value"] = msi{a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()]}
-		}
-		expected[a.Name] = value
+	// You can't mix expressions and older mechanisms,
+	// so this reimplements Expected using ConditionExpression.
+	e := &Expression{
+		AttributeNames: map[string]string{},
 	}
-	q.buffer["Expected"] = expected
+	terms := []string{}
+	attrIndex := 0
+	for _, a := range attributes {
+		namePlaceholder := fmt.Sprintf("#Expected%d", attrIndex)
+		valuePlaceholder := fmt.Sprintf(":Expected%d", attrIndex)
+		attrIndex++
+		e.AttributeNames[namePlaceholder] = a.Name
+
+		term := ""
+		if a.Exists == "false" {
+			term = fmt.Sprintf("attribute_not_exists (%s)", namePlaceholder)
+		} else {
+			term = fmt.Sprintf("%s = %s", namePlaceholder, valuePlaceholder)
+			renamedAttr := a
+			renamedAttr.Name = valuePlaceholder
+			e.AttributeValues = append(e.AttributeValues, renamedAttr)
+		}
+		terms = append(terms, term)
+	}
+	e.Text = strings.Join(terms, " AND ")
+	q.AddConditionExpression(e)
 }
 
 func attributeList(attributes []Attribute) msi {
 	b := msi{}
 	for _, a := range attributes {
-		//UGH!!  (I miss the query operator)
-		b[a.Name] = msi{a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()]}
+		b[a.Name] = a.valueMsi()
 	}
 	return b
 }

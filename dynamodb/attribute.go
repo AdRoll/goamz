@@ -157,6 +157,10 @@ func (a *Attribute) SetExists(exists bool) *Attribute {
 	return a
 }
 
+func (a Attribute) valueMsi() msi {
+	return msi{a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()]}
+}
+
 func (k *PrimaryKey) HasRange() bool {
 	return k.RangeAttribute != nil
 }

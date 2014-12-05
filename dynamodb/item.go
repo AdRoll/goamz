@@ -218,14 +218,18 @@ func (t *Table) runGetItemQuery(q Query) ([]byte, error) {
 }
 
 func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
-	return t.putItem(hashKey, rangeKey, attributes, nil)
+	return t.putItem(hashKey, rangeKey, attributes, nil, nil)
 }
 
 func (t *Table) ConditionalPutItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
-	return t.putItem(hashKey, rangeKey, attributes, expected)
+	return t.putItem(hashKey, rangeKey, attributes, expected, nil)
 }
 
-func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribute) (bool, error) {
+func (t *Table) ConditionExpressionPutItem(hashKey, rangeKey string, attributes []Attribute, condition *Expression) (bool, error) {
+	return t.putItem(hashKey, rangeKey, attributes, nil, condition)
+}
+
+func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribute, condition *Expression) (bool, error) {
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
 	}
@@ -236,8 +240,13 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 	attributes = append(attributes, keys...)
 
 	q.AddItem(attributes)
+
 	if expected != nil {
 		q.AddExpected(expected)
+	}
+
+	if condition != nil {
+		q.AddConditionExpression(condition)
 	}
 
 	jsonResponse, err := t.runPutItemQuery(q)
@@ -316,12 +325,16 @@ func (t *Table) runPutItemQuery(q Query) ([]byte, error) {
 	return jsonResponse, nil
 }
 
-func (t *Table) deleteItem(key *Key, expected []Attribute) (bool, error) {
+func (t *Table) deleteItem(key *Key, expected []Attribute, condition *Expression) (bool, error) {
 	q := NewQuery(t)
 	q.AddKey(key)
 
 	if expected != nil {
 		q.AddExpected(expected)
+	}
+
+	if condition != nil {
+		q.AddConditionExpression(condition)
 	}
 
 	jsonResponse, err := t.runDeleteItemQuery(q)
@@ -349,11 +362,15 @@ func (t *Table) runDeleteItemQuery(q Query) ([]byte, error) {
 }
 
 func (t *Table) DeleteItem(key *Key) (bool, error) {
-	return t.deleteItem(key, nil)
+	return t.deleteItem(key, nil, nil)
 }
 
 func (t *Table) ConditionalDeleteItem(key *Key, expected []Attribute) (bool, error) {
-	return t.deleteItem(key, expected)
+	return t.deleteItem(key, expected, nil)
+}
+
+func (t *Table) ConditionExpressionDeleteItem(key *Key, condition *Expression) (bool, error) {
+	return t.deleteItem(key, nil, condition)
 }
 
 func (t *Table) DeleteDocument(key *Key) error {
@@ -377,30 +394,42 @@ func (t *Table) DeleteDocument(key *Key) error {
 }
 
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, "ADD")
+	return t.modifyAttributes(key, attributes, nil, nil, "ADD")
 }
 
 func (t *Table) UpdateAttributes(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, "PUT")
+	return t.modifyAttributes(key, attributes, nil, nil, "PUT")
 }
 
 func (t *Table) DeleteAttributes(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, "DELETE")
+	return t.modifyAttributes(key, attributes, nil, nil, "DELETE")
 }
 
 func (t *Table) ConditionalAddAttributes(key *Key, attributes, expected []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, expected, "ADD")
+	return t.modifyAttributes(key, attributes, expected, nil, "ADD")
 }
 
 func (t *Table) ConditionalUpdateAttributes(key *Key, attributes, expected []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, expected, "PUT")
+	return t.modifyAttributes(key, attributes, expected, nil, "PUT")
 }
 
 func (t *Table) ConditionalDeleteAttributes(key *Key, attributes, expected []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, expected, "DELETE")
+	return t.modifyAttributes(key, attributes, expected, nil, "DELETE")
 }
 
-func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, action string) (bool, error) {
+func (t *Table) ConditionExpressionAddAttributes(key *Key, attributes []Attribute, condition *Expression) (bool, error) {
+	return t.modifyAttributes(key, attributes, nil, condition, "ADD")
+}
+
+func (t *Table) ConditionExpressionUpdateAttributes(key *Key, attributes []Attribute, condition *Expression) (bool, error) {
+	return t.modifyAttributes(key, attributes, nil, condition, "PUT")
+}
+
+func (t *Table) ConditionExpressionDeleteAttributes(key *Key, attributes []Attribute, condition *Expression) (bool, error) {
+	return t.modifyAttributes(key, attributes, nil, condition, "DELETE")
+}
+
+func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, condition *Expression, action string) (bool, error) {
 
 	if len(attributes) == 0 {
 		return false, errors.New("At least one attribute is required.")
@@ -412,6 +441,10 @@ func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, act
 
 	if expected != nil {
 		q.AddExpected(expected)
+	}
+
+	if condition != nil {
+		q.AddConditionExpression(condition)
 	}
 
 	jsonResponse, err := t.Server.queryServer(target("UpdateItem"), q)
