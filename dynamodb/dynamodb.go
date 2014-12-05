@@ -3,12 +3,13 @@ package dynamodb
 import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
-	"github.com/crowdmob/goamz/aws"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
 type Server struct {
@@ -122,4 +123,20 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 
 func target(name string) string {
 	return "DynamoDB_20120810." + name
+}
+
+func exponentialBackoff(f func() error, maxRetry uint) error {
+	var err error
+	currentRetry := uint(0)
+	for {
+		if err = f(); err == nil {
+			return nil
+		}
+
+		if currentRetry >= maxRetry {
+			return err
+		}
+		time.Sleep((1 << currentRetry) * 50 * time.Millisecond)
+		currentRetry++
+	}
 }
