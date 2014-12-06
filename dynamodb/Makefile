@@ -1,4 +1,4 @@
-DYNAMODB_LOCAL_VERSION = 2014-04-24
+DYNAMODB_LOCAL_VERSION = 2014-10-07
 
 launch: DynamoDBLocal.jar
 	cd dynamodb_local_$(DYNAMODB_LOCAL_VERSION) && java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar

@@ -7,6 +7,14 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 )
 
+type Query interface {
+	AddKey(key *Key) error
+	AddExclusiveStartKey(key *Key) error
+	AddExclusiveStartTableName(table string) error
+	SetConsistentRead(c bool) error
+	String() string
+}
+
 func (t *Table) Query(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKeyConditions(attributeComparisons)
@@ -56,7 +64,7 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, e
 	return itemCount, nil
 }
 
-func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) QueryTable(q Query) ([]map[string]*Attribute, *Key, error) {
 	jsonResponse, err := t.Server.queryServer(target("Query"), q)
 	if err != nil {
 		return nil, nil, err
@@ -121,7 +129,7 @@ func (t *Table) LimitedQueryOnIndexCallbackIterator(attributeComparisons []Attri
 	return t.QueryTableCallbackIterator(q, cb)
 }
 
-func (t *Table) QueryTableCallbackIterator(query *Query, cb func(map[string]*Attribute) error) error {
+func (t *Table) QueryTableCallbackIterator(query Query, cb func(map[string]*Attribute) error) error {
 	for {
 		var results []map[string]*Attribute
 		var lastEvaluatedKey *Key
@@ -149,13 +157,13 @@ func (t *Table) QueryTableCallbackIterator(query *Query, cb func(map[string]*Att
 		if lastEvaluatedKey == nil {
 			break
 		}
-		query.AddExclusiveStartKey(t, lastEvaluatedKey)
+		query.AddExclusiveStartKey(lastEvaluatedKey)
 	}
 
 	return nil
 }
 
-func RunQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
+func RunQuery(q Query, t *Table) ([]map[string]*Attribute, error) {
 
 	result, _, err := t.QueryTable(q)
 

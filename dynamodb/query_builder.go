@@ -2,30 +2,35 @@ package dynamodb
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 )
 
 type msi map[string]interface{}
-type Query struct {
+type UntypedQuery struct {
 	buffer msi
+	table  *Table
 }
 
-func NewEmptyQuery() *Query {
-	return &Query{msi{}}
+func NewEmptyQuery() *UntypedQuery {
+	return &UntypedQuery{msi{}, nil}
 }
 
-func NewQuery(t *Table) *Query {
-	q := &Query{msi{}}
+func NewQuery(t *Table) *UntypedQuery {
+	q := &UntypedQuery{msi{}, t}
 	q.addTable(t)
 	return q
 }
 
 // This way of specifing the key is used when doing a Get.
 // If rangeKey is "", it is assumed to not want to be used
-func (q *Query) AddKey(t *Table, key *Key) {
-	k := t.Key
+func (q *UntypedQuery) AddKey(key *Key) error {
+	if q.table == nil {
+		return errors.New("Table is nil")
+	}
+	k := q.table.Key
 	keymap := msi{
 		k.KeyAttribute.Name: msi{
 			k.KeyAttribute.Type: key.HashKey},
@@ -35,16 +40,22 @@ func (q *Query) AddKey(t *Table, key *Key) {
 	}
 
 	q.buffer["Key"] = keymap
+	return nil
 }
 
-func (q *Query) AddExclusiveStartKey(t *Table, key *Key) {
-	q.buffer["ExclusiveStartKey"] = keyAttributes(t, key)
+func (q *UntypedQuery) AddExclusiveStartKey(key *Key) error {
+	if q.table == nil {
+		return errors.New("Table is nil")
+	}
+	q.buffer["ExclusiveStartKey"] = keyAttributes(q.table, key)
+	return nil
 }
 
-func (q *Query) AddExclusiveStartTableName(table string) {
+func (q *UntypedQuery) AddExclusiveStartTableName(table string) error {
 	if table != "" {
 		q.buffer["ExclusiveStartTableName"] = table
 	}
+	return nil
 }
 
 func keyAttributes(t *Table, key *Key) msi {
@@ -58,7 +69,7 @@ func keyAttributes(t *Table, key *Key) msi {
 	return out
 }
 
-func (q *Query) AddAttributesToGet(attributes []string) {
+func (q *UntypedQuery) AddAttributesToGet(attributes []string) {
 	if len(attributes) == 0 {
 		return
 	}
@@ -66,13 +77,14 @@ func (q *Query) AddAttributesToGet(attributes []string) {
 	q.buffer["AttributesToGet"] = attributes
 }
 
-func (q *Query) ConsistentRead(c bool) {
+func (q *UntypedQuery) SetConsistentRead(c bool) error {
 	if c == true {
 		q.buffer["ConsistentRead"] = "true" //String "true", not bool true
 	}
+	return nil
 }
 
-func (q *Query) AddGetRequestItems(tableKeys map[*Table][]Key) {
+func (q *UntypedQuery) AddGetRequestItems(tableKeys map[*Table][]Key) {
 	requestitems := msi{}
 	for table, keys := range tableKeys {
 		keyslist := []msi{}
@@ -84,7 +96,7 @@ func (q *Query) AddGetRequestItems(tableKeys map[*Table][]Key) {
 	q.buffer["RequestItems"] = requestitems
 }
 
-func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attribute) {
+func (q *UntypedQuery) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attribute) {
 	b := q.buffer
 
 	b["RequestItems"] = func() msi {
@@ -116,7 +128,7 @@ func (q *Query) AddWriteRequestItems(tableItems map[*Table]map[string][][]Attrib
 	}()
 }
 
-func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
+func (q *UntypedQuery) AddCreateRequestTable(description TableDescriptionT) {
 	b := q.buffer
 
 	attDefs := []interface{}{}
@@ -167,31 +179,31 @@ func (q *Query) AddCreateRequestTable(description TableDescriptionT) {
 	}
 }
 
-func (q *Query) AddDeleteRequestTable(description TableDescriptionT) {
+func (q *UntypedQuery) AddDeleteRequestTable(description TableDescriptionT) {
 	b := q.buffer
 	b["TableName"] = description.TableName
 }
 
-func (q *Query) AddKeyConditions(comparisons []AttributeComparison) {
+func (q *UntypedQuery) AddKeyConditions(comparisons []AttributeComparison) {
 	q.buffer["KeyConditions"] = buildComparisons(comparisons)
 }
 
-func (q *Query) AddQueryFilter(comparisons []AttributeComparison) {
+func (q *UntypedQuery) AddQueryFilter(comparisons []AttributeComparison) {
 	q.buffer["QueryFilter"] = buildComparisons(comparisons)
 }
 
-func (q *Query) AddLimit(limit int64) {
+func (q *UntypedQuery) AddLimit(limit int64) {
 	q.buffer["Limit"] = limit
 }
-func (q *Query) AddSelect(value string) {
+func (q *UntypedQuery) AddSelect(value string) {
 	q.buffer["Select"] = value
 }
 
-func (q *Query) AddIndex(value string) {
+func (q *UntypedQuery) AddIndex(value string) {
 	q.buffer["IndexName"] = value
 }
 
-func (q *Query) AddScanIndexForward(val bool) {
+func (q *UntypedQuery) AddScanIndexForward(val bool) {
 	if val {
 		q.buffer["ScanIndexForward"] = "true"
 	} else {
@@ -204,11 +216,11 @@ func (q *Query) AddScanIndexForward(val bool) {
        "AttributeName1":{"AttributeValueList":[{"S":"AttributeValue"}],"ComparisonOperator":"EQ"}
    },
 */
-func (q *Query) AddScanFilter(comparisons []AttributeComparison) {
+func (q *UntypedQuery) AddScanFilter(comparisons []AttributeComparison) {
 	q.buffer["ScanFilter"] = buildComparisons(comparisons)
 }
 
-func (q *Query) AddParallelScanConfiguration(segment int, totalSegments int) {
+func (q *UntypedQuery) AddParallelScanConfiguration(segment int, totalSegments int) {
 	q.buffer["Segment"] = segment
 	q.buffer["TotalSegments"] = totalSegments
 }
@@ -231,7 +243,7 @@ func buildComparisons(comparisons []AttributeComparison) msi {
 }
 
 // The primary key must be included in attributes.
-func (q *Query) AddItem(attributes []Attribute) {
+func (q *UntypedQuery) AddItem(attributes []Attribute) {
 	q.buffer["Item"] = attributeList(attributes)
 }
 
@@ -251,7 +263,7 @@ type Expression struct {
 	AttributeValues []Attribute
 }
 
-func (q *Query) addExpressionAttributeNames(e *Expression) {
+func (q *UntypedQuery) addExpressionAttributeNames(e *Expression) {
 	expressionAttributeNames := msi{}
 	if existing, ok := q.buffer["ExpressionAttributeNames"]; ok {
 		for k, v := range existing.(msi) {
@@ -266,7 +278,7 @@ func (q *Query) addExpressionAttributeNames(e *Expression) {
 	}
 }
 
-func (q *Query) addExpressionAttributeValues(e *Expression) {
+func (q *UntypedQuery) addExpressionAttributeValues(e *Expression) {
 	expressionAttributeValues := msi{}
 	if existing, ok := q.buffer["ExpressionAttributeValues"]; ok {
 		for k, v := range existing.(msi) {
@@ -281,31 +293,31 @@ func (q *Query) addExpressionAttributeValues(e *Expression) {
 	}
 }
 
-func (q *Query) AddConditionExpression(e *Expression) {
+func (q *UntypedQuery) AddConditionExpression(e *Expression) {
 	q.buffer["ConditionExpression"] = e.Text
 	q.addExpressionAttributeNames(e)
 	q.addExpressionAttributeValues(e)
 }
 
-func (q *Query) AddFilterExpression(e *Expression) {
+func (q *UntypedQuery) AddFilterExpression(e *Expression) {
 	q.buffer["FilterExpression"] = e.Text
 	q.addExpressionAttributeNames(e)
 	q.addExpressionAttributeValues(e)
 }
 
-func (q *Query) AddProjectionExpression(e *Expression) {
+func (q *UntypedQuery) AddProjectionExpression(e *Expression) {
 	q.buffer["ProjectionExpression"] = e.Text
 	q.addExpressionAttributeNames(e)
 	// projection expressions don't have expression attribute values
 }
 
-func (q *Query) AddUpdateExpression(e *Expression) {
+func (q *UntypedQuery) AddUpdateExpression(e *Expression) {
 	q.buffer["UpdateExpression"] = e.Text
 	q.addExpressionAttributeNames(e)
 	q.addExpressionAttributeValues(e)
 }
 
-func (q *Query) AddUpdates(attributes []Attribute, action string) {
+func (q *UntypedQuery) AddUpdates(attributes []Attribute, action string) {
 	// You can't mix expressions and older mechanisms,
 	// so this reimplements AttributeUpdates using UpdateExpression.
 	e := &Expression{
@@ -362,7 +374,7 @@ func (q *Query) AddUpdates(attributes []Attribute, action string) {
 	q.AddUpdateExpression(e)
 }
 
-func (q *Query) AddExpected(attributes []Attribute) {
+func (q *UntypedQuery) AddExpected(attributes []Attribute) {
 	// You can't mix expressions and older mechanisms,
 	// so this reimplements Expected using ConditionExpression.
 	e := &Expression{
@@ -399,15 +411,15 @@ func attributeList(attributes []Attribute) msi {
 	return b
 }
 
-func (q *Query) addTable(t *Table) {
+func (q *UntypedQuery) addTable(t *Table) {
 	q.addTableByName(t.Name)
 }
 
-func (q *Query) addTableByName(tableName string) {
+func (q *UntypedQuery) addTableByName(tableName string) {
 	q.buffer["TableName"] = tableName
 }
 
-func (q *Query) String() string {
+func (q *UntypedQuery) String() string {
 	bytes, _ := json.Marshal(q.buffer)
 	return string(bytes)
 }
