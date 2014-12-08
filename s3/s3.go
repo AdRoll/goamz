@@ -415,21 +415,37 @@ func makeXmlBuffer(doc []byte) *bytes.Buffer {
 	return buf
 }
 
+type IndexDocument struct {
+	Suffix string `xml:"Suffix"`
+}
+
+type ErrorDocument struct {
+	Key string `xml:"Key"`
+}
+
 type RoutingRule struct {
 	ConditionKeyPrefixEquals     string `xml:"Condition>KeyPrefixEquals"`
 	RedirectReplaceKeyPrefixWith string `xml:"Redirect>ReplaceKeyPrefixWith,omitempty"`
 	RedirectReplaceKeyWith       string `xml:"Redirect>ReplaceKeyWith,omitempty"`
 }
 
-type WebsiteConfiguration struct {
-	XMLName             xml.Name       `xml:"http://s3.amazonaws.com/doc/2006-03-01/ WebsiteConfiguration"`
-	IndexDocumentSuffix string         `xml:"IndexDocument>Suffix"`
-	ErrorDocumentKey    string         `xml:"ErrorDocument>Key"`
-	RoutingRules        *[]RoutingRule `xml:"RoutingRules>RoutingRule,omitempty"`
+type RedirectAllRequestsTo struct {
+	HostName string `xml:"HostName"`
+	Protocol string `xml:"Protocol,omitempty"`
 }
 
-func (b *Bucket) PutBucketWebsite(configuration WebsiteConfiguration) error {
+type WebsiteConfiguration struct {
+	XMLName               xml.Name               `xml:"http://s3.amazonaws.com/doc/2006-03-01/ WebsiteConfiguration"`
+	IndexDocument         *IndexDocument         `xml:"IndexDocument,omitempty"`
+	ErrorDocument         *ErrorDocument         `xml:"ErrorDocument,omitempty"`
+	RoutingRules          *[]RoutingRule         `xml:"RoutingRules>RoutingRule,omitempty"`
+	RedirectAllRequestsTo *RedirectAllRequestsTo `xml:"RedirectAllRequestsTo,omitempty"`
+}
 
+// PutBucketWebsite configures a bucket as a website.
+//
+// See http://goo.gl/TpRlUy for details.
+func (b *Bucket) PutBucketWebsite(configuration WebsiteConfiguration) error {
 	doc, err := xml.Marshal(configuration)
 	if err != nil {
 		return err
