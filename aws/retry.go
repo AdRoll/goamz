@@ -81,7 +81,7 @@ func shouldRetry(r *http.Response, err error, numRetries int, maxRetries int) bo
 	}
 
 	// Always retry temporary network errors.
-	if v, ok := err.(net.Error); ok && v.Temporary() {
+	if err, ok := err.(net.Error); ok && err.Temporary() {
 		return true
 	}
 
@@ -91,7 +91,7 @@ func shouldRetry(r *http.Response, err error, numRetries int, maxRetries int) bo
 	}
 
 	// Always retry throttling exceptions.
-	if v, ok := err.(*Error); ok && isThrottlingException(v) {
+	if err, ok := err.(*Error); ok && isThrottlingException(err) {
 		return true
 	}
 
