@@ -231,15 +231,20 @@ func (s *V4Signer) canonicalRequest(req *http.Request, payloadHash string) strin
 }
 
 func (s *V4Signer) canonicalURI(u *url.URL) string {
-	canonicalPath := u.RequestURI()
-	if u.RawQuery != "" {
-		canonicalPath = canonicalPath[:len(canonicalPath)-len(u.RawQuery)-1]
-	}
+	u = &url.URL{Path: u.Path}
+	canonicalPath := u.String()
+
 	slash := strings.HasSuffix(canonicalPath, "/")
 	canonicalPath = path.Clean(canonicalPath)
+
+	if canonicalPath == "" || canonicalPath == "." {
+		canonicalPath = "/"
+	}
+
 	if canonicalPath != "/" && slash {
 		canonicalPath += "/"
 	}
+
 	return canonicalPath
 }
 

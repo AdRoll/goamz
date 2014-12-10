@@ -152,7 +152,7 @@ func (s *QueryBuilderSuite) TestAddExpectedQuery(c *check.C) {
 	table := s.server.NewTable("sites", key)
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test"})
+	q.AddKey(&Key{HashKey: "test"})
 
 	expected := []Attribute{
 		*NewStringAttribute("domain", "expectedTest").SetExists(true),
@@ -167,15 +167,14 @@ func (s *QueryBuilderSuite) TestAddExpectedQuery(c *check.C) {
 
 	expectedJson, err := simplejson.NewJson([]byte(`
 	{
-		"Expected": {
-			"domain": {
-				"Exists": "true",
-				"Value": {
-					"S": "expectedTest"
-				}
-			},
-			"testKey": {
-				"Exists": "false"
+		"ConditionExpression": "#Expected0 = :Expected0 AND attribute_not_exists (#Expected1)",
+		"ExpressionAttributeNames": {
+			"#Expected0": "domain",
+			"#Expected1": "testKey"
+		},
+		"ExpressionAttributeValues": {
+			":Expected0": {
+				"S":"expectedTest"
 			}
 		},
 		"Key": {
@@ -198,7 +197,7 @@ func (s *QueryBuilderSuite) TestGetItemQuery(c *check.C) {
 	table := s.server.NewTable("sites", key)
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test"})
+	q.AddKey(&Key{HashKey: "test"})
 
 	{
 		queryJson, err := simplejson.NewJson([]byte(q.String()))
@@ -224,7 +223,7 @@ func (s *QueryBuilderSuite) TestGetItemQuery(c *check.C) {
 
 	// Use ConsistentRead
 	{
-		q.ConsistentRead(true)
+		q.SetConsistentRead(true)
 		queryJson, err := simplejson.NewJson([]byte(q.String()))
 		if err != nil {
 			c.Fatal(err)
@@ -258,7 +257,7 @@ func (s *QueryBuilderSuite) TestUpdateQuery(c *check.C) {
 	attributes := []Attribute{*countAttribute}
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test", RangeKey: "1234"})
+	q.AddKey(&Key{HashKey: "test", RangeKey: "1234"})
 	q.AddUpdates(attributes, "ADD")
 
 	queryJson, err := simplejson.NewJson([]byte(q.String()))
@@ -267,12 +266,13 @@ func (s *QueryBuilderSuite) TestUpdateQuery(c *check.C) {
 	}
 	expectedJson, err := simplejson.NewJson([]byte(`
 {
-	"AttributeUpdates": {
-		"count": {
-			"Action": "ADD",
-			"Value": {
-				"N": "4"
-			}
+	"UpdateExpression":"ADD #Updates0 :Updates0",
+	"ExpressionAttributeNames": {
+		"#Updates0": "count"
+	},
+	"ExpressionAttributeValues": {
+		":Updates0": {
+			"N": "4"
 		}
 	},
 	"Key": {
@@ -298,7 +298,7 @@ func (s *QueryBuilderSuite) TestAddUpdates(c *check.C) {
 	table := s.server.NewTable("sites", key)
 
 	q := NewQuery(table)
-	q.AddKey(table, &Key{HashKey: "test"})
+	q.AddKey(&Key{HashKey: "test"})
 
 	attr := NewStringSetAttribute("StringSet", []string{"str", "str2"})
 
@@ -310,12 +310,13 @@ func (s *QueryBuilderSuite) TestAddUpdates(c *check.C) {
 	}
 	expectedJson, err := simplejson.NewJson([]byte(`
 {
-	"AttributeUpdates": {
-		"StringSet": {
-			"Action": "ADD",
-			"Value": {
-				"SS": ["str", "str2"]
-			}
+	"UpdateExpression": "ADD #Updates0 :Updates0",
+	"ExpressionAttributeNames": {
+		"#Updates0": "StringSet"
+	},
+	"ExpressionAttributeValues": {
+		":Updates0": {
+			"SS": ["str", "str2"]
 		}
 	},
 	"Key": {

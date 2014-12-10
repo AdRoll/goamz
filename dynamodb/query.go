@@ -7,6 +7,14 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 )
 
+type Query interface {
+	AddKey(key *Key) error
+	AddExclusiveStartKey(key *Key) error
+	AddExclusiveStartTableName(table string) error
+	SetConsistentRead(c bool) error
+	String() string
+}
+
 func (t *Table) Query(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
 	q := NewQuery(t)
 	q.AddKeyConditions(attributeComparisons)
@@ -56,7 +64,7 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, e
 	return itemCount, nil
 }
 
-func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) QueryTable(q Query) ([]map[string]*Attribute, *Key, error) {
 	jsonResponse, err := t.Server.queryServer(target("Query"), q)
 	if err != nil {
 		return nil, nil, err
@@ -93,7 +101,69 @@ func (t *Table) QueryTable(q *Query) ([]map[string]*Attribute, *Key, error) {
 
 }
 
-func RunQuery(q *Query, t *Table) ([]map[string]*Attribute, error) {
+func (t *Table) QueryCallbackIterator(attributeComparisons []AttributeComparison, cb func(map[string]*Attribute) error) error {
+	q := NewQuery(t)
+	q.AddKeyConditions(attributeComparisons)
+	return t.QueryTableCallbackIterator(q, cb)
+}
+
+func (t *Table) QueryOnIndexCallbackIterator(attributeComparisons []AttributeComparison, indexName string, cb func(map[string]*Attribute) error) error {
+	q := NewQuery(t)
+	q.AddKeyConditions(attributeComparisons)
+	q.AddIndex(indexName)
+	return t.QueryTableCallbackIterator(q, cb)
+}
+
+func (t *Table) LimitedQueryCallbackIterator(attributeComparisons []AttributeComparison, limit int64, cb func(map[string]*Attribute) error) error {
+	q := NewQuery(t)
+	q.AddKeyConditions(attributeComparisons)
+	q.AddLimit(limit)
+	return t.QueryTableCallbackIterator(q, cb)
+}
+
+func (t *Table) LimitedQueryOnIndexCallbackIterator(attributeComparisons []AttributeComparison, indexName string, limit int64, cb func(map[string]*Attribute) error) error {
+	q := NewQuery(t)
+	q.AddKeyConditions(attributeComparisons)
+	q.AddIndex(indexName)
+	q.AddLimit(limit)
+	return t.QueryTableCallbackIterator(q, cb)
+}
+
+func (t *Table) QueryTableCallbackIterator(query Query, cb func(map[string]*Attribute) error) error {
+	for {
+		var results []map[string]*Attribute
+		var lastEvaluatedKey *Key
+		var err error
+		exponentialBackoff(func() error {
+			results, lastEvaluatedKey, err = t.QueryTable(query)
+			if err == nil {
+				return nil
+			}
+			if err.(*Error).StatusCode == 500 ||
+				(err.(*Error).StatusCode == 400 && err.(*Error).Code == "ProvisionedThroughputExceededException") {
+				return err
+			}
+			return nil
+		}, 15)
+		if err != nil {
+			return err
+		}
+		for _, item := range results {
+			if err := cb(item); err != nil {
+				return err
+			}
+		}
+
+		if lastEvaluatedKey == nil {
+			break
+		}
+		query.AddExclusiveStartKey(lastEvaluatedKey)
+	}
+
+	return nil
+}
+
+func RunQuery(q Query, t *Table) ([]map[string]*Attribute, error) {
 
 	result, _, err := t.QueryTable(q)
 

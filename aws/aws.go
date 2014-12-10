@@ -68,6 +68,7 @@ type Region struct {
 	KinesisEndpoint        string
 	STSEndpoint            string
 	CloudFormationEndpoint string
+	ElastiCacheEndpoint    string
 }
 
 var Regions = map[string]Region{

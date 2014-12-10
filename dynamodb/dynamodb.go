@@ -3,12 +3,13 @@ package dynamodb
 import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
-	"github.com/crowdmob/goamz/aws"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
 type Server struct {
@@ -19,20 +20,6 @@ type Server struct {
 func New(auth aws.Auth, region aws.Region) *Server {
 	return &Server{auth, region}
 }
-
-/*
-type Query struct {
-	Query string
-}
-*/
-
-/*
-func NewQuery(queryParts []string) *Query {
-	return &Query{
-		"{" + strings.Join(queryParts, ",") + "}",
-	}
-}
-*/
 
 // Specific error constants
 var ErrNotFound = errors.New("Item not found")
@@ -62,7 +49,7 @@ func buildError(r *http.Response, jsonBody []byte) error {
 		log.Printf("Failed to parse body as JSON")
 		return err
 	}
-	ddbError.Message = json.Get("message").MustString()
+	ddbError.Message = json.Get("Message").MustString()
 
 	// Of the form: com.amazon.coral.validate#ValidationException
 	// We only want the last part
@@ -76,7 +63,7 @@ func buildError(r *http.Response, jsonBody []byte) error {
 	return &ddbError
 }
 
-func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
+func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 	data := strings.NewReader(query.String())
 	hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
 	if err != nil {
@@ -122,4 +109,20 @@ func (s *Server) queryServer(target string, query *Query) ([]byte, error) {
 
 func target(name string) string {
 	return "DynamoDB_20120810." + name
+}
+
+func exponentialBackoff(f func() error, maxRetry uint) error {
+	var err error
+	currentRetry := uint(0)
+	for {
+		if err = f(); err == nil {
+			return nil
+		}
+
+		if currentRetry >= maxRetry {
+			return err
+		}
+		time.Sleep((1 << currentRetry) * 50 * time.Millisecond)
+		currentRetry++
+	}
 }

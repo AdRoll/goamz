@@ -153,7 +153,7 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 			*NewNumericAttribute("AddNewAttr1", "10"),
 			*NewNumericAttribute("AddNewAttr2", "20"),
 		}
-		if ok, err := s.table.ConditionalAddAttributes(pk, addNewAttrs, nil); !ok {
+		if ok, err := s.table.ConditionalAddAttributes(pk, addNewAttrs, expected); !ok {
 			c.Errorf("Expect condition met. %s", err)
 		}
 
@@ -233,6 +233,162 @@ func (s *ItemSuite) TestConditionalPutUpdateDeleteItem(c *check.C) {
 			*NewStringAttribute("Attr1", "Attr2Val").SetExists(true),
 		}
 		if ok, _ := s.table.ConditionalDeleteItem(pk, expected); !ok {
+			c.Errorf("Expect condition met.")
+		}
+
+		// Get to verify Delete operation
+		_, err := s.table.GetItem(pk)
+		c.Check(err.Error(), check.Matches, "Item not found")
+	}
+}
+
+func (s *ItemSuite) TestConditionExpressionPutUpdateDeleteItem(c *check.C) {
+	if s.WithRange {
+		// No rangekey test required
+		return
+	}
+
+	attrs := []Attribute{
+		*NewStringAttribute("Attr1", "Attr1Val"),
+	}
+	pk := &Key{HashKey: "NewHashKeyVal"}
+
+	// Put
+	if ok, err := s.table.PutItem("NewHashKeyVal", "", attrs); !ok {
+		c.Fatal(err)
+	}
+
+	{
+		// Put with condition failed
+		condition := &Expression{
+			Text: "Attr1 = :val AND attribute_not_exists (AttrNotExists)",
+			AttributeValues: []Attribute{
+				*NewStringAttribute(":val", "expectedAttr1Val"),
+			},
+		}
+		if ok, err := s.table.ConditionExpressionPutItem("NewHashKeyVal", "", attrs, condition); ok {
+			c.Errorf("Expect condition does not meet.")
+		} else {
+			c.Check(err.Error(), check.Matches, "ConditionalCheckFailedException.*")
+		}
+
+		// Update attributes with condition failed
+		if ok, err := s.table.ConditionExpressionUpdateAttributes(pk, attrs, condition); ok {
+			c.Errorf("Expect condition does not meet.")
+		} else {
+			c.Check(err.Error(), check.Matches, "ConditionalCheckFailedException.*")
+		}
+
+		// Delete attributes with condition failed
+		if ok, err := s.table.ConditionExpressionDeleteAttributes(pk, attrs, condition); ok {
+			c.Errorf("Expect condition does not meet.")
+		} else {
+			c.Check(err.Error(), check.Matches, "ConditionalCheckFailedException.*")
+		}
+	}
+
+	{
+		condition := &Expression{
+			Text: "Attr1 = :val",
+			AttributeValues: []Attribute{
+				*NewStringAttribute(":val", "Attr1Val"),
+			},
+		}
+
+		// Add attributes with condition met
+		addNewAttrs := []Attribute{
+			*NewNumericAttribute("AddNewAttr1", "10"),
+			*NewNumericAttribute("AddNewAttr2", "20"),
+		}
+		if ok, err := s.table.ConditionExpressionAddAttributes(pk, addNewAttrs, condition); !ok {
+			c.Errorf("Expect condition met. %s", err)
+		}
+
+		// Update attributes with condition met
+		updateAttrs := []Attribute{
+			*NewNumericAttribute("AddNewAttr1", "100"),
+		}
+		if ok, err := s.table.ConditionExpressionUpdateAttributes(pk, updateAttrs, condition); !ok {
+			c.Errorf("Expect condition met. %s", err)
+		}
+
+		// Delete attributes with condition met
+		deleteAttrs := []Attribute{
+			*NewNumericAttribute("AddNewAttr2", ""),
+		}
+		if ok, err := s.table.ConditionExpressionDeleteAttributes(pk, deleteAttrs, condition); !ok {
+			c.Errorf("Expect condition met. %s", err)
+		}
+
+		// Get to verify operations that condition are met
+		item, err := s.table.GetItem(pk)
+		if err != nil {
+			c.Fatal(err)
+		}
+
+		if val, ok := item["AddNewAttr1"]; ok {
+			c.Check(val, check.DeepEquals, NewNumericAttribute("AddNewAttr1", "100"))
+		} else {
+			c.Error("Expect AddNewAttr1 attribute to be added and updated")
+		}
+
+		if _, ok := item["AddNewAttr2"]; ok {
+			c.Error("Expect AddNewAttr2 attribute to be deleted")
+		}
+	}
+
+	{
+		// Put with condition met
+		condition := &Expression{
+			Text: "Attr1 = :val",
+			AttributeValues: []Attribute{
+				*NewStringAttribute(":val", "Attr1Val"),
+			},
+		}
+		newattrs := []Attribute{
+			*NewStringAttribute("Attr1", "Attr2Val"),
+		}
+		if ok, err := s.table.ConditionExpressionPutItem("NewHashKeyVal", "", newattrs, condition); !ok {
+			c.Errorf("Expect condition met. %s", err)
+		}
+
+		// Get to verify Put operation that condition are met
+		item, err := s.table.GetItem(pk)
+		if err != nil {
+			c.Fatal(err)
+		}
+
+		if val, ok := item["Attr1"]; ok {
+			c.Check(val, check.DeepEquals, NewStringAttribute("Attr1", "Attr2Val"))
+		} else {
+			c.Error("Expect Attr1 attribute to be updated")
+		}
+	}
+
+	{
+		// Delete with condition failed
+		condition := &Expression{
+			Text: "Attr1 = :val",
+			AttributeValues: []Attribute{
+				*NewStringAttribute(":val", "expectedAttr1Val"),
+			},
+		}
+		if ok, err := s.table.ConditionExpressionDeleteItem(pk, condition); ok {
+			c.Errorf("Expect condition does not meet.")
+		} else {
+			c.Check(err.Error(), check.Matches, "ConditionalCheckFailedException.*")
+		}
+	}
+
+	{
+		// Delete with condition met
+		condition := &Expression{
+			Text: "Attr1 = :val",
+			AttributeValues: []Attribute{
+				*NewStringAttribute(":val", "Attr2Val"),
+			},
+		}
+		if ok, _ := s.table.ConditionExpressionDeleteItem(pk, condition); !ok {
 			c.Errorf("Expect condition met.")
 		}
 
@@ -410,5 +566,80 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 		} else {
 			c.Error("Expect list to be remained")
 		}
+	}
+}
+
+func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
+	k := &Key{HashKey: "NewHashKeyVal"}
+	if s.WithRange {
+		k.RangeKey = "1"
+	}
+
+	in := map[string]interface{}{
+		"Attr1": "Attr1Val",
+		"Attr2": 12,
+	}
+
+	// Put
+	if err := s.table.PutDocument(k, in); err != nil {
+		c.Fatal(err)
+	}
+
+	// Get
+	var out map[string]interface{}
+	if err := s.table.GetDocument(k, &out); err != nil {
+		c.Fatal(err)
+	}
+	c.Check(out, check.DeepEquals, in)
+
+	// Delete
+	if err := s.table.DeleteDocument(k); err != nil {
+		c.Fatal(err)
+	}
+	err := s.table.GetDocument(k, &out)
+	c.Check(err.Error(), check.Matches, "Item not found")
+}
+
+func (s *ItemSuite) TestPutGetDeleteDocumentTyped(c *check.C) {
+	k := &Key{HashKey: "NewHashKeyVal"}
+	if s.WithRange {
+		k.RangeKey = "1"
+	}
+
+	type myInnterStruct struct {
+		List []interface{}
+	}
+	type myStruct struct {
+		Attr1  string
+		Attr2  int64
+		Nested myInnterStruct
+	}
+	in := myStruct{Attr1: "Attr1Val", Attr2: 1000000, Nested: myInnterStruct{[]interface{}{true, false, nil, "some string", 3.14}}}
+
+	for i := 0; i < 2; i++ {
+		// Put - test both struct and pointer to struct
+		if i == 0 {
+			if err := s.table.PutDocument(k, in); err != nil {
+				c.Fatal(err)
+			}
+		} else {
+			if err := s.table.PutDocument(k, &in); err != nil {
+				c.Fatal(err)
+			}
+		}
+
+		// Get
+		var out myStruct
+		if err := s.table.GetDocument(k, &out); err != nil {
+			c.Fatal(err)
+		}
+		c.Check(out, check.DeepEquals, in)
+
+		// Delete
+		if err := s.table.DeleteDocument(k); err != nil {
+			c.Fatal(err)
+		}
+		err := s.table.GetDocument(k, &out)
+		c.Check(err.Error(), check.Matches, "Item not found")
 	}
 }

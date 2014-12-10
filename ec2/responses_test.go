@@ -1054,6 +1054,21 @@ var (
 </AttachVolumeResponse>
 `
 
+	CreateVolumeExample = `
+<CreateVolumeResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
+	<requestId>0c67a4c9-d7ec-45ef-8016-bf666EXAMPLE</requestId>
+	<volumeId>vol-2a21e543</volumeId>
+	<size>1</size>
+	<snapshotId/>
+	<availabilityZone>us-east-1a</availabilityZone>
+	<status>creating</status>
+	<createTime>2009-12-28T05:42:53.000Z</createTime>
+	<volumeType>standard</volumeType>
+	<iops>0</iops>
+	<encrypted>false</encrypted>
+</CreateVolumeResponse>
+`
+
 	DescribeVpcsExample = `
 <DescribeVpcsResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
   <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>

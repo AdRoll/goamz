@@ -415,21 +415,37 @@ func makeXmlBuffer(doc []byte) *bytes.Buffer {
 	return buf
 }
 
+type IndexDocument struct {
+	Suffix string `xml:"Suffix"`
+}
+
+type ErrorDocument struct {
+	Key string `xml:"Key"`
+}
+
 type RoutingRule struct {
 	ConditionKeyPrefixEquals     string `xml:"Condition>KeyPrefixEquals"`
 	RedirectReplaceKeyPrefixWith string `xml:"Redirect>ReplaceKeyPrefixWith,omitempty"`
 	RedirectReplaceKeyWith       string `xml:"Redirect>ReplaceKeyWith,omitempty"`
 }
 
-type WebsiteConfiguration struct {
-	XMLName             xml.Name       `xml:"http://s3.amazonaws.com/doc/2006-03-01/ WebsiteConfiguration"`
-	IndexDocumentSuffix string         `xml:"IndexDocument>Suffix"`
-	ErrorDocumentKey    string         `xml:"ErrorDocument>Key"`
-	RoutingRules        *[]RoutingRule `xml:"RoutingRules>RoutingRule,omitempty"`
+type RedirectAllRequestsTo struct {
+	HostName string `xml:"HostName"`
+	Protocol string `xml:"Protocol,omitempty"`
 }
 
-func (b *Bucket) PutBucketWebsite(configuration WebsiteConfiguration) error {
+type WebsiteConfiguration struct {
+	XMLName               xml.Name               `xml:"http://s3.amazonaws.com/doc/2006-03-01/ WebsiteConfiguration"`
+	IndexDocument         *IndexDocument         `xml:"IndexDocument,omitempty"`
+	ErrorDocument         *ErrorDocument         `xml:"ErrorDocument,omitempty"`
+	RoutingRules          *[]RoutingRule         `xml:"RoutingRules>RoutingRule,omitempty"`
+	RedirectAllRequestsTo *RedirectAllRequestsTo `xml:"RedirectAllRequestsTo,omitempty"`
+}
 
+// PutBucketWebsite configures a bucket as a website.
+//
+// See http://goo.gl/TpRlUy for details.
+func (b *Bucket) PutBucketWebsite(configuration WebsiteConfiguration) error {
 	doc, err := xml.Marshal(configuration)
 	if err != nil {
 		return err
@@ -641,8 +657,8 @@ type VersionsResp struct {
 	MaxKeys         int
 	Delimiter       string
 	IsTruncated     bool
-	Versions        []Version
-	CommonPrefixes  []string `xml:">Prefix"`
+	Versions        []Version `xml:"Version"`
+	CommonPrefixes  []string  `xml:">Prefix"`
 }
 
 // The Version type represents an object version stored in an S3 bucket.
@@ -814,11 +830,16 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 
 // PostFormArgs returns the action and input fields needed to allow anonymous
 // uploads to a bucket within the expiration limit
-func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (action string, fields map[string]string) {
+// Additional conditions can be specified with conds
+func (b *Bucket) PostFormArgsEx(path string, expires time.Time, redirect string, conds []string) (action string, fields map[string]string) {
 	conditions := make([]string, 0)
 	fields = map[string]string{
 		"AWSAccessKeyId": b.Auth.AccessKey,
 		"key":            path,
+	}
+
+	if conds != nil {
+		conditions = append(conditions, conds...)
 	}
 
 	conditions = append(conditions, fmt.Sprintf("{\"key\": \"%s\"}", path))
@@ -840,6 +861,12 @@ func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (
 
 	action = fmt.Sprintf("%s/%s/", b.S3.Region.S3Endpoint, b.Name)
 	return
+}
+
+// PostFormArgs returns the action and input fields needed to allow anonymous
+// uploads to a bucket within the expiration limit
+func (b *Bucket) PostFormArgs(path string, expires time.Time, redirect string) (action string, fields map[string]string) {
+	return b.PostFormArgsEx(path, expires, redirect, nil)
 }
 
 type request struct {

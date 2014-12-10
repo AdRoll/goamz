@@ -138,7 +138,7 @@ func setUpAuth(c *check.C) {
 		dynamodb_auth = aws.Auth{AccessKey: "DUMMY_KEY", SecretKey: "DUMMY_SECRET"}
 	} else {
 		c.Log("Using REAL AMAZON SERVER")
-		dynamodb_region = aws.USEast
+		dynamodb_region = aws.USWest2
 		auth, err := aws.EnvAuth()
 		if err != nil {
 			c.Fatal(err)

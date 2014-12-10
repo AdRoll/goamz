@@ -1058,6 +1058,30 @@ func (s *S) TestAttachVolume(c *check.C) {
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
+func (s *S) TestCreateVolume(c *check.C) {
+	testServer.Response(200, nil, CreateVolumeExample)
+
+	resp, err := s.ec2.CreateVolume(ec2.CreateVolumeOptions{
+		Size:             "1",
+		AvailabilityZone: "us-east-1a",
+	})
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"CreateVolume"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "0c67a4c9-d7ec-45ef-8016-bf666EXAMPLE")
+	c.Assert(resp.Size, check.Equals, "1")
+	c.Assert(resp.VolumeId, check.Equals, "vol-2a21e543")
+	c.Assert(resp.AvailabilityZone, check.Equals, "us-east-1a")
+	c.Assert(resp.SnapshotId, check.Equals, "")
+	c.Assert(resp.Status, check.Equals, "creating")
+	c.Assert(resp.CreateTime, check.Equals, "2009-12-28T05:42:53.000Z")
+	c.Assert(resp.VolumeType, check.Equals, "standard")
+	c.Assert(resp.IOPS, check.Equals, 0)
+	c.Assert(resp.Encrypted, check.Equals, false)
+}
+
 func (s *S) TestDescribeVpcs(c *check.C) {
 	testServer.Response(200, nil, DescribeVpcsExample)
 
