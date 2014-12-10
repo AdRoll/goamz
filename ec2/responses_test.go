@@ -1147,4 +1147,12 @@ var (
   </accountAttributeSet>
 </DescribeAccountAttributesResponse>
 `
+
+	CreateSecurityGroupVpcExample = `
+<CreateSecurityGroupResponse xmlns="http://ec2.amazonaws.com/doc/2014-10-01/">
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+   <return>true</return>
+   <groupId>sg-0a42d66a</groupId>
+</CreateSecurityGroupResponse>
+`
 )

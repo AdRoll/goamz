@@ -570,12 +570,13 @@ func (s *S) TestDescribeSubnetsExample(c *check.C) {
 func (s *S) TestCreateSecurityGroupExample(c *check.C) {
 	testServer.Response(200, nil, CreateSecurityGroupExample)
 
-	resp, err := s.ec2.CreateSecurityGroup("websrv", "Web Servers")
+	resp, err := s.ec2.CreateSecurityGroup("websrv", "Web Servers", "")
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], check.DeepEquals, []string{"CreateSecurityGroup"})
 	c.Assert(req.Form["GroupName"], check.DeepEquals, []string{"websrv"})
 	c.Assert(req.Form["GroupDescription"], check.DeepEquals, []string{"Web Servers"})
+	c.Assert(req.Form["VpcId"], check.DeepEquals, []string(nil))
 
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
@@ -1150,4 +1151,20 @@ func (s *S) TestDescribeAccountAttriutes(c *check.C) {
 	v1 := a0.AttributeValue[1]
 	c.Assert(v0, check.Equals, "EC2")
 	c.Assert(v1, check.Equals, "VPC")
+}
+func (s *S) TestCreateSecurityGroupVpcExample(c *check.C) {
+	testServer.Response(200, nil, CreateSecurityGroupVpcExample)
+
+	resp, err := s.ec2.CreateSecurityGroup("WebServerSG", "Web Servers", "vpc-3325caf2")
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"CreateSecurityGroup"})
+	c.Assert(req.Form["GroupName"], check.DeepEquals, []string{"WebServerSG"})
+	c.Assert(req.Form["GroupDescription"], check.DeepEquals, []string{"Web Servers"})
+	c.Assert(req.Form["VpcId"], check.DeepEquals, []string{"vpc-3325caf2"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
+	c.Assert(resp.Name, check.Equals, "WebServerSG")
+	c.Assert(resp.Id, check.Equals, "sg-0a42d66a")
 }
