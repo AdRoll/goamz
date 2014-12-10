@@ -1677,6 +1677,8 @@ type DescribeInternetGatewaysResp struct {
 	InternetGateway []InternetGatewayStruct `xml:"internetGatewaySet>item"`
 }
 
+// Describes one or more of your Internet gateways
+// http://goo.gl/QR2DiZ
 func (ec2 *EC2) DescribeInternetGateways(InternetGatewayIds []string, filter *Filter) (resp *DescribeInternetGatewaysResp, err error) {
 	params := makeParams("DescribeInternetGateways")
 	for i, id := range InternetGatewayIds {
@@ -1700,6 +1702,8 @@ type DescribeAccountAttributeResp struct {
 	AttributeList []AttributeSet `xml:"accountAttributeSet>item"`
 }
 
+// Describes attributes of your AWS account.
+// http://goo.gl/xj7YGT
 func (ec2 *EC2) DescribeAccountAttributes(AttributeNames []string, filter *Filter) (resp *DescribeAccountAttributeResp, err error) {
 	params := makeParams("DescribeAccountAttributes")
 	for i, AttrName := range AttributeNames {
