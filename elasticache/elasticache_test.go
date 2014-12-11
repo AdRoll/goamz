@@ -21,7 +21,7 @@ func Test(t *testing.T) {
 func (s *S) SetUpSuite(c *check.C) {
 	testServer.Start()
 	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
-	s.elasticache = New(auth, aws.Region{EC2Endpoint: testServer.URL})
+	s.elasticache = New(auth, aws.Region{ElastiCacheEndpoint: testServer.URL})
 }
 
 func (s *S) TearDownTest(c *check.C) {
