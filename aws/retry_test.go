@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"math/rand"
 	"net"
 	"net/http"
 	"testing"
@@ -63,15 +64,15 @@ var testCases = []testCase{
 			err: &Error{
 				Code: "ProvisionedThroughputExceededException",
 			},
-			numRetries: 0,
+			numRetries: 1,
 		},
 		defaultResult: testResult{
 			shouldRetry: true,
-			delay:       0 * time.Millisecond,
+			delay:       1105991654 * time.Nanosecond, // account for randomness with known seed
 		},
 		dynamoDBResult: testResult{
 			shouldRetry: true,
-			delay:       0 * time.Millisecond,
+			delay:       50 * time.Millisecond,
 		},
 	},
 	// Test a fake throttling exception
@@ -187,7 +188,7 @@ var testCases = []testCase{
 		},
 		defaultResult: testResult{
 			shouldRetry: false,
-			delay:       2400 * time.Millisecond,
+			delay:       4313582352 * time.Nanosecond, // account for randomness with known seed
 		},
 		dynamoDBResult: testResult{
 			shouldRetry: true,
@@ -228,6 +229,7 @@ var testCases = []testCase{
 }
 
 func TestDefaultRetryPolicy(t *testing.T) {
+	rand.Seed(0)
 	var policy RetryPolicy
 	policy = &DefaultRetryPolicy{}
 	for _, test := range testCases {
@@ -239,7 +241,7 @@ func TestDefaultRetryPolicy(t *testing.T) {
 		if shouldRetry != test.defaultResult.shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, test.defaultResult.shouldRetry, res, err, numRetries)
 		}
-		delay := policy.Delay(numRetries)
+		delay := policy.Delay(&res, err, numRetries)
 		if delay != test.defaultResult.delay {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, test.defaultResult.delay, res, err, numRetries)
 		}
@@ -258,7 +260,7 @@ func TestDynamoDBRetryPolicy(t *testing.T) {
 		if shouldRetry != test.dynamoDBResult.shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, test.dynamoDBResult.shouldRetry, res, err, numRetries)
 		}
-		delay := policy.Delay(numRetries)
+		delay := policy.Delay(&res, err, numRetries)
 		if delay != test.dynamoDBResult.delay {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, test.dynamoDBResult.delay, res, err, numRetries)
 		}
@@ -277,7 +279,7 @@ func TestNeverRetryPolicy(t *testing.T) {
 		if shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, false, res, err, numRetries)
 		}
-		delay := policy.Delay(numRetries)
+		delay := policy.Delay(&res, err, numRetries)
 		if delay != time.Duration(0) {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, time.Duration(0), res, err, numRetries)
 		}

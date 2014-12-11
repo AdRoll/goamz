@@ -1,17 +1,20 @@
 package aws
 
 import (
+	"math/rand"
 	"net"
 	"net/http"
 	"time"
 )
 
 const (
-	maxDelay           = 20 * time.Second
-	defaultScale       = 300 * time.Millisecond
-	defaultMaxRetries  = 3
-	dynamoDBScale      = 25 * time.Millisecond
-	dynamoDBMaxRetries = 10
+	maxDelay             = 20 * time.Second
+	defaultScale         = 300 * time.Millisecond
+	throttlingScale      = 500 * time.Millisecond
+	throttlingScaleRange = throttlingScale / 4
+	defaultMaxRetries    = 3
+	dynamoDBScale        = 25 * time.Millisecond
+	dynamoDBMaxRetries   = 10
 )
 
 // A RetryPolicy encapsulates a strategy for implementing client retries.
@@ -22,10 +25,14 @@ type RetryPolicy interface {
 	ShouldRetry(r *http.Response, err error, numRetries int) bool
 
 	// Delay returns the time a client should wait before issuing a retry.
-	Delay(numRetries int) time.Duration
+	Delay(r *http.Response, err error, numRetries int) time.Duration
 }
 
 // DefaultRetryPolicy implements the AWS SDK default retry policy.
+//
+// It will retry up to 3 times, and uses an exponential backoff with a scale
+// factor of 300ms (300ms, 600ms, 1200ms). If the retry is because of
+// throttling, the delay will also include some randomness.
 //
 // See https://github.com/aws/aws-sdk-java/blob/master/aws-java-sdk-core/src/main/java/com/amazonaws/retry/PredefinedRetryPolicies.java#L90.
 type DefaultRetryPolicy struct {
@@ -37,11 +44,18 @@ func (policy DefaultRetryPolicy) ShouldRetry(r *http.Response, err error, numRet
 }
 
 // Delay implements the RetryPolicy Delay method.
-func (policy DefaultRetryPolicy) Delay(numRetries int) time.Duration {
-	return exponentialBackoff(numRetries, defaultScale)
+func (policy DefaultRetryPolicy) Delay(r *http.Response, err error, numRetries int) time.Duration {
+	scale := defaultScale
+	if err, ok := err.(*Error); ok && isThrottlingException(err) {
+		scale = throttlingScale + time.Duration(rand.Int63n(int64(throttlingScaleRange)))
+	}
+	return exponentialBackoff(numRetries, scale)
 }
 
 // DynamoDBRetryPolicy implements the AWS SDK DynamoDB retry policy.
+//
+// It will retry up to 10 times, and uses an exponential backoff with a scale
+// factor of 25ms (25ms, 50ms, 100ms, ...).
 //
 // See https://github.com/aws/aws-sdk-java/blob/master/aws-java-sdk-core/src/main/java/com/amazonaws/retry/PredefinedRetryPolicies.java#L103.
 type DynamoDBRetryPolicy struct {
@@ -53,7 +67,7 @@ func (policy DynamoDBRetryPolicy) ShouldRetry(r *http.Response, err error, numRe
 }
 
 // Delay implements the RetryPolicy Delay method.
-func (policy DynamoDBRetryPolicy) Delay(numRetries int) time.Duration {
+func (policy DynamoDBRetryPolicy) Delay(r *http.Response, err error, numRetries int) time.Duration {
 	return exponentialBackoff(numRetries, dynamoDBScale)
 }
 
@@ -67,7 +81,7 @@ func (policy NeverRetryPolicy) ShouldRetry(r *http.Response, err error, numRetri
 }
 
 // Delay implements the RetryPolicy Delay method.
-func (policy NeverRetryPolicy) Delay(numRetries int) time.Duration {
+func (policy NeverRetryPolicy) Delay(r *http.Response, err error, numRetries int) time.Duration {
 	return time.Duration(0)
 }
 
