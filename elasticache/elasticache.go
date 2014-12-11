@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
@@ -176,8 +175,6 @@ func (ec *ElastiCache) query(query string, response interface{}) error {
 		return err
 	}
 
-	log.Println(hreq)
-	log.Println(string(b))
 	return xml.Unmarshal(b, &response)
 }
 
