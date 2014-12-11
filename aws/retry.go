@@ -115,7 +115,7 @@ func shouldRetry(r *http.Response, err error, numRetries int, maxRetries int) bo
 }
 
 func exponentialBackoff(numRetries int, scale time.Duration) time.Duration {
-	if numRetries <= 0 {
+	if numRetries < 0 {
 		return time.Duration(0)
 	}
 

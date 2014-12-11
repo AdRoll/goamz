@@ -36,11 +36,11 @@ var testCases = []testCase{
 		},
 		defaultResult: testResult{
 			shouldRetry: true,
-			delay:       0 * time.Millisecond,
+			delay:       617165505 * time.Nanosecond, // account for randomness with known seed
 		},
 		dynamoDBResult: testResult{
 			shouldRetry: true,
-			delay:       0 * time.Millisecond,
+			delay:       25 * time.Millisecond,
 		},
 	},
 	testCase{
@@ -52,11 +52,11 @@ var testCases = []testCase{
 		},
 		defaultResult: testResult{
 			shouldRetry: true,
-			delay:       0 * time.Millisecond,
+			delay:       579393152 * time.Nanosecond, // account for randomness with known seed
 		},
 		dynamoDBResult: testResult{
 			shouldRetry: true,
-			delay:       0 * time.Millisecond,
+			delay:       25 * time.Millisecond,
 		},
 	},
 	testCase{
@@ -85,11 +85,11 @@ var testCases = []testCase{
 		},
 		defaultResult: testResult{
 			shouldRetry: false,
-			delay:       0 * time.Millisecond,
+			delay:       300 * time.Millisecond,
 		},
 		dynamoDBResult: testResult{
 			shouldRetry: false,
-			delay:       0 * time.Millisecond,
+			delay:       25 * time.Millisecond,
 		},
 	},
 	// Test 5xx errors
