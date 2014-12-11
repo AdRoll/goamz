@@ -7,10 +7,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/crowdmob/goamz/dynamodb/dynamizer"
 	"log"
-	"time"
 )
-
-const maxNumberOfRetry = 4
 
 type BatchGetItem struct {
 	Server *Server
@@ -141,7 +138,7 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 		q.SetConsistentRead(consistentRead)
 	}
 
-	jsonResponse, err := t.runGetItemQuery(q)
+	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
 
 	json, err := simplejson.NewJson(jsonResponse)
 	if err != nil {
@@ -175,7 +172,7 @@ func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool, v interface
 		q.SetConsistentRead(consistentRead)
 	}
 
-	jsonResponse, err := t.runGetItemQuery(q)
+	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
 	if err != nil {
 		return err
 	}
@@ -205,16 +202,6 @@ func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool, v interface
 	}
 
 	return nil
-}
-
-func (t *Table) runGetItemQuery(q Query) ([]byte, error) {
-	// TODO: implement retry logic
-	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
-	if err != nil {
-		return nil, err
-	}
-
-	return jsonResponse, nil
 }
 
 func (t *Table) PutItem(hashKey string, rangeKey string, attributes []Attribute) (bool, error) {
@@ -249,7 +236,7 @@ func (t *Table) putItem(hashKey, rangeKey string, attributes, expected []Attribu
 		q.AddConditionExpression(condition)
 	}
 
-	jsonResponse, err := t.runPutItemQuery(q)
+	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
 	if err != nil {
 		return false, err
 	}
@@ -271,7 +258,7 @@ func (t *Table) PutDocument(key *Key, data interface{}) error {
 	q := NewDynamoQuery(t)
 	q.AddItem(key, item)
 
-	jsonResponse, err := t.runPutItemQuery(q)
+	jsonResponse, err := t.Server.queryServer(target("PutItem"), q)
 	if err != nil {
 		return err
 	}
@@ -287,44 +274,6 @@ func (t *Table) PutDocument(key *Key, data interface{}) error {
 	return nil
 }
 
-func (t *Table) runPutItemQuery(q Query) ([]byte, error) {
-	var jsonResponse []byte
-	var err error
-	// based on:
-	// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html#APIRetries
-	currentRetry := uint(0)
-	for {
-		jsonResponse, err = t.Server.queryServer(target("PutItem"), q)
-		if currentRetry >= maxNumberOfRetry {
-			break
-		}
-
-		retry := false
-		if err != nil {
-			log.Printf("Error requesting from Amazon, request was: %#v\n response is:%#v\n and error is: %#v\n", q, string(jsonResponse), err)
-			if err, ok := err.(*Error); ok {
-				retry = (err.StatusCode == 500) ||
-					(err.Code == "ThrottlingException") ||
-					(err.Code == "ProvisionedThroughputExceededException")
-			}
-		}
-
-		if !retry {
-			break
-		}
-
-		log.Printf("Retrying in %v ms\n", (1<<currentRetry)*50)
-		<-time.After((1 << currentRetry) * 50 * time.Millisecond)
-		currentRetry += 1
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return jsonResponse, nil
-}
-
 func (t *Table) deleteItem(key *Key, expected []Attribute, condition *Expression) (bool, error) {
 	q := NewQuery(t)
 	q.AddKey(key)
@@ -337,7 +286,7 @@ func (t *Table) deleteItem(key *Key, expected []Attribute, condition *Expression
 		q.AddConditionExpression(condition)
 	}
 
-	jsonResponse, err := t.runDeleteItemQuery(q)
+	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
 
 	if err != nil {
 		return false, err
@@ -349,16 +298,6 @@ func (t *Table) deleteItem(key *Key, expected []Attribute, condition *Expression
 	}
 
 	return true, nil
-}
-
-func (t *Table) runDeleteItemQuery(q Query) ([]byte, error) {
-	// TODO: implement retry logic
-	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
-	if err != nil {
-		return nil, err
-	}
-
-	return jsonResponse, nil
 }
 
 func (t *Table) DeleteItem(key *Key) (bool, error) {
@@ -377,7 +316,7 @@ func (t *Table) DeleteDocument(key *Key) error {
 	q := NewDynamoQuery(t)
 	q.AddKey(key)
 
-	jsonResponse, err := t.runDeleteItemQuery(q)
+	jsonResponse, err := t.Server.queryServer(target("DeleteItem"), q)
 	if err != nil {
 		return err
 	}

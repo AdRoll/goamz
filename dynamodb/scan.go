@@ -45,13 +45,7 @@ func (t *Table) FetchPartialResults(query Query) ([]map[string]*Attribute, *Key,
 
 func (t *Table) FetchResultCallbackIterator(query Query, cb func(map[string]*Attribute) error) error {
 	for {
-		var results []map[string]*Attribute
-		var lastEvaluatedKey *Key
-		var err error
-		err = exponentialBackoff(func() error {
-			results, lastEvaluatedKey, err = t.FetchPartialResults(query)
-			return err
-		}, 15)
+		results, lastEvaluatedKey, err := t.FetchPartialResults(query)
 		if err != nil {
 			return err
 		}

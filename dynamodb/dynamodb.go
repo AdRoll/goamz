@@ -4,7 +4,6 @@ import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -13,12 +12,13 @@ import (
 )
 
 type Server struct {
-	Auth   aws.Auth
-	Region aws.Region
+	Auth        aws.Auth
+	Region      aws.Region
+	RetryPolicy aws.RetryPolicy
 }
 
 func New(auth aws.Auth, region aws.Region) *Server {
-	return &Server{auth, region}
+	return &Server{auth, region, aws.DynamoDBRetryPolicy{}}
 }
 
 // Specific error constants
@@ -42,11 +42,9 @@ func buildError(r *http.Response, jsonBody []byte) error {
 		StatusCode: r.StatusCode,
 		Status:     r.Status,
 	}
-	// TODO return error if Unmarshal fails?
 
 	json, err := simplejson.NewJson(jsonBody)
 	if err != nil {
-		log.Printf("Failed to parse body as JSON")
 		return err
 	}
 	ddbError.Message = json.Get("Message").MustString()
@@ -81,48 +79,48 @@ func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 
 	signer := aws.NewV4Signer(s.Auth, "dynamodb", s.Region)
 	signer.Sign(hreq)
+	numRetries := 0
+	for {
+		resp, err := http.DefaultClient.Do(hreq)
+		if err != nil {
+			if s.RetryPolicy.ShouldRetry(resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(resp, err, numRetries))
+				numRetries++
+				continue
+			}
+			return nil, err
+		}
 
-	resp, err := http.DefaultClient.Do(hreq)
+		defer resp.Body.Close()
 
-	if err != nil {
-		log.Printf("Error calling Amazon")
-		return nil, err
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if s.RetryPolicy.ShouldRetry(resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(resp, err, numRetries))
+				numRetries++
+				continue
+			}
+			return nil, err
+		}
+
+		// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html
+		// "A response code of 200 indicates the operation was successful."
+		if resp.StatusCode != 200 {
+			err := buildError(resp, body)
+			if s.RetryPolicy.ShouldRetry(resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(resp, err, numRetries))
+				numRetries++
+				continue
+			}
+			return nil, err
+		}
+
+		return body, nil
 	}
 
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Could not read response body")
-		return nil, err
-	}
-
-	// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html
-	// "A response code of 200 indicates the operation was successful."
-	if resp.StatusCode != 200 {
-		ddbErr := buildError(resp, body)
-		return nil, ddbErr
-	}
-
-	return body, nil
+	panic("unreachable")
 }
 
 func target(name string) string {
 	return "DynamoDB_20120810." + name
-}
-
-func exponentialBackoff(f func() error, maxRetry uint) error {
-	var err error
-	currentRetry := uint(0)
-	for {
-		if err = f(); err == nil {
-			return nil
-		}
-
-		if currentRetry >= maxRetry {
-			return err
-		}
-		time.Sleep((1 << currentRetry) * 50 * time.Millisecond)
-		currentRetry++
-	}
 }
