@@ -166,6 +166,11 @@ func (s *Service) BuildError(r *http.Response) error {
 	return &err
 }
 
+type ServiceError interface {
+	error
+	ErrorCode() string
+}
+
 type ErrorResponse struct {
 	Errors    Error  `xml:"Error"`
 	RequestId string // A unique ID for tracking the request
@@ -183,6 +188,10 @@ func (err *Error) Error() string {
 	return fmt.Sprintf("Type: %s, Code: %s, Message: %s",
 		err.Type, err.Code, err.Message,
 	)
+}
+
+func (err *Error) ErrorCode() string {
+	return err.Code
 }
 
 type Auth struct {

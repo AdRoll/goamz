@@ -1,7 +1,15 @@
 package dynamodb
 
 import (
+	"encoding/json"
 	"gopkg.in/check.v1"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+
+	"github.com/crowdmob/goamz/aws"
 )
 
 type ItemSuite struct {
@@ -566,6 +574,85 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 		} else {
 			c.Error("Expect list to be remained")
 		}
+	}
+}
+
+func (s *ItemSuite) TestDefaultRetryPolicy(c *check.C) {
+	if s.WithRange {
+		// No rangekey test required
+		return
+	}
+
+	// Save off the real endpoint, and then point it at a local proxy.
+	endpoint := s.table.Server.Region.DynamoDBEndpoint
+	defer func() {
+		s.table.Server.Region.DynamoDBEndpoint = endpoint
+	}()
+	numCalls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		numCalls++
+		// On the first request, force a failure.
+		if numCalls == 1 {
+			b, _ := json.Marshal(map[string]interface{}{
+				"__type": "com.amazonaws.dynamodb.v20120810#ProvisionedThroughputExceededException",
+				"Code":   "blah",
+			})
+			w.WriteHeader(400)
+			io.WriteString(w, string(b))
+			return
+		}
+
+		// Otherwise, proxy to actual DynamoDB endpoint. We reformat the request
+		// with the same content.
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			c.Fatal(err)
+		}
+		newr, err := http.NewRequest("POST", endpoint + "/", strings.NewReader(string(body)))
+		headersToKeep := map[string]bool{
+			"Content-Type":            true,
+			"X-Amz-Date": true,
+			"X-Amz-Target": true,
+			"X-Amz-Security-Token": true,
+		}
+		for h, _ := range r.Header {
+			if _, ok := headersToKeep[h]; ok {
+				newr.Header.Set(h, r.Header.Get(h))
+			}
+		}
+
+		signer := aws.NewV4Signer(s.table.Server.Auth, "dynamodb", s.table.Server.Region)
+		signer.Sign(newr)
+
+		resp, err := http.DefaultClient.Do(newr)
+		if err != nil {
+			c.Fatal(err)
+		}
+		body, err = ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		if err != nil {
+			c.Fatal(err)
+		}
+		w.WriteHeader(resp.StatusCode)
+		io.WriteString(w, string(body))
+	}))
+	defer server.Close()
+	s.table.Server.Region.DynamoDBEndpoint = server.URL
+
+	// Now make the request.
+	k := &Key{HashKey: "NewHashKeyVal"}
+	if s.WithRange {
+		k.RangeKey = "1"
+	}
+
+	in := map[string]interface{}{
+		"Attr1": "Attr1Val",
+		"Attr2": 12,
+	}
+
+	// Put
+	if err := s.table.PutDocument(k, in); err != nil {
+		c.Fatal(err)
 	}
 }
 

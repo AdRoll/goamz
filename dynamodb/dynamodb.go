@@ -36,6 +36,10 @@ func (e Error) Error() string {
 	return e.Code + ": " + e.Message
 }
 
+func (e Error) ErrorCode() string {
+	return e.Code
+}
+
 func buildError(r *http.Response, jsonBody []byte) error {
 
 	ddbError := Error{
@@ -62,25 +66,26 @@ func buildError(r *http.Response, jsonBody []byte) error {
 }
 
 func (s *Server) queryServer(target string, query Query) ([]byte, error) {
-	data := strings.NewReader(query.String())
-	hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
-	if err != nil {
-		return nil, err
-	}
-
-	hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
-	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
-	hreq.Header.Set("X-Amz-Target", target)
-
-	token := s.Auth.Token()
-	if token != "" {
-		hreq.Header.Set("X-Amz-Security-Token", token)
-	}
-
-	signer := aws.NewV4Signer(s.Auth, "dynamodb", s.Region)
-	signer.Sign(hreq)
 	numRetries := 0
 	for {
+		data := strings.NewReader(query.String())
+		hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
+		if err != nil {
+			return nil, err
+		}
+
+		hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
+		hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
+		hreq.Header.Set("X-Amz-Target", target)
+
+		token := s.Auth.Token()
+		if token != "" {
+			hreq.Header.Set("X-Amz-Security-Token", token)
+		}
+
+		signer := aws.NewV4Signer(s.Auth, "dynamodb", s.Region)
+		signer.Sign(hreq)
+
 		resp, err := http.DefaultClient.Do(hreq)
 		if err != nil {
 			if s.RetryPolicy.ShouldRetry(resp, err, numRetries) {

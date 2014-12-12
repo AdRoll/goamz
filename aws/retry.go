@@ -100,12 +100,12 @@ func shouldRetry(r *http.Response, err error, numRetries int, maxRetries int) bo
 	}
 
 	// Always retry 5xx responses.
-	if r.StatusCode >= 500 {
+	if r != nil && r.StatusCode >= 500 {
 		return true
 	}
 
 	// Always retry throttling exceptions.
-	if err, ok := err.(*Error); ok && isThrottlingException(err) {
+	if err, ok := err.(ServiceError); ok && isThrottlingException(err) {
 		return true
 	}
 
@@ -126,8 +126,8 @@ func exponentialBackoff(numRetries int, scale time.Duration) time.Duration {
 	return delay
 }
 
-func isThrottlingException(err *Error) bool {
-	switch err.Code {
+func isThrottlingException(err ServiceError) bool {
+	switch err.ErrorCode() {
 	case "Throttling", "ThrottlingException", "ProvisionedThroughputExceededException":
 		return true
 	default:
