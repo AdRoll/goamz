@@ -67,8 +67,8 @@ type Options struct {
 	CacheControl         string
 	RedirectLocation     string
 	ContentMD5           string
+	ContentDisposition   string
 	// What else?
-	// Content-Disposition string
 	//// The following become headers so they are []strings rather than strings... I think
 	// x-amz-storage-class []string
 }
@@ -391,6 +391,9 @@ func (o Options) addHeaders(headers map[string][]string) {
 	}
 	if len(o.RedirectLocation) != 0 {
 		headers["x-amz-website-redirect-location"] = []string{o.RedirectLocation}
+	}
+	if len(o.ContentDisposition) != 0 {
+		headers["Content-Disposition"] = []string{o.ContentDisposition}
 	}
 	for k, v := range o.Meta {
 		headers["x-amz-meta-"+k] = v
