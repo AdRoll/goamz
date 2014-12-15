@@ -129,48 +129,98 @@ var attempts = aws.AttemptStrategy{
 	Delay: 200 * time.Millisecond,
 }
 
+const (
+	UnitSeconds            string = "Seconds"
+	UnitMicroseconds       string = "Microseconds"
+	UnitMilliseconds       string = "Milliseconds"
+	UnitBytes              string = "Bytes"
+	UnitKilobytes          string = "Kilobytes"
+	UnitMegabytes          string = "Megabytes"
+	UnitGigabytes          string = "Gigabytes"
+	UnitTerabytes          string = "Terabytes"
+	UnitBits               string = "Bits"
+	UnitKilobits           string = "Kilobits"
+	UnitMegabits           string = "Megabits"
+	UnitGigabits           string = "Gigabits"
+	UnitTerabits           string = "Terabits"
+	UnitPercent            string = "Percent"
+	UnitCount              string = "Count"
+	UnitBytesPerSecond     string = "Bytes/Second"
+	UnitKilobytesPerSecond string = "Kilobytes/Second"
+	UnitMegabytesPerSecond string = "Megabytes/Second"
+	UnitGigabytesPerSecond string = "Gigabytes/Second"
+	UnitTerabytesPerSecond string = "Terabytes/Second"
+	UnitBitsPerSecond      string = "Bits/Second"
+	UnitKilobitsPerSecond  string = "Kilobits/Second"
+	UnitMegabitsPerSecond  string = "Megabits/Second"
+	UnitGigabitsPerSecond  string = "Gigabits/Second"
+	UnitTerabitsPerSecond  string = "Terabits/Second"
+	UnitCountPerSecond     string = "Count/Second"
+	UnitNone               string = "None"
+)
+
 var validUnits = sets.SSet(
-	"Seconds",
-	"Microseconds",
-	"Milliseconds",
-	"Bytes",
-	"Kilobytes",
-	"Megabytes",
-	"Gigabytes",
-	"Terabytes",
-	"Bits",
-	"Kilobits",
-	"Megabits",
-	"Gigabits",
-	"Terabits",
-	"Percent",
-	"Count",
-	"Bytes/Second",
-	"Kilobytes/Second",
-	"Megabytes/Second",
-	"Gigabytes/Second",
-	"Terabytes/Second",
-	"Bits/Second",
-	"Kilobits/Second",
-	"Megabits/Second",
-	"Gigabits/Second",
-	"Terabits/Second",
-	"Count/Second",
+	UnitSeconds,
+	UnitMicroseconds,
+	UnitMilliseconds,
+	UnitBytes,
+	UnitKilobytes,
+	UnitMegabytes,
+	UnitGigabytes,
+	UnitTerabytes,
+	UnitBits,
+	UnitKilobits,
+	UnitMegabits,
+	UnitGigabits,
+	UnitTerabits,
+	UnitPercent,
+	UnitCount,
+	UnitBytesPerSecond,
+	UnitKilobytesPerSecond,
+	UnitMegabytesPerSecond,
+	UnitGigabytesPerSecond,
+	UnitTerabytesPerSecond,
+	UnitBitsPerSecond,
+	UnitKilobitsPerSecond,
+	UnitMegabitsPerSecond,
+	UnitGigabitsPerSecond,
+	UnitTerabitsPerSecond,
+	UnitCountPerSecond,
+	UnitNone,
+)
+
+const (
+	StatisticDatapointAverage     string = "Average"
+	StatisticDatapointSum         string = "Sum"
+	StatisticDatapointSampleCount string = "SampleCount"
+	StatisticDatapointMaximum     string = "Maximum"
+	StatisticDatapointMinimum     string = "Minimum"
 )
 
 var validMetricStatistics = sets.SSet(
-	"Average",
-	"Sum",
-	"SampleCount",
-	"Maximum",
-	"Minimum",
+	StatisticDatapointAverage,
+	StatisticDatapointSum,
+	StatisticDatapointSampleCount,
+	StatisticDatapointMaximum,
+	StatisticDatapointMinimum,
+)
+
+const (
+	ComparisonOperatorLessThanThreshold             string = "LessThanThreshold"
+	ComparisonOperatorLessThanOrEqualToThreshold    string = "LessThanOrEqualToThreshold"
+	ComparisonOperatorGreaterThanThreshold          string = "GreaterThanThreshold"
+	ComparisonOperatorGreaterThanOrEqualToThreshold string = "GreaterThanOrEqualToThreshold"
 )
 
 var validComparisonOperators = sets.SSet(
-	"LessThanThreshold",
-	"LessThanOrEqualToThreshold",
-	"GreaterThanThreshold",
-	"GreaterThanOrEqualToThreshold",
+	ComparisonOperatorLessThanThreshold,
+	ComparisonOperatorLessThanOrEqualToThreshold,
+	ComparisonOperatorGreaterThanThreshold,
+	ComparisonOperatorGreaterThanOrEqualToThreshold,
+)
+
+const (
+	MetricNameCPUUtilization = "CPUUtilization"
 )
 
 // Create a new CloudWatch object for a given namespace

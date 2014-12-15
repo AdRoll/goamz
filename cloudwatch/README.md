@@ -25,7 +25,7 @@ Please refer to the project's main page at [https://github.com/crowdmob/goamz](h
 ##Examples
 ####Get Metric Statistics
 
-```
+```go
 import (
     "fmt"
     "time"
@@ -57,9 +57,9 @@ func test_get_metric_statistics() {
                 EndTime: now,
                 StartTime: prev,
                 MetricName: metricName,
-                Unit: "Count", // Not mandatory
+                Unit: cloudwatch.UnitCount, // Not mandatory
                 Period: 60,
-                Statistics: []string{"Sum"},
+                Statistics: []string{cloudwatch.StatisticDatapointSum},
                 Namespace: namespace,
             }
 
@@ -70,11 +70,10 @@ func test_get_metric_statistics() {
         fmt.Printf("Error: %+v\n", err)
     }
 }
-
 ```
 ####List Metrics
 
-```
+```go
 import (
     "fmt"
     "time"
