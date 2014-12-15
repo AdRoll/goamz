@@ -608,11 +608,11 @@ func (s *ItemSuite) TestDefaultRetryPolicy(c *check.C) {
 		if err != nil {
 			c.Fatal(err)
 		}
-		newr, err := http.NewRequest("POST", endpoint + "/", strings.NewReader(string(body)))
+		newr, err := http.NewRequest("POST", endpoint+"/", strings.NewReader(string(body)))
 		headersToKeep := map[string]bool{
-			"Content-Type":            true,
-			"X-Amz-Date": true,
-			"X-Amz-Target": true,
+			"Content-Type":         true,
+			"X-Amz-Date":           true,
+			"X-Amz-Target":         true,
 			"X-Amz-Security-Token": true,
 		}
 		for h, _ := range r.Header {
