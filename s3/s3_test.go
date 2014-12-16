@@ -213,9 +213,10 @@ func (s *S) TestGetNotFound(c *check.C) {
 
 func (s *S) TestPutObject(c *check.C) {
 	testServer.Response(200, nil, "")
+	const DISPOSITION = "attachment; filename=\"0x1a2b3c.jpg\""
 
 	b := s.s3.Bucket("bucket")
-	err := b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{})
+	err := b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{ContentDisposition: DISPOSITION})
 	c.Assert(err, check.IsNil)
 
 	req := testServer.WaitRequest()
@@ -224,6 +225,7 @@ func (s *S) TestPutObject(c *check.C) {
 	c.Assert(req.Header["Date"], check.Not(check.DeepEquals), []string{""})
 	c.Assert(req.Header["Content-Type"], check.DeepEquals, []string{"content-type"})
 	c.Assert(req.Header["Content-Length"], check.DeepEquals, []string{"7"})
+	c.Assert(req.Header["Content-Disposition"], check.DeepEquals, []string{DISPOSITION})
 	//c.Assert(req.Header["Content-MD5"], gocheck.DeepEquals, "...")
 	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
 }
