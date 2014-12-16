@@ -122,8 +122,6 @@ func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 
 		return body, nil
 	}
-
-	panic("unreachable")
 }
 
 func target(name string) string {
