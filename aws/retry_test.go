@@ -9,7 +9,7 @@ import (
 )
 
 type testInput struct {
-	res        http.Response
+	res        *http.Response
 	err        error
 	numRetries int
 }
@@ -26,6 +26,22 @@ type testCase struct {
 }
 
 var testCases = []testCase{
+	// Test nil fields
+	testCase{
+		input: testInput{
+			err: nil,
+			res: nil,
+			numRetries: 0,
+		},
+		defaultResult: testResult{
+			shouldRetry: false,
+			delay:       300 * time.Millisecond,
+		},
+		dynamoDBResult: testResult{
+			shouldRetry: false,
+			delay:       25 * time.Millisecond,
+		},
+	},
 	// Test 3 different throttling exceptions
 	testCase{
 		input: testInput{
@@ -95,7 +111,7 @@ var testCases = []testCase{
 	// Test 5xx errors
 	testCase{
 		input: testInput{
-			res: http.Response{
+			res: &http.Response{
 				StatusCode: http.StatusInternalServerError,
 			},
 			numRetries: 1,
@@ -111,7 +127,7 @@ var testCases = []testCase{
 	},
 	testCase{
 		input: testInput{
-			res: http.Response{
+			res: &http.Response{
 				StatusCode: http.StatusServiceUnavailable,
 			},
 			numRetries: 1,
@@ -128,7 +144,7 @@ var testCases = []testCase{
 	// Test a random 400 error
 	testCase{
 		input: testInput{
-			res: http.Response{
+			res: &http.Response{
 				StatusCode: http.StatusNotFound,
 			},
 			numRetries: 1,
@@ -145,7 +161,7 @@ var testCases = []testCase{
 	// Test a temporary net.Error
 	testCase{
 		input: testInput{
-			res: http.Response{},
+			res: &http.Response{},
 			err: &net.DNSError{
 				IsTimeout: true,
 			},
@@ -163,7 +179,7 @@ var testCases = []testCase{
 	// Test a non-temporary net.Error
 	testCase{
 		input: testInput{
-			res: http.Response{},
+			res: &http.Response{},
 			err: &net.DNSError{
 				IsTimeout: false,
 			},
@@ -237,11 +253,11 @@ func TestDefaultRetryPolicy(t *testing.T) {
 		err := test.input.err
 		numRetries := test.input.numRetries
 
-		shouldRetry := policy.ShouldRetry(&res, err, numRetries)
+		shouldRetry := policy.ShouldRetry(res, err, numRetries)
 		if shouldRetry != test.defaultResult.shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, test.defaultResult.shouldRetry, res, err, numRetries)
 		}
-		delay := policy.Delay(&res, err, numRetries)
+		delay := policy.Delay(res, err, numRetries)
 		if delay != test.defaultResult.delay {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, test.defaultResult.delay, res, err, numRetries)
 		}
@@ -256,11 +272,11 @@ func TestDynamoDBRetryPolicy(t *testing.T) {
 		err := test.input.err
 		numRetries := test.input.numRetries
 
-		shouldRetry := policy.ShouldRetry(&res, err, numRetries)
+		shouldRetry := policy.ShouldRetry(res, err, numRetries)
 		if shouldRetry != test.dynamoDBResult.shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, test.dynamoDBResult.shouldRetry, res, err, numRetries)
 		}
-		delay := policy.Delay(&res, err, numRetries)
+		delay := policy.Delay(res, err, numRetries)
 		if delay != test.dynamoDBResult.delay {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, test.dynamoDBResult.delay, res, err, numRetries)
 		}
@@ -275,11 +291,11 @@ func TestNeverRetryPolicy(t *testing.T) {
 		err := test.input.err
 		numRetries := test.input.numRetries
 
-		shouldRetry := policy.ShouldRetry(&res, err, numRetries)
+		shouldRetry := policy.ShouldRetry(res, err, numRetries)
 		if shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, false, res, err, numRetries)
 		}
-		delay := policy.Delay(&res, err, numRetries)
+		delay := policy.Delay(res, err, numRetries)
 		if delay != time.Duration(0) {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, time.Duration(0), res, err, numRetries)
 		}
