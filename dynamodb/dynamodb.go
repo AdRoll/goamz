@@ -88,8 +88,8 @@ func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 
 		resp, err := http.DefaultClient.Do(hreq)
 		if err != nil {
-			if s.RetryPolicy.ShouldRetry(resp, err, numRetries) {
-				time.Sleep(s.RetryPolicy.Delay(resp, err, numRetries))
+			if s.RetryPolicy.ShouldRetry(target, resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(target, resp, err, numRetries))
 				numRetries++
 				continue
 			}
@@ -100,8 +100,8 @@ func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			if s.RetryPolicy.ShouldRetry(resp, err, numRetries) {
-				time.Sleep(s.RetryPolicy.Delay(resp, err, numRetries))
+			if s.RetryPolicy.ShouldRetry(target, resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(target, resp, err, numRetries))
 				numRetries++
 				continue
 			}
@@ -112,8 +112,8 @@ func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 		// "A response code of 200 indicates the operation was successful."
 		if resp.StatusCode != 200 {
 			err := buildError(resp, body)
-			if s.RetryPolicy.ShouldRetry(resp, err, numRetries) {
-				time.Sleep(s.RetryPolicy.Delay(resp, err, numRetries))
+			if s.RetryPolicy.ShouldRetry(target, resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(target, resp, err, numRetries))
 				numRetries++
 				continue
 			}

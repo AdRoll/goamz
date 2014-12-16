@@ -95,16 +95,16 @@ type retryPolicy struct {
 	numCalls int
 }
 
-func (w *retryPolicy) ShouldRetry(r *http.Response, err error, numRetries int) bool {
+func (w *retryPolicy) ShouldRetry(target string, r *http.Response, err error, numRetries int) bool {
 	w.numCalls++
 	dynamodbPolicy := aws.DynamoDBRetryPolicy{}
-	if !dynamodbPolicy.ShouldRetry(r, err, numRetries) {
+	if !dynamodbPolicy.ShouldRetry(target, r, err, numRetries) {
 		return false
 	}
 	return w.numCalls < 3
 }
 
-func (w *retryPolicy) Delay(r *http.Response, err error, numRetries int) time.Duration {
+func (w *retryPolicy) Delay(target string, r *http.Response, err error, numRetries int) time.Duration {
 	return 0
 }
 

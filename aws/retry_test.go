@@ -253,11 +253,11 @@ func TestDefaultRetryPolicy(t *testing.T) {
 		err := test.input.err
 		numRetries := test.input.numRetries
 
-		shouldRetry := policy.ShouldRetry(res, err, numRetries)
+		shouldRetry := policy.ShouldRetry("", res, err, numRetries)
 		if shouldRetry != test.defaultResult.shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, test.defaultResult.shouldRetry, res, err, numRetries)
 		}
-		delay := policy.Delay(res, err, numRetries)
+		delay := policy.Delay("", res, err, numRetries)
 		if delay != test.defaultResult.delay {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, test.defaultResult.delay, res, err, numRetries)
 		}
@@ -272,11 +272,11 @@ func TestDynamoDBRetryPolicy(t *testing.T) {
 		err := test.input.err
 		numRetries := test.input.numRetries
 
-		shouldRetry := policy.ShouldRetry(res, err, numRetries)
+		shouldRetry := policy.ShouldRetry("", res, err, numRetries)
 		if shouldRetry != test.dynamoDBResult.shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, test.dynamoDBResult.shouldRetry, res, err, numRetries)
 		}
-		delay := policy.Delay(res, err, numRetries)
+		delay := policy.Delay("", res, err, numRetries)
 		if delay != test.dynamoDBResult.delay {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, test.dynamoDBResult.delay, res, err, numRetries)
 		}
@@ -291,11 +291,11 @@ func TestNeverRetryPolicy(t *testing.T) {
 		err := test.input.err
 		numRetries := test.input.numRetries
 
-		shouldRetry := policy.ShouldRetry(res, err, numRetries)
+		shouldRetry := policy.ShouldRetry("", res, err, numRetries)
 		if shouldRetry {
 			t.Errorf("ShouldRetry returned %v, expected %v res=%#v err=%#v numRetries=%d", shouldRetry, false, res, err, numRetries)
 		}
-		delay := policy.Delay(res, err, numRetries)
+		delay := policy.Delay("", res, err, numRetries)
 		if delay != time.Duration(0) {
 			t.Errorf("Delay returned %v, expected %v res=%#v err=%#v numRetries=%d", delay, time.Duration(0), res, err, numRetries)
 		}
