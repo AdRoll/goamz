@@ -68,6 +68,7 @@ type Options struct {
 	RedirectLocation     string
 	ContentMD5           string
 	ContentDisposition   string
+	Range                string
 	// What else?
 	//// The following become headers so they are []strings rather than strings... I think
 	// x-amz-storage-class []string
@@ -75,6 +76,7 @@ type Options struct {
 
 type CopyOptions struct {
 	Options
+	CopySourceOptions string
 	MetadataDirective string
 	ContentType       string
 }
@@ -380,6 +382,9 @@ func (o Options) addHeaders(headers map[string][]string) {
 		headers["x-amz-server-side-encryption-customer-key"] = []string{o.SSECustomerKey}
 		headers["x-amz-server-side-encryption-customer-key-MD5"] = []string{o.SSECustomerKeyMD5}
 	}
+	if len(o.Range) != 0 {
+		headers["Range"] = []string{o.Range}
+	}
 	if len(o.ContentEncoding) != 0 {
 		headers["Content-Encoding"] = []string{o.ContentEncoding}
 	}
@@ -405,6 +410,9 @@ func (o CopyOptions) addHeaders(headers map[string][]string) {
 	o.Options.addHeaders(headers)
 	if len(o.MetadataDirective) != 0 {
 		headers["x-amz-metadata-directive"] = []string{o.MetadataDirective}
+	}
+	if len(o.CopySourceOptions) != 0 {
+		headers["x-amz-copy-source-range"] = []string{o.CopySourceOptions}
 	}
 	if len(o.ContentType) != 0 {
 		headers["Content-Type"] = []string{o.ContentType}
