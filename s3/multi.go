@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 // Multi represents an unfinished multipart upload.
@@ -139,13 +140,20 @@ func (b *Bucket) InitMulti(key string, contType string, perm ACL, options Option
 	return &Multi{Bucket: b, Key: key, UploadId: resp.UploadId}, nil
 }
 
-func (m *Multi) PutPartCopy(n int, source string) (*CopyObjectResult, Part, error) {
+func (m *Multi) PutPartCopy(n int, options CopyOptions, source string) (*CopyObjectResult, Part, error) {
 	headers := map[string][]string{
 		"x-amz-copy-source": {url.QueryEscape(source)},
 	}
+	options.addHeaders(headers)
 	params := map[string][]string{
 		"uploadId":   {m.UploadId},
 		"partNumber": {strconv.FormatInt(int64(n), 10)},
+	}
+
+	sourceBucket := m.Bucket.S3.Bucket(strings.TrimRight(strings.SplitAfterN(source, "/", 2)[0], "/"))
+	sourceMeta, err := sourceBucket.Head(strings.SplitAfterN(source, "/", 2)[1], nil)
+	if err != nil {
+		return nil, Part{}, err
 	}
 
 	for attempt := attempts.Start(); attempt.Next(); {
@@ -167,7 +175,7 @@ func (m *Multi) PutPartCopy(n int, source string) (*CopyObjectResult, Part, erro
 		if resp.ETag == "" {
 			return nil, Part{}, errors.New("part upload succeeded with no ETag")
 		}
-		return resp, Part{n, resp.ETag, -1}, nil
+		return resp, Part{n, resp.ETag, sourceMeta.ContentLength}, nil
 	}
 	panic("unreachable")
 }
