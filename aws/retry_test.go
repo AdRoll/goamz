@@ -29,8 +29,8 @@ var testCases = []testCase{
 	// Test nil fields
 	testCase{
 		input: testInput{
-			err: nil,
-			res: nil,
+			err:        nil,
+			res:        nil,
 			numRetries: 0,
 		},
 		defaultResult: testResult{
