@@ -33,7 +33,10 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return e.Code + ": " + e.Message
+	if e.Message != "" {
+		return e.Code + ": " + e.Message
+	}
+	return e.Code
 }
 
 func (e Error) ErrorCode() string {
@@ -51,7 +54,11 @@ func buildError(r *http.Response, jsonBody []byte) error {
 	if err != nil {
 		return err
 	}
-	ddbError.Message = json.Get("Message").MustString()
+	message := json.Get("Message").MustString()
+	if message == "" {
+		message = json.Get("message").MustString()
+	}
+	ddbError.Message = message
 
 	// Of the form: com.amazon.coral.validate#ValidationException
 	// We only want the last part
