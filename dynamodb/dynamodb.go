@@ -4,7 +4,6 @@ import simplejson "github.com/bitly/go-simplejson"
 import (
 	"errors"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -13,12 +12,13 @@ import (
 )
 
 type Server struct {
-	Auth   aws.Auth
-	Region aws.Region
+	Auth        aws.Auth
+	Region      aws.Region
+	RetryPolicy aws.RetryPolicy
 }
 
 func New(auth aws.Auth, region aws.Region) *Server {
-	return &Server{auth, region}
+	return &Server{auth, region, aws.DynamoDBRetryPolicy{}}
 }
 
 // Specific error constants
@@ -33,7 +33,14 @@ type Error struct {
 }
 
 func (e Error) Error() string {
-	return e.Code + ": " + e.Message
+	if e.Message != "" {
+		return e.Code + ": " + e.Message
+	}
+	return e.Code
+}
+
+func (e Error) ErrorCode() string {
+	return e.Code
 }
 
 func buildError(r *http.Response, jsonBody []byte) error {
@@ -42,14 +49,16 @@ func buildError(r *http.Response, jsonBody []byte) error {
 		StatusCode: r.StatusCode,
 		Status:     r.Status,
 	}
-	// TODO return error if Unmarshal fails?
 
 	json, err := simplejson.NewJson(jsonBody)
 	if err != nil {
-		log.Printf("Failed to parse body as JSON")
 		return err
 	}
-	ddbError.Message = json.Get("Message").MustString()
+	message := json.Get("Message").MustString()
+	if message == "" {
+		message = json.Get("message").MustString()
+	}
+	ddbError.Message = message
 
 	// Of the form: com.amazon.coral.validate#ValidationException
 	// We only want the last part
@@ -64,65 +73,64 @@ func buildError(r *http.Response, jsonBody []byte) error {
 }
 
 func (s *Server) queryServer(target string, query Query) ([]byte, error) {
-	data := strings.NewReader(query.String())
-	hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
-	if err != nil {
-		return nil, err
+	numRetries := 0
+	for {
+		data := strings.NewReader(query.String())
+		hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
+		if err != nil {
+			return nil, err
+		}
+
+		hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
+		hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
+		hreq.Header.Set("X-Amz-Target", target)
+
+		token := s.Auth.Token()
+		if token != "" {
+			hreq.Header.Set("X-Amz-Security-Token", token)
+		}
+
+		signer := aws.NewV4Signer(s.Auth, "dynamodb", s.Region)
+		signer.Sign(hreq)
+
+		resp, err := http.DefaultClient.Do(hreq)
+		if err != nil {
+			if s.RetryPolicy.ShouldRetry(target, resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(target, resp, err, numRetries))
+				numRetries++
+				continue
+			}
+			return nil, err
+		}
+
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if s.RetryPolicy.ShouldRetry(target, resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(target, resp, err, numRetries))
+				numRetries++
+				continue
+			}
+			return nil, err
+		}
+
+		// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html
+		// "A response code of 200 indicates the operation was successful."
+		if resp.StatusCode != 200 {
+			err := buildError(resp, body)
+			if s.RetryPolicy.ShouldRetry(target, resp, err, numRetries) {
+				time.Sleep(s.RetryPolicy.Delay(target, resp, err, numRetries))
+				numRetries++
+				continue
+			}
+			return nil, err
+		}
+
+		return body, nil
 	}
-
-	hreq.Header.Set("Content-Type", "application/x-amz-json-1.0")
-	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
-	hreq.Header.Set("X-Amz-Target", target)
-
-	token := s.Auth.Token()
-	if token != "" {
-		hreq.Header.Set("X-Amz-Security-Token", token)
-	}
-
-	signer := aws.NewV4Signer(s.Auth, "dynamodb", s.Region)
-	signer.Sign(hreq)
-
-	resp, err := http.DefaultClient.Do(hreq)
-
-	if err != nil {
-		log.Printf("Error calling Amazon")
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Could not read response body")
-		return nil, err
-	}
-
-	// http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ErrorHandling.html
-	// "A response code of 200 indicates the operation was successful."
-	if resp.StatusCode != 200 {
-		ddbErr := buildError(resp, body)
-		return nil, ddbErr
-	}
-
-	return body, nil
 }
 
 func target(name string) string {
 	return "DynamoDB_20120810." + name
-}
-
-func exponentialBackoff(f func() error, maxRetry uint) error {
-	var err error
-	currentRetry := uint(0)
-	for {
-		if err = f(); err == nil {
-			return nil
-		}
-
-		if currentRetry >= maxRetry {
-			return err
-		}
-		time.Sleep((1 << currentRetry) * 50 * time.Millisecond)
-		currentRetry++
-	}
 }

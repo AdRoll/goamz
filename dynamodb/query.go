@@ -131,20 +131,7 @@ func (t *Table) LimitedQueryOnIndexCallbackIterator(attributeComparisons []Attri
 
 func (t *Table) QueryTableCallbackIterator(query Query, cb func(map[string]*Attribute) error) error {
 	for {
-		var results []map[string]*Attribute
-		var lastEvaluatedKey *Key
-		var err error
-		exponentialBackoff(func() error {
-			results, lastEvaluatedKey, err = t.QueryTable(query)
-			if err == nil {
-				return nil
-			}
-			if err.(*Error).StatusCode == 500 ||
-				(err.(*Error).StatusCode == 400 && err.(*Error).Code == "ProvisionedThroughputExceededException") {
-				return err
-			}
-			return nil
-		}, 15)
+		results, lastEvaluatedKey, err := t.QueryTable(query)
 		if err != nil {
 			return err
 		}
