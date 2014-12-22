@@ -235,3 +235,11 @@ var TestGetQueueAttributesXmlOK = `
   </ResponseMetadata>
 </GetQueueAttributesResponse>
 `
+
+var TestPurgeQueueXmlOK = `
+<PurgeQueueResponse>
+    <ResponseMetadata>
+        <RequestId>6fde8d1e-52cd-4581-8cd9-c512f4c64223</RequestId>
+    </ResponseMetadata>
+</PurgeQueueResponse>
+`

@@ -201,6 +201,21 @@ func (s *S) TestDeleteMessageBatch(c *check.C) {
 	}
 }
 
+func (s *S) TestPurgeQueue(c *check.C) {
+	testServer.PrepareResponse(200, nil, TestPurgeQueueXmlOK)
+
+	q := &Queue{s.sqs, testServer.URL + "/123456789012/testQueue/"}
+	resp, err := q.PurgeQueue()
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, check.Equals, "POST")
+	c.Assert(req.URL.Path, check.Equals, "/123456789012/testQueue/")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "6fde8d1e-52cd-4581-8cd9-c512f4c64223")
+	c.Assert(err, check.IsNil)
+}
+
 func (s *S) TestReceiveMessage(c *check.C) {
 	testServer.PrepareResponse(200, nil, TestReceiveMessageXmlOK)
 

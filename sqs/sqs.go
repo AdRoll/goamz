@@ -82,6 +82,10 @@ type DeleteQueueResponse struct {
 	ResponseMetadata ResponseMetadata
 }
 
+type PurgeQueueResponse struct {
+	ResponseMetadata ResponseMetadata
+}
+
 type SendMessageResponse struct {
 	AttributeMD5     string `xml:"SendMessageResult>MD5OfMessageAttributes"`
 	MD5              string `xml:"SendMessageResult>MD5OfMessageBody"`
@@ -454,6 +458,15 @@ func (q *Queue) DeleteMessageBatch(msgList []Message) (resp *DeleteMessageBatchR
 	if len(messageWithErrors) > 0 {
 		log.Printf("%d Message have not been sent", len(messageWithErrors))
 	}
+
+	return
+}
+
+func (q *Queue) PurgeQueue() (resp *PurgeQueueResponse, err error) {
+	resp = &PurgeQueueResponse{}
+	params := makeParams("PurgeQueue")
+
+	err = q.SQS.query(q.Url, params, resp)
 
 	return
 }
