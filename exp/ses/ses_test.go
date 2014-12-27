@@ -8,18 +8,6 @@ import (
 	"gopkg.in/check.v1"
 )
 
-const t_ERROR_RESPONSE = `
-<?xml version="1.0"?>
-<ErrorResponse xmlns="http://ses.amazonaws.com/doc/2010-12-01/">
-	<Error>
-		<Type>Sender</Type>
-		<Code>MessageRejected</Code>
-		<Message>Email address is not verified.</Message>
-	</Error>
-	<RequestId>21d1e58d-28b2-4d5f-a974-669c3c67674f</RequestId>
-</ErrorResponse>
-`
-
 func Test(t *testing.T) {
 	check.TestingT(t)
 }
