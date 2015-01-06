@@ -40,6 +40,7 @@ type S3 struct {
 	aws.Region
 	ConnectTimeout time.Duration
 	ReadTimeout    time.Duration
+	Signature      int
 	private        byte // Reserve the right of using private data.
 }
 
@@ -95,7 +96,7 @@ var attempts = aws.AttemptStrategy{
 
 // New creates a new S3.
 func New(auth aws.Auth, region aws.Region) *S3 {
-	return &S3{auth, region, 0, 0, 0}
+	return &S3{auth, region, 0, 0, 0, aws.V2Signature}
 }
 
 // Bucket returns a Bucket with the given name.
@@ -924,7 +925,10 @@ func (s3 *S3) queryV4Sign(req *request, resp interface{}) error {
 		req.headers = map[string][]string{}
 	}
 
-	s3.setBaseURL(req)
+	err := s3.setBaseURL(req)
+	if err != nil {
+		return err
+	}
 
 	hreq, err := s3.setupHttpRequest(req)
 	if err != nil {
@@ -992,8 +996,6 @@ func partiallyEscapedPath(path string) string {
 
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
-	var signpath = req.path
-
 	if !req.prepared {
 		req.prepared = true
 		if req.method == "" {
@@ -1013,31 +1015,29 @@ func (s3 *S3) prepare(req *request) error {
 		if !strings.HasPrefix(req.path, "/") {
 			req.path = "/" + req.path
 		}
-		signpath = req.path
 
 		err := s3.setBaseURL(req)
 		if err != nil {
 			return err
 		}
-		if req.bucket != "" {
-			signpath = "/" + req.bucket + signpath
+	}
+
+	if s3.Signature == aws.V2Signature {
+		// Always sign again as it's not clear how far the
+		// server has handled a previous attempt.
+		u, err := url.Parse(req.baseurl)
+		if err != nil {
+			return err
 		}
-	}
 
-	// Always sign again as it's not clear how far the
-	// server has handled a previous attempt.
-	u, err := url.Parse(req.baseurl)
-	if err != nil {
-		return fmt.Errorf("bad S3 endpoint URL %q: %v", req.baseurl, err)
+		signpathPatiallyEscaped := partiallyEscapedPath(req.path)
+		req.headers["Host"] = []string{u.Host}
+		req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
+		if s3.Auth.Token() != "" {
+			req.headers["X-Amz-Security-Token"] = []string{s3.Auth.Token()}
+		}
+		sign(s3.Auth, req.method, signpathPatiallyEscaped, req.params, req.headers)
 	}
-
-	signpathPatiallyEscaped := partiallyEscapedPath(signpath)
-	req.headers["Host"] = []string{u.Host}
-	req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-	if s3.Auth.Token() != "" {
-		req.headers["X-Amz-Security-Token"] = []string{s3.Auth.Token()}
-	}
-	sign(s3.Auth, req.method, signpathPatiallyEscaped, req.params, req.headers)
 	return nil
 }
 
@@ -1064,6 +1064,13 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 	}
 	if req.payload != nil {
 		hreq.Body = ioutil.NopCloser(req.payload)
+	}
+
+	if s3.Signature == aws.V4Signature {
+		hreq.Host = hreq.URL.Host
+		signer := aws.NewV4Signer(s3.Auth, "s3", s3.Region)
+		signer.IncludeXAmzContentSha256 = true
+		signer.Sign(&hreq)
 	}
 
 	return &hreq, nil
