@@ -266,8 +266,20 @@ func (s *V4Signer) canonicalQueryString(u *url.URL) string {
 }
 
 func (s *V4Signer) canonicalHeaders(h http.Header) string {
-	i, a := 0, make([]string, len(h))
+	i, a, lowerCase := 0, make([]string, len(h)), make(map[string][]string)
+
 	for k, v := range h {
+		lowerCase[strings.ToLower(k)] = v
+	}
+
+	var keys []string
+	for k := range lowerCase {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		v := lowerCase[k]
 		for j, w := range v {
 			v[j] = strings.Trim(w, " ")
 		}
@@ -275,7 +287,6 @@ func (s *V4Signer) canonicalHeaders(h http.Header) string {
 		a[i] = strings.ToLower(k) + ":" + strings.Join(v, ",")
 		i++
 	}
-	sort.Strings(a)
 	return strings.Join(a, "\n")
 }
 
