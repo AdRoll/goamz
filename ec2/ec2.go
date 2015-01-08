@@ -1607,7 +1607,7 @@ func (ec2 *EC2) CreateVolume(options CreateVolumeOptions) (resp *CreateVolumeRes
 	if options.SnapshotId != "" {
 		params["SnapshotId"] = options.SnapshotId
 	}
-	if options.SnapshotId != "" {
+	if options.VolumeType != "" {
 		params["VolumeType"] = options.VolumeType
 	}
 	if options.IOPS > 0 {
