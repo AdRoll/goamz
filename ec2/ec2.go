@@ -1537,7 +1537,7 @@ type DescribeVolumesResp struct {
 
 func (ec2 *EC2) DescribeVolumes(volIds []string, filter *Filter) (resp *DescribeVolumesResp, err error) {
 	params := makeParams("DescribeVolumes")
-	addParamsList(params, "VolumeIds", volIds)
+	addParamsList(params, "VolumeId", volIds)
 	filter.addParams(params)
 	resp = &DescribeVolumesResp{}
 	err = ec2.query(params, resp)
