@@ -139,6 +139,9 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 	}
 
 	jsonResponse, err := t.Server.queryServer(target("GetItem"), q)
+	if err != nil {
+		return nil, err
+	}
 
 	json, err := simplejson.NewJson(jsonResponse)
 	if err != nil {
