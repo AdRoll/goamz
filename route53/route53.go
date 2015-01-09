@@ -68,15 +68,16 @@ type CreateHostedZoneRequest struct {
 }
 
 type ResourceRecordValue struct {
-	Value string `xml:"Value"`
+	Value string `xml:"ResourceRecord>Value"`
 }
 
 type Change struct {
-	Action string                `xml:"Action"`
-	Name   string                `xml:"ResourceRecordSet>Name"`
-	Type   string                `xml:"ResourceRecordSet>Type"`
-	TTL    int                   `xml:"ResourceRecordSet>TTL,omitempty"`
-	Values []ResourceRecordValue `xml:"ResourceRecordSet>ResourceRecords>ResourceRecord"`
+	Action      string                `xml:"Action"`
+	Name        string                `xml:"ResourceRecordSet>Name"`
+	Type        string                `xml:"ResourceRecordSet>Type"`
+	TTL         int                   `xml:"ResourceRecordSet>TTL,omitempty"`
+	AliasTarget AliasTarget           `xml:"ResourceRecordSet>AliasTarget,omitempty"`
+	Values      []ResourceRecordValue `xml:"ResourceRecordSet>ResourceRecords,omitempty"`
 }
 
 type ChangeResourceRecordSetsRequest struct {
