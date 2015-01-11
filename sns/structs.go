@@ -2,6 +2,7 @@ package sns
 
 import (
 	"github.com/crowdmob/goamz/aws"
+	"time"
 )
 
 type Topic struct {
@@ -176,17 +177,29 @@ type SetPlatformApplicationAttributesResponse struct {
 	ResponseMetadata aws.ResponseMetadata
 }
 
-//===== Notification ======
+//===== Http Json messages ======
+
+const (
+	MESSAGE_TYPE_SUBSCRIPTION_CONFIRMATION = "SubscriptionConfirmation"
+	MESSAGE_TYPE_UNSUBSCRIBE_CONFIRMATION  = "UnsubscribeConfirmation"
+	MESSAGE_TYPE_NOTIFICATION              = "Notification"
+)
+
+// Json http notifications
+// http://docs.aws.amazon.com/sns/latest/dg/json-formats.html#http-subscription-confirmation-json
 // http://docs.aws.amazon.com/sns/latest/dg/json-formats.html#http-notification-json
+// http://docs.aws.amazon.com/sns/latest/dg/json-formats.html#http-unsubscribe-confirmation-json
 type HttpNotification struct {
-	Type             string `json:"Type"`
-	MessageId        string `json:"MessageId"`
-	TopicArn         string `json:"TopicArn"`
-	Subject          string `json:"Subject"`
-	Message          string `json:"Message"`
-	Timestamp        string `json:"Rimestamp"`
-	SignatureVersion string `json:"SignatureVersion"`
-	Signature        string `json:"Signature"`
-	SigningCertURL   string `json:"SigningCertURL"`
-	UnsubscribeURL   string `json:"UnsubscribeURL"`
+	Type             string    `json:"Type"`
+	MessageId        string    `json:"MessageId"`
+	Token            string    `json:"Token" optional` // Only for subscribe and unsubscribe
+	TopicArn         string    `json:"TopicArn"`
+	Subject          string    `json:"Subject" optional` // Only for Notification
+	Message          string    `json:"Message"`
+	SubscribeURL     string    `json:"SubscribeURL" optional` // Only for subscribe and unsubscribe
+	Timestamp        time.Time `json:"Timestamp"`
+	SignatureVersion string    `json:"SignatureVersion"`
+	Signature        string    `json:"Signature"`
+	SigningCertURL   string    `json:"SigningCertURL"`
+	UnsubscribeURL   string    `json:"UnsubscribeURL" optional` // Only for notifications
 }
