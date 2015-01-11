@@ -323,7 +323,6 @@ var TestListPlatformApplicationsXmlOK = `
   </ResponseMetadata>
 </ListPlatformApplicationsResponse>
 `
-
 var TestSetEndpointAttributesXmlOK = `
 <SetEndpointAttributesResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
   <ResponseMetadata>
