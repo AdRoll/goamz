@@ -175,3 +175,18 @@ type SetEndpointAttributesResponse struct {
 type SetPlatformApplicationAttributesResponse struct {
 	ResponseMetadata aws.ResponseMetadata
 }
+
+//===== Notification ======
+// http://docs.aws.amazon.com/sns/latest/dg/json-formats.html#http-notification-json
+type HttpNotification struct {
+	Type             string `json:"Type"`
+	MessageId        string `json:"MessageId"`
+	TopicArn         string `json:"TopicArn"`
+	Subject          string `json:"Subject"`
+	Message          string `json:"Message"`
+	Timestamp        string `json:"Rimestamp"`
+	SignatureVersion string `json:"SignatureVersion"`
+	Signature        string `json:"Signature"`
+	SigningCertURL   string `json:"SigningCertURL"`
+	UnsubscribeURL   string `json:"UnsubscribeURL"`
+}
