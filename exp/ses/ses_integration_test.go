@@ -1,8 +1,6 @@
 package ses
 
 import (
-	"log"
-	"testing"
 	"time"
 
 	"github.com/crowdmob/goamz/aws"
@@ -10,10 +8,14 @@ import (
 
 //http://docs.aws.amazon.com/ses/latest/DeveloperGuide/mailbox-simulator.html
 var (
-	tEST_SOURCE_ADDRESS = "Funky name <noreply@example.com>"
-	tEST_TO_ADDRESSES   = []string{"success@simulator.amazonses.com"}
-	tEST_CC_ADDRESSES   = []string{}
-	tEST_BCC_ADDRESSES  = []string{}
+	tEST_TO_ADDRESSES = []string{
+		"success@simulator.amazonses.com",
+		"bounce@simulator.amazonses.com",
+		"ooto@simulator.amazonses.com",
+		"complaint@simulator.amazonses.com",
+		"suppressionlist@simulator.amazonses.com"}
+	tEST_CC_ADDRESSES  = []string{}
+	tEST_BCC_ADDRESSES = []string{}
 )
 
 const (
@@ -30,17 +32,15 @@ const (
 `
 )
 
-// This is an end to end test which can be used to manually test your environment
-// integration with SES. This tests is normally Suppressed because this sends a
-// real email which costs money.
+// This is an helper function for integration tests between SES ans SNS.
+// Use this method to send emails to the testing endpoint and read to SNS
+// to process the bounces and complains.
 //
-// You can enable this manually by removing the underscore in front of the name.
-// Don't forget to replace the email addresses in the variables with the ones you
-// want to test.
-func _TestSES_Integration(t *testing.T) {
+// from: the source email address registered in your SES account
+func SendSESIntegrationTestEmail(from string) (*SendEmailResponse, error) {
 	awsAuth, err := aws.GetAuth("", "", "", time.Time{})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	server := New(awsAuth, aws.EUWest)
 
@@ -48,9 +48,5 @@ func _TestSES_Integration(t *testing.T) {
 		tEST_CC_ADDRESSES, tEST_BCC_ADDRESSES)
 	message := NewMessage(tEST_EMAIL_SUBJECT, tEST_TEXT_BODY, tEST_HTML_BODY)
 
-	resp, err := server.SendEmail(tEST_SOURCE_ADDRESS, destination, message)
-	if err != nil {
-		t.Fatal("Message delivery failed with error: %v\n", err)
-	}
-	log.Printf("Response: %v", resp)
+	return server.SendEmail(from, destination, message)
 }
