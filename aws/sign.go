@@ -161,6 +161,12 @@ func (s *V4Signer) Sign(req *http.Request) {
 	signature := s.signature(t, sts)                  // Calculate the AWS Signature Version 4
 	auth := s.authorization(req.Header, t, signature) // Create Authorization header value
 	req.Header.Set("Authorization", auth)             // Add Authorization header to request
+
+	// Add Security Token header if you have a Security Token (usually via IAM role)
+	if s.auth.Token() != "" {
+		req.Header.Set("X-Amz-Security-Token", s.auth.Token())
+	}
+
 	return
 }
 
