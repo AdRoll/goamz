@@ -823,7 +823,6 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 		method = "PUT"
 	}
 	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
-	fmt.Println("String to sign:\n", stringToSign)
 	a := b.S3.Auth
 	secretKey := a.SecretKey
 	accessId := a.AccessKey
