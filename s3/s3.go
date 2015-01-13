@@ -822,8 +822,15 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 	if method != "POST" {
 		method = "PUT"
 	}
-	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n/" + b.Name + "/" + path
+
 	a := b.S3.Auth
+	tokenData := ""
+
+	if a.Token() != "" {
+		tokenData = "x-amz-security-token:" + a.Token() + "\n"
+	}
+
+	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n" + tokenData + "/" + b.Name + "/" + path
 	secretKey := a.SecretKey
 	accessId := a.AccessKey
 	mac := hmac.New(sha1.New, []byte(secretKey))
@@ -843,7 +850,7 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 	params.Add("Expires", strconv.FormatInt(expire_date, 10))
 	params.Add("Signature", signature)
 	if a.Token() != "" {
-		params.Add("token", a.Token())
+		params.Add("x-amz-security-token", a.Token())
 	}
 
 	signedurl.RawQuery = params.Encode()
