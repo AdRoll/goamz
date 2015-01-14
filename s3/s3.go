@@ -773,6 +773,12 @@ func (b *Bucket) SignedURL(path string, expires time.Time) string {
 // SignedURLWithArgs returns a signed URL that allows anyone holding the URL
 // to retrieve the object at path. The signature is valid until expires.
 func (b *Bucket) SignedURLWithArgs(path string, expires time.Time, params url.Values, headers http.Header) string {
+	return b.SignedURLWithMethod("GET", path, expires, params, headers)
+}
+
+// SignedURLWithMethod returns a signed URL that allows anyone holding the URL
+// to either retrieve the object at path or make a HEAD request against it. The signature is valid until expires.
+func (b *Bucket) SignedURLWithMethod(method, path string, expires time.Time, params url.Values, headers http.Header) string {
 	var uv = url.Values{}
 
 	if params != nil {
@@ -786,6 +792,7 @@ func (b *Bucket) SignedURLWithArgs(path string, expires time.Time, params url.Va
 	}
 
 	req := &request{
+		method:  method,
 		bucket:  b.Name,
 		path:    path,
 		params:  uv,
