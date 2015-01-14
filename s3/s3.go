@@ -779,7 +779,11 @@ func (b *Bucket) SignedURLWithArgs(path string, expires time.Time, params url.Va
 		uv = params
 	}
 
-	uv.Set("Expires", strconv.FormatInt(expires.Unix(), 10))
+	if b.S3.Signature == aws.V2Signature {
+		uv.Set("Expires", strconv.FormatInt(expires.Unix(), 10))
+	} else {
+		uv.Set("X-Amz-Expires", strconv.FormatInt(expires.Unix()-time.Now().Unix(), 10))
+	}
 
 	req := &request{
 		bucket:  b.Name,
@@ -996,22 +1000,24 @@ func partiallyEscapedPath(path string) string {
 
 // prepare sets up req to be delivered to S3.
 func (s3 *S3) prepare(req *request) error {
+	// Copy so they can be mutated without affecting on retries.
+	params := make(url.Values)
+	headers := make(http.Header)
+	for k, v := range req.params {
+		params[k] = v
+	}
+	for k, v := range req.headers {
+		headers[k] = v
+	}
+	req.params = params
+	req.headers = headers
+
 	if !req.prepared {
 		req.prepared = true
 		if req.method == "" {
 			req.method = "GET"
 		}
-		// Copy so they can be mutated without affecting on retries.
-		params := make(url.Values)
-		headers := make(http.Header)
-		for k, v := range req.params {
-			params[k] = v
-		}
-		for k, v := range req.headers {
-			headers[k] = v
-		}
-		req.params = params
-		req.headers = headers
+
 		if !strings.HasPrefix(req.path, "/") {
 			req.path = "/" + req.path
 		}
@@ -1020,6 +1026,10 @@ func (s3 *S3) prepare(req *request) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if s3.Auth.Token() != "" {
+		req.headers["X-Amz-Security-Token"] = []string{s3.Auth.Token()}
 	}
 
 	if s3.Signature == aws.V2Signature {
@@ -1033,16 +1043,36 @@ func (s3 *S3) prepare(req *request) error {
 		signpathPatiallyEscaped := partiallyEscapedPath(req.path)
 		req.headers["Host"] = []string{u.Host}
 		req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
-		if s3.Auth.Token() != "" {
-			req.headers["X-Amz-Security-Token"] = []string{s3.Auth.Token()}
-		}
+
 		sign(s3.Auth, req.method, signpathPatiallyEscaped, req.params, req.headers)
+	} else {
+		hreq, err := s3.setupHttpRequest(req)
+		if err != nil {
+			return err
+		}
+
+		hreq.Host = hreq.URL.Host
+		signer := aws.NewV4Signer(s3.Auth, "s3", s3.Region)
+		signer.IncludeXAmzContentSha256 = true
+		signer.Sign(hreq)
+
+		req.payload = hreq.Body
+		if _, ok := headers["Content-Length"]; ok {
+			req.headers["Content-Length"] = headers["Content-Length"]
+		}
 	}
 	return nil
 }
 
 // Prepares an *http.Request for doHttpRequest
 func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
+	// Copy so that signing the http request will not mutate it
+	headers := make(http.Header)
+	for k, v := range req.headers {
+		headers[k] = v
+	}
+	req.headers = headers
+
 	u, err := req.url()
 	if err != nil {
 		return nil, err
@@ -1056,6 +1086,7 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 		ProtoMinor: 1,
 		Close:      true,
 		Header:     req.headers,
+		Form:       req.params,
 	}
 
 	if v, ok := req.headers["Content-Length"]; ok {
@@ -1064,13 +1095,6 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 	}
 	if req.payload != nil {
 		hreq.Body = ioutil.NopCloser(req.payload)
-	}
-
-	if s3.Signature == aws.V4Signature {
-		hreq.Host = hreq.URL.Host
-		signer := aws.NewV4Signer(s3.Auth, "s3", s3.Region)
-		signer.IncludeXAmzContentSha256 = true
-		signer.Sign(&hreq)
 	}
 
 	return &hreq, nil
