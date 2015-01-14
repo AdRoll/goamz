@@ -1,7 +1,6 @@
 package sns_test
 
 import (
-	"encoding/json"
 	"github.com/crowdmob/goamz/aws"
 	"github.com/crowdmob/goamz/sns"
 	"github.com/crowdmob/goamz/testutil"
@@ -471,37 +470,4 @@ func (s *S) TestSetPlatformApplicationAttributes(c *check.C) {
 	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "cf577bcc-b3dc-5463-88f1-3180b9412395")
 
 	c.Assert(err, check.IsNil)
-}
-
-func (s *S) TestHttpSubscriptionConfirmationRequestUnmarshalling(c *check.C) {
-	notification := sns.HttpNotification{}
-	err := json.Unmarshal([]byte(HttpSubscriptionConfirmationRequest), &notification)
-	c.Assert(err, check.IsNil)
-	c.Assert(notification.Token, check.NotNil)
-	c.Assert(notification.Subject, check.Equals, "")
-	c.Assert(notification.SubscribeURL, check.NotNil)
-	c.Assert(notification.UnsubscribeURL, check.Equals, "")
-	c.Assert(notification.Type, check.Equals, sns.MESSAGE_TYPE_SUBSCRIPTION_CONFIRMATION)
-}
-
-func (s *S) TestHttpNotificationRequestUnmarshalling(c *check.C) {
-	notification := sns.HttpNotification{}
-	err := json.Unmarshal([]byte(HttpNotificationRequest), &notification)
-	c.Assert(err, check.IsNil)
-	c.Assert(notification.Token, check.Equals, "")
-	c.Assert(notification.Subject, check.NotNil)
-	c.Assert(notification.SubscribeURL, check.Equals, "")
-	c.Assert(notification.UnsubscribeURL, check.NotNil)
-	c.Assert(notification.Type, check.Equals, sns.MESSAGE_TYPE_NOTIFICATION)
-}
-
-func (s *S) TestHttpUnsubscribeConfirmationRequestUnmarshalling(c *check.C) {
-	notification := sns.HttpNotification{}
-	err := json.Unmarshal([]byte(HttpUnsubscribeConfirmationRequest), &notification)
-	c.Assert(err, check.IsNil)
-	c.Assert(notification.Token, check.NotNil)
-	c.Assert(notification.Subject, check.Equals, "")
-	c.Assert(notification.SubscribeURL, check.NotNil)
-	c.Assert(notification.UnsubscribeURL, check.Equals, "")
-	c.Assert(notification.Type, check.Equals, sns.MESSAGE_TYPE_UNSUBSCRIBE_CONFIRMATION)
 }

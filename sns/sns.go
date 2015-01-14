@@ -198,6 +198,15 @@ func (sns *SNS) Subscribe(topicArn, protocol, endpoint string) (*SubscribeRespon
 	return response, err
 }
 
+func (sns *SNS) UnsubscribeFromHttp(notification *HttpNotification,
+	authenticateOnUnsubscribe string) (*UnsubscribeResponse, error) {
+	if notification.Type != MESSAGE_TYPE_NOTIFICATION {
+		return nil, fmt.Errorf("Expected message type \"%S\", found \"%s\"",
+			MESSAGE_TYPE_NOTIFICATION, notification.Type)
+	}
+	return sns.Unsubscribe(notification.TopicArn)
+}
+
 // Deletes a subscription.
 // If the subscription requires authentication for deletion, only the owner of the subscription or the topic's owner can unsubscribe, and an AWS signature is required.
 // If the Unsubscribe call does not require authentication and the requester is not the subscription owner, a final cancellation message is delivered to the endpoint, so that the endpoint owner can easily resubscribe to the topic if the Unsubscribe request was unintended.
@@ -209,6 +218,19 @@ func (sns *SNS) Unsubscribe(subscriptionArn string) (*UnsubscribeResponse, error
 	err := sns.query("POST", params, response)
 
 	return response, err
+}
+
+// Verifies an endpoint owner's intent to receive messages by responding to
+// json subscription notification or by re-subscribing after aving received
+// an unsubscribed notification from an http post.
+func (sns *SNS) ConfirmSubscriptionFromHttp(notification *HttpNotification,
+	authenticateOnUnsubscribe string) (*ConfirmSubscriptionResponse, error) {
+	if notification.Type != MESSAGE_TYPE_SUBSCRIPTION_CONFIRMATION &&
+		notification.Type != MESSAGE_TYPE_UNSUBSCRIBE_CONFIRMATION {
+		return nil, fmt.Errorf("Expected message type \"%S\" or \"%s\", found \"%s\"",
+			MESSAGE_TYPE_SUBSCRIPTION_CONFIRMATION, MESSAGE_TYPE_UNSUBSCRIBE_CONFIRMATION, notification.Type)
+	}
+	return sns.ConfirmSubscription(notification.TopicArn, notification.Token, authenticateOnUnsubscribe)
 }
 
 // Verifies an endpoint owner's intent to receive messages by validating the token sent to the endpoint by an earlier Subscribe action.
