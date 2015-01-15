@@ -31,6 +31,7 @@ github.com/crowdmob/goamz/sns
 
 github.com/crowdmob/goamz/exp/mturk
 github.com/crowdmob/goamz/exp/sdb
+github.com/crowdmob/goamz/exp/ses
 ```
 
 Packages under `exp/` are still in an experimental or unfinished/unpolished state.
