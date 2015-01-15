@@ -1,4 +1,4 @@
-package ses
+package ses_test
 
 var TestSendEmailError = `
 <?xml version="1.0"?>

@@ -1,4 +1,4 @@
-package ses
+package ses_test
 
 const SNSBounceNotification = `
     {

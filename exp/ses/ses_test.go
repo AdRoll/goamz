@@ -1,11 +1,12 @@
-package ses
+package ses_test
 
 import (
+	"gopkg.in/check.v1"
 	"testing"
 
 	"github.com/crowdmob/goamz/aws"
+	"github.com/crowdmob/goamz/exp/ses"
 	"github.com/crowdmob/goamz/testutil"
-	"gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) {
@@ -16,13 +17,13 @@ var _ = check.Suite(&S{})
 var testServer = testutil.NewHTTPServer()
 
 type S struct {
-	sesService *SES
+	sesService *ses.SES
 }
 
 func (s *S) SetUpSuite(c *check.C) {
 	testServer.Start()
 	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
-	sesService := New(auth, aws.Region{SESEndpoint: testServer.URL})
+	sesService := ses.New(auth, aws.Region{SESEndpoint: testServer.URL})
 	s.sesService = sesService
 }
 
@@ -34,8 +35,8 @@ func (s *S) TestBuildError(c *check.C) {
 	testServer.Response(400, nil, TestSendEmailError)
 
 	resp, err := s.sesService.SendEmail("foo@example.com",
-		NewDestination([]string{"unauthorized@example.com"}, []string{}, []string{}),
-		NewMessage("subject", "textBody", "htmlBody"))
+		ses.NewDestination([]string{"unauthorized@example.com"}, []string{}, []string{}),
+		ses.NewMessage("subject", "textBody", "htmlBody"))
 	_ = testServer.WaitRequest()
 
 	c.Assert(resp, check.IsNil)
@@ -46,10 +47,10 @@ func (s *S) TestSendEmail(c *check.C) {
 	testServer.Response(200, nil, TestSendEmailOk)
 
 	resp, err := s.sesService.SendEmail("foo@example.com",
-		NewDestination([]string{"to1@example.com", "to2@example.com"},
+		ses.NewDestination([]string{"to1@example.com", "to2@example.com"},
 			[]string{"cc1@example.com", "cc2@example.com"},
 			[]string{"bcc1@example.com", "bcc2@example.com"}),
-		NewMessage("subject", "textBody", "htmlBody"))
+		ses.NewMessage("subject", "textBody", "htmlBody"))
 	req := testServer.WaitRequest()
 
 	c.Assert(req.Method, check.Equals, "POST")
