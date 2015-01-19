@@ -429,9 +429,7 @@ func (c *CloudWatch) PutMetricAlarm(alarm *MetricAlarm) (result *aws.BaseRespons
 	}
 	if alarm.AlarmDescription != "" {
 		params["AlarmDescription"] = alarm.AlarmDescription
-		return
 	}
-	params["AlarmDescription"] = alarm.AlarmDescription
 	params["AlarmName"] = alarm.AlarmName
 	params["ComparisonOperator"] = alarm.ComparisonOperator
 	for i, dim := range alarm.Dimensions {
