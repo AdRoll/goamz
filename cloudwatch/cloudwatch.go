@@ -118,6 +118,7 @@ type MetricAlarm struct {
 	InsufficientDataActions []AlarmAction
 	MetricName              string
 	Namespace               string
+	OKActions               []AlarmAction
 	Period                  int
 	Statistic               string
 	Threshold               float64
@@ -430,6 +431,9 @@ func (c *CloudWatch) PutMetricAlarm(alarm *MetricAlarm) (result *aws.BaseRespons
 	}
 	for i, action := range alarm.InsufficientDataActions {
 		params["InsufficientDataActions.member."+strconv.Itoa(i+1)] = action.ARN
+	}
+	for i, action := range alarm.OKActions {
+		params["OKActions.member."+strconv.Itoa(i+1)] = action.ARN
 	}
 	if alarm.AlarmDescription != "" {
 		params["AlarmDescription"] = alarm.AlarmDescription
