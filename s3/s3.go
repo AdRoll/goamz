@@ -806,7 +806,7 @@ func (b *Bucket) SignedURLWithMethod(method, path string, expires time.Time, par
 	if err != nil {
 		panic(err)
 	}
-	if b.S3.Auth.Token() != "" {
+	if b.S3.Auth.Token() != "" && b.S3.Signature == aws.V2Signature {
 		return u.String() + "&x-amz-security-token=" + url.QueryEscape(req.headers["X-Amz-Security-Token"][0])
 	} else {
 		return u.String()
@@ -1041,8 +1041,10 @@ func (s3 *S3) prepare(req *request) error {
 		}
 	}
 
-	if s3.Auth.Token() != "" {
+	if s3.Signature == aws.V2Signature && s3.Auth.Token() != "" {
 		req.headers["X-Amz-Security-Token"] = []string{s3.Auth.Token()}
+	} else if s3.Auth.Token() != "" {
+		req.params.Set("X-Amz-Security-Token", s3.Auth.Token())
 	}
 
 	if s3.Signature == aws.V2Signature {
