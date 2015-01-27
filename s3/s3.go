@@ -1233,6 +1233,19 @@ func shouldRetry(err error) bool {
 		case "read", "write":
 			return true
 		}
+	case *url.Error:
+		// url.Error can be returned either by net/url if a URL cannot be
+		// parsed, or by net/http if the response is closed before the headers
+		// are received or parsed correctly. In that later case, e.Op is set to
+		// the HTTP method name with the first letter uppercased. We don't want
+		// to retry on POST operations, since those are not idempotent, all the
+		// other ones should be safe to retry.
+		switch e.Op {
+		case "Get", "Put", "Delete", "Head":
+			return shouldRetry(e.Err)
+		default:
+			return false
+		}
 	case *Error:
 		switch e.Code {
 		case "InternalError", "NoSuchUpload", "NoSuchBucket":
