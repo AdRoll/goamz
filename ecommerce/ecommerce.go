@@ -3,7 +3,7 @@ package ecommerce
 import (
 	"net/http"
 
-	"github.com/crowdmob/goamz/aws"
+	"github.com/AdRoll/goamz/aws"
 )
 
 // ProductAdvertising provides methods for querying the product advertising API

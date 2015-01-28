@@ -1,8 +1,8 @@
 package elb_test
 
 import (
-	"github.com/crowdmob/goamz/aws"
-	"github.com/crowdmob/goamz/elb"
+	"github.com/AdRoll/goamz/aws"
+	"github.com/AdRoll/goamz/elb"
 	"gopkg.in/check.v1"
 	"time"
 )

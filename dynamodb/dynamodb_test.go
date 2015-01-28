@@ -2,7 +2,7 @@ package dynamodb
 
 import (
 	"flag"
-	"github.com/crowdmob/goamz/aws"
+	"github.com/AdRoll/goamz/aws"
 	"gopkg.in/check.v1"
 	"testing"
 	"time"

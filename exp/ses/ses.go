@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/crowdmob/goamz/aws"
+	"github.com/AdRoll/goamz/aws"
 )
 
 const MAX_RECIPIENTS_PER_REQUEST = 50

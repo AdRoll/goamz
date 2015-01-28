@@ -2,7 +2,7 @@ package sns_test
 
 import (
 	"encoding/json"
-	"github.com/crowdmob/goamz/sns"
+	"github.com/AdRoll/goamz/sns"
 	"gopkg.in/check.v1"
 )
 

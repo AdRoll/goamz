@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	simplejson "github.com/bitly/go-simplejson"
-	"github.com/crowdmob/goamz/dynamodb/dynamizer"
+	"github.com/AdRoll/goamz/dynamodb/dynamizer"
 	"log"
 )
 
