@@ -1,8 +1,8 @@
 package dynamodb
 
 import (
-	simplejson "github.com/bitly/go-simplejson"
 	"github.com/AdRoll/goamz/aws"
+	simplejson "github.com/bitly/go-simplejson"
 	"gopkg.in/check.v1"
 )
 

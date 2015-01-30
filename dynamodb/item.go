@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	simplejson "github.com/bitly/go-simplejson"
 	"github.com/AdRoll/goamz/dynamodb/dynamizer"
+	simplejson "github.com/bitly/go-simplejson"
 	"log"
 )
 
