@@ -99,6 +99,8 @@ func (k *KMS) Encrypt(info EncryptInfo) (EncryptResp, error){
     return resp, err
 }
 
+// ================== Action ========================
+
 func (k *KMS) Decrypt(info DecryptInfo) (DecryptResp, error){
 	resp := DecryptResp{}
     bResp, err := k.query(&info)
