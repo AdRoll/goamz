@@ -62,6 +62,7 @@ type Region struct {
 	SESEndpoint            string
 	IAMEndpoint            string
 	ELBEndpoint            string
+	KMSEndpoint            string
 	DynamoDBEndpoint       string
 	CloudWatchServicepoint ServiceInfo
 	AutoScalingEndpoint    string
