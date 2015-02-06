@@ -51,6 +51,8 @@ func (k *KMS) query(requstInfo KMSAction) ([]byte, error){
         hreq.Header.Set("X-Amz-Security-Token", k.Auth.Token())
     }
 
+	//All KMS operations require Signature Version 4
+	//http://docs.aws.amazon.com/kms/latest/APIReference/Welcome.html
     signer := aws.NewV4Signer(k.Auth, serverName, k.Region)
     signer.Sign(hreq)
 
@@ -108,4 +110,16 @@ func (k *KMS) Decrypt(info DecryptInfo) (DecryptResp, error){
 	err = json.Unmarshal(bResp, &resp)
 
     return resp, err
+}
+
+func (k *KMS) EnableKey(info EnableKeyInfo) error {
+	_, err := k.query(&info)
+
+	return err
+}
+
+func (k *KMS) DisableKey(info DisableKeyInfo) error {
+	_, err := k.query(&info)
+
+	return err
 }
