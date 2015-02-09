@@ -76,6 +76,7 @@ func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 	numRetries := 0
 	for {
 		data := strings.NewReader(query.String())
+
 		hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
 		if err != nil {
 			return nil, err

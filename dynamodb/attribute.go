@@ -12,6 +12,7 @@ const (
 	TYPE_STRING_SET = "SS"
 	TYPE_NUMBER_SET = "NS"
 	TYPE_BINARY_SET = "BS"
+	TYPE_MAP        = "M"
 
 	COMPARISON_EQUAL                    = "EQ"
 	COMPARISON_NOT_EQUAL                = "NE"
@@ -43,6 +44,7 @@ type Attribute struct {
 	Name      string
 	Value     string
 	SetValues []string
+	MapValues map[string]*Attribute
 	Exists    string // exists on dynamodb? Values: "true", "false", or ""
 }
 
@@ -140,6 +142,14 @@ func NewBinarySetAttribute(name string, values []string) *Attribute {
 	}
 }
 
+func NewMapAttribute(name string, values map[string]*Attribute) *Attribute {
+	return &Attribute{
+		Type:      TYPE_MAP,
+		Name:      name,
+		MapValues: values,
+	}
+}
+
 func (a *Attribute) SetType() bool {
 	switch a.Type {
 	case TYPE_BINARY_SET, TYPE_NUMBER_SET, TYPE_STRING_SET:
@@ -158,7 +168,18 @@ func (a *Attribute) SetExists(exists bool) *Attribute {
 }
 
 func (a Attribute) valueMsi() msi {
-	return msi{a.Type: map[bool]interface{}{true: a.SetValues, false: a.Value}[a.SetType()]}
+	switch {
+	case a.SetType():
+		return msi{a.Type: a.SetValues}
+	case a.Type == TYPE_MAP:
+		b := msi{}
+		for _, nestedAttr := range a.MapValues {
+			b[nestedAttr.Name] = nestedAttr.valueMsi()
+		}
+		return msi{a.Type: b}
+	default:
+		return msi{a.Type: a.Value}
+	}
 }
 
 func (k *PrimaryKey) HasRange() bool {

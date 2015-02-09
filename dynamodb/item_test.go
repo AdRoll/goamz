@@ -569,6 +569,139 @@ func (s *ItemSuite) TestUpdateItemWithSet(c *check.C) {
 	}
 }
 
+func (s *ItemSuite) TestQueryScanWithMap(c *check.C) {
+	attrs := []Attribute{
+		*NewMapAttribute("Attr1",
+			map[string]*Attribute{
+				"SubAttr1": NewStringAttribute("SubAttr1", "SubAttr1Val"),
+				"SubAttr2": NewNumericAttribute("SubAttr2", "2"),
+			},
+		),
+	}
+	var rk string
+	if s.WithRange {
+		rk = "1"
+	}
+	if ok, err := s.table.PutItem("NewHashKeyVal", rk, attrs); !ok {
+		c.Fatal(err)
+	}
+	pk := &Key{HashKey: "NewHashKeyVal", RangeKey: rk}
+
+	// Scan
+	if out, err := s.table.Scan(nil); err != nil {
+		c.Fatal(err)
+	} else {
+		if len(out) != 1 {
+			c.Fatal("Got no result from scan")
+		}
+		item := out[0]
+		if val, ok := item["Attr1"]; ok {
+			c.Check(val, check.DeepEquals, &attrs[0])
+		} else {
+			c.Error("Expected Attr1 to be found")
+		}
+	}
+
+	// Query
+	q := NewQuery(s.table)
+	q.AddKey(pk)
+	eq := NewStringAttributeComparison("TestHashKey", COMPARISON_EQUAL, pk.HashKey)
+	q.AddKeyConditions([]AttributeComparison{*eq})
+
+	if out, _, err := s.table.QueryTable(q); err != nil {
+		c.Fatal(err)
+	} else {
+		if len(out) != 1 {
+			c.Fatal("Got no result from query")
+		}
+		item := out[0]
+		if val, ok := item["Attr1"]; ok {
+			c.Check(val, check.DeepEquals, &attrs[0])
+		} else {
+			c.Fatal("Expected Attr1 to be found")
+		}
+	}
+
+}
+
+func (s *ItemSuite) TestUpdateItemWithMap(c *check.C) {
+	attrs := []Attribute{
+		*NewMapAttribute("Attr1",
+			map[string]*Attribute{
+				"SubAttr1": NewStringAttribute("SubAttr1", "SubAttr1Val"),
+				"SubAttr2": NewNumericAttribute("SubAttr2", "2"),
+			},
+		),
+	}
+	var rk string
+	if s.WithRange {
+		rk = "1"
+	}
+	if ok, err := s.table.PutItem("NewHashKeyVal", rk, attrs); !ok {
+		c.Error(err)
+	}
+
+	// Verify the PutItem operation
+	pk := &Key{HashKey: "NewHashKeyVal", RangeKey: rk}
+	if item, err := s.table.GetItem(pk); err != nil {
+		c.Error(err)
+	} else {
+		if val, ok := item["Attr1"]; ok {
+			c.Check(val, check.DeepEquals, &attrs[0])
+		} else {
+			c.Error("Expected Attr1 to be found")
+		}
+	}
+
+	// Update the map attribute via UpdateItem API w/ UpdateExpression
+	expected := []Attribute{
+		*NewMapAttribute("Attr1",
+			map[string]*Attribute{
+				"SubAttr1": NewStringAttribute("SubAttr1", "SubAttr1Val"),
+				"SubAttr2": NewNumericAttribute("SubAttr2", "2"),
+				"SubAttr3": NewStringAttribute("SubAttr3", "SubAttr3Val"),
+			},
+		),
+	}
+	if ok, err := s.table.UpdateExpressionUpdateAttributes(pk, nil, nil); !ok {
+		c.Fatal(err)
+	}
+
+	// Verify the map attribute field has been updated
+	if item, err := s.table.GetItem(pk); err != nil {
+		c.Fatal(err)
+	} else {
+		if val, ok := item["Attr1"]; ok {
+			c.Check(val, check.DeepEquals, &expected[0])
+		} else {
+			c.Fatal("Expected Attr1 to be found")
+		}
+	}
+
+	// Overwrite the map via UpdateItem API w/ AttributeUpdates
+	newAttrs := []Attribute{
+		*NewMapAttribute("Attr1",
+			map[string]*Attribute{
+				"SubAttr3": NewStringAttribute("SubAttr3", "SubAttr3Val"),
+			},
+		),
+	}
+	if ok, err := s.table.UpdateAttributes(pk, newAttrs); !ok {
+		c.Fatal(err)
+	}
+
+	// Verify the map attribute has been overwritten
+	if item, err := s.table.GetItem(pk); err != nil {
+		c.Fatal(err)
+	} else {
+		if val, ok := item["Attr1"]; ok {
+			c.Check(val, check.DeepEquals, &newAttrs[0])
+		} else {
+			c.Fatal("Expected Attr1 to be found")
+		}
+	}
+}
+
 func (s *ItemSuite) TestPutGetDeleteDocument(c *check.C) {
 	k := &Key{HashKey: "NewHashKeyVal"}
 	if s.WithRange {
