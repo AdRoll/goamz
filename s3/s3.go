@@ -844,7 +844,7 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 		log.Println("ERROR sining url for S3 upload", err)
 		return ""
 	}
-	signedurl.Path += path
+	signedurl.Path = path
 	params := url.Values{}
 	params.Add("AWSAccessKeyId", accessId)
 	params.Add("Expires", strconv.FormatInt(expire_date, 10))
