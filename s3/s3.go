@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -817,7 +818,7 @@ func (b *Bucket) SignedURLWithMethod(method, path string, expires time.Time, par
 // to upload the object at path. The signature is valid until expires.
 // contenttype is a string like image/png
 // path is the resource name in s3 terminalogy like images/ali.png [obviously exclusing the bucket name itself]
-func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time.Time) string {
+func (b *Bucket) UploadSignedURL(urlPath, method, content_type string, expires time.Time) string {
 	expire_date := expires.Unix()
 	if method != "POST" {
 		method = "PUT"
@@ -830,7 +831,7 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 		tokenData = "x-amz-security-token:" + a.Token() + "\n"
 	}
 
-	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n" + tokenData + "/" + b.Name + "/" + path
+	stringToSign := method + "\n\n" + content_type + "\n" + strconv.FormatInt(expire_date, 10) + "\n" + tokenData + "/" + path.Join(b.Name, urlPath)
 	secretKey := a.SecretKey
 	accessId := a.AccessKey
 	mac := hmac.New(sha1.New, []byte(secretKey))
@@ -844,7 +845,7 @@ func (b *Bucket) UploadSignedURL(path, method, content_type string, expires time
 		log.Println("ERROR sining url for S3 upload", err)
 		return ""
 	}
-	signedurl.Path = path
+	signedurl.Path = urlPath
 	params := url.Values{}
 	params.Add("AWSAccessKeyId", accessId)
 	params.Add("Expires", strconv.FormatInt(expire_date, 10))
