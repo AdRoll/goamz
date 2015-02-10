@@ -333,6 +333,56 @@ func (s *QueryBuilderSuite) TestAddUpdates(c *check.C) {
 	c.Check(queryJson, check.DeepEquals, expectedJson)
 }
 
+func (s *QueryBuilderSuite) TestMapUpdates(c *check.C) {
+	primary := NewStringAttribute("domain", "")
+	key := PrimaryKey{primary, nil}
+	table := s.server.NewTable("sites", key)
+
+	q := NewQuery(table)
+	q.AddKey(&Key{HashKey: "test"})
+
+	subAttr1 := NewStringAttribute(":Updates1", "subval1")
+	subAttr2 := NewNumericAttribute(":Updates2", "2")
+	exp := &Expression{
+		Text: "SET #Updates0.#Updates1=:Updates1, #Updates0.#Updates2=:Updates2",
+		AttributeNames: map[string]string{
+			"#Updates0": "Map",
+			"#Updates1": "submap1",
+			"#Updates2": "submap2",
+		},
+		AttributeValues: []Attribute{*subAttr1, *subAttr2},
+	}
+	q.AddUpdateExpression(exp)
+	queryJson, err := simplejson.NewJson([]byte(q.String()))
+	if err != nil {
+		c.Fatal(err)
+	}
+	expectedJson, err := simplejson.NewJson([]byte(`
+{
+	"UpdateExpression": "SET #Updates0.#Updates1=:Updates1, #Updates0.#Updates2=:Updates2",
+	"ExpressionAttributeNames": {
+		"#Updates0": "Map",
+		"#Updates1": "submap1",
+		"#Updates2": "submap2"
+	},
+	"ExpressionAttributeValues": {
+        ":Updates1": {"S": "subval1"},
+        ":Updates2": {"N": "2"}
+	},
+	"Key": {
+		"domain": {
+			"S": "test"
+		}
+	},
+	"TableName": "sites"
+}
+	`))
+	if err != nil {
+		c.Fatal(err)
+	}
+	c.Check(queryJson, check.DeepEquals, expectedJson)
+}
+
 func (s *QueryBuilderSuite) TestAddKeyConditions(c *check.C) {
 	primary := NewStringAttribute("domain", "")
 	key := PrimaryKey{primary, nil}

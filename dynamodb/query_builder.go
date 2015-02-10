@@ -195,6 +195,7 @@ func (q *UntypedQuery) AddQueryFilter(comparisons []AttributeComparison) {
 func (q *UntypedQuery) AddLimit(limit int64) {
 	q.buffer["Limit"] = limit
 }
+
 func (q *UntypedQuery) AddSelect(value string) {
 	q.buffer["Select"] = value
 }

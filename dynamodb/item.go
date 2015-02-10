@@ -336,50 +336,60 @@ func (t *Table) DeleteDocument(key *Key) error {
 }
 
 func (t *Table) AddAttributes(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, nil, "ADD")
+	return t.modifyAttributes(key, attributes, nil, nil, nil, "ADD")
 }
 
 func (t *Table) UpdateAttributes(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, nil, "PUT")
+	return t.modifyAttributes(key, attributes, nil, nil, nil, "PUT")
 }
 
 func (t *Table) DeleteAttributes(key *Key, attributes []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, nil, "DELETE")
+	return t.modifyAttributes(key, attributes, nil, nil, nil, "DELETE")
 }
 
 func (t *Table) ConditionalAddAttributes(key *Key, attributes, expected []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, expected, nil, "ADD")
+	return t.modifyAttributes(key, attributes, expected, nil, nil, "ADD")
 }
 
 func (t *Table) ConditionalUpdateAttributes(key *Key, attributes, expected []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, expected, nil, "PUT")
+	return t.modifyAttributes(key, attributes, expected, nil, nil, "PUT")
 }
 
 func (t *Table) ConditionalDeleteAttributes(key *Key, attributes, expected []Attribute) (bool, error) {
-	return t.modifyAttributes(key, attributes, expected, nil, "DELETE")
+	return t.modifyAttributes(key, attributes, expected, nil, nil, "DELETE")
 }
 
 func (t *Table) ConditionExpressionAddAttributes(key *Key, attributes []Attribute, condition *Expression) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, condition, "ADD")
+	return t.modifyAttributes(key, attributes, nil, condition, nil, "ADD")
 }
 
 func (t *Table) ConditionExpressionUpdateAttributes(key *Key, attributes []Attribute, condition *Expression) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, condition, "PUT")
+	return t.modifyAttributes(key, attributes, nil, condition, nil, "PUT")
 }
 
 func (t *Table) ConditionExpressionDeleteAttributes(key *Key, attributes []Attribute, condition *Expression) (bool, error) {
-	return t.modifyAttributes(key, attributes, nil, condition, "DELETE")
+	return t.modifyAttributes(key, attributes, nil, condition, nil, "DELETE")
 }
 
-func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, condition *Expression, action string) (bool, error) {
+func (t *Table) UpdateExpressionUpdateAttributes(key *Key, condition, update *Expression) (bool, error) {
+	return t.modifyAttributes(key, nil, nil, condition, update, "")
+}
 
-	if len(attributes) == 0 {
+func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, condition, update *Expression, action string) (bool, error) {
+
+	if len(attributes) == 0 && update == nil {
 		return false, errors.New("At least one attribute is required.")
 	}
 
 	q := NewQuery(t)
 	q.AddKey(key)
-	q.AddUpdates(attributes, action)
+
+	if len(attributes) > 0 {
+		q.AddUpdates(attributes, action)
+	}
+	if update != nil {
+		q.AddUpdateExpression(update)
+	}
 
 	if expected != nil {
 		q.AddExpected(expected)
@@ -461,6 +471,13 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 					Type:      TYPE_BINARY_SET,
 					Name:      key,
 					SetValues: arry,
+				}
+			} else if vals, ok := v[TYPE_MAP].(map[string]interface{}); ok {
+				m := parseAttributes(vals)
+				results[key] = &Attribute{
+					Type:      TYPE_MAP,
+					Name:      key,
+					MapValues: m,
 				}
 			}
 		} else {
