@@ -377,13 +377,19 @@ func (t *Table) UpdateExpressionUpdateAttributes(key *Key, condition, update *Ex
 
 func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, condition, update *Expression, action string) (bool, error) {
 
-	if len(attributes) == 0 {
+	if len(attributes) == 0 && update == nil {
 		return false, errors.New("At least one attribute is required.")
 	}
 
 	q := NewQuery(t)
 	q.AddKey(key)
-	q.AddUpdates(attributes, action)
+
+	if len(attributes) > 0 {
+		q.AddUpdates(attributes, action)
+	}
+	if update != nil {
+		q.AddUpdateExpression(update)
+	}
 
 	if expected != nil {
 		q.AddExpected(expected)

@@ -638,7 +638,7 @@ func (s *ItemSuite) TestUpdateItemWithMap(c *check.C) {
 		rk = "1"
 	}
 	if ok, err := s.table.PutItem("NewHashKeyVal", rk, attrs); !ok {
-		c.Error(err)
+		c.Fatal(err)
 	}
 
 	// Verify the PutItem operation
@@ -653,7 +653,16 @@ func (s *ItemSuite) TestUpdateItemWithMap(c *check.C) {
 		}
 	}
 
-	// Update the map attribute via UpdateItem API w/ UpdateExpression
+	// Update the map attribute via UpdateItem API
+	updateAttr := NewStringAttribute(":3", "SubAttr3Val")
+	update := &Expression{
+		Text: "SET #a.#3 = :3",
+		AttributeNames: map[string]string{
+			"#a": "Attr1",
+			"#3": "SubAttr3",
+		},
+		AttributeValues: []Attribute{*updateAttr},
+	}
 	expected := []Attribute{
 		*NewMapAttribute("Attr1",
 			map[string]*Attribute{
@@ -663,7 +672,7 @@ func (s *ItemSuite) TestUpdateItemWithMap(c *check.C) {
 			},
 		),
 	}
-	if ok, err := s.table.UpdateExpressionUpdateAttributes(pk, nil, nil); !ok {
+	if ok, err := s.table.UpdateExpressionUpdateAttributes(pk, nil, update); !ok {
 		c.Fatal(err)
 	}
 
@@ -678,7 +687,7 @@ func (s *ItemSuite) TestUpdateItemWithMap(c *check.C) {
 		}
 	}
 
-	// Overwrite the map via UpdateItem API w/ AttributeUpdates
+	// Overwrite the map via UpdateItem API
 	newAttrs := []Attribute{
 		*NewMapAttribute("Attr1",
 			map[string]*Attribute{
@@ -687,7 +696,7 @@ func (s *ItemSuite) TestUpdateItemWithMap(c *check.C) {
 		),
 	}
 	if ok, err := s.table.UpdateAttributes(pk, newAttrs); !ok {
-		c.Fatal(err)
+		c.Error(err)
 	}
 
 	// Verify the map attribute has been overwritten
