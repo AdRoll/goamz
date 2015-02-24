@@ -8,7 +8,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 )
 
-func (t *Table) FetchPartialResults(query Query) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) FetchPartialResults(query Query) ([]map[string]*Attribute, StartKey, error) {
 	jsonResponse, err := t.Server.queryServer(target("Scan"), query)
 	if err != nil {
 		return nil, nil, err
@@ -35,9 +35,9 @@ func (t *Table) FetchPartialResults(query Query) ([]map[string]*Attribute, *Key,
 		results[i] = parseAttributes(item)
 	}
 
-	var lastEvaluatedKey *Key
+	var lastEvaluatedKey StartKey
 	if lastKeyMap := json.Get("LastEvaluatedKey").MustMap(); lastKeyMap != nil {
-		lastEvaluatedKey = parseKey(t, lastKeyMap)
+		lastEvaluatedKey = lastKeyMap
 	}
 
 	return results, lastEvaluatedKey, nil
@@ -64,19 +64,19 @@ func (t *Table) FetchResultCallbackIterator(query Query, cb func(map[string]*Att
 	return nil
 }
 
-func (t *Table) ScanPartial(attributeComparisons []AttributeComparison, exclusiveStartKey *Key) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) ScanPartial(attributeComparisons []AttributeComparison, exclusiveStartKey StartKey) ([]map[string]*Attribute, StartKey, error) {
 	return t.ParallelScanPartialLimit(attributeComparisons, exclusiveStartKey, 0, 0, 0)
 }
 
-func (t *Table) ScanPartialLimit(attributeComparisons []AttributeComparison, exclusiveStartKey *Key, limit int64) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) ScanPartialLimit(attributeComparisons []AttributeComparison, exclusiveStartKey StartKey, limit int64) ([]map[string]*Attribute, StartKey, error) {
 	return t.ParallelScanPartialLimit(attributeComparisons, exclusiveStartKey, 0, 0, limit)
 }
 
-func (t *Table) ParallelScanPartial(attributeComparisons []AttributeComparison, exclusiveStartKey *Key, segment, totalSegments int) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) ParallelScanPartial(attributeComparisons []AttributeComparison, exclusiveStartKey StartKey, segment, totalSegments int) ([]map[string]*Attribute, StartKey, error) {
 	return t.ParallelScanPartialLimit(attributeComparisons, exclusiveStartKey, segment, totalSegments, 0)
 }
 
-func (t *Table) ParallelScanPartialLimit(attributeComparisons []AttributeComparison, exclusiveStartKey *Key, segment, totalSegments int, limit int64) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) ParallelScanPartialLimit(attributeComparisons []AttributeComparison, exclusiveStartKey StartKey, segment, totalSegments int, limit int64) ([]map[string]*Attribute, StartKey, error) {
 	q := NewQuery(t)
 	q.AddScanFilter(attributeComparisons)
 	if exclusiveStartKey != nil {
