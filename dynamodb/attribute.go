@@ -39,6 +39,8 @@ type PrimaryKey struct {
 	RangeAttribute *Attribute
 }
 
+type StartKey map[string]interface{}
+
 type Attribute struct {
 	Type      string
 	Name      string

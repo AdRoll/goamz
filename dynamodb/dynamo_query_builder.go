@@ -88,7 +88,7 @@ func (q *DynamoQuery) AddItem(key *Key, item dynamizer.DynamoItem) error {
 	return nil
 }
 
-func (q *DynamoQuery) AddExclusiveStartKey(key *Key) error {
+func (q *DynamoQuery) AddExclusiveStartKey(key StartKey) error {
 	panic("not implemented")
 	return nil
 }
