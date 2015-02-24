@@ -94,7 +94,7 @@ func (t *Table) QueryTable(q Query) ([]map[string]*Attribute, StartKey, error) {
 
 	var lastEvaluatedKey StartKey
 	if lastKeyMap := json.Get("LastEvaluatedKey").MustMap(); lastKeyMap != nil {
-                lastEvaluatedKey = lastKeyMap
+		lastEvaluatedKey = lastKeyMap
 	}
 
 	return results, lastEvaluatedKey, nil
