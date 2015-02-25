@@ -9,7 +9,7 @@ import (
 
 type Query interface {
 	AddKey(key *Key) error
-	AddExclusiveStartKey(key *Key) error
+	AddExclusiveStartKey(key StartKey) error
 	AddExclusiveStartTableName(table string) error
 	SetConsistentRead(c bool) error
 	String() string
@@ -64,7 +64,7 @@ func (t *Table) CountQuery(attributeComparisons []AttributeComparison) (int64, e
 	return itemCount, nil
 }
 
-func (t *Table) QueryTable(q Query) ([]map[string]*Attribute, *Key, error) {
+func (t *Table) QueryTable(q Query) ([]map[string]*Attribute, StartKey, error) {
 	jsonResponse, err := t.Server.queryServer(target("Query"), q)
 	if err != nil {
 		return nil, nil, err
@@ -92,9 +92,9 @@ func (t *Table) QueryTable(q Query) ([]map[string]*Attribute, *Key, error) {
 		results[i] = parseAttributes(item)
 	}
 
-	var lastEvaluatedKey *Key
+	var lastEvaluatedKey StartKey
 	if lastKeyMap := json.Get("LastEvaluatedKey").MustMap(); lastKeyMap != nil {
-		lastEvaluatedKey = parseKey(t, lastKeyMap)
+		lastEvaluatedKey = lastKeyMap
 	}
 
 	return results, lastEvaluatedKey, nil

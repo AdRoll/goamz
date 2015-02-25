@@ -43,11 +43,11 @@ func (q *UntypedQuery) AddKey(key *Key) error {
 	return nil
 }
 
-func (q *UntypedQuery) AddExclusiveStartKey(key *Key) error {
+func (q *UntypedQuery) AddExclusiveStartKey(key StartKey) error {
 	if q.table == nil {
 		return errors.New("Table is nil")
 	}
-	q.buffer["ExclusiveStartKey"] = keyAttributes(q.table, key)
+	q.buffer["ExclusiveStartKey"] = key
 	return nil
 }
 
