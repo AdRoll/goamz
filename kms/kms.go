@@ -86,6 +86,19 @@ func (k *KMS) DescribeKey(info DescribeKeyInfo) (DescribeKeyResp, error){
     return resp, err
 }
 
+func (k *KMS) ListAliases(info ListAliasesInfo) (ListAliasesResp, error) {
+	resp := ListAliasesResp{}
+	bResp, err := k.query(&info)
+
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bResp, &resp)
+
+	return resp, err
+}
+
 func (k *KMS) Encrypt(info EncryptInfo) (EncryptResp, error){
 	resp := EncryptResp{}
     bResp, err := k.query(&info)

@@ -24,6 +24,16 @@ func (d *DescribeKeyInfo) ActionName() string {
 	return "DescribeKey"
 }
 
+type ListAliasesInfo struct {
+	//These parameters are optional. See http://docs.aws.amazon.com/kms/latest/APIReference/API_ListAliases.html
+	Limit	int			`json:",omitempty"`
+	Marker	string		`json:",omitempty"`
+}
+
+func (l *ListAliasesInfo) ActionName() string {
+	return "ListAliases"
+}
+
 type EncryptInfo struct {
 	//4 forms for KeyId - http://docs.aws.amazon.com/kms/latest/APIReference/API_Encrypt.html
 	//1. Key ARN

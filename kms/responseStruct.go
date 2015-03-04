@@ -14,6 +14,18 @@ type DescribeKeyResp struct {
 	}
 }
 
+type AliasInfo struct {
+	AliasArn	string
+	AliasName	string
+	TargetKeyId	string
+}
+
+type ListAliasesResp struct {
+	Aliases		[]AliasInfo
+	NextMarker	string
+	Truncated	bool
+}
+
 type EncryptResp struct {
 	CiphertextBlob		[]byte
 	KeyId				string
