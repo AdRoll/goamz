@@ -52,6 +52,10 @@ type Config struct {
 	// all other regions.
 	// http://docs.amazonwebservices.com/AmazonS3/latest/API/ErrorResponses.html
 	Send409Conflict bool
+
+	// Address on which to listen. By default, a random port is assigned by the
+	// operating system and the server listens on localhost.
+	ListenAddress string
 }
 
 func (c *Config) send409Conflict() bool {
@@ -105,7 +109,13 @@ type resource interface {
 }
 
 func NewServer(config *Config) (*Server, error) {
-	l, err := net.Listen("tcp", "localhost:0")
+	listenAddress := "localhost:0"
+
+	if config != nil && config.ListenAddress != "" {
+		listenAddress = config.ListenAddress
+	}
+
+	l, err := net.Listen("tcp", listenAddress)
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen on localhost: %v", err)
 	}
