@@ -13,6 +13,7 @@ const (
 	TYPE_NUMBER_SET = "NS"
 	TYPE_BINARY_SET = "BS"
 	TYPE_MAP        = "M"
+	TYPE_LIST       = "L"
 
 	COMPARISON_EQUAL                    = "EQ"
 	COMPARISON_NOT_EQUAL                = "NE"
@@ -42,12 +43,13 @@ type PrimaryKey struct {
 type StartKey map[string]interface{}
 
 type Attribute struct {
-	Type      string
-	Name      string
-	Value     string
-	SetValues []string
-	MapValues map[string]*Attribute
-	Exists    string // exists on dynamodb? Values: "true", "false", or ""
+	Type       string
+	Name       string
+	Value      string
+	SetValues  []string
+	MapValues  map[string]*Attribute
+	Exists     string // exists on dynamodb? Values: "true", "false", or ""
+	ListValues []*Attribute
 }
 
 type AttributeComparison struct {
@@ -152,6 +154,14 @@ func NewMapAttribute(name string, values map[string]*Attribute) *Attribute {
 	}
 }
 
+func NewListAttribute(name string, values []*Attribute) *Attribute {
+	return &Attribute{
+		Type:       TYPE_LIST,
+		Name:       name,
+		ListValues: values,
+	}
+}
+
 func (a *Attribute) SetType() bool {
 	switch a.Type {
 	case TYPE_BINARY_SET, TYPE_NUMBER_SET, TYPE_STRING_SET:
@@ -179,6 +189,13 @@ func (a Attribute) valueMsi() msi {
 			b[nestedAttr.Name] = nestedAttr.valueMsi()
 		}
 		return msi{a.Type: b}
+	case a.Type == TYPE_LIST:
+		c := make([]map[string]interface{}, len(a.ListValues))
+		for i, nestedAttr := range a.ListValues {
+			c[i] = nestedAttr.valueMsi()
+		}
+		return msi{a.Type: c}
+
 	default:
 		return msi{a.Type: a.Value}
 	}

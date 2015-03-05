@@ -415,76 +415,93 @@ func (t *Table) modifyAttributes(key *Key, attributes, expected []Attribute, con
 
 func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 	results := map[string]*Attribute{}
-
-	for key, value := range s {
-		if v, ok := value.(map[string]interface{}); ok {
-			if val, ok := v[TYPE_STRING].(string); ok {
-				results[key] = &Attribute{
-					Type:  TYPE_STRING,
-					Name:  key,
-					Value: val,
-				}
-			} else if val, ok := v[TYPE_NUMBER].(string); ok {
-				results[key] = &Attribute{
-					Type:  TYPE_NUMBER,
-					Name:  key,
-					Value: val,
-				}
-			} else if val, ok := v[TYPE_BINARY].(string); ok {
-				results[key] = &Attribute{
-					Type:  TYPE_BINARY,
-					Name:  key,
-					Value: val,
-				}
-			} else if vals, ok := v[TYPE_STRING_SET].([]interface{}); ok {
-				arry := make([]string, len(vals))
-				for i, ivalue := range vals {
-					if val, ok := ivalue.(string); ok {
-						arry[i] = val
-					}
-				}
-				results[key] = &Attribute{
-					Type:      TYPE_STRING_SET,
-					Name:      key,
-					SetValues: arry,
-				}
-			} else if vals, ok := v[TYPE_NUMBER_SET].([]interface{}); ok {
-				arry := make([]string, len(vals))
-				for i, ivalue := range vals {
-					if val, ok := ivalue.(string); ok {
-						arry[i] = val
-					}
-				}
-				results[key] = &Attribute{
-					Type:      TYPE_NUMBER_SET,
-					Name:      key,
-					SetValues: arry,
-				}
-			} else if vals, ok := v[TYPE_BINARY_SET].([]interface{}); ok {
-				arry := make([]string, len(vals))
-				for i, ivalue := range vals {
-					if val, ok := ivalue.(string); ok {
-						arry[i] = val
-					}
-				}
-				results[key] = &Attribute{
-					Type:      TYPE_BINARY_SET,
-					Name:      key,
-					SetValues: arry,
-				}
-			} else if vals, ok := v[TYPE_MAP].(map[string]interface{}); ok {
-				m := parseAttributes(vals)
-				results[key] = &Attribute{
-					Type:      TYPE_MAP,
-					Name:      key,
-					MapValues: m,
-				}
+	for key, v := range s {
+		switch v.(type) {
+		case map[string]interface{}:
+			attr := parseAttribute(v.(map[string]interface{}))
+			if attr != nil {
+				attr.Name = key
+				results[key] = attr
 			}
-		} else {
-			log.Printf("type assertion to map[string] interface{} failed for : %s\n ", value)
+		}
+	}
+	return results
+
+}
+
+func parseAttribute(v map[string]interface{}) *Attribute {
+	if val, ok := v[TYPE_STRING].(string); ok {
+		return &Attribute{
+			Type:  TYPE_STRING,
+			Value: val,
+		}
+	} else if val, ok := v[TYPE_NUMBER].(string); ok {
+		return &Attribute{
+			Type:  TYPE_NUMBER,
+			Value: val,
+		}
+	} else if val, ok := v[TYPE_BINARY].(string); ok {
+		return &Attribute{
+			Type:  TYPE_BINARY,
+			Value: val,
+		}
+	} else if vals, ok := v[TYPE_STRING_SET].([]interface{}); ok {
+		arry := make([]string, len(vals))
+		for i, ivalue := range vals {
+			if val, ok := ivalue.(string); ok {
+				arry[i] = val
+			}
+		}
+		return &Attribute{
+			Type:      TYPE_STRING_SET,
+			SetValues: arry,
+		}
+	} else if vals, ok := v[TYPE_NUMBER_SET].([]interface{}); ok {
+		arry := make([]string, len(vals))
+		for i, ivalue := range vals {
+			if val, ok := ivalue.(string); ok {
+				arry[i] = val
+			}
+		}
+		return &Attribute{
+			Type:      TYPE_NUMBER_SET,
+			SetValues: arry,
+		}
+	} else if vals, ok := v[TYPE_BINARY_SET].([]interface{}); ok {
+		arry := make([]string, len(vals))
+		for i, ivalue := range vals {
+			if val, ok := ivalue.(string); ok {
+				arry[i] = val
+			}
+		}
+		return &Attribute{
+			Type:      TYPE_BINARY_SET,
+			SetValues: arry,
+		}
+	} else if vals, ok := v[TYPE_MAP].(map[string]interface{}); ok {
+		m := parseAttributes(vals)
+		return &Attribute{
+			Type:      TYPE_MAP,
+			MapValues: m,
+		}
+	} else if vals, ok := v[TYPE_LIST].([]interface{}); ok {
+		arry := make([]*Attribute, len(vals))
+		for i, ivalue := range vals {
+			if iivalue, iok := ivalue.(map[string]interface{}); iok {
+				arry[i] = parseAttribute(iivalue)
+			} else {
+				log.Printf("parse list attribute failed for : %s\n ", ivalue)
+			}
 		}
 
-	}
+		return &Attribute{
+			Type:       TYPE_LIST,
+			ListValues: arry,
+		}
 
-	return results
+	} else {
+		log.Printf("parse attribute failed for : %s\n ", v)
+	}
+	return nil
+
 }
