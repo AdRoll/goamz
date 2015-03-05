@@ -5,8 +5,8 @@ type KMSAction interface {
 }
 
 type ProduceKeyOpt struct {
-	EncryptionContext	map[string]string	`json:",omitempty"`
-	GrantTokens			[]string			`json:",omitempty"`
+	EncryptionContext map[string]string `json:",omitempty"`
+	GrantTokens       []string          `json:",omitempty"`
 }
 
 //The following structs are the parameters when requesting to AWS KMS
@@ -17,7 +17,7 @@ type DescribeKeyInfo struct {
 	//2. Alias ARN
 	//3. Globally Unique Key
 	//4. Alias Name
-	KeyId	string
+	KeyId string
 }
 
 func (d *DescribeKeyInfo) ActionName() string {
@@ -26,8 +26,8 @@ func (d *DescribeKeyInfo) ActionName() string {
 
 type ListAliasesInfo struct {
 	//These parameters are optional. See http://docs.aws.amazon.com/kms/latest/APIReference/API_ListAliases.html
-	Limit	int			`json:",omitempty"`
-	Marker	string		`json:",omitempty"`
+	Limit  int    `json:",omitempty"`
+	Marker string `json:",omitempty"`
 }
 
 func (l *ListAliasesInfo) ActionName() string {
@@ -40,9 +40,9 @@ type EncryptInfo struct {
 	//2. Alias ARN
 	//3. Globally Unique Key
 	//4. Alias Name
-	KeyId			string
+	KeyId string
 	ProduceKeyOpt
-	Plaintext		[]byte
+	Plaintext []byte
 }
 
 func (e *EncryptInfo) ActionName() string {
@@ -50,7 +50,7 @@ func (e *EncryptInfo) ActionName() string {
 }
 
 type DecryptInfo struct {
-	CiphertextBlob	[]byte
+	CiphertextBlob []byte
 	ProduceKeyOpt
 }
 
@@ -62,10 +62,10 @@ type EnableKeyInfo struct {
 	//2 forms for KeyId - http://docs.aws.amazon.com/kms/latest/APIReference/API_EnableKey.html
 	//1. Key ARN
 	//2. Globally Unique Key
-	KeyId	string
+	KeyId string
 }
 
-func (e * EnableKeyInfo) ActionName() string {
+func (e *EnableKeyInfo) ActionName() string {
 	return "EnableKey"
 }
 
@@ -73,9 +73,9 @@ type DisableKeyInfo struct {
 	//2 forms for KeyId - http://docs.aws.amazon.com/kms/latest/APIReference/API_DisableKey.html
 	//1. Key ARN
 	//2. Globally Unique KeyId
-	KeyId	string
+	KeyId string
 }
 
-func (d * DisableKeyInfo) ActionName() string {
+func (d *DisableKeyInfo) ActionName() string {
 	return "DisableKey"
 }
