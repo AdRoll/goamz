@@ -821,6 +821,14 @@ func (objr objectResource) post(a *action) interface{} {
 		delete(objr.bucket.multipartUploads, uploadId)
 
 		obj := objr.object
+
+		if obj == nil {
+			obj = &object{
+				name: objr.name,
+				meta: make(http.Header),
+			}
+		}
+
 		obj.data = data.Bytes()
 		obj.checksum = sum.Sum(nil)
 		obj.mtime = time.Now()
