@@ -73,6 +73,8 @@ func (k *KMS) query(requstInfo KMSAction) ([]byte, error) {
 	return body, err
 }
 
+// ================== Action ========================
+
 func (k *KMS) DescribeKey(info DescribeKeyInfo) (DescribeKeyResp, error) {
 	resp := DescribeKeyResp{}
 	bResp, err := k.query(&info)
@@ -111,8 +113,6 @@ func (k *KMS) Encrypt(info EncryptInfo) (EncryptResp, error) {
 
 	return resp, err
 }
-
-// ================== Action ========================
 
 func (k *KMS) Decrypt(info DecryptInfo) (DecryptResp, error) {
 	resp := DecryptResp{}
