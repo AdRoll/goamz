@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/trendmicro/goamz/aws"
+	"github.com/AdRoll/goamz/aws"
 	"io/ioutil"
 	"net/http"
 	"time"
