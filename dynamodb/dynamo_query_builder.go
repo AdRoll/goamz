@@ -88,16 +88,6 @@ func (q *DynamoQuery) AddItem(key *Key, item dynamizer.DynamoItem) error {
 	return nil
 }
 
-func (q *DynamoQuery) AddExclusiveStartKey(key StartKey) error {
-	panic("not implemented")
-	return nil
-}
-
-func (q *DynamoQuery) AddExclusiveStartTableName(table string) error {
-	panic("not implemented")
-	return nil
-}
-
 func (q *DynamoQuery) SetConsistentRead(consistent bool) error {
 	if consistent {
 		q.ConsistentRead = "true" // string, not boolean
