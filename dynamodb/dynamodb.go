@@ -2,6 +2,7 @@ package dynamodb
 
 import simplejson "github.com/bitly/go-simplejson"
 import (
+	"bytes"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -75,7 +76,11 @@ func buildError(r *http.Response, jsonBody []byte) error {
 func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 	numRetries := 0
 	for {
-		data := strings.NewReader(query.String())
+		qs, err := query.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		data := bytes.NewReader(qs)
 
 		hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
 		if err != nil {

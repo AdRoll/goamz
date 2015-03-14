@@ -97,10 +97,6 @@ func (q *DynamoQuery) SetConsistentRead(consistent bool) error {
 	return nil
 }
 
-func (q *DynamoQuery) String() string {
-	bytes, err := json.Marshal(q)
-	if err != nil {
-		panic(err) // TODO: need to change the interface to support returning error
-	}
-	return string(bytes)
+func (q *DynamoQuery) Marshal() ([]byte, error) {
+	return json.Marshal(q)
 }

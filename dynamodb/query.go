@@ -8,7 +8,7 @@ import (
 )
 
 type Query interface {
-	String() string
+	Marshal() ([]byte, error)
 }
 
 type ScanQuery interface {
