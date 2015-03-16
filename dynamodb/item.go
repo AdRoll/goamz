@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"strconv"
+
 	"github.com/AdRoll/goamz/dynamodb/dynamizer"
 	simplejson "github.com/bitly/go-simplejson"
-	"log"
 )
 
 type BatchGetItem struct {
@@ -498,7 +500,16 @@ func parseAttribute(v map[string]interface{}) *Attribute {
 			Type:       TYPE_LIST,
 			ListValues: arry,
 		}
-
+	} else if val, ok := v[TYPE_BOOL].(bool); ok {
+		return &Attribute{
+			Type:  TYPE_BOOL,
+			Value: strconv.FormatBool(val),
+		}
+	} else if val, ok := v[TYPE_NULL].(bool); ok {
+		return &Attribute{
+			Type:  TYPE_NULL,
+			Value: strconv.FormatBool(val),
+		}
 	} else {
 		log.Printf("parse attribute failed for : %s\n ", v)
 	}
