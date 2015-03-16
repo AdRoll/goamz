@@ -165,6 +165,30 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 	return parseAttributes(item), nil
 }
 
+func (t *Table) getKeyFromItem(item dynamizer.DynamoItem) (Key, error) {
+	key := Key{}
+	attr, err := attributeFromDynamoAttribute(item[t.Key.KeyAttribute.Name])
+	if err != nil {
+		return key, err
+	}
+	key.HashKey = attr.Value
+	if t.Key.HasRange() {
+		attr, err := attributeFromDynamoAttribute(item[t.Key.RangeAttribute.Name])
+		if err != nil {
+			return key, err
+		}
+		key.RangeKey = attr.Value
+	}
+	return key, nil
+}
+
+func (t *Table) deleteKeyFromItem(item dynamizer.DynamoItem) {
+	delete(item, t.Key.KeyAttribute.Name)
+	if t.Key.HasRange() {
+		delete(item, t.Key.RangeAttribute.Name)
+	}
+}
+
 func (t *Table) GetDocument(key *Key, v interface{}) error {
 	return t.GetDocumentConsistent(key, false, v)
 }
@@ -195,10 +219,7 @@ func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool, v interface
 	}
 
 	// Delete the keys from the response.
-	delete(response.Item, t.Key.KeyAttribute.Name)
-	if t.Key.HasRange() {
-		delete(response.Item, t.Key.RangeAttribute.Name)
-	}
+	t.deleteKeyFromItem(response.Item)
 
 	// Convert back to standard struct/JSON object.
 	err = dynamizer.FromDynamo(response.Item, v)
