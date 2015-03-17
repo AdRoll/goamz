@@ -12,7 +12,7 @@ const (
 
 type DynamoQuery struct {
 	TableName      string               `json:",omitempty"`
-	ConsistentRead string               `json:",omitempty"`
+	ConsistentRead bool                 `json:",omitempty"`
 	Item           dynamizer.DynamoItem `json:",omitempty"`
 	Key            dynamizer.DynamoItem `json:",omitempty"`
 	table          *Table
@@ -110,11 +110,7 @@ func (q *DynamoQuery) AddItem(key *Key, item dynamizer.DynamoItem) error {
 }
 
 func (q *DynamoQuery) SetConsistentRead(consistent bool) error {
-	if consistent {
-		q.ConsistentRead = "true" // string, not boolean
-	} else {
-		q.ConsistentRead = "" // omit for false
-	}
+	q.ConsistentRead = consistent
 	return nil
 }
 
@@ -124,7 +120,7 @@ func (q *DynamoQuery) Marshal() ([]byte, error) {
 
 type batchGetPerTableQuery struct {
 	Keys           []dynamizer.DynamoItem `json:",omitempty"`
-	ConsistentRead string                 `json:",omitempty"`
+	ConsistentRead bool                   `json:",omitempty"`
 }
 
 type DynamoBatchGetQuery struct {
@@ -142,7 +138,7 @@ func NewDynamoBatchGetQuery(t *Table) *DynamoBatchGetQuery {
 	q.RequestItems = map[string]*batchGetPerTableQuery{
 		t.Name: &batchGetPerTableQuery{
 			Keys:           make([]dynamizer.DynamoItem, 0, MaxBatchSize),
-			ConsistentRead: "",
+			ConsistentRead: false,
 		},
 	}
 	return q
@@ -163,11 +159,7 @@ func (q *DynamoBatchGetQuery) AddKey(key *Key) error {
 
 func (q *DynamoBatchGetQuery) SetConsistentRead(consistent bool) error {
 	tq := q.RequestItems[q.table.Name]
-	if consistent {
-		tq.ConsistentRead = "true" // string, not boolean
-	} else {
-		tq.ConsistentRead = "" // omit for false
-	}
+	tq.ConsistentRead = consistent
 	return nil
 }
 

@@ -32,7 +32,7 @@ func TestDynamoQuery(t *testing.T) {
 	}
 	table := server.NewTable(desc.TableName, pk)
 
-	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":"true","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
+	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":true,"Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testGetQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testPutQuery(t, table, `{"TableName":"DynamoDBTestMyTable","Item":{"Attr1":{"S":"Attr1Val"},"Attr2":{"N":"12"},"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testDeleteQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
@@ -63,7 +63,7 @@ func TestDynamoQueryWithRange(t *testing.T) {
 	}
 	table := server.NewTable(desc.TableName, pk)
 
-	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":"true","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
+	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":true,"Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testGetQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testPutQuery(t, table, `{"TableName":"DynamoDBTestMyTable","Item":{"Attr1":{"S":"Attr1Val"},"Attr2":{"N":"12"},"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testDeleteQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
