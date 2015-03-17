@@ -24,6 +24,7 @@ func New(auth aws.Auth, region aws.Region) *Server {
 
 // Specific error constants
 var ErrNotFound = errors.New("Item not found")
+var ErrNotProcessed = errors.New("Key was not processed in the batch request, should retry")
 
 // Error represents an error in an operation with Dynamodb (following goamz/s3)
 type Error struct {

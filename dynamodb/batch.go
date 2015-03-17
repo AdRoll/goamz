@@ -47,25 +47,38 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 	//
 	// N.B. The map is of type Key - not *Key - so that equality is based on the
 	// hash and range key values, not the pointer location.
-	m := make(map[Key]dynamizer.DynamoItem)
+	responses := make(map[Key]dynamizer.DynamoItem)
 	for _, item := range response.Responses[t.Name] {
 		key, err := t.getKeyFromItem(item)
 		if err != nil {
 			return err, nil
 		}
 		t.deleteKeyFromItem(item)
-		m[key] = item
+		responses[key] = item
 	}
 
-	// TODO: Handle unprocessed keys. Simplest method may be to return a
-	// special error code, so that the caller can decide how to handle the
-	// partial result. This would allow callers to utilize the responses that
-	// were returned immediately.
+	// Handle unprocessed keys. We return a special error code so that the
+	// caller can decide how to handle the partial result. This allows callers
+	// to utilize the responses we do have available right away.
+	unprocessed := make(map[Key]bool)
+	if r, ok := response.UnprocessedKeys[t.Name]; ok {
+		for _, item := range r.Keys {
+			key, err := t.getKeyFromItem(item)
+			if err != nil {
+				return err, nil
+			}
+			unprocessed[key] = true
+		}
+	}
 
+	// Package the final response maintaining the original ordering as specified
+	// by the caller.
 	errs := make([]error, numKeys)
 	for i, key := range keys {
-		if item, ok := m[*key]; ok {
+		if item, ok := responses[*key]; ok {
 			errs[i] = dynamizer.FromDynamo(item, rv.Index(i))
+		} else if _, ok := unprocessed[*key]; ok {
+			errs[i] = ErrNotProcessed
 		} else {
 			errs[i] = ErrNotFound
 		}

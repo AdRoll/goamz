@@ -130,7 +130,7 @@ type DynamoBatchGetQuery struct {
 
 type DynamoBatchResponse struct {
 	Responses       map[string][]dynamizer.DynamoItem
-	UnprocessedKeys map[string][]dynamizer.DynamoItem
+	UnprocessedKeys map[string]*batchGetPerTableQuery
 }
 
 func NewDynamoBatchGetQuery(t *Table) *DynamoBatchGetQuery {

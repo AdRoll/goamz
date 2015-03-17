@@ -1,6 +1,9 @@
 package dynamodb
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 
 	"gopkg.in/check.v1"
@@ -141,6 +144,61 @@ func (s *BatchSuite) TestBatchGetDocumentTyped(c *check.C) {
 			c.Assert(outs[i], check.DeepEquals, ins[i])
 		} else {
 			c.Assert(errs[i], check.Equals, ErrNotFound)
+		}
+	}
+}
+
+func (s *BatchSuite) TestUnprocessedKeys(c *check.C) {
+	// Here we test what happens if DynamoDB returns partial success and returns
+	// some keys in the UnprocessedKeys field. To do so, we setup a fake endpoint
+	// for DynamoDB which will simply returns a canned response. This is more
+	// efficient than loading enough data into DynamoDB local to force it over
+	// the 16mb limit.
+	endpoint := s.server.Region.DynamoDBEndpoint
+	defer func() {
+		s.server.Region.DynamoDBEndpoint = endpoint
+	}()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawjson := `{"Responses":{"DynamoDBTestMyTable":[{"Nested":{"M":{"List":{"L":[{"BOOL":true},{"BOOL":false},{"NULL":true},{"S":"some string"},{"N":"3.14"}]}}},"TestHashKey":{"S":"NewHashKeyVal0"},"Attr1":{"S":"Attr1Val0"},"Attr2":{"N":"1000000"},"TestRangeKey":{"N":"12"}}]},"UnprocessedKeys":{"DynamoDBTestMyTable":{"Keys":[{"TestHashKey":{"S":"NewHashKeyVal2"},"TestRangeKey":{"N":"14"}},{"TestHashKey":{"S":"NewHashKeyVal1"},"TestRangeKey":{"N":"13"}}],"ConsistentRead":true}}}`
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, rawjson)
+	}))
+	defer server.Close()
+	s.server.Region.DynamoDBEndpoint = server.URL
+
+	type myInnterStruct struct {
+		List []interface{}
+	}
+	type myStruct struct {
+		Attr1  string
+		Attr2  int64
+		Nested myInnterStruct
+	}
+
+	numKeys := 3
+	keys := make([]*Key, 0, numKeys)
+	outs := make([]myStruct, numKeys)
+
+	for i := 0; i < numKeys; i++ {
+		k := &Key{HashKey: "NewHashKeyVal" + strconv.Itoa(i)}
+		if s.WithRange {
+			k.RangeKey = strconv.Itoa(12 + i)
+		}
+
+		keys = append(keys, k)
+	}
+
+	err, errs := s.table.BatchGetDocument(keys, true, outs)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	for i := 0; i < numKeys; i++ {
+		if i == 0 {
+			c.Assert(errs[i], check.Equals, nil)
+		} else {
+			c.Assert(errs[i], check.Equals, ErrNotProcessed)
 		}
 	}
 }
