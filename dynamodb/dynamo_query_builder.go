@@ -50,7 +50,7 @@ type DynamoBatchPutQuery struct {
 }
 
 type DynamoBatchPutResponse struct {
-	UnprocessedKeys map[string][]*batchPutPerTableQuery
+	UnprocessedItems map[string][]*batchPutPerTableQuery
 }
 
 func NewDynamoQuery(t *Table) *DynamoQuery {

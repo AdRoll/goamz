@@ -120,8 +120,28 @@ func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
 		return err, nil
 	}
 
-	// TODO: Handle unprocessed keys.
+	// Handle unprocessed items. We return a special error code so that the
+	// caller can decide how to handle the partial result. This allows callers
+	// to move on from successful writes immediately.
+	unprocessed := make(map[Key]bool)
+	if r, ok := response.UnprocessedItems[t.Name]; ok {
+		for _, item := range r {
+			key, err := t.getKeyFromItem(item.PutRequest.Item)
+			if err != nil {
+				return err, nil
+			}
+			unprocessed[key] = true
+		}
+	}
 
+	// Package the final response maintaining the original ordering as specified
+	// by the caller.
 	errs := make([]error, numKeys)
+	for i, key := range keys {
+		if _, ok := unprocessed[*key]; ok {
+			errs[i] = ErrNotProcessed
+		}
+	}
+
 	return nil, errs
 }

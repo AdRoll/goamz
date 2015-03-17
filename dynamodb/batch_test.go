@@ -241,3 +241,110 @@ func (s *BatchSuite) TestBatchPutDocument(c *check.C) {
 		c.Assert(outs[i], check.DeepEquals, ins[i])
 	}
 }
+
+func (s *BatchSuite) TestBatchPutDocumentTyped(c *check.C) {
+	type myInnterStruct struct {
+		List []interface{}
+	}
+	type myStruct struct {
+		Attr1  string
+		Attr2  int64
+		Nested myInnterStruct
+	}
+
+	numKeys := 3
+	keys := make([]*Key, 0, numKeys)
+	ins := make([]myStruct, 0, numKeys)
+	outs := make([]myStruct, numKeys)
+
+	for i := 0; i < numKeys; i++ {
+		k := &Key{HashKey: "NewHashKeyVal" + strconv.Itoa(i)}
+		if s.WithRange {
+			k.RangeKey = strconv.Itoa(12 + i)
+		}
+
+		in := myStruct{
+			Attr1:  "Attr1Val" + strconv.Itoa(i),
+			Attr2:  1000000 + int64(i),
+			Nested: myInnterStruct{[]interface{}{true, false, nil, "some string", 3.14}},
+		}
+
+		keys = append(keys, k)
+		ins = append(ins, in)
+	}
+
+	err, errs := s.table.BatchPutDocument(keys, ins)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	err, errs = s.table.BatchGetDocument(keys, true, outs)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	for i := 0; i < numKeys; i++ {
+		c.Assert(errs[i], check.Equals, nil)
+		c.Assert(outs[i], check.DeepEquals, ins[i])
+	}
+}
+
+func (s *BatchSuite) TestBatchPutDocumentUnprocessedItems(c *check.C) {
+	// Here we test what happens if DynamoDB returns partial success and returns
+	// some items in the UnprocessedItems field. To do so, we setup a fake
+	// endpoint for DynamoDB which will simply returns a canned response.
+	endpoint := s.server.Region.DynamoDBEndpoint
+	defer func() {
+		s.server.Region.DynamoDBEndpoint = endpoint
+	}()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawjson := `{"UnprocessedItems":{"DynamoDBTestMyTable":[{"PutRequest":{"Item":{"Attr1":{"S":"Attr1Val1"},"Attr2":{"N":"1000001"},"Nested":{"M":{"List":{"L":[{"BOOL":true},{"BOOL":false},{"NULL":true},{"S":"some string"},{"N":"3.14"}]}}},"TestHashKey":{"S":"NewHashKeyVal1"},"TestRangeKey":{"N":"13"}}}},{"PutRequest":{"Item":{"Attr1":{"S":"Attr1Val2"},"Attr2":{"N":"1000002"},"Nested":{"M":{"List":{"L":[{"BOOL":true},{"BOOL":false},{"NULL":true},{"S":"some string"},{"N":"3.14"}]}}},"TestHashKey":{"S":"NewHashKeyVal2"},"TestRangeKey":{"N":"14"}}}}]}}`
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, rawjson)
+	}))
+	defer server.Close()
+	s.server.Region.DynamoDBEndpoint = server.URL
+
+	type myInnterStruct struct {
+		List []interface{}
+	}
+	type myStruct struct {
+		Attr1  string
+		Attr2  int64
+		Nested myInnterStruct
+	}
+
+	numKeys := 3
+	keys := make([]*Key, 0, numKeys)
+	ins := make([]myStruct, 0, numKeys)
+
+	for i := 0; i < numKeys; i++ {
+		k := &Key{HashKey: "NewHashKeyVal" + strconv.Itoa(i)}
+		if s.WithRange {
+			k.RangeKey = strconv.Itoa(12 + i)
+		}
+
+		in := myStruct{
+			Attr1:  "Attr1Val" + strconv.Itoa(i),
+			Attr2:  1000000 + int64(i),
+			Nested: myInnterStruct{[]interface{}{true, false, nil, "some string", 3.14}},
+		}
+
+		keys = append(keys, k)
+		ins = append(ins, in)
+	}
+
+	err, errs := s.table.BatchPutDocument(keys, ins)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	for i := 0; i < numKeys; i++ {
+		if i == 0 {
+			c.Assert(errs[i], check.Equals, nil)
+		} else {
+			c.Assert(errs[i], check.Equals, ErrNotProcessed)
+		}
+	}
+}
