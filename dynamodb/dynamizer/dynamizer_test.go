@@ -85,10 +85,10 @@ func TestToDynamo(t *testing.T) {
 	}
 }
 
-func testToDynamo(t *testing.T, in interface{}, expectedstring string) {
+func testToDynamo(t *testing.T, in interface{}, expectedString string) {
 	var expected interface{}
 	var buf bytes.Buffer
-	buf.WriteString(expectedstring)
+	buf.WriteString(expectedString)
 	if err := json.Unmarshal(buf.Bytes(), &expected); err != nil {
 		t.Fatal(err)
 	}
@@ -106,10 +106,10 @@ func TestFromDynamo(t *testing.T) {
 	}
 }
 
-func testFromDynamo(t *testing.T, inputstring string, expected interface{}) {
+func testFromDynamo(t *testing.T, inputString string, expected interface{}) {
 	var item DynamoItem
 	var buf bytes.Buffer
-	buf.WriteString(inputstring)
+	buf.WriteString(inputString)
 	if err := json.Unmarshal(buf.Bytes(), &item); err != nil {
 		t.Fatal(err)
 	}
