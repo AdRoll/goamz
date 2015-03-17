@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	MaxBatchSize = 100
+	MaxGetBatchSize = 100
+	MaxPutBatchSize = 25
 )
 
 type DynamoQuery struct {
@@ -20,6 +21,36 @@ type DynamoQuery struct {
 
 type DynamoResponse struct {
 	Item dynamizer.DynamoItem `json:",omitempty"`
+}
+
+type batchGetPerTableQuery struct {
+	Keys           []dynamizer.DynamoItem `json:",omitempty"`
+	ConsistentRead bool                   `json:",omitempty"`
+}
+
+type DynamoBatchGetQuery struct {
+	RequestItems map[string]*batchGetPerTableQuery `json:",omitempty"`
+	table        *Table
+}
+
+type DynamoBatchGetResponse struct {
+	Responses       map[string][]dynamizer.DynamoItem
+	UnprocessedKeys map[string]*batchGetPerTableQuery
+}
+
+type batchPutPerTableQuery struct {
+	PutRequest struct {
+		Item dynamizer.DynamoItem `json:",omitempty"`
+	} `json:",omitempty"`
+}
+
+type DynamoBatchPutQuery struct {
+	RequestItems map[string][]*batchPutPerTableQuery `json:",omitempty"`
+	table        *Table
+}
+
+type DynamoBatchPutResponse struct {
+	UnprocessedKeys map[string][]*batchPutPerTableQuery
 }
 
 func NewDynamoQuery(t *Table) *DynamoQuery {
@@ -118,26 +149,11 @@ func (q *DynamoQuery) Marshal() ([]byte, error) {
 	return json.Marshal(q)
 }
 
-type batchGetPerTableQuery struct {
-	Keys           []dynamizer.DynamoItem `json:",omitempty"`
-	ConsistentRead bool                   `json:",omitempty"`
-}
-
-type DynamoBatchGetQuery struct {
-	RequestItems map[string]*batchGetPerTableQuery `json:",omitempty"`
-	table        *Table
-}
-
-type DynamoBatchResponse struct {
-	Responses       map[string][]dynamizer.DynamoItem
-	UnprocessedKeys map[string]*batchGetPerTableQuery
-}
-
 func NewDynamoBatchGetQuery(t *Table) *DynamoBatchGetQuery {
 	q := &DynamoBatchGetQuery{table: t}
 	q.RequestItems = map[string]*batchGetPerTableQuery{
 		t.Name: &batchGetPerTableQuery{
-			Keys:           make([]dynamizer.DynamoItem, 0, MaxBatchSize),
+			Keys:           make([]dynamizer.DynamoItem, 0, MaxGetBatchSize),
 			ConsistentRead: false,
 		},
 	}
@@ -146,8 +162,8 @@ func NewDynamoBatchGetQuery(t *Table) *DynamoBatchGetQuery {
 
 func (q *DynamoBatchGetQuery) AddKey(key *Key) error {
 	tq := q.RequestItems[q.table.Name]
-	if len(tq.Keys) >= MaxBatchSize {
-		return fmt.Errorf("Cannot add key, max batch size (%d) exceeded", MaxBatchSize)
+	if len(tq.Keys) >= MaxGetBatchSize {
+		return fmt.Errorf("Cannot add key, max batch size (%d) exceeded", MaxGetBatchSize)
 	}
 	keys, err := buildKeyMap(q.table, key)
 	if err != nil {
@@ -164,5 +180,35 @@ func (q *DynamoBatchGetQuery) SetConsistentRead(consistent bool) error {
 }
 
 func (q *DynamoBatchGetQuery) Marshal() ([]byte, error) {
+	return json.Marshal(q)
+}
+
+func NewDynamoBatchPutQuery(t *Table) *DynamoBatchPutQuery {
+	q := &DynamoBatchPutQuery{table: t}
+	q.RequestItems = map[string][]*batchPutPerTableQuery{
+		t.Name: make([]*batchPutPerTableQuery, 0, MaxPutBatchSize),
+	}
+	return q
+}
+
+func (q *DynamoBatchPutQuery) AddItem(key *Key, item dynamizer.DynamoItem) error {
+	// Add in the hash/range keys.
+	keys, err := buildKeyMap(q.table, key)
+	if err != nil {
+		return err
+	}
+	for k, v := range keys {
+		item[k] = v
+	}
+
+	tq := &batchPutPerTableQuery{}
+	tq.PutRequest.Item = item
+
+	q.RequestItems[q.table.Name] = append(q.RequestItems[q.table.Name], tq)
+
+	return nil
+}
+
+func (q *DynamoBatchPutQuery) Marshal() ([]byte, error) {
 	return json.Marshal(q)
 }

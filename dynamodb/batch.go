@@ -35,7 +35,7 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 	}
 
 	// Deserialize from []byte to JSON.
-	var response DynamoBatchResponse
+	var response DynamoBatchGetResponse
 	err = json.Unmarshal(jsonResponse, &response)
 	if err != nil {
 		return err, nil
@@ -84,5 +84,44 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 		}
 	}
 
+	return nil, errs
+}
+
+func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
+	numKeys := len(keys)
+
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Slice {
+		return fmt.Errorf("v must be a slice with the same length as keys"), nil
+	} else if rv.Len() != numKeys {
+		return fmt.Errorf("v must be a slice with the same length as keys"), nil
+	}
+
+	q := NewDynamoBatchPutQuery(t)
+	for i, key := range keys {
+		item, err := dynamizer.ToDynamo(rv.Index(i).Interface())
+		if err != nil {
+			return err, nil
+		}
+		if err := q.AddItem(key, item); err != nil {
+			return err, nil
+		}
+	}
+
+	jsonResponse, err := t.Server.queryServer(target("BatchWriteItem"), q)
+	if err != nil {
+		return err, nil
+	}
+
+	// Deserialize from []byte to JSON.
+	var response DynamoBatchPutResponse
+	err = json.Unmarshal(jsonResponse, &response)
+	if err != nil {
+		return err, nil
+	}
+
+	// TODO: Handle unprocessed keys.
+
+	errs := make([]error, numKeys)
 	return nil, errs
 }

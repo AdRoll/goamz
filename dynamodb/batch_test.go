@@ -148,7 +148,7 @@ func (s *BatchSuite) TestBatchGetDocumentTyped(c *check.C) {
 	}
 }
 
-func (s *BatchSuite) TestUnprocessedKeys(c *check.C) {
+func (s *BatchSuite) TestBatchGetDocumentUnprocessedKeys(c *check.C) {
 	// Here we test what happens if DynamoDB returns partial success and returns
 	// some keys in the UnprocessedKeys field. To do so, we setup a fake endpoint
 	// for DynamoDB which will simply returns a canned response. This is more
@@ -200,5 +200,44 @@ func (s *BatchSuite) TestUnprocessedKeys(c *check.C) {
 		} else {
 			c.Assert(errs[i], check.Equals, ErrNotProcessed)
 		}
+	}
+}
+
+func (s *BatchSuite) TestBatchPutDocument(c *check.C) {
+	numKeys := 3
+	keys := make([]*Key, 0, numKeys)
+	ins := make([]map[string]interface{}, 0, numKeys)
+	outs := make([]map[string]interface{}, numKeys)
+	for i := 0; i < numKeys; i++ {
+		k := &Key{HashKey: "NewHashKeyVal" + strconv.Itoa(i)}
+		if s.WithRange {
+			k.RangeKey = strconv.Itoa(12 + i)
+		}
+
+		in := map[string]interface{}{
+			"Attr1": "Attr1Val" + strconv.Itoa(i),
+			"Attr2": 12 + i,
+		}
+
+		keys = append(keys, k)
+		ins = append(ins, in)
+	}
+
+	err, errs := s.table.BatchPutDocument(keys, ins)
+	if err != nil {
+		c.Fatal(err)
+	}
+	for i := 0; i < numKeys; i++ {
+		c.Assert(errs[i], check.Equals, nil)
+	}
+
+	err, errs = s.table.BatchGetDocument(keys, true, outs)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	for i := 0; i < numKeys; i++ {
+		c.Assert(errs[i], check.Equals, nil)
+		c.Assert(outs[i], check.DeepEquals, ins[i])
 	}
 }
