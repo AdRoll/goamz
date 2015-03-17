@@ -96,7 +96,7 @@ var attempts = aws.AttemptStrategy{
 
 // New creates a new S3.
 func New(auth aws.Auth, region aws.Region) *S3 {
-	return &S3{auth, region, 0, 0, 0, aws.V2Signature}
+	return &S3{auth, region, 0, 0, aws.V2Signature, 0}
 }
 
 // Bucket returns a Bucket with the given name.
