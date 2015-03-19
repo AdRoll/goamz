@@ -39,6 +39,23 @@ var batch_suite = &BatchSuite{
 		TableName: "DynamoDBTestMyTable",
 		AttributeDefinitions: []AttributeDefinitionT{
 			AttributeDefinitionT{"TestHashKey", "S"},
+		},
+		KeySchema: []KeySchemaT{
+			KeySchemaT{"TestHashKey", "HASH"},
+		},
+		ProvisionedThroughput: ProvisionedThroughputT{
+			ReadCapacityUnits:  1,
+			WriteCapacityUnits: 1,
+		},
+	},
+	WithRange: false,
+}
+
+var batch_suite_with_range = &BatchSuite{
+	TableDescriptionT: TableDescriptionT{
+		TableName: "DynamoDBTestMyTable",
+		AttributeDefinitions: []AttributeDefinitionT{
+			AttributeDefinitionT{"TestHashKey", "S"},
 			AttributeDefinitionT{"TestRangeKey", "N"},
 		},
 		KeySchema: []KeySchemaT{
@@ -54,6 +71,7 @@ var batch_suite = &BatchSuite{
 }
 
 var _ = check.Suite(batch_suite)
+var _ = check.Suite(batch_suite_with_range)
 
 func (s *BatchSuite) TestBatchGetDocument(c *check.C) {
 	numKeys := 3
