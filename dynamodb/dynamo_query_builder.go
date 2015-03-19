@@ -192,6 +192,10 @@ func NewDynamoBatchPutQuery(t *Table) *DynamoBatchPutQuery {
 }
 
 func (q *DynamoBatchPutQuery) AddItem(key *Key, item dynamizer.DynamoItem) error {
+	if len(q.RequestItems[q.table.Name]) >= MaxPutBatchSize {
+		return fmt.Errorf("Cannot add item, max batch size (%d) exceeded", MaxPutBatchSize)
+	}
+
 	// Add in the hash/range keys.
 	keys, err := buildKeyMap(q.table, key)
 	if err != nil {

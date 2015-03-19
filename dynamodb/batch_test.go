@@ -203,6 +203,26 @@ func (s *BatchSuite) TestBatchGetDocumentUnprocessedKeys(c *check.C) {
 	}
 }
 
+func (s *BatchSuite) TestBatchGetDocumentSizeExceeded(c *check.C) {
+	numKeys := MaxGetBatchSize+1
+	keys := make([]*Key, 0, numKeys)
+	outs := make([]map[string]interface{}, numKeys)
+	for i := 0; i < numKeys; i++ {
+		k := &Key{HashKey: "NewHashKeyVal" + strconv.Itoa(i)}
+		if s.WithRange {
+			k.RangeKey = strconv.Itoa(12 + i)
+		}
+		keys = append(keys, k)
+	}
+
+	err, _ := s.table.BatchGetDocument(keys, true, outs)
+	if err == nil {
+		c.Fatal("Expected max batch size exceeded error")
+	} else {
+		c.Assert(err.Error(), check.Equals, "Cannot add key, max batch size (100) exceeded")
+	}
+}
+
 func (s *BatchSuite) TestBatchPutDocument(c *check.C) {
 	numKeys := 3
 	keys := make([]*Key, 0, numKeys)
@@ -346,5 +366,28 @@ func (s *BatchSuite) TestBatchPutDocumentUnprocessedItems(c *check.C) {
 		} else {
 			c.Assert(errs[i], check.Equals, ErrNotProcessed)
 		}
+	}
+}
+
+func (s *BatchSuite) TestBatchPutDocumentSizeExceeded(c *check.C) {
+	numKeys := MaxPutBatchSize+1
+	keys := make([]*Key, 0, numKeys)
+	ins := make([]map[string]interface{}, 0, numKeys)
+	for i := 0; i < numKeys; i++ {
+		k := &Key{HashKey: "NewHashKeyVal" + strconv.Itoa(i)}
+		if s.WithRange {
+			k.RangeKey = strconv.Itoa(12 + i)
+		}
+		in := map[string]interface{}{}
+
+		keys = append(keys, k)
+		ins = append(ins, in)
+	}
+
+	err, _ := s.table.BatchPutDocument(keys, ins)
+	if err == nil {
+		c.Fatal("Expected max batch size exceeded error")
+	} else {
+		c.Assert(err.Error(), check.Equals, "Cannot add item, max batch size (25) exceeded")
 	}
 }
