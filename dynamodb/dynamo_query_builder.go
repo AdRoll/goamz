@@ -7,7 +7,16 @@ import (
 )
 
 const (
+	// MaxGetBatchSize limits the maximum number of items per batch get
+	// operation. Note also that the total size of all the items retrieved
+	// cannot exceed 16 MB, but that limit is not enforced client side.
+	// cf: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html
 	MaxGetBatchSize = 100
+
+	// MaxPutBatchSize limits the maximum number of items per batch put
+	// operation. Note also that the total size of all the items written
+	// cannot exceed 16 MB, but that limit is not enforced client side.
+	// cf: http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Limits.html
 	MaxPutBatchSize = 25
 )
 
