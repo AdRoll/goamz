@@ -102,7 +102,7 @@ func dynamoAttributeFromAttribute(attr *Attribute, value string) (*dynamizer.Dyn
 
 func buildKeyMap(table *Table, key *Key) (dynamizer.DynamoItem, error) {
 	if key.HashKey == "" {
-		return nil, fmt.Errorf("HaskKey is always required")
+		return nil, fmt.Errorf("HashKey is always required")
 	}
 
 	k := table.Key

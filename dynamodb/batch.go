@@ -42,7 +42,7 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 	}
 
 	// DynamoDB doesn't return the items in any particular order, but we promise
-	// callers that we will. So we build a map of key to resposne to match up
+	// callers that we will. So we build a map of key to response to match up
 	// inputs to return values.
 	//
 	// N.B. The map is of type Key - not *Key - so that equality is based on the
