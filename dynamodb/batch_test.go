@@ -99,7 +99,7 @@ func (s *BatchSuite) TestBatchGetDocument(c *check.C) {
 		ins = append(ins, in)
 	}
 
-	err, errs := s.table.BatchGetDocument(keys, true, outs)
+	errs, err := s.table.BatchGetDocument(keys, true, outs)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -151,7 +151,7 @@ func (s *BatchSuite) TestBatchGetDocumentTyped(c *check.C) {
 		ins = append(ins, in)
 	}
 
-	err, errs := s.table.BatchGetDocument(keys, true, outs)
+	errs, err := s.table.BatchGetDocument(keys, true, outs)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -211,7 +211,7 @@ func (s *BatchSuite) TestBatchGetDocumentUnprocessedKeys(c *check.C) {
 		keys = append(keys, k)
 	}
 
-	err, errs := s.table.BatchGetDocument(keys, true, outs)
+	errs, err := s.table.BatchGetDocument(keys, true, outs)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -241,7 +241,7 @@ func (s *BatchSuite) TestBatchGetDocumentSizeExceeded(c *check.C) {
 		keys = append(keys, k)
 	}
 
-	err, _ := s.table.BatchGetDocument(keys, true, outs)
+	_, err := s.table.BatchGetDocument(keys, true, outs)
 	if err == nil {
 		c.Fatal("Expected max batch size exceeded error")
 	} else {
@@ -269,7 +269,7 @@ func (s *BatchSuite) TestBatchPutDocument(c *check.C) {
 		ins = append(ins, in)
 	}
 
-	err, errs := s.table.BatchPutDocument(keys, ins)
+	errs, err := s.table.BatchPutDocument(keys, ins)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -277,7 +277,7 @@ func (s *BatchSuite) TestBatchPutDocument(c *check.C) {
 		c.Assert(errs[i], check.Equals, nil)
 	}
 
-	err, errs = s.table.BatchGetDocument(keys, true, outs)
+	errs, err = s.table.BatchGetDocument(keys, true, outs)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -319,12 +319,12 @@ func (s *BatchSuite) TestBatchPutDocumentTyped(c *check.C) {
 		ins = append(ins, in)
 	}
 
-	err, errs := s.table.BatchPutDocument(keys, ins)
+	errs, err := s.table.BatchPutDocument(keys, ins)
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	err, errs = s.table.BatchGetDocument(keys, true, outs)
+	errs, err = s.table.BatchGetDocument(keys, true, outs)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -385,7 +385,7 @@ func (s *BatchSuite) TestBatchPutDocumentUnprocessedItems(c *check.C) {
 		ins = append(ins, in)
 	}
 
-	err, errs := s.table.BatchPutDocument(keys, ins)
+	errs, err := s.table.BatchPutDocument(keys, ins)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -414,7 +414,7 @@ func (s *BatchSuite) TestBatchPutDocumentSizeExceeded(c *check.C) {
 		ins = append(ins, in)
 	}
 
-	err, _ := s.table.BatchPutDocument(keys, ins)
+	_, err := s.table.BatchPutDocument(keys, ins)
 	if err == nil {
 		c.Fatal("Expected max batch size exceeded error")
 	} else {

@@ -14,14 +14,14 @@ import (
 // throttling.
 var errProvisionedThroughputExceeded = &Error{Code: "ProvisionedThroughputExceededException"}
 
-func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}) (error, []error) {
+func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}) ([]error, error) {
 	numKeys := len(keys)
 
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Slice {
-		return fmt.Errorf("v must be a slice with the same length as keys"), nil
+		return nil, fmt.Errorf("v must be a slice with the same length as keys")
 	} else if rv.Len() != numKeys {
-		return fmt.Errorf("v must be a slice with the same length as keys"), nil
+		return nil, fmt.Errorf("v must be a slice with the same length as keys")
 	}
 
 	// Create a map to track which keys have been processed, since DynamoDB
@@ -44,7 +44,7 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 				continue
 			}
 			if err := q.AddKey(key); err != nil {
-				return err, nil
+				return nil, err
 			}
 		}
 
@@ -54,13 +54,13 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 
 		jsonResponse, err := t.Server.queryServer(target, q)
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 
 		var response DynamoBatchGetResponse
 		err = json.Unmarshal(jsonResponse, &response)
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 
 		// DynamoDB doesn't return the items in any particular order, but we promise
@@ -70,7 +70,7 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 		for _, item := range response.Responses[t.Name] {
 			key, err := t.getKeyFromItem(item)
 			if err != nil {
-				return err, nil
+				return nil, err
 			}
 			t.deleteKeyFromItem(item)
 			responses[key] = item
@@ -85,7 +85,7 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 			for _, item := range r.Keys {
 				key, err := t.getKeyFromItem(item)
 				if err != nil {
-					return err, nil
+					return nil, err
 				}
 				unprocessed[key] = true
 				numUnprocessed++
@@ -113,7 +113,7 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 
 		// If we are done, or we're not going to retry, return now.
 		if numUnprocessed == 0 || !t.Server.RetryPolicy.ShouldRetry(target, nil, errProvisionedThroughputExceeded, numRetries) {
-			return nil, errs
+			return errs, nil
 		}
 
 		// Sleep according to the retry strategy and then attempt again with the
@@ -123,14 +123,14 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 	}
 }
 
-func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
+func (t *Table) BatchPutDocument(keys []*Key, v interface{}) ([]error, error) {
 	numKeys := len(keys)
 
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Slice {
-		return fmt.Errorf("v must be a slice with the same length as keys"), nil
+		return nil, fmt.Errorf("v must be a slice with the same length as keys")
 	} else if rv.Len() != numKeys {
-		return fmt.Errorf("v must be a slice with the same length as keys"), nil
+		return nil, fmt.Errorf("v must be a slice with the same length as keys")
 	}
 
 	// Create a map to track which keys have been processed, since DynamoDB
@@ -155,22 +155,22 @@ func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
 
 			item, err := dynamizer.ToDynamo(rv.Index(i).Interface())
 			if err != nil {
-				return err, nil
+				return nil, err
 			}
 			if err := q.AddItem(key, item); err != nil {
-				return err, nil
+				return nil, err
 			}
 		}
 
 		jsonResponse, err := t.Server.queryServer(target, q)
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 
 		var response DynamoBatchPutResponse
 		err = json.Unmarshal(jsonResponse, &response)
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 
 		// Handle unprocessed items. We return a special error code so that the
@@ -182,7 +182,7 @@ func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
 			for _, item := range r {
 				key, err := t.getKeyFromItem(item.PutRequest.Item)
 				if err != nil {
-					return err, nil
+					return nil, err
 				}
 				unprocessed[key] = true
 				numUnprocessed++
@@ -207,7 +207,7 @@ func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
 
 		// If we are done, or we're not going to retry, return now.
 		if numUnprocessed == 0 || !t.Server.RetryPolicy.ShouldRetry(target, nil, errProvisionedThroughputExceeded, numRetries) {
-			return nil, errs
+			return errs, nil
 		}
 
 		// Sleep according to the retry strategy and then attempt again with the
