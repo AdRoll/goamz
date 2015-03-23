@@ -176,11 +176,15 @@ func (s *BatchSuite) TestBatchGetDocumentUnprocessedKeys(c *check.C) {
 	defer func() {
 		s.server.Region.DynamoDBEndpoint = endpoint
 	}()
+	invocations := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rawjson := `{"Responses":{"DynamoDBTestMyTable":[{"Nested":{"M":{"List":{"L":[{"BOOL":true},{"BOOL":false},{"NULL":true},{"S":"some string"},{"N":"3.14"}]}}},"TestHashKey":{"S":"NewHashKeyVal0"},"Attr1":{"S":"Attr1Val0"},"Attr2":{"N":"1000000"},"TestRangeKey":{"N":"12"}}]},"UnprocessedKeys":{"DynamoDBTestMyTable":{"Keys":[{"TestHashKey":{"S":"NewHashKeyVal2"},"TestRangeKey":{"N":"14"}},{"TestHashKey":{"S":"NewHashKeyVal1"},"TestRangeKey":{"N":"13"}}],"ConsistentRead":true}}}`
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, rawjson)
+		// Restore the endpoint so any retries succeed.
+		s.server.Region.DynamoDBEndpoint = endpoint
+		invocations++
 	}))
 	defer server.Close()
 	s.server.Region.DynamoDBEndpoint = server.URL
@@ -212,11 +216,15 @@ func (s *BatchSuite) TestBatchGetDocumentUnprocessedKeys(c *check.C) {
 		c.Fatal(err)
 	}
 
+	// Make sure our fake endpoint was called exactly once.
+	c.Assert(invocations, check.Equals, 1)
+
+	// Confirm that each key was processed.
 	for i := 0; i < numKeys; i++ {
 		if i == 0 {
 			c.Assert(errs[i], check.Equals, nil)
 		} else {
-			c.Assert(errs[i], check.Equals, ErrNotProcessed)
+			c.Assert(errs[i], check.Equals, ErrNotFound)
 		}
 	}
 }
@@ -335,11 +343,15 @@ func (s *BatchSuite) TestBatchPutDocumentUnprocessedItems(c *check.C) {
 	defer func() {
 		s.server.Region.DynamoDBEndpoint = endpoint
 	}()
+	invocations := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rawjson := `{"UnprocessedItems":{"DynamoDBTestMyTable":[{"PutRequest":{"Item":{"Attr1":{"S":"Attr1Val1"},"Attr2":{"N":"1000001"},"Nested":{"M":{"List":{"L":[{"BOOL":true},{"BOOL":false},{"NULL":true},{"S":"some string"},{"N":"3.14"}]}}},"TestHashKey":{"S":"NewHashKeyVal1"},"TestRangeKey":{"N":"13"}}}},{"PutRequest":{"Item":{"Attr1":{"S":"Attr1Val2"},"Attr2":{"N":"1000002"},"Nested":{"M":{"List":{"L":[{"BOOL":true},{"BOOL":false},{"NULL":true},{"S":"some string"},{"N":"3.14"}]}}},"TestHashKey":{"S":"NewHashKeyVal2"},"TestRangeKey":{"N":"14"}}}}]}}`
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, rawjson)
+		// Restore the endpoint so any retries succeed.
+		s.server.Region.DynamoDBEndpoint = endpoint
+		invocations++
 	}))
 	defer server.Close()
 	s.server.Region.DynamoDBEndpoint = server.URL
@@ -378,12 +390,12 @@ func (s *BatchSuite) TestBatchPutDocumentUnprocessedItems(c *check.C) {
 		c.Fatal(err)
 	}
 
+	// Make sure our fake endpoint was called exactly once.
+	c.Assert(invocations, check.Equals, 1)
+
+	// Confirm that each key was processed.
 	for i := 0; i < numKeys; i++ {
-		if i == 0 {
-			c.Assert(errs[i], check.Equals, nil)
-		} else {
-			c.Assert(errs[i], check.Equals, ErrNotProcessed)
-		}
+		c.Assert(errs[i], check.Equals, nil)
 	}
 }
 

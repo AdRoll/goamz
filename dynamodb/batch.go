@@ -4,9 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/AdRoll/goamz/dynamodb/dynamizer"
 )
+
+// Fake error for use with the retry strategy. Any keys returned in the
+// UnprocessedKeys/UnprocessedItems arrays are assumed to be because of
+// throttling.
+var errProvisionedThroughputExceeded = &Error{Code: "ProvisionedThroughputExceededException"}
 
 func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}) (error, []error) {
 	numKeys := len(keys)
@@ -18,73 +24,103 @@ func (t *Table) BatchGetDocument(keys []*Key, consistentRead bool, v interface{}
 		return fmt.Errorf("v must be a slice with the same length as keys"), nil
 	}
 
-	q := NewDynamoBatchGetQuery(t)
-	for _, key := range keys {
-		if err := q.AddKey(key); err != nil {
-			return err, nil
-		}
-	}
-
-	if consistentRead {
-		q.SetConsistentRead(consistentRead)
-	}
-
-	jsonResponse, err := t.Server.queryServer(target("BatchGetItem"), q)
-	if err != nil {
-		return err, nil
-	}
-
-	// Deserialize from []byte to JSON.
-	var response DynamoBatchGetResponse
-	err = json.Unmarshal(jsonResponse, &response)
-	if err != nil {
-		return err, nil
-	}
-
-	// DynamoDB doesn't return the items in any particular order, but we promise
-	// callers that we will. So we build a map of key to response to match up
-	// inputs to return values.
+	// Create a map to track which keys have been processed, since DynamoDB
+	// doesn't return items in any particular order.
 	//
-	// N.B. The map is of type Key - not *Key - so that equality is based on the
-	// hash and range key values, not the pointer location.
-	responses := make(map[Key]dynamizer.DynamoItem)
-	for _, item := range response.Responses[t.Name] {
-		key, err := t.getKeyFromItem(item)
+	// N.B. This map is of type Key - not *Key - so that equality is based on
+	// the hash and range key values, not the pointer address.
+	processed := make(map[Key]bool)
+	errs := make([]error, numKeys)
+
+	numRetries := 0
+	target := target("BatchGetItem")
+	for {
+		q := NewDynamoBatchGetQuery(t)
+
+		// Add requested keys to the query, skipping over those for which we
+		// already have responses.
+		for _, key := range keys {
+			if _, ok := processed[*key]; ok {
+				continue
+			}
+			if err := q.AddKey(key); err != nil {
+				return err, nil
+			}
+		}
+
+		if consistentRead {
+			q.SetConsistentRead(consistentRead)
+		}
+
+		jsonResponse, err := t.Server.queryServer(target, q)
 		if err != nil {
 			return err, nil
 		}
-		t.deleteKeyFromItem(item)
-		responses[key] = item
-	}
 
-	// Handle unprocessed keys. We return a special error code so that the
-	// caller can decide how to handle the partial result. This allows callers
-	// to utilize the responses we do have available right away.
-	unprocessed := make(map[Key]bool)
-	if r, ok := response.UnprocessedKeys[t.Name]; ok {
-		for _, item := range r.Keys {
+		var response DynamoBatchGetResponse
+		err = json.Unmarshal(jsonResponse, &response)
+		if err != nil {
+			return err, nil
+		}
+
+		// DynamoDB doesn't return the items in any particular order, but we promise
+		// callers that we will. So we build a map of key to response to match up
+		// inputs to return values.
+		responses := make(map[Key]dynamizer.DynamoItem)
+		for _, item := range response.Responses[t.Name] {
 			key, err := t.getKeyFromItem(item)
 			if err != nil {
 				return err, nil
 			}
-			unprocessed[key] = true
+			t.deleteKeyFromItem(item)
+			responses[key] = item
 		}
-	}
 
-	// Package the final response maintaining the original ordering as specified
-	// by the caller.
-	errs := make([]error, numKeys)
-	for i, key := range keys {
-		if item, ok := responses[*key]; ok {
-			errs[i] = dynamizer.FromDynamo(item, rv.Index(i))
-		} else if _, ok := unprocessed[*key]; ok {
-			errs[i] = ErrNotProcessed
-		} else {
-			errs[i] = ErrNotFound
+		// Handle unprocessed keys. We return a special error code so that the
+		// caller can decide how to handle the partial result. This allows callers
+		// to utilize the responses we do have available right away.
+		unprocessed := make(map[Key]bool)
+		numUnprocessed := 0
+		if r, ok := response.UnprocessedKeys[t.Name]; ok {
+			for _, item := range r.Keys {
+				key, err := t.getKeyFromItem(item)
+				if err != nil {
+					return err, nil
+				}
+				unprocessed[key] = true
+				numUnprocessed++
+			}
 		}
-	}
 
-	return nil, errs
+		// Package the responses maintaining the original ordering as specified
+		// by the caller. Set ErrNotProcessed for all unprocessed in keys in
+		// case we don't retry.
+		for i, key := range keys {
+			if _, ok := processed[*key]; ok {
+				continue
+			}
+
+			if item, ok := responses[*key]; ok {
+				errs[i] = dynamizer.FromDynamo(item, rv.Index(i))
+				processed[*key] = true
+			} else if _, ok := unprocessed[*key]; !ok {
+				errs[i] = ErrNotFound
+				processed[*key] = true
+			} else {
+				errs[i] = ErrNotProcessed
+			}
+		}
+
+		// If we are done, or we're not going to retry, return now.
+		if numUnprocessed == 0 || !t.Server.RetryPolicy.ShouldRetry(target, nil, errProvisionedThroughputExceeded, numRetries) {
+			return nil, errs
+		}
+
+		// Sleep according to the retry strategy and then attempt again with the
+		// remaining keys.
+		time.Sleep(t.Server.RetryPolicy.Delay(target, nil, errProvisionedThroughputExceeded, numRetries))
+		numRetries++
+	}
 }
 
 func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
@@ -97,51 +133,86 @@ func (t *Table) BatchPutDocument(keys []*Key, v interface{}) (error, []error) {
 		return fmt.Errorf("v must be a slice with the same length as keys"), nil
 	}
 
-	q := NewDynamoBatchPutQuery(t)
-	for i, key := range keys {
-		item, err := dynamizer.ToDynamo(rv.Index(i).Interface())
-		if err != nil {
-			return err, nil
-		}
-		if err := q.AddItem(key, item); err != nil {
-			return err, nil
-		}
-	}
+	// Create a map to track which keys have been processed, since DynamoDB
+	// doesn't return items in any particular order.
+	//
+	// N.B. This map is of type Key - not *Key - so that equality is based on
+	// the hash and range key values, not the pointer address.
+	processed := make(map[Key]bool)
+	errs := make([]error, numKeys)
 
-	jsonResponse, err := t.Server.queryServer(target("BatchWriteItem"), q)
-	if err != nil {
-		return err, nil
-	}
+	numRetries := 0
+	target := target("BatchWriteItem")
+	for {
+		q := NewDynamoBatchPutQuery(t)
 
-	// Deserialize from []byte to JSON.
-	var response DynamoBatchPutResponse
-	err = json.Unmarshal(jsonResponse, &response)
-	if err != nil {
-		return err, nil
-	}
+		// Add requested keys to the query, skipping over those for which we
+		// already have responses.
+		for i, key := range keys {
+			if _, ok := processed[*key]; ok {
+				continue
+			}
 
-	// Handle unprocessed items. We return a special error code so that the
-	// caller can decide how to handle the partial result. This allows callers
-	// to move on from successful writes immediately.
-	unprocessed := make(map[Key]bool)
-	if r, ok := response.UnprocessedItems[t.Name]; ok {
-		for _, item := range r {
-			key, err := t.getKeyFromItem(item.PutRequest.Item)
+			item, err := dynamizer.ToDynamo(rv.Index(i).Interface())
 			if err != nil {
 				return err, nil
 			}
-			unprocessed[key] = true
+			if err := q.AddItem(key, item); err != nil {
+				return err, nil
+			}
 		}
-	}
 
-	// Package the final response maintaining the original ordering as specified
-	// by the caller.
-	errs := make([]error, numKeys)
-	for i, key := range keys {
-		if _, ok := unprocessed[*key]; ok {
-			errs[i] = ErrNotProcessed
+		jsonResponse, err := t.Server.queryServer(target, q)
+		if err != nil {
+			return err, nil
 		}
-	}
 
-	return nil, errs
+		var response DynamoBatchPutResponse
+		err = json.Unmarshal(jsonResponse, &response)
+		if err != nil {
+			return err, nil
+		}
+
+		// Handle unprocessed items. We return a special error code so that the
+		// caller can decide how to handle the partial result. This allows callers
+		// to move on from successful writes immediately.
+		unprocessed := make(map[Key]bool)
+		numUnprocessed := 0
+		if r, ok := response.UnprocessedItems[t.Name]; ok {
+			for _, item := range r {
+				key, err := t.getKeyFromItem(item.PutRequest.Item)
+				if err != nil {
+					return err, nil
+				}
+				unprocessed[key] = true
+				numUnprocessed++
+			}
+		}
+
+		// Package the responses maintaining the original ordering as specified
+		// by the caller. Set ErrNotProcessed for all unprocessed in keys in
+		// case we don't retry.
+		for i, key := range keys {
+			if _, ok := processed[*key]; ok {
+				continue
+			}
+
+			if _, ok := unprocessed[*key]; ok {
+				errs[i] = ErrNotProcessed
+			} else {
+				errs[i] = nil
+				processed[*key] = true
+			}
+		}
+
+		// If we are done, or we're not going to retry, return now.
+		if numUnprocessed == 0 || !t.Server.RetryPolicy.ShouldRetry(target, nil, errProvisionedThroughputExceeded, numRetries) {
+			return nil, errs
+		}
+
+		// Sleep according to the retry strategy and then attempt again with the
+		// remaining keys.
+		time.Sleep(t.Server.RetryPolicy.Delay(target, nil, errProvisionedThroughputExceeded, numRetries))
+		numRetries++
+	}
 }
