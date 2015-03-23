@@ -222,7 +222,7 @@ func (s *BatchSuite) TestBatchGetDocumentUnprocessedKeys(c *check.C) {
 }
 
 func (s *BatchSuite) TestBatchGetDocumentSizeExceeded(c *check.C) {
-	numKeys := MaxGetBatchSize+1
+	numKeys := MaxGetBatchSize + 1
 	keys := make([]*Key, 0, numKeys)
 	outs := make([]map[string]interface{}, numKeys)
 	for i := 0; i < numKeys; i++ {
@@ -388,7 +388,7 @@ func (s *BatchSuite) TestBatchPutDocumentUnprocessedItems(c *check.C) {
 }
 
 func (s *BatchSuite) TestBatchPutDocumentSizeExceeded(c *check.C) {
-	numKeys := MaxPutBatchSize+1
+	numKeys := MaxPutBatchSize + 1
 	keys := make([]*Key, 0, numKeys)
 	ins := make([]map[string]interface{}, 0, numKeys)
 	for i := 0; i < numKeys; i++ {
