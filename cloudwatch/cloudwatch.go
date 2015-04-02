@@ -374,7 +374,7 @@ func (c *CloudWatch) PutMetricDataNamespace(metrics []MetricDatum, namespace str
 		}
 		if metric.Value != 0 {
 			params[prefix+".Value"] = strconv.FormatFloat(metric.Value, 'E', 10, 64)
-		} else {
+		} else if metric.StatisticValues == nil {
 			params[prefix+".Value"] = "0"
 		}
 		if !metric.Timestamp.IsZero() {
