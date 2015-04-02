@@ -138,6 +138,41 @@ func (s *S) TestPutAttrsOK(c *check.C) {
 
 }
 
+func (s *S) TestDeleteAttrsOK(c *check.C) {
+	testServer.Response(200, nil, TestDeleteAttrsXmlOK)
+
+	domain := s.sdb.Domain("MyDomain")
+	item := domain.Item("Item123")
+
+	deleteAttrs := new(sdb.DeleteAttrs)
+	deleteAttrs.Delete("FirstName", "john")
+	deleteAttrs.Delete("LastName", "smith")
+
+	deleteAttrs.IfValue("FirstName", "john")
+	deleteAttrs.IfMissing("FirstName")
+
+	resp, err := item.DeleteAttrs(deleteAttrs)
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, check.Equals, "GET")
+	c.Assert(req.URL.Path, check.Equals, "/")
+	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DeleteAttributes"})
+	c.Assert(req.Form["ItemName"], check.DeepEquals, []string{"Item123"})
+	c.Assert(req.Form["DomainName"], check.DeepEquals, []string{"MyDomain"})
+	c.Assert(req.Form["Attribute.1.Name"], check.DeepEquals, []string{"FirstName"})
+	c.Assert(req.Form["Attribute.1.Value"], check.DeepEquals, []string{"john"})
+	c.Assert(req.Form["Attribute.2.Name"], check.DeepEquals, []string{"LastName"})
+	c.Assert(req.Form["Attribute.2.Value"], check.DeepEquals, []string{"smith"})
+
+	c.Assert(req.Form["Expected.1.Name"], check.DeepEquals, []string{"FirstName"})
+	c.Assert(req.Form["Expected.1.Value"], check.DeepEquals, []string{"john"})
+	c.Assert(req.Form["Expected.1.Exists"], check.DeepEquals, []string{"false"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.ResponseMetadata.RequestId, check.Equals, "05ae667c-cfac-41a8-ab37-a9c897c4c3ca")
+	c.Assert(resp.ResponseMetadata.BoxUsage, check.Equals, 0.0000219907)
+
+}
+
 func (s *S) TestAttrsOK(c *check.C) {
 	testServer.Response(200, nil, TestAttrsXmlOK)
 

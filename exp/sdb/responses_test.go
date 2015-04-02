@@ -74,6 +74,16 @@ var TestPutAttrsXmlOK = `
 </PutAttributesResponse>
 `
 
+var TestDeleteAttrsXmlOK = `
+<?xml version="1.0"?>
+<DeleteAttributesResponse xmlns="http://sdb.amazonaws.com/doc/2009-04-15/">
+  <ResponseMetadata>
+    <RequestId>05ae667c-cfac-41a8-ab37-a9c897c4c3ca</RequestId>
+    <BoxUsage>0.0000219907</BoxUsage>
+  </ResponseMetadata>
+</DeleteAttributesResponse>
+`
+
 var TestAttrsXmlOK = `
 <?xml version="1.0"?>
 <GetAttributesResponse xmlns="http://sdb.amazonaws.com/doc/2009-04-15/">
