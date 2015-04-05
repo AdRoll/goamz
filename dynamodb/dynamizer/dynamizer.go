@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/cbroglie/mapstructure"
 )
 
 // A DynamoAttribute represents the union of possible DynamoDB attribute values.
