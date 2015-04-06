@@ -8,7 +8,7 @@ import (
 	simplejson "github.com/bitly/go-simplejson"
 )
 
-func (t *Table) FetchPartialResults(query Query) ([]map[string]*Attribute, StartKey, error) {
+func (t *Table) FetchPartialResults(query ScanQuery) ([]map[string]*Attribute, StartKey, error) {
 	jsonResponse, err := t.Server.queryServer(target("Scan"), query)
 	if err != nil {
 		return nil, nil, err
@@ -43,7 +43,7 @@ func (t *Table) FetchPartialResults(query Query) ([]map[string]*Attribute, Start
 	return results, lastEvaluatedKey, nil
 }
 
-func (t *Table) FetchResultCallbackIterator(query Query, cb func(map[string]*Attribute) error) error {
+func (t *Table) FetchResultCallbackIterator(query ScanQuery, cb func(map[string]*Attribute) error) error {
 	for {
 		results, lastEvaluatedKey, err := t.FetchPartialResults(query)
 		if err != nil {
@@ -91,7 +91,7 @@ func (t *Table) ParallelScanPartialLimit(attributeComparisons []AttributeCompari
 	return t.FetchPartialResults(q)
 }
 
-func (t *Table) FetchResults(query Query) ([]map[string]*Attribute, error) {
+func (t *Table) FetchResults(query ScanQuery) ([]map[string]*Attribute, error) {
 	results, _, err := t.FetchPartialResults(query)
 	return results, err
 }

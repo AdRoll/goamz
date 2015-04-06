@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+
+	"github.com/cbroglie/mapstructure"
 )
 
 // A DynamoAttribute represents the union of possible DynamoDB attribute values.
@@ -90,28 +92,46 @@ func FromDynamo(item DynamoItem, v interface{}) (err error) {
 		m[k] = undynamize(v)
 	}
 
-	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct, got " + rv.Type().String())
+	// Handle the case where v is already a reflect.Value object representing a
+	// struct or map.
+	rv, ok := v.(reflect.Value)
+	var rt reflect.Type
+	if ok {
+		rt = rv.Type()
+		if !rv.CanAddr() {
+			return fmt.Errorf("v is not addressable")
+		}
+	} else {
+		rv = reflect.ValueOf(v)
+		if rv.Kind() != reflect.Ptr || rv.IsNil() {
+			if rv.IsValid() {
+				return fmt.Errorf("v must be a non-nil pointer to a map[string]interface{} or struct (or an addressable reflect.Value), got %s", rv.Type().String())
+			} else {
+				return fmt.Errorf("v must be a non-nil pointer to a map[string]interface{} or struct (or an addressable reflect.Value), got zero-value")
+			}
+		}
+		rt = rv.Type()
+		rv = rv.Elem()
 	}
 
-	switch rv.Elem().Kind() {
+	switch rv.Kind() {
 	case reflect.Struct:
-		// TODO: We convert basic maps into structs by JSON encoding/decoding.
-		// This can be made more efficient by simplying recursing over the
-		// struct and populating it from the map.
-		b, err := json.Marshal(m)
+		config := &mapstructure.DecoderConfig{
+			TagName: "json",
+			Result:  v,
+		}
+		decoder, err := mapstructure.NewDecoder(config)
 		if err != nil {
 			return err
 		}
-		return json.Unmarshal(b, v)
+		return decoder.Decode(m)
 	case reflect.Map:
-		if rv.Elem().Type().Key().Kind() != reflect.String {
-			return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct, got " + rv.Type().String())
+		if rv.Type().Key().Kind() != reflect.String {
+			return fmt.Errorf("v must be a non-nil pointer to a map[string]interface{} or struct (or an addressable reflect.Value), got %s", rt.String())
 		}
-		rv.Elem().Set(reflect.ValueOf(m))
+		rv.Set(reflect.ValueOf(m))
 	default:
-		return errors.New("v must be a non-nil pointer to a map[string]interface{} or struct, got " + rv.Type().String())
+		return fmt.Errorf("v must be a non-nil pointer to a map[string]interface{} or struct (or an addressable reflect.Value), got %s", rt.String())
 	}
 
 	return nil

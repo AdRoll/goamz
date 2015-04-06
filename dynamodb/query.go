@@ -8,11 +8,13 @@ import (
 )
 
 type Query interface {
-	AddKey(key *Key) error
+	Marshal() ([]byte, error)
+}
+
+type ScanQuery interface {
+	Query
 	AddExclusiveStartKey(key StartKey) error
 	AddExclusiveStartTableName(table string) error
-	SetConsistentRead(c bool) error
-	String() string
 }
 
 func (t *Table) Query(attributeComparisons []AttributeComparison) ([]map[string]*Attribute, error) {
@@ -129,7 +131,7 @@ func (t *Table) LimitedQueryOnIndexCallbackIterator(attributeComparisons []Attri
 	return t.QueryTableCallbackIterator(q, cb)
 }
 
-func (t *Table) QueryTableCallbackIterator(query Query, cb func(map[string]*Attribute) error) error {
+func (t *Table) QueryTableCallbackIterator(query ScanQuery, cb func(map[string]*Attribute) error) error {
 	for {
 		results, lastEvaluatedKey, err := t.QueryTable(query)
 		if err != nil {

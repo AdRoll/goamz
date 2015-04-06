@@ -420,7 +420,11 @@ func (q *UntypedQuery) addTableByName(tableName string) {
 	q.buffer["TableName"] = tableName
 }
 
+func (q *UntypedQuery) Marshal() ([]byte, error) {
+	return json.Marshal(q.buffer)
+}
+
 func (q *UntypedQuery) String() string {
-	bytes, _ := json.Marshal(q.buffer)
+	bytes, _ := q.Marshal()
 	return string(bytes)
 }

@@ -14,6 +14,8 @@ const (
 	TYPE_BINARY_SET = "BS"
 	TYPE_MAP        = "M"
 	TYPE_LIST       = "L"
+	TYPE_BOOL       = "BOOL"
+	TYPE_NULL       = "NULL"
 
 	COMPARISON_EQUAL                    = "EQ"
 	COMPARISON_NOT_EQUAL                = "NE"

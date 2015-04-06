@@ -32,7 +32,7 @@ func TestDynamoQuery(t *testing.T) {
 	}
 	table := server.NewTable(desc.TableName, pk)
 
-	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":"true","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
+	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":true,"Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testGetQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testPutQuery(t, table, `{"TableName":"DynamoDBTestMyTable","Item":{"Attr1":{"S":"Attr1Val"},"Attr2":{"N":"12"},"TestHashKey":{"S":"NewHashKeyVal"}}}`)
 	testDeleteQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"}}}`)
@@ -63,7 +63,7 @@ func TestDynamoQueryWithRange(t *testing.T) {
 	}
 	table := server.NewTable(desc.TableName, pk)
 
-	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":"true","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
+	testGetQuery(t, table, true, `{"TableName":"DynamoDBTestMyTable","ConsistentRead":true,"Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testGetQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testPutQuery(t, table, `{"TableName":"DynamoDBTestMyTable","Item":{"Attr1":{"S":"Attr1Val"},"Attr2":{"N":"12"},"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
 	testDeleteQuery(t, table, false, `{"TableName":"DynamoDBTestMyTable","Key":{"TestHashKey":{"S":"NewHashKeyVal"},"TestRangeKey":{"N":"12"}}}`)
@@ -82,15 +82,18 @@ func testPutQuery(t *testing.T, table *Table, expected string) {
 		"Attr2": 12}
 	item, err := dynamizer.ToDynamo(data)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	q := NewDynamoQuery(table)
 	if err := q.AddItem(key, item); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	actual := q.String()
+	actual, err := q.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
 	compareJSONStrings(t, expected, actual)
 }
 
@@ -104,13 +107,16 @@ func testGetQuery(t *testing.T, table *Table, consistent bool, expected string) 
 
 	q := NewDynamoQuery(table)
 	if err := q.AddKey(key); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if err := q.SetConsistentRead(consistent); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	actual := q.String()
+	actual, err := q.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
 	compareJSONStrings(t, expected, actual)
 }
 
@@ -124,10 +130,13 @@ func testDeleteQuery(t *testing.T, table *Table, consistent bool, expected strin
 
 	q := NewDynamoQuery(table)
 	if err := q.AddKey(key); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	actual := q.String()
+	actual, err := q.Marshal()
+	if err != nil {
+		t.Fatal(err)
+	}
 	compareJSONStrings(t, expected, actual)
 }
 
@@ -135,22 +144,19 @@ func testDeleteQuery(t *testing.T, table *Table, consistent bool, expected strin
 // to a simple encode + string compare since JSON encoding is not ordered. So
 // what we do is JSON encode, then JSON decode into untyped maps, and then
 // finally do a recursive comparison.
-func compareJSONStrings(t *testing.T, expected string, actual string) {
-	var expectedBytes, actualBytes bytes.Buffer
+func compareJSONStrings(t *testing.T, expected string, actual []byte) {
+	var expectedBytes bytes.Buffer
 	expectedBytes.WriteString(expected)
-	actualBytes.WriteString(actual)
 	var expectedUntyped, actualUntyped map[string]interface{}
-	eerr := json.Unmarshal(expectedBytes.Bytes(), &expectedUntyped)
-	if eerr != nil {
-		t.Error(eerr)
-		return
+	err := json.Unmarshal(expectedBytes.Bytes(), &expectedUntyped)
+	if err != nil {
+		t.Fatal(err)
 	}
-	aerr := json.Unmarshal(actualBytes.Bytes(), &actualUntyped)
-	if aerr != nil {
-		t.Error(aerr)
-		return
+	err = json.Unmarshal(actual, &actualUntyped)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(expectedUntyped, actualUntyped) {
-		t.Errorf("Expected %s, got %s", expected, actual)
+		t.Fatalf("Expected %s, got %s", expected, actual)
 	}
 }

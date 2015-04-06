@@ -2,6 +2,7 @@ package dynamodb
 
 import simplejson "github.com/bitly/go-simplejson"
 import (
+	"bytes"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -23,6 +24,7 @@ func New(auth aws.Auth, region aws.Region) *Server {
 
 // Specific error constants
 var ErrNotFound = errors.New("Item not found")
+var ErrNotProcessed = errors.New("Key was not processed in the batch request, should retry")
 
 // Error represents an error in an operation with Dynamodb (following goamz/s3)
 type Error struct {
@@ -75,7 +77,11 @@ func buildError(r *http.Response, jsonBody []byte) error {
 func (s *Server) queryServer(target string, query Query) ([]byte, error) {
 	numRetries := 0
 	for {
-		data := strings.NewReader(query.String())
+		qs, err := query.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		data := bytes.NewReader(qs)
 
 		hreq, err := http.NewRequest("POST", s.Region.DynamoDBEndpoint+"/", data)
 		if err != nil {

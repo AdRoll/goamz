@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"strconv"
+
 	"github.com/AdRoll/goamz/dynamodb/dynamizer"
 	simplejson "github.com/bitly/go-simplejson"
-	"log"
 )
 
 type BatchGetItem struct {
@@ -163,6 +165,30 @@ func (t *Table) getItem(key *Key, consistentRead bool) (map[string]*Attribute, e
 	return parseAttributes(item), nil
 }
 
+func (t *Table) getKeyFromItem(item dynamizer.DynamoItem) (Key, error) {
+	key := Key{}
+	attr, err := attributeFromDynamoAttribute(item[t.Key.KeyAttribute.Name])
+	if err != nil {
+		return key, err
+	}
+	key.HashKey = attr.Value
+	if t.Key.HasRange() {
+		attr, err := attributeFromDynamoAttribute(item[t.Key.RangeAttribute.Name])
+		if err != nil {
+			return key, err
+		}
+		key.RangeKey = attr.Value
+	}
+	return key, nil
+}
+
+func (t *Table) deleteKeyFromItem(item dynamizer.DynamoItem) {
+	delete(item, t.Key.KeyAttribute.Name)
+	if t.Key.HasRange() {
+		delete(item, t.Key.RangeAttribute.Name)
+	}
+}
+
 func (t *Table) GetDocument(key *Key, v interface{}) error {
 	return t.GetDocumentConsistent(key, false, v)
 }
@@ -193,10 +219,7 @@ func (t *Table) GetDocumentConsistent(key *Key, consistentRead bool, v interface
 	}
 
 	// Delete the keys from the response.
-	delete(response.Item, t.Key.KeyAttribute.Name)
-	if t.Key.HasRange() {
-		delete(response.Item, t.Key.RangeAttribute.Name)
-	}
+	t.deleteKeyFromItem(response.Item)
 
 	// Convert back to standard struct/JSON object.
 	err = dynamizer.FromDynamo(response.Item, v)
@@ -498,7 +521,16 @@ func parseAttribute(v map[string]interface{}) *Attribute {
 			Type:       TYPE_LIST,
 			ListValues: arry,
 		}
-
+	} else if val, ok := v[TYPE_BOOL].(bool); ok {
+		return &Attribute{
+			Type:  TYPE_BOOL,
+			Value: strconv.FormatBool(val),
+		}
+	} else if val, ok := v[TYPE_NULL].(bool); ok {
+		return &Attribute{
+			Type:  TYPE_NULL,
+			Value: strconv.FormatBool(val),
+		}
 	} else {
 		log.Printf("parse attribute failed for : %s\n ", v)
 	}
