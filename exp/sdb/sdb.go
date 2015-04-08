@@ -283,6 +283,76 @@ func (item *Item) Attrs(names []string, consistent bool) (resp *AttrsResp, err e
 	return
 }
 
+type DeleteAttrs struct {
+	attrs    []Attr
+	expected []Attr
+	missing  map[string]bool
+}
+
+func (da *DeleteAttrs) Delete(name, value string) {
+	da.attrs = append(da.attrs, Attr{name, value})
+}
+
+// The DeleteAttrs request will only succeed if the existing
+// item in SimpleDB contains a matching name / value pair.
+func (da *DeleteAttrs) IfValue(name, value string) {
+	da.expected = append(da.expected, Attr{name, value})
+}
+
+// Flag to test the existence of an attribute while performing
+// conditional updates. X can be any positive integer or 0.
+//
+// This should set Expected.N.Name=name and Expected.N.Exists=false
+func (da *DeleteAttrs) IfMissing(name string) {
+	if da.missing == nil {
+		da.missing = make(map[string]bool)
+	}
+	da.missing[name] = true
+}
+
+// DeleteAttrs deletes attrs from an item.
+//
+// See http://goo.gl/Znved2 for more details.
+func (item *Item) DeleteAttrs(attrs *DeleteAttrs) (resp *SimpleResp, err error) {
+	params := makeParams("DeleteAttributes")
+	resp = &SimpleResp{}
+
+	// copy these attrs over to the parameters
+	itemNum := 1
+	for _, attr := range attrs.attrs {
+		itemNumStr := strconv.Itoa(itemNum)
+
+		// do the name and value
+		params["Attribute."+itemNumStr+".Name"] = []string{attr.Name}
+		if attr.Value != "" {
+			params["Attribute."+itemNumStr+".Value"] = []string{attr.Value}
+		}
+
+		itemNum++
+	}
+
+	//append expected values to params
+	expectedNum := 1
+	for _, attr := range attrs.expected {
+		expectedNumStr := strconv.Itoa(expectedNum)
+		params["Expected."+expectedNumStr+".Name"] = []string{attr.Name}
+		if attr.Value != "" {
+			params["Expected."+expectedNumStr+".Value"] = []string{attr.Value}
+		}
+
+		if attrs.missing[attr.Name] {
+			params["Expected."+expectedNumStr+".Exists"] = []string{"false"}
+		}
+		expectedNum++
+	}
+
+	err = item.query(params, nil, resp)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 // ----------------------------------------------------------------------------
 // Generic data structures for all requests/responses.
 
