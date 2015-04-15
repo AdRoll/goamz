@@ -198,7 +198,7 @@ func (s *SQS) GetQueue(queueName string) (*Queue, error) {
 	return q, nil
 }
 
-func (s *SQS) QueueFromArn(queueUrl string) (q *Queue) {
+func (s *SQS) QueueFromUrl(queueUrl string) (q *Queue) {
 	q = &Queue{s, queueUrl}
 	return
 }
