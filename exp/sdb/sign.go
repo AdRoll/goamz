@@ -27,12 +27,12 @@ func sign(auth aws.Auth, method, path string, params url.Values, headers http.He
 	}
 
 	// set up some defaults used for signing the request
-	params["AWSAccessKeyId"] = []string{auth.AccessKey}
-	params["SignatureVersion"] = []string{"2"}
-	params["SignatureMethod"] = []string{"HmacSHA256"}
 	if auth.Token() != "" {
 		params["SecurityToken"] = []string{auth.Token()}
 	}
+	params["AWSAccessKeyId"] = []string{auth.AccessKey}
+	params["SignatureVersion"] = []string{"2"}
+	params["SignatureMethod"] = []string{"HmacSHA256"}
 
 	// join up all the incoming params
 	var sarray []string
