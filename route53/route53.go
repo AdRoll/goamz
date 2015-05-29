@@ -76,7 +76,7 @@ type Change struct {
 	Name        string                `xml:"ResourceRecordSet>Name"`
 	Type        string                `xml:"ResourceRecordSet>Type"`
 	TTL         int                   `xml:"ResourceRecordSet>TTL,omitempty"`
-	AliasTarget AliasTarget           `xml:"ResourceRecordSet>AliasTarget,omitempty"`
+	AliasTarget *AliasTarget          `xml:"ResourceRecordSet>AliasTarget,omitempty"`
 	Values      []ResourceRecordValue `xml:"ResourceRecordSet>ResourceRecords,omitempty"`
 }
 
