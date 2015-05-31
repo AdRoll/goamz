@@ -21,6 +21,7 @@ script:
   - go test -v ./iam/
   - go test -v ./kinesis/
   - go test -v ./rds/
+  - go test -v ./route53/
   - go test -v ./s3/
   - go test -v ./sns/
   - go test -v ./sqs/
