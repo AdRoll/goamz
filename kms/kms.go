@@ -9,7 +9,7 @@ package kms
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/AdRoll/goamz/aws"
 	"io/ioutil"
 	"net/http"
@@ -67,10 +67,29 @@ func (k *KMS) query(requstInfo KMSAction) ([]byte, error) {
 	defer r.Body.Close()
 
 	if r.StatusCode != 200 {
-		return nil, errors.New(r.Status)
+		return nil, buildError(body, r.StatusCode)
 	}
 
 	return body, err
+}
+
+type KMSError struct {
+	StatusCode int    `json:",omitempty"`
+	Type       string `json:"__type"`
+	Message    string `json:"message"`
+}
+
+func (k *KMSError) Error() string {
+	return fmt.Sprintf("Type: %s, Code: %d, Message: %s",
+		k.Type, k.StatusCode, k.Message,
+	)
+
+}
+
+func buildError(body []byte, statusCode int) error {
+	err := KMSError{StatusCode: statusCode}
+	json.Unmarshal(body, &err)
+	return &err
 }
 
 // ================== Action ========================

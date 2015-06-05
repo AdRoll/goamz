@@ -13,3 +13,10 @@ var DescribeKeyExample = `
 	}
 }
 `
+
+var ErrorExample = `
+{
+    "__type": "TestException",
+    "message": "This is a error test"
+}
+`
