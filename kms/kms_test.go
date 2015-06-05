@@ -49,3 +49,11 @@ func (s *S) TestDescribeKey(c *check.C) {
 	c.Assert(desc.KeyMetadata.KeyId, check.Equals, "12345678-1234-1234-1234-123456789012")
 	c.Assert(desc.KeyMetadata.KeyUsage, check.Equals, "ENCRYPT_DECRYPT")
 }
+
+func (s *S) TestErrorCase(c *check.C) {
+	testServer.Response(400, nil, ErrorExample)
+
+	_, err := s.kms.DescribeKey(kms.DescribeKeyInfo{KeyId: "alias/test"})
+
+	c.Assert(err, check.ErrorMatches, "Type: TestException, Code: 400, Message: This is a error test")
+}
