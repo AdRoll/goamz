@@ -88,6 +88,28 @@ var TestSendMessageBatchXmlOk = `
 </SendMessageBatchResponse>
 `
 
+var TestSendMessageWithAttributesBatchXmlOk = `
+<SendMessageBatchResponse>
+<SendMessageBatchResult>
+    <SendMessageBatchResultEntry>
+        <Id>test_msg_001</Id>
+        <MessageId>0a5231c7-8bff-4955-be2e-8dc7c50a25fa</MessageId>
+        <MD5OfMessageBody>0e024d309850c78cba5eabbeff7cae71</MD5OfMessageBody>
+        <MD5OfMessageAttributes>2944a3ed5910a98cafafdec208195fd5</MD5OfMessageAttributes>
+    </SendMessageBatchResultEntry>
+    <SendMessageBatchResultEntry>
+        <Id>test_msg_002</Id>
+        <MessageId>15ee1ed3-87e7-40c1-bdaa-2e49968ea7e9</MessageId>
+        <MD5OfMessageBody>7fb8146a82f95e0af155278f406862c2</MD5OfMessageBody>
+        <MD5OfMessageAttributes>2944a3ed5910a98cafafdec208195fd5</MD5OfMessageAttributes>
+    </SendMessageBatchResultEntry>
+</SendMessageBatchResult>
+<ResponseMetadata>
+    <RequestId>ca1ad5d0-8271-408b-8d0f-1351bf547e74</RequestId>
+</ResponseMetadata>
+</SendMessageBatchResponse>
+`
+
 var TestReceiveMessageXmlOK = `
 <ReceiveMessageResponse>
   <ReceiveMessageResult>

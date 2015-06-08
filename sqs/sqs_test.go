@@ -179,6 +179,29 @@ func (s *S) TestSendMessageBatch(c *check.C) {
 	}
 }
 
+func (s *S) TestSendMessageBatchWithAttributes(c *check.C) {
+	testServer.PrepareResponse(200, nil, TestSendMessageWithAttributesBatchXmlOk)
+
+	q := &Queue{s.sqs, testServer.URL + "/123456789012/testQueue/"}
+
+	msgList := []Message{*(&Message{Body: "test message body 1"}), *(&Message{Body: "test message body 2"}),}
+	mAttrs := make(map[string]string)
+	mAttrs["testKey"] = "testValue"
+	resp, err := q.SendMessageBatchWithAttributes(msgList, mAttrs)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, check.Equals, "POST")
+	c.Assert(req.URL.Path, check.Equals, "/123456789012/testQueue/")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+
+	for idx, msg := range msgList {
+		var h hash.Hash = md5.New()
+		h.Write([]byte(msg.Body))
+		c.Assert(resp.SendMessageBatchResult[idx].MD5OfMessageBody, check.Equals, fmt.Sprintf("%x", h.Sum(nil)))
+		c.Assert(err, check.IsNil)
+	}
+}
+
 func (s *S) TestDeleteMessageBatch(c *check.C) {
 	testServer.PrepareResponse(200, nil, TestDeleteMessageBatchXmlOK)
 

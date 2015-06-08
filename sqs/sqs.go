@@ -375,6 +375,7 @@ type SendMessageBatchResultEntry struct {
 	Id               string `xml:"Id"`
 	MessageId        string `xml:"MessageId"`
 	MD5OfMessageBody string `xml:"MD5OfMessageBody"`
+	MD5OfMessageAttributes	string `xml:"MD5OfMessageAttributes"`
 }
 
 type SendMessageBatchResponse struct {
@@ -385,6 +386,12 @@ type SendMessageBatchResponse struct {
 /* SendMessageBatch
  */
 func (q *Queue) SendMessageBatch(msgList []Message) (resp *SendMessageBatchResponse, err error) {
+	return q.SendMessageBatchWithAttributes(msgList, map[string]string{})
+}
+
+/* SendMessageBatchWithAttributes
+ */
+func (q *Queue) SendMessageBatchWithAttributes(msgList []Message, MessageAttributes map[string]string) (resp *SendMessageBatchResponse, err error) {
 	resp = &SendMessageBatchResponse{}
 	params := makeParams("SendMessageBatch")
 
@@ -396,9 +403,29 @@ func (q *Queue) SendMessageBatch(msgList []Message) (resp *SendMessageBatchRespo
 		if msg.DelaySeconds > 0 {
 			params[fmt.Sprintf("SendMessageBatchRequestEntry.%d.DelaySeconds", count)] = strconv.Itoa(msg.DelaySeconds)
 		}
+
+		// Add attributes (currently only supports string values)
+		i := 1
+		for k, v := range MessageAttributes {
+			params[fmt.Sprintf("SendMessageBatchRequestEntry.%d.MessageAttribute.%d.Name", count, i)] = k
+			params[fmt.Sprintf("SendMessageBatchRequestEntry.%d.MessageAttribute.%d.Value.StringValue", count, i)] = v
+			params[fmt.Sprintf("SendMessageBatchRequestEntry.%d.MessageAttribute.%d.Value.DataType", count, i)] = "String"
+			i++
+		}
 	}
 
 	err = q.SQS.query(q.Url, params, resp)
+
+	if len(MessageAttributes) > 0 {
+		expectedAttributeMD5 := fmt.Sprintf("%x", calculateAttributeMD5(MessageAttributes))
+		for _, res := range resp.SendMessageBatchResult {
+			// Assert we have expected Attribute MD5 if we've passed any Message Attributes
+			if res.MD5OfMessageAttributes != "" && expectedAttributeMD5 != res.MD5OfMessageAttributes {
+				return resp, errors.New(fmt.Sprintf("Attribute MD5 mismatch, expecting `%v`, found `%v`", expectedAttributeMD5, res.MD5OfMessageAttributes))
+			}
+		}
+	}
+
 	return
 }
 
