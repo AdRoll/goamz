@@ -25,6 +25,8 @@ import (
 
 const debug = false
 
+var rangePattern = regexp.MustCompile(`^bytes=([\d]*)-([\d]*)$`)
+
 type s3Error struct {
 	statusCode int
 	XMLName    struct{} `xml:"Error"`
@@ -592,8 +594,33 @@ func (objr objectResource) get(a *action) interface{} {
 			h.Set(name, vals[0])
 		}
 	}
+
+	data := obj.data
+	status := http.StatusOK
 	if r := a.req.Header.Get("Range"); r != "" {
-		fatalf(400, "NotImplemented", "range unimplemented")
+		// s3 ignores invalid ranges
+		if matches := rangePattern.FindStringSubmatch(r); len(matches) == 3 {
+			var err error
+			start := 0
+			end := len(obj.data) - 1
+			if matches[1] != "" {
+				start, err = strconv.Atoi(matches[1])
+			}
+			if err == nil && matches[2] != "" {
+				end, err = strconv.Atoi(matches[2])
+			}
+			if err == nil && start >= 0 && end >= start {
+				if start >= len(obj.data) {
+					fatalf(416, "InvalidRequest", "The requested range is not satisfiable")
+				}
+				if end > len(obj.data)-1 {
+					end = len(obj.data) - 1
+				}
+				data = obj.data[start : end+1]
+				status = http.StatusPartialContent
+				h.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, len(obj.data)))
+			}
+		}
 	}
 	// TODO Last-Modified-Since
 	// TODO If-Modified-Since
@@ -602,14 +629,19 @@ func (objr objectResource) get(a *action) interface{} {
 	// TODO If-None-Match
 	// TODO Connection: close ??
 	// TODO x-amz-request-id
-	h.Set("Content-Length", fmt.Sprint(len(obj.data)))
+	h.Set("Content-Length", fmt.Sprint(len(data)))
 	h.Set("ETag", hex.EncodeToString(obj.checksum))
 	h.Set("Last-Modified", obj.mtime.Format(time.RFC1123))
+
+	if status != http.StatusOK {
+		a.w.WriteHeader(status)
+	}
+
 	if a.req.Method == "HEAD" {
 		return nil
 	}
 	// TODO avoid holding the lock when writing data.
-	_, err := a.w.Write(obj.data)
+	_, err := a.w.Write(data)
 	if err != nil {
 		// we can't do much except just log the fact.
 		log.Printf("error writing data: %v", err)
