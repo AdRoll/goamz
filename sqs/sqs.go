@@ -414,7 +414,9 @@ func (q *Queue) SendMessageBatchWithAttributes(msgList []Message, MessageAttribu
 		}
 	}
 
-	err = q.SQS.query(q.Url, params, resp)
+	if err = q.SQS.query(q.Url, params, resp); err != nil {
+		return resp, err
+	}
 
 	if len(MessageAttributes) > 0 {
 		expectedAttributeMD5 := fmt.Sprintf("%x", calculateAttributeMD5(MessageAttributes))
