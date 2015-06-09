@@ -95,13 +95,13 @@ var TestSendMessageWithAttributesBatchXmlOk = `
         <Id>test_msg_001</Id>
         <MessageId>0a5231c7-8bff-4955-be2e-8dc7c50a25fa</MessageId>
         <MD5OfMessageBody>0e024d309850c78cba5eabbeff7cae71</MD5OfMessageBody>
-        <MD5OfMessageAttributes>2944a3ed5910a98cafafdec208195fd5</MD5OfMessageAttributes>
+        <MD5OfMessageAttributes>aa2d3624c269a9962017f352cd57dcff</MD5OfMessageAttributes>
     </SendMessageBatchResultEntry>
     <SendMessageBatchResultEntry>
         <Id>test_msg_002</Id>
         <MessageId>15ee1ed3-87e7-40c1-bdaa-2e49968ea7e9</MessageId>
         <MD5OfMessageBody>7fb8146a82f95e0af155278f406862c2</MD5OfMessageBody>
-        <MD5OfMessageAttributes>2944a3ed5910a98cafafdec208195fd5</MD5OfMessageAttributes>
+        <MD5OfMessageAttributes>aa2d3624c269a9962017f352cd57dcff</MD5OfMessageAttributes>
     </SendMessageBatchResultEntry>
 </SendMessageBatchResult>
 <ResponseMetadata>
