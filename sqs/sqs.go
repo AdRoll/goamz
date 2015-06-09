@@ -372,10 +372,10 @@ func (q *Queue) DeleteMessage(M *Message) (resp *DeleteMessageResponse, err erro
 }
 
 type SendMessageBatchResultEntry struct {
-	Id               string `xml:"Id"`
-	MessageId        string `xml:"MessageId"`
-	MD5OfMessageBody string `xml:"MD5OfMessageBody"`
-	MD5OfMessageAttributes	string `xml:"MD5OfMessageAttributes"`
+	Id                     string `xml:"Id"`
+	MessageId              string `xml:"MessageId"`
+	MD5OfMessageBody       string `xml:"MD5OfMessageBody"`
+	MD5OfMessageAttributes string `xml:"MD5OfMessageAttributes"`
 }
 
 type SendMessageBatchResponse struct {

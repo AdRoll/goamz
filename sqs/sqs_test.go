@@ -184,7 +184,7 @@ func (s *S) TestSendMessageBatchWithAttributes(c *check.C) {
 
 	q := &Queue{s.sqs, testServer.URL + "/123456789012/testQueue/"}
 
-	msgList := []Message{*(&Message{Body: "test message body 1"}), *(&Message{Body: "test message body 2"}),}
+	msgList := []Message{*(&Message{Body: "test message body 1"}), *(&Message{Body: "test message body 2"})}
 	mAttrs := make(map[string]string)
 	mAttrs["testKey"] = "testValue"
 	resp, err := q.SendMessageBatchWithAttributes(msgList, mAttrs)
