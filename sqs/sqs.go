@@ -13,7 +13,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/AdRoll/goamz/aws"
 	"io"
 	"io/ioutil"
 	"log"
@@ -23,6 +22,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/AdRoll/goamz/aws"
 )
 
 const debug = false
@@ -517,6 +518,11 @@ func (s *SQS) query(queueUrl string, params map[string]string, resp interface{})
 	hreq, err := http.NewRequest("POST", url_.String(), strings.NewReader(multimap(params).Encode()))
 	if err != nil {
 		return err
+	}
+
+	// respect the environmnet's proxy settings
+	if prox_url, _ := http.ProxyFromEnvironment(hreq); prox_url != nil {
+		hreq.URL = prox_url
 	}
 
 	hreq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
