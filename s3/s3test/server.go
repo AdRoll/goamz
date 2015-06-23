@@ -84,7 +84,7 @@ type bucket struct {
 	ctime            time.Time
 	objects          map[string]*object
 	multipartUploads map[string][]*multipartUploadPart
-	multipartMeta	 map[string]http.Header
+	multipartMeta    map[string]http.Header
 }
 
 type object struct {
@@ -441,7 +441,7 @@ func (r bucketResource) put(a *action) interface{} {
 			// TODO default acl
 			objects:          make(map[string]*object),
 			multipartUploads: make(map[string][]*multipartUploadPart),
-			multipartMeta:	  make(map[string]http.Header),
+			multipartMeta:    make(map[string]http.Header),
 		}
 		a.srv.buckets[r.name] = r.bucket
 		created = true
