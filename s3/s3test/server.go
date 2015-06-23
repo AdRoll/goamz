@@ -84,6 +84,7 @@ type bucket struct {
 	ctime            time.Time
 	objects          map[string]*object
 	multipartUploads map[string][]*multipartUploadPart
+	multipartMeta    map[string]http.Header
 }
 
 type object struct {
@@ -440,6 +441,7 @@ func (r bucketResource) put(a *action) interface{} {
 			// TODO default acl
 			objects:          make(map[string]*object),
 			multipartUploads: make(map[string][]*multipartUploadPart),
+			multipartMeta:    make(map[string]http.Header),
 		}
 		a.srv.buckets[r.name] = r.bucket
 		created = true
@@ -787,6 +789,13 @@ func (objr objectResource) post(a *action) interface{} {
 		uploadId := strconv.FormatInt(rand.Int63(), 16)
 
 		objr.bucket.multipartUploads[uploadId] = []*multipartUploadPart{}
+		objr.bucket.multipartMeta[uploadId] = make(http.Header)
+		for key, values := range a.req.Header {
+			key = http.CanonicalHeaderKey(key)
+			if metaHeaders[key] || strings.HasPrefix(key, "X-Amz-Meta-") {
+				objr.bucket.multipartMeta[uploadId][key] = values
+			}
+		}
 
 		return &multipartInitResponse{
 			Bucket:   objr.bucket.name,
@@ -865,6 +874,7 @@ func (objr objectResource) post(a *action) interface{} {
 		obj.checksum = sum.Sum(nil)
 		obj.mtime = time.Now()
 		objr.bucket.objects[objr.name] = obj
+		obj.meta = objr.bucket.multipartMeta[uploadId]
 
 		objectLocation := fmt.Sprintf("http://%s/%s/%s", a.srv.listener.Addr().String(), objr.bucket.name, objr.name)
 
