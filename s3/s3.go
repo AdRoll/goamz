@@ -1251,7 +1251,7 @@ func shouldRetry(err error) bool {
 		return true
 	case *net.OpError:
 		switch e.Op {
-		case "read", "write":
+		case "dial", "read", "write":
 			return true
 		}
 	case *url.Error:
