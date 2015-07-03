@@ -266,7 +266,6 @@ func (r *Route53) ListResourceRecordSets(hostedZone string, name string, _type s
 	}
 	path := fmt.Sprintf("%s/%s/rrset?%s", r.Endpoint, hostedZone, buffer.String())
 
-	fmt.Println(path)
 	result = new(ListResourceRecordSetsResponse)
 	err = r.query("GET", path, nil, result)
 
