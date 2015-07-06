@@ -49,7 +49,7 @@ type Config struct {
 
 // Structs for getting the existing Hosted Zones
 type ListHostedZonesResponse struct {
-	XMLName     xml.Name     `xml:"ListHostedZonesResponse"`
+	XMLName     xml.Name     `xml:"https://route53.amazonaws.com/doc/2013-04-01/ ListHostedZonesResponse"`
 	HostedZones []HostedZone `xml:"HostedZones>HostedZone"`
 	Marker      string
 	IsTruncated bool
@@ -59,8 +59,7 @@ type ListHostedZonesResponse struct {
 
 // Structs for Creating a New Host
 type CreateHostedZoneRequest struct {
-	XMLName          xml.Name `xml:"CreateHostedZoneRequest"`
-	Xmlns            string   `xml:"xmlns,attr"`
+	XMLName          xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ CreateHostedZoneRequest"`
 	Name             string
 	CallerReference  string
 	VPC              HostedZoneVPC
@@ -81,21 +80,18 @@ type Change struct {
 }
 
 type ChangeResourceRecordSetsRequest struct {
-	XMLName xml.Name `xml:"ChangeResourceRecordSetsRequest"`
-	Xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ ChangeResourceRecordSetsRequest"`
 	Changes []Change `xml:"ChangeBatch>Changes>Change"`
 }
 
 type AssociateVPCWithHostedZoneRequest struct {
-	XMLName xml.Name `xml:"AssociateVPCWithHostedZoneRequest"`
-	Xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ AssociateVPCWithHostedZoneRequest"`
 	VPC     HostedZoneVPC
 	Comment string
 }
 
 type DisassociateVPCWithHostedZoneRequest struct {
-	XMLName xml.Name `xml:"DisassociateVPCWithHostedZoneRequest"`
-	Xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ DisassociateVPCWithHostedZoneRequest"`
 	VPC     HostedZoneVPC
 	Comment string
 }
@@ -112,7 +108,7 @@ type HostedZoneVPC struct {
 }
 
 type CreateHostedZoneResponse struct {
-	XMLName       xml.Name `xml:"CreateHostedZoneResponse"`
+	XMLName       xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ CreateHostedZoneResponse"`
 	HostedZone    HostedZone
 	ChangeInfo    ChangeInfo
 	DelegationSet DelegationSet
@@ -152,7 +148,7 @@ type ResourceRecordSets struct {
 }
 
 type ListResourceRecordSetsResponse struct {
-	XMLName              xml.Name `xml:"ListResourceRecordSetsResponse"`
+	XMLName              xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ ListResourceRecordSetsResponse"`
 	ResourceRecordSets   []ResourceRecordSets
 	IsTruncated          bool
 	MaxItems             int
@@ -162,7 +158,7 @@ type ListResourceRecordSetsResponse struct {
 }
 
 type ChangeResourceRecordSetsResponse struct {
-	XMLName     xml.Name `xml:"ChangeResourceRecordSetsResponse"`
+	XMLName     xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ ChangeResourceRecordSetsResponse"`
 	Id          string   `xml:"ChangeInfo>Id"`
 	Status      string   `xml:"ChangeInfo>Status"`
 	SubmittedAt string   `xml:"ChangeInfo>SubmittedAt"`
@@ -186,27 +182,24 @@ type NameServers struct {
 }
 
 type GetHostedZoneResponse struct {
-	XMLName       xml.Name `xml:"GetHostedZoneResponse"`
+	XMLName       xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ GetHostedZoneResponse"`
 	HostedZone    HostedZone
 	DelegationSet DelegationSet
 	VPCs          []HostedZoneVPC `xml:"VPCs>VPC"`
 }
 
 type DeleteHostedZoneResponse struct {
-	XMLName    xml.Name `xml:"DeleteHostedZoneResponse"`
-	Xmlns      string   `xml:"xmlns,attr"`
+	XMLName    xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ DeleteHostedZoneResponse"`
 	ChangeInfo ChangeInfo
 }
 
 type AssociateVPCWithHostedZoneResponse struct {
-	XMLName    xml.Name `xml:"AssociateVPCWithHostedZoneResponse"`
-	Xmlns      string   `xml:"xmlns,attr"`
+	XMLName    xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ AssociateVPCWithHostedZoneResponse"`
 	ChangeInfo ChangeInfo
 }
 
 type DisassociateVPCWithHostedZoneResponse struct {
-	XMLName    xml.Name `xml:"DisassociateVPCWithHostedZoneResponse"`
-	Xmlns      string   `xml:"xmlns,attr"`
+	XMLName    xml.Name `xml:"https://route53.amazonaws.com/doc/2013-04-01/ DisassociateVPCWithHostedZoneResponse"`
 	ChangeInfo ChangeInfo
 }
 
