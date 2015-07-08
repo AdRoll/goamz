@@ -1260,7 +1260,14 @@ func shouldRetry(err error) bool {
 		// are received or parsed correctly. In that later case, e.Op is set to
 		// the HTTP method name with the first letter uppercased. We don't want
 		// to retry on POST operations, since those are not idempotent, all the
-		// other ones should be safe to retry.
+		// other ones should be safe to retry. The only case where all
+		// operations are safe to retry are "dial" errors, since in that case
+		// the POST request didn't make it to the server.
+
+		if netErr, ok := e.Err.(*net.OpError); ok && netErr.Op == "dial" {
+			return true
+		}
+
 		switch e.Op {
 		case "Get", "Put", "Delete", "Head":
 			return shouldRetry(e.Err)
