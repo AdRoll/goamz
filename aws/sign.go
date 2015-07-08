@@ -109,7 +109,7 @@ func (s *Route53Signer) Sign(req *http.Request) {
 	req.Header.Set("X-Amz-Date", date)
 	req.Header.Set("Content-Type", "application/xml")
 	if s.auth.Token() != "" {
-		req.Header.Set("X-Amzn-Security-Token", s.auth.Token())
+		req.Header.Set("X-Amz-Security-Token", s.auth.Token())
 	}
 }
 
