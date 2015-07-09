@@ -136,9 +136,7 @@ func (s *S) TestGetAssignmentsForHIT_NoAnswer(c *check.C) {
 	testServer.WaitRequest()
 
 	c.Assert(err, check.IsNil)
-	c.Assert(assignments, check.NotNil)
-
-	c.Assert(len(assignments), check.Equals, 0)
+	c.Assert(assignments, check.IsNil)
 }
 
 func (s *S) TestGetAssignmentsForHIT_Answer(c *check.C) {
