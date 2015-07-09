@@ -96,9 +96,24 @@ type object struct {
 }
 
 type multipartUploadPart struct {
+	index        uint
 	data         []byte
 	etag         string
 	lastModified time.Time
+}
+
+type multipartUploadPartByIndex []*multipartUploadPart
+
+func (x multipartUploadPartByIndex) Len() int {
+	return len(x)
+}
+
+func (x multipartUploadPartByIndex) Swap(i, j int) {
+	x[i], x[j] = x[j], x[i]
+}
+
+func (x multipartUploadPartByIndex) Less(i, j int) bool {
+	return x[i].index < x[j].index
 }
 
 // A resource encapsulates the subject of an HTTP request.
@@ -667,6 +682,7 @@ func (objr objectResource) put(a *action) interface{} {
 	// TODO x-amz-storage-class
 
 	uploadId := a.req.URL.Query().Get("uploadId")
+	var partNumber uint
 
 	// Check that the upload ID is valid if this is a multipart upload
 	if uploadId != "" {
@@ -680,16 +696,13 @@ func (objr objectResource) put(a *action) interface{} {
 			fatalf(400, "InvalidRequest", "Missing partNumber parameter")
 		}
 
-		partNumber, err := strconv.ParseUint(partNumberStr, 10, 32)
+		number, err := strconv.ParseUint(partNumberStr, 10, 32)
 
 		if err != nil {
 			fatalf(400, "InvalidRequest", "partNumber is not a number")
 		}
 
-		// Parts are 1-indexed for multipart uploads
-		if uint(partNumber)-1 != uint(len(objr.bucket.multipartUploads[uploadId])) {
-			fatalf(400, "InvalidRequest", "Invalid part number")
-		}
+		partNumber = uint(number)
 	}
 
 	var expectHash []byte
@@ -746,9 +759,10 @@ func (objr objectResource) put(a *action) interface{} {
 
 		parts := objr.bucket.multipartUploads[uploadId]
 		part := &multipartUploadPart{
-			data,
-			etag,
-			time.Now(),
+			index:        partNumber,
+			data:         data,
+			etag:         etag,
+			lastModified: time.Now(),
 		}
 
 		objr.bucket.multipartUploads[uploadId] = append(parts, part)
@@ -845,10 +859,12 @@ func (objr objectResource) post(a *action) interface{} {
 		data := &bytes.Buffer{}
 		w := io.MultiWriter(sum, data)
 
+		sort.Sort(multipartUploadPartByIndex(parts))
+
 		for i, p := range parts {
 			reqPart := req.Part[i]
 
-			if reqPart.PartNumber != uint(1+i) {
+			if reqPart.PartNumber != p.index {
 				fatalf(400, "InvalidRequest", "Bad part number")
 			}
 
