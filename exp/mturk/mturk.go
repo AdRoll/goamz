@@ -265,8 +265,13 @@ type GetAssignmentsForHITResponse struct {
 		NumResults      uint
 		TotalNumResults uint
 		PageNumber      uint
-		Assignment      Assignment
+		Assignments     []Assignment `xml:"Assignment"`
 	}
+}
+
+type GetHITResponse struct {
+	RequestId string `xml:"OperationRequest>RequestId"`
+	HIT       HIT
 }
 
 /*
@@ -338,7 +343,8 @@ func (mt *MTurk) CreateHIT(
 	keywords string,
 	maxAssignments uint,
 	qualificationRequirement *QualificationRequirement,
-	requesterAnnotation string) (h *HIT, err error) {
+	requesterAnnotation string,
+	addParams ...string) (h *HIT, err error) {
 
 	params := make(map[string]string)
 	params["Title"] = title
@@ -369,7 +375,7 @@ func (mt *MTurk) CreateHIT(
 	}
 
 	var response CreateHITResponse
-	err = mt.query(params, "CreateHIT", &response)
+	err = mt.query(params, "CreateHIT", &response, addParams...)
 	if err == nil {
 		h = &response.HIT
 	}
@@ -381,7 +387,13 @@ func (mt *MTurk) CreateHIT(
 // supports "external" questions (see "HIT" struct above).  If
 // "maxAssignments" or "requesterAnnotation" are the zero value for
 // their types, they will not be included in the request.
-func (mt *MTurk) CreateHITOfType(hitTypeId string, q ExternalQuestion, lifetimeInSeconds uint, maxAssignments uint, requesterAnnotation string) (h *HIT, err error) {
+func (mt *MTurk) CreateHITOfType(hitTypeId string,
+	q ExternalQuestion,
+	lifetimeInSeconds uint,
+	maxAssignments uint,
+	requesterAnnotation string,
+	addParams ...string) (h *HIT, err error) {
+
 	params := make(map[string]string)
 	params["HITTypeId"] = hitTypeId
 	params["Question"], err = xmlEncode(&q)
@@ -397,7 +409,7 @@ func (mt *MTurk) CreateHITOfType(hitTypeId string, q ExternalQuestion, lifetimeI
 	}
 
 	var response CreateHITResponse
-	err = mt.query(params, "CreateHIT", &response)
+	err = mt.query(params, "CreateHIT", &response, addParams...)
 	if err == nil {
 		h = &response.HIT
 	}
@@ -405,23 +417,35 @@ func (mt *MTurk) CreateHITOfType(hitTypeId string, q ExternalQuestion, lifetimeI
 }
 
 // Get the Assignments for a HIT.
-func (mt *MTurk) GetAssignmentsForHIT(hitId string) (r *Assignment, err error) {
+func (mt *MTurk) GetAssignmentsForHIT(hitId string, addParams ...string) (r []Assignment, err error) {
 	params := make(map[string]string)
 	params["HITId"] = hitId
 	var response GetAssignmentsForHITResponse
-	err = mt.query(params, "GetAssignmentsForHIT", &response)
+	err = mt.query(params, "GetAssignmentsForHIT", &response, addParams...)
 	if err == nil {
-		r = &response.GetAssignmentsForHITResult.Assignment
+		r = response.GetAssignmentsForHITResult.Assignments
+	}
+	return
+}
+
+// Get a single HIT
+func (mt *MTurk) GetHIT(hitId string, addParams ...string) (h *HIT, err error) {
+	params := make(map[string]string)
+	params["HITId"] = hitId
+	var response GetHITResponse
+	err = mt.query(params, "GetHIT", &response, addParams...)
+	if err == nil {
+		h = &response.HIT
 	}
 	return
 }
 
 // Corresponds to "SearchHITs" operation of Mechanical Turk. http://goo.gl/PskcX
 // Currenlty supports none of the optional parameters.
-func (mt *MTurk) SearchHITs() (s *SearchHITsResult, err error) {
+func (mt *MTurk) SearchHITs(addParams ...string) (s *SearchHITsResult, err error) {
 	params := make(map[string]string)
 	var response SearchHITsResponse
-	err = mt.query(params, "SearchHITs", &response)
+	err = mt.query(params, "SearchHITs", &response, addParams...)
 	if err == nil {
 		s = &response.SearchHITsResult
 	}
@@ -432,9 +456,14 @@ func (mt *MTurk) SearchHITs() (s *SearchHITsResult, err error) {
 // adds the signature to the "params" map and sends the request
 // to the server.  It then unmarshals the response in to the "resp"
 // parameter using xml.Unmarshal()
-func (mt *MTurk) query(params map[string]string, operation string, resp interface{}) error {
+func (mt *MTurk) query(params map[string]string, operation string, resp interface{}, addParams ...string) error {
 	service := "AWSMechanicalTurkRequester"
 	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+
+	// Add additional parameters to the map of params
+	for i := 1; i < len(addParams); i += 2 {
+		params[addParams[i-1]] = addParams[i]
+	}
 
 	params["AWSAccessKeyId"] = mt.Auth.AccessKey
 	params["Service"] = service

@@ -131,14 +131,12 @@ func (s *S) TestSearchHITs(c *check.C) {
 func (s *S) TestGetAssignmentsForHIT_NoAnswer(c *check.C) {
 	testServer.Response(200, nil, GetAssignmentsForHITNoAnswerResponse)
 
-	assignment, err := s.mturk.GetAssignmentsForHIT("emptyassignment")
+	assignments, err := s.mturk.GetAssignmentsForHIT("emptyassignment")
 
 	testServer.WaitRequest()
 
 	c.Assert(err, check.IsNil)
-	c.Assert(assignment, check.NotNil)
-
-	c.Assert(assignment.HITId, check.Equals, "")
+	c.Assert(assignments, check.IsNil)
 }
 
 func (s *S) TestGetAssignmentsForHIT_Answer(c *check.C) {
@@ -151,16 +149,16 @@ func (s *S) TestGetAssignmentsForHIT_Answer(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(assignment, check.NotNil)
 
-	c.Assert(assignment.AssignmentId, check.Equals, "2QKNTL0XULRGFAQWUWDD05FP94V2O3")
-	c.Assert(assignment.WorkerId, check.Equals, "A1ZUQ2YDM61713")
-	c.Assert(assignment.HITId, check.Equals, "2W36VCPWZ9RN5DX1MBJ7VN3D6WEPAM")
-	c.Assert(assignment.AssignmentStatus, check.Equals, "Submitted")
-	c.Assert(assignment.AutoApprovalTime, check.Equals, "2014-02-26T09:39:48Z")
-	c.Assert(assignment.AcceptTime, check.Equals, "2014-01-27T09:39:38Z")
-	c.Assert(assignment.SubmitTime, check.Equals, "2014-01-27T09:39:48Z")
-	c.Assert(assignment.ApprovalTime, check.Equals, "")
+	c.Assert(assignment[0].AssignmentId, check.Equals, "2QKNTL0XULRGFAQWUWDD05FP94V2O3")
+	c.Assert(assignment[0].WorkerId, check.Equals, "A1ZUQ2YDM61713")
+	c.Assert(assignment[0].HITId, check.Equals, "2W36VCPWZ9RN5DX1MBJ7VN3D6WEPAM")
+	c.Assert(assignment[0].AssignmentStatus, check.Equals, "Submitted")
+	c.Assert(assignment[0].AutoApprovalTime, check.Equals, "2014-02-26T09:39:48Z")
+	c.Assert(assignment[0].AcceptTime, check.Equals, "2014-01-27T09:39:38Z")
+	c.Assert(assignment[0].SubmitTime, check.Equals, "2014-01-27T09:39:48Z")
+	c.Assert(assignment[0].ApprovalTime, check.Equals, "")
 
-	answers := assignment.Answers()
+	answers := assignment[0].Answers()
 	c.Assert(len(answers), check.Equals, 4)
 	c.Assert(answers["tags"], check.Equals, "asd")
 	c.Assert(answers["text_in_image"], check.Equals, "asd")
