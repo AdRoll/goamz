@@ -1279,6 +1279,10 @@ func shouldRetry(err error) bool {
 		case "InternalError", "NoSuchUpload", "NoSuchBucket":
 			return true
 		}
+		switch e.StatusCode {
+		case 500, 503, 504:
+			return true
+		}
 	}
 	return false
 }
