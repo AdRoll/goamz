@@ -164,6 +164,14 @@ func NewListAttribute(name string, values []*Attribute) *Attribute {
 	}
 }
 
+func NewBoolAttribute(name string, value string) *Attribute {
+	return &Attribute{
+		Type:  TYPE_BOOL,
+		Name:  name,
+		Value: value,
+	}
+}
+
 func (a *Attribute) SetType() bool {
 	switch a.Type {
 	case TYPE_BINARY_SET, TYPE_NUMBER_SET, TYPE_STRING_SET:
