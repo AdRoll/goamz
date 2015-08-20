@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"net/url"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -428,6 +429,9 @@ func (m *Multi) Complete(parts []Part) error {
 			payload: bytes.NewReader(data),
 		}
 		var resp completeUploadResp
+		headers := make(http.Header)
+                headers.Add("Content-Length",strconv.FormatInt(int64(len(data)), 10))
+                req.headers = headers
 		err := m.Bucket.S3.query(req, &resp)
 		if shouldRetry(err) && attempt.HasNext() {
 			continue
