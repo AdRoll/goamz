@@ -31,7 +31,7 @@ func (s *S) TearDownTest(c *check.C) {
 func (s *S) TestDescribeReplicationGroup(c *check.C) {
 	testServer.Start()
 	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
-	s.elasticache = New(auth, aws.Region{EC2Endpoint: testServer.URL})
+	s.elasticache = New(auth, aws.Region{EC2Endpoint: aws.ServiceInfo{Endpoint: testServer.URL, Signer: aws.V2Signature}})
 
 	testServer.Response(200, nil, DescribeReplicationGroupsResponse)
 

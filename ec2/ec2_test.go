@@ -23,7 +23,7 @@ var testServer = testutil.NewHTTPServer()
 func (s *S) SetUpSuite(c *check.C) {
 	testServer.Start()
 	auth := aws.Auth{AccessKey: "abc", SecretKey: "123"}
-	s.ec2 = ec2.New(auth, aws.Region{EC2Endpoint: testServer.URL})
+	s.ec2 = ec2.New(auth, aws.Region{EC2Endpoint: aws.ServiceInfo{Endpoint: testServer.URL, Signer: aws.V2Signature}})
 }
 
 func (s *S) TearDownTest(c *check.C) {
@@ -964,8 +964,8 @@ func (s *S) TestSignatureWithEndpointPath(c *check.C) {
 
 	testServer.Response(200, nil, RebootInstancesExample)
 
-	// https://bugs.launchpad.net/goamz/+bug/1022749
-	ec2 := ec2.New(s.ec2.Auth, aws.Region{EC2Endpoint: testServer.URL + "/services/Cloud"})
+	region := aws.Region{EC2Endpoint: aws.ServiceInfo{Endpoint: testServer.URL + "/services/Cloud", Signer: aws.V2Signature}}
+	ec2 := ec2.New(s.ec2.Auth, region)
 
 	_, err := ec2.RebootInstances("i-10a64379")
 	c.Assert(err, check.IsNil)

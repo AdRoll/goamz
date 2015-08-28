@@ -121,7 +121,7 @@ var timeNow = time.Now
 func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 	params["Version"] = "2014-02-01"
 	params["Timestamp"] = timeNow().In(time.UTC).Format(time.RFC3339)
-	endpoint, err := url.Parse(ec2.Region.EC2Endpoint)
+	endpoint, err := url.Parse(ec2.Region.EC2Endpoint.Endpoint)
 	if err != nil {
 		return err
 	}
