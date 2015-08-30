@@ -12,6 +12,7 @@ package ec2
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
 	"fmt"
@@ -26,6 +27,8 @@ import (
 )
 
 const debug = false
+
+var b64 = base64.StdEncoding
 
 // The EC2 type encapsulates operations with a specific EC2 region.
 type EC2 struct {
@@ -120,7 +123,11 @@ var timeNow = time.Now
 
 func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 	params["Version"] = "2014-02-01"
-	params["Timestamp"] = timeNow().In(time.UTC).Format(time.RFC3339)
+	service, err := aws.NewService(ec2.Auth, ec2.Region.EC2Endpoint)
+	if err != nil {
+		return err
+	}
+
 	endpoint, err := url.Parse(ec2.Region.EC2Endpoint.Endpoint)
 	if err != nil {
 		return err
@@ -128,30 +135,28 @@ func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 	if endpoint.Path == "" {
 		endpoint.Path = "/"
 	}
+
 	if ec2.Auth.Token() != "" {
 		params["SecurityToken"] = ec2.Auth.Token()
 	}
 
-	sign(ec2.Auth, "GET", endpoint.Path, params, endpoint.Host)
-	endpoint.RawQuery = multimap(params).Encode()
-	if debug {
-		log.Printf("get { %v } -> {\n", endpoint.String())
-	}
-	r, err := http.Get(endpoint.String())
+	response, err := service.Query("GET", endpoint.Path, params)
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
+	defer response.Body.Close()
 
 	if debug {
-		dump, _ := httputil.DumpResponse(r, true)
+		dump, _ := httputil.DumpResponse(response, true)
 		log.Printf("response:\n")
 		log.Printf("%v\n}\n", string(dump))
 	}
-	if r.StatusCode != 200 {
-		return buildError(r)
+
+	if response.StatusCode != 200 {
+		return buildError(response)
 	}
-	err = xml.NewDecoder(r.Body).Decode(resp)
+
+	err = xml.NewDecoder(response.Body).Decode(resp)
 	return err
 }
 
