@@ -958,22 +958,6 @@ func (s *S) TestRebootInstances(c *check.C) {
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
-func (s *S) TestSignatureWithEndpointPath(c *check.C) {
-	ec2.FakeTime(true)
-	defer ec2.FakeTime(false)
-
-	testServer.Response(200, nil, RebootInstancesExample)
-
-	region := aws.Region{EC2Endpoint: aws.ServiceInfo{Endpoint: testServer.URL + "/services/Cloud", Signer: aws.V2Signature}}
-	ec2 := ec2.New(s.ec2.Auth, region)
-
-	_, err := ec2.RebootInstances("i-10a64379")
-	c.Assert(err, check.IsNil)
-
-	req := testServer.WaitRequest()
-	c.Assert(req.Form["Signature"], check.DeepEquals, []string{"VVoC6Y6xfES+KvZo+789thP8+tye4F6fOKBiKmXk4S4="})
-}
-
 func (s *S) TestDescribeReservedInstancesiExample(c *check.C) {
 	testServer.Response(200, nil, DescribeReservedInstancesExample)
 
