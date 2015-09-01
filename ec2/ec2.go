@@ -120,40 +120,48 @@ type xmlErrors struct {
 var timeNow = time.Now
 
 func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
-	params["Version"] = "2014-02-01"
-	params["Timestamp"] = timeNow().In(time.UTC).Format(time.RFC3339)
-	endpoint, err := url.Parse(ec2.Region.EC2Endpoint.Endpoint)
+	values := multimap(params)
+	values.Set("Version", "2014-02-01")
+	values.Set("Timestamp", timeNow().In(time.UTC).Format(time.RFC3339))
+
+	client := http.Client{}
+
+	req, err := http.NewRequest("GET", ec2.Region.EC2Endpoint.Endpoint, nil)
 	if err != nil {
 		return err
-	}
-	if endpoint.Path == "" {
-		endpoint.Path = "/"
 	}
 
-	signer, err := aws.NewV2Signer(ec2.Auth, ec2.Region.EC2Endpoint)
+	if req.URL.Path == "" {
+		req.URL.Path = "/"
+	}
+
+	req.URL.RawQuery = values.Encode()
+
+	sgnr, err := aws.NewV2Signer(ec2.Auth, ec2.Region.EC2Endpoint)
 	if err != nil {
 		return err
 	}
-	signer.Sign("GET", endpoint.Path, params)
-	endpoint.RawQuery = multimap(params).Encode()
-	if debug {
-		log.Printf("get { %v } -> {\n", endpoint.String())
-	}
-	r, err := http.Get(endpoint.String())
+	sgnr.SignRequest(req)
+
+	r, err := client.Do(req)
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
 
 	if debug {
 		dump, _ := httputil.DumpResponse(r, true)
 		log.Printf("response:\n")
 		log.Printf("%v\n}\n", string(dump))
 	}
+
+	defer r.Body.Close()
+
 	if r.StatusCode != 200 {
 		return buildError(r)
 	}
+
 	err = xml.NewDecoder(r.Body).Decode(resp)
+
 	return err
 }
 
