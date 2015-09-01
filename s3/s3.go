@@ -1113,10 +1113,19 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 	}
 	u.Opaque = fmt.Sprintf("//%s%s", u.Host, partiallyEscapedPath(u.Path))
 
-	hreq, _ := http.NewRequest(req.method, u.String(), nil)
-        hreq.Header = req.headers
-        hreq.Form = req.params	
+	if s3.Region.Name != "generic" {
+		u.Opaque = fmt.Sprintf("//%s%s", u.Host, partiallyEscapedPath(u.Path))
+	}
 
+	hreq := http.Request{
+		URL:        u,
+		Method:     req.method,
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Close:      true,
+		Header:     req.headers,
+		Form:       req.params,
+	}
 	if v, ok := req.headers["Content-Length"]; ok {
 		hreq.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
 		delete(req.headers, "Content-Length")
@@ -1125,7 +1134,7 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 		hreq.Body = ioutil.NopCloser(req.payload)
 	}
 
-	return hreq, nil
+	return &hreq, nil
 }
 
 // doHttpRequest sends hreq and returns the http response from the server.
