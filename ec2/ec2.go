@@ -12,6 +12,7 @@ package ec2
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
 	"fmt"
@@ -128,11 +129,12 @@ func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 	if endpoint.Path == "" {
 		endpoint.Path = "/"
 	}
-	if ec2.Auth.Token() != "" {
-		params["SecurityToken"] = ec2.Auth.Token()
-	}
 
-	sign(ec2.Auth, "GET", endpoint.Path, params, endpoint.Host)
+	signer, err := aws.NewV2Signer(ec2.Auth, ec2.Region.EC2Endpoint)
+	if err != nil {
+		return err
+	}
+	signer.Sign("GET", endpoint.Path, params)
 	endpoint.RawQuery = multimap(params).Encode()
 	if debug {
 		log.Printf("get { %v } -> {\n", endpoint.String())
@@ -453,8 +455,8 @@ func (ec2 *EC2) RunInstances(options *RunInstancesOptions) (resp *RunInstancesRe
 		params["RamdiskId"] = options.RamdiskId
 	}
 	if options.UserData != nil {
-		userData := make([]byte, b64.EncodedLen(len(options.UserData)))
-		b64.Encode(userData, options.UserData)
+		userData := make([]byte, base64.StdEncoding.EncodedLen(len(options.UserData)))
+		base64.StdEncoding.Encode(userData, options.UserData)
 		params["UserData"] = string(userData)
 	}
 	if options.AvailabilityZone != "" {
