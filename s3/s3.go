@@ -1111,7 +1111,9 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	u.Opaque = fmt.Sprintf("//%s%s", u.Host, partiallyEscapedPath(u.Path))
+	if s3.Region.Name != "generic" {
+		u.Opaque = fmt.Sprintf("//%s%s", u.Host, partiallyEscapedPath(u.Path))
+	}
 
 	hreq := http.Request{
 		URL:        u,
