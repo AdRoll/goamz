@@ -8,11 +8,17 @@ import (
 	"strings"
 )
 
+type COP string
 type msi map[string]interface{}
 type UntypedQuery struct {
 	buffer msi
 	table  *Table
 }
+
+const (
+	COP_AND COP = "AND"
+	COP_OR  COP = "OR"
+)
 
 func NewEmptyQuery() *UntypedQuery {
 	return &UntypedQuery{msi{}, nil}
@@ -82,6 +88,10 @@ func (q *UntypedQuery) SetConsistentRead(c bool) error {
 		q.buffer["ConsistentRead"] = "true" //String "true", not bool true
 	}
 	return nil
+}
+
+func (q *UntypedQuery) SetConditionalOperator(op COP) {
+	q.buffer["ConditionalOperator"] = string(op)
 }
 
 func (q *UntypedQuery) AddGetRequestItems(tableKeys map[*Table][]Key) {
