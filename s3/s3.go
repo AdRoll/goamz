@@ -1113,6 +1113,10 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 	}
 	u.Opaque = fmt.Sprintf("//%s%s", u.Host, partiallyEscapedPath(u.Path))
 
+	if s3.Region.Name != "generic" {
+		u.Opaque = fmt.Sprintf("//%s%s", u.Host, partiallyEscapedPath(u.Path))
+	}
+
 	hreq := http.Request{
 		URL:        u,
 		Method:     req.method,
@@ -1122,7 +1126,6 @@ func (s3 *S3) setupHttpRequest(req *request) (*http.Request, error) {
 		Header:     req.headers,
 		Form:       req.params,
 	}
-
 	if v, ok := req.headers["Content-Length"]; ok {
 		hreq.ContentLength, _ = strconv.ParseInt(v[0], 10, 64)
 		delete(req.headers, "Content-Length")
