@@ -438,3 +438,42 @@ func (s *S) TestListMulti(c *check.C) {
 	c.Assert(req.Form["delimiter"], check.DeepEquals, []string{"/"})
 	c.Assert(req.Form["max-uploads"], check.DeepEquals, []string{"1000"})
 }
+
+func (s *S) TestMultiCompleteSupportRadosGW(c *check.C) {
+        testServer.Response(200, nil, InitMultiResultDump)
+        testServer.Response(200, nil, MultiCompleteDump)
+	s.s3.Region.Name = "generic"
+        b := s.s3.Bucket("sample")
+
+        multi, err := b.InitMulti("multi", "text/plain", s3.Private, s3.Options{})
+        c.Assert(err, check.IsNil)
+
+        err = multi.Complete([]s3.Part{{2, `"ETag2"`, 32}, {1, `"ETag1"`, 64}})
+        c.Assert(err, check.IsNil)
+
+        testServer.WaitRequest()
+        req := testServer.WaitRequest()
+        c.Assert(req.Method, check.Equals, "POST")
+        c.Assert(req.URL.Path, check.Equals, "/sample/multi")
+        c.Assert(req.Form.Get("uploadId"), check.Matches, "JNbR_[A-Za-z0-9.]+QQ--")
+	c.Assert(req.Header["Content-Length"], check.NotNil)
+	
+        var payload struct {
+                XMLName xml.Name
+                Part    []struct {
+                        PartNumber int
+                        ETag       string
+                }
+        }
+
+        dec := xml.NewDecoder(req.Body)
+        err = dec.Decode(&payload)
+        c.Assert(err, check.IsNil)
+
+        c.Assert(payload.XMLName.Local, check.Equals, "CompleteMultipartUpload")
+        c.Assert(len(payload.Part), check.Equals, 2)
+        c.Assert(payload.Part[0].PartNumber, check.Equals, 1)
+        c.Assert(payload.Part[0].ETag, check.Equals, `"ETag1"`)
+        c.Assert(payload.Part[1].PartNumber, check.Equals, 2)
+        c.Assert(payload.Part[1].ETag, check.Equals, `"ETag2"`)
+}
