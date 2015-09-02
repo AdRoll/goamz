@@ -122,7 +122,7 @@ var EUWest = Region{
 
 var EUCentral = Region{
 	"eu-central-1",
-	ServiceInfo{"https://ec2.eu-central-1.amazonaws.com", V2Signature},
+	ServiceInfo{"https://ec2.eu-central-1.amazonaws.com", V4Signature},
 	"https://s3-eu-central-1.amazonaws.com",
 	"",
 	true,

@@ -15,6 +15,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/AdRoll/goamz/aws"
 	"log"
@@ -137,11 +138,19 @@ func (ec2 *EC2) query(params map[string]string, resp interface{}) error {
 
 	req.URL.RawQuery = values.Encode()
 
-	sgnr, err := aws.NewV2Signer(ec2.Auth, ec2.Region.EC2Endpoint)
-	if err != nil {
-		return err
+	if ec2.Region.EC2Endpoint.Signer == aws.V2Signature {
+		sgnr, err := aws.NewV2Signer(ec2.Auth, ec2.Region.EC2Endpoint)
+		sgnr.SignRequest(req)
+		if err != nil {
+			return err
+		}
+	} else if ec2.Region.EC2Endpoint.Signer == aws.V4Signature {
+		sgnr := aws.NewV4Signer(ec2.Auth, "ec2", ec2.Region)
+		sgnr.SignRequest(req)
+	} else {
+		str := fmt.Sprintf("Unknown signature type specified for region '%v'", ec2.Region.Name)
+		return errors.New(str)
 	}
-	sgnr.SignRequest(req)
 
 	r, err := client.Do(req)
 	if err != nil {
