@@ -502,12 +502,12 @@ func (s *S) TestLocation(c *check.C) {
 }
 
 func (s *S) TestSupportRadosGW(c *check.C) {
-        testServer.Response(200, nil, "content")
-        s.s3.Region.Name = "generic"
-        b := s.s3.Bucket("bucket")
-        _, err := b.Get("rgw")
+	testServer.Response(200, nil, "content")
+	s.s3.Region.Name = "generic"
+	b := s.s3.Bucket("bucket")
+	_, err := b.Get("rgw")
 
-        req := testServer.WaitRequest()
-        c.Assert(err, check.IsNil)
-        c.Assert(req.RequestURI, check.Equals, "/bucket/rgw")
+	req := testServer.WaitRequest()
+	c.Assert(err, check.IsNil)
+	c.Assert(req.RequestURI, check.Equals, "/bucket/rgw")
 }
