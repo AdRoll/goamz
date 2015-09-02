@@ -10,7 +10,7 @@ import (
 	"github.com/AdRoll/goamz/aws"
 	"github.com/AdRoll/goamz/s3"
 	"github.com/AdRoll/goamz/testutil"
-	_ "gopkg.in/check.v1"
+	"gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) {

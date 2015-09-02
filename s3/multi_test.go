@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/AdRoll/goamz/s3"
-	_ "gopkg.in/check.v1"
+	"gopkg.in/check.v1"
 )
 
 func (s *S) TestInitMulti(c *check.C) {
