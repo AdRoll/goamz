@@ -317,6 +317,7 @@ func (nullResource) post(a *action) interface{}   { return notAllowed() }
 func (nullResource) delete(a *action) interface{} { return notAllowed() }
 
 const timeFormat = "2006-01-02T15:04:05.000Z"
+const lastModifiedTimeFormat = "Mon, 2 Jan 2006 15:04:05 GMT"
 
 type bucketResource struct {
 	name   string
@@ -648,7 +649,7 @@ func (objr objectResource) get(a *action) interface{} {
 	// TODO x-amz-request-id
 	h.Set("Content-Length", fmt.Sprint(len(data)))
 	h.Set("ETag", hex.EncodeToString(obj.checksum))
-	h.Set("Last-Modified", obj.mtime.Format(time.RFC1123))
+	h.Set("Last-Modified", obj.mtime.Format(lastModifiedTimeFormat))
 
 	if status != http.StatusOK {
 		a.w.WriteHeader(status)
