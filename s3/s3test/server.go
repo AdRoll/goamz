@@ -316,7 +316,7 @@ func (nullResource) get(a *action) interface{}    { return notAllowed() }
 func (nullResource) post(a *action) interface{}   { return notAllowed() }
 func (nullResource) delete(a *action) interface{} { return notAllowed() }
 
-const timeFormat = "2006-01-02T15:04:05.000Z07:00"
+const timeFormat = "2006-01-02T15:04:05.000Z"
 
 type bucketResource struct {
 	name   string
@@ -418,7 +418,7 @@ func (s orderedObjects) Less(i, j int) bool {
 func (obj *object) s3Key() s3.Key {
 	return s3.Key{
 		Key:          obj.name,
-		LastModified: obj.mtime.Format(timeFormat),
+		LastModified: obj.mtime.UTC().Format(timeFormat),
 		Size:         int64(len(obj.data)),
 		ETag:         fmt.Sprintf(`"%x"`, obj.checksum),
 		// TODO StorageClass
