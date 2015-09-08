@@ -173,6 +173,10 @@ func (k *Kinesis) query(target string, query *Query) ([]byte, error) {
 	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
 	hreq.Header.Set("X-Amz-Target", target)
 
+	if k.Auth.Token() != "" {
+		hreq.Header.Set("X-Amz-Security-Token", k.Auth.Token())
+	}
+
 	signer := aws.NewV4Signer(k.Auth, "kinesis", k.Region)
 	signer.Sign(hreq)
 
