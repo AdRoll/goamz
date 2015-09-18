@@ -27,7 +27,7 @@ var USGovWest = Region{
 var USEast = Region{
 	"us-east-1",
 	ServiceInfo{"https://ec2.us-east-1.amazonaws.com", V2Signature},
-	"https://s3.amazonaws.com",
+	"https://s3-external-1.amazonaws.com",
 	"",
 	false,
 	false,
