@@ -1074,11 +1074,11 @@ func (s3 *S3) prepare(req *request) error {
 			return err
 		}
 
-		signpathPatiallyEscaped := partiallyEscapedPath(req.path)
+		signpathPartiallyEscaped := partiallyEscapedPath(req.path)
 		req.headers["Host"] = []string{u.Host}
 		req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 
-		sign(s3.Auth, req.method, signpathPatiallyEscaped, req.params, req.headers)
+		sign(s3.Auth, req.method, signpathPartiallyEscaped, req.params, req.headers)
 	} else {
 		hreq, err := s3.setupHttpRequest(req)
 		if err != nil {
