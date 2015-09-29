@@ -1075,6 +1075,9 @@ func (s3 *S3) prepare(req *request) error {
 		}
 
 		signpathPartiallyEscaped := partiallyEscapedPath(req.path)
+		if strings.IndexAny(s3.Region.S3BucketEndpoint, "${bucket}") >= 0 {
+			signpathPartiallyEscaped = "/" + req.bucket + signpathPartiallyEscaped
+		}
 		req.headers["Host"] = []string{u.Host}
 		req.headers["Date"] = []string{time.Now().In(time.UTC).Format(time.RFC1123)}
 
