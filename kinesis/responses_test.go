@@ -65,7 +65,17 @@ var listStreams string = `{
   ]
 }`
 
-var putRecords string = `{
+var putRecord string = `{
   "SequenceNumber": "21269319989653637946712965403778482177",
   "ShardId": "shardId-000000000001"
+}`
+
+var putRecords string = `{
+  "FailedRecordCount": 0,
+  "Records": [
+    {
+      "SequenceNumber": "49543463076548007577105092703039560359975228518395019266",
+      "ShardId": "shardId-000000000000"
+    }
+  ]
 }`

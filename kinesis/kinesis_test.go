@@ -85,11 +85,22 @@ func TestListStreams(t *testing.T) {
 	equals(t, "exampleStreamName", resp.StreamNames[0])
 }
 
-func TestPutRecords(t *testing.T) {
+func TestPutRecord(t *testing.T) {
 	resp := &kinesis.PutRecordResponse{}
-	err := json.Unmarshal([]byte(putRecords), resp)
+	err := json.Unmarshal([]byte(putRecord), resp)
 
 	ok(t, err)
 	equals(t, "21269319989653637946712965403778482177", resp.SequenceNumber)
 	equals(t, "shardId-000000000001", resp.ShardId)
+}
+
+func TestPutRecords(t *testing.T) {
+	resp := &kinesis.PutRecordsResponse{}
+	err := json.Unmarshal([]byte(putRecords), resp)
+
+	ok(t, err)
+	equals(t, 0, resp.FailedRecordCount)
+	equals(t, 1, len(resp.Records))
+	equals(t, "49543463076548007577105092703039560359975228518395019266", resp.Records[0].SequenceNumber)
+	equals(t, "shardId-000000000000", resp.Records[0].ShardId)
 }

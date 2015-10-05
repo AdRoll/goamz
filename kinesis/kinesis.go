@@ -148,6 +148,23 @@ func (k *Kinesis) PutRecord(streamName, partitionKey string, data []byte, hashKe
 	return prr, err
 }
 
+// This operation puts multiple data records into an Amazon Kinesis stream from a producer.
+func (k *Kinesis) PutRecords(streamName string, records []PutRecordsRequestEntry) (resp *PutRecordsResponse, err error) {
+	target := target("PutRecords")
+	query := NewQueryWithStream(streamName)
+	query.AddRecords(records)
+
+	body, err := k.query(target, query)
+	if err != nil {
+		return nil, err
+	}
+
+	prr := &PutRecordsResponse{}
+	err = json.Unmarshal(body, prr)
+
+	return prr, err
+}
+
 // This operation splits a shard into two new shards in the stream,
 // to increase the stream's capacity to ingest and transport data.
 func (k *Kinesis) SplitShard(streamName, shard, startingHashKey string) error {

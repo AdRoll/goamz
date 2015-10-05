@@ -67,6 +67,10 @@ func (q *Query) AddSequenceNumberForOrdering(sequenceNumber string) {
 	q.buffer["SequenceNumberForOrdering"] = sequenceNumber
 }
 
+func (q *Query) AddRecords(records []PutRecordsRequestEntry) {
+	q.buffer["Records"] = records
+}
+
 func (q *Query) AddShardToMerge(shard string) {
 	q.buffer["ShardToMerge"] = shard
 }
