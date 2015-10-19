@@ -875,6 +875,21 @@ func (s *S) TestCreateTags(c *check.C) {
 	c.Assert(resp.RequestId, check.Equals, "59dbff89-35bd-4eac-99ed-be587EXAMPLE")
 }
 
+func (s *S) TestDeleteTags(c *check.C) {
+	testServer.Response(200, nil, DeleteTagsExample)
+
+	resp, err := s.ec2.DeleteTags([]string{"ami-1a2b3c4d", "i-7f4d3a2b"}, []ec2.Tag{{"webserver", ""}, {"stack", ""}})
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Form["ResourceId.1"], check.DeepEquals, []string{"ami-1a2b3c4d"})
+	c.Assert(req.Form["ResourceId.2"], check.DeepEquals, []string{"i-7f4d3a2b"})
+	c.Assert(req.Form["Tag.1.Key"], check.DeepEquals, []string{"webserver"})
+	c.Assert(req.Form["Tag.2.Key"], check.DeepEquals, []string{"stack"})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.RequestId, check.Equals, "7a62c49f-347e-4fc4-9331-6e8eEXAMPLE")
+}
+
 func (s *S) TestDescribeTags(c *check.C) {
 	testServer.Response(200, nil, DescribeTagsExample)
 

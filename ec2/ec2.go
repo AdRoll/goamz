@@ -1333,6 +1333,25 @@ func (ec2 *EC2) CreateTags(instIds []string, tags []Tag) (resp *SimpleResp, err 
 	return resp, nil
 }
 
+// DeleteTags deletes the specified set of tags from the specified set of resources.
+//
+// See http://goo.gl/t6XvYh for more details
+func (ec2 *EC2) DeleteTags(instIds []string, tags []Tag) (resp *SimpleResp, err error) {
+	params := makeParams("DeleteTags")
+	addParamsList(params, "ResourceId", instIds)
+
+	for j, tag := range tags {
+		params["Tag."+strconv.Itoa(j+1)+".Key"] = tag.Key
+	}
+
+	resp = &SimpleResp{}
+	err = ec2.query(params, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 // DescribedTag represents key-value metadata used to classify and organize EC2
 // instances. Also includes the Resource ID and type the tag is attached to
 //

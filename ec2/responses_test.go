@@ -686,7 +686,7 @@ var (
       </tagSet>
     </item>
   </securityGroupInfo>
-</DescribeSecurityGroupsResponse>  
+</DescribeSecurityGroupsResponse>
 `
 
 	// A dump which includes groups within ip permissions.
@@ -762,6 +762,14 @@ var (
    <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <return>true</return>
 </CreateTagsResponse>
+`
+
+	// http://goo.gl/t6XvYh
+	DeleteTagsExample = `
+<DeleteTagsResponse xmlns="http://ec2.amazonaws.com/doc/2015-10-01/">
+   <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
+   <return>true</return>
+</DeleteTagsResponse>
 `
 
 	// http://goo.gl/hgJjO7
@@ -1017,7 +1025,7 @@ var (
 
 	DescribeVolumesExample = `
 <DescribeVolumesResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
-   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
    <volumeSet>
       <item>
          <volumeId>vol-1a2b3c4d</volumeId>
@@ -1076,8 +1084,8 @@ var (
     <item>
       <vpcId>vpc-1a2b3c4d</vpcId>
       <state>available</state>
-      <cidrBlock>10.0.0.0/23</cidrBlock>    
-      <dhcpOptionsId>dopt-7a8b9c2d</dhcpOptionsId> 
+      <cidrBlock>10.0.0.0/23</cidrBlock>
+      <dhcpOptionsId>dopt-7a8b9c2d</dhcpOptionsId>
       <instanceTenancy>default</instanceTenancy>
       <isDefault>false</isDefault>
       <tagSet/>
@@ -1095,7 +1103,7 @@ var (
       <state>available</state>
       <customerGatewayConfiguration>
           ...Customer gateway configuration data in escaped XML format...
-      </customerGatewayConfiguration>     
+      </customerGatewayConfiguration>
       <type>ipsec.1</type>
       <customerGatewayId>cgw-b4dc3961</customerGatewayId>
       <vpnGatewayId>vgw-8db04f81</vpnGatewayId>
@@ -1108,12 +1116,12 @@ var (
 	DescribeVpnGatewaysExample = `
 <DescribeVpnGatewaysResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
   <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
-  <vpnGatewaySet>	
+  <vpnGatewaySet>
     <item>
       <vpnGatewayId>vgw-8db04f81</vpnGatewayId>
       <state>available</state>
       <type>ipsec.1</type>
-      <availabilityZone>us-east-1a</availabilityZone> 
+      <availabilityZone>us-east-1a</availabilityZone>
       <attachments>
         <item>
           <vpcId>vpc-1a2b3c4d</vpcId>
@@ -1128,8 +1136,8 @@ var (
 
 	DescribeInternetGatewaysExample = `
 <DescribeInternetGatewaysResponse xmlns="http://ec2.amazonaws.com/doc/2014-09-01/">
-   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId> 
-   <internetGatewaySet>  
+   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+   <internetGatewaySet>
       <item>
          <internetGatewayId>igw-eaad4883EXAMPLE</internetGatewayId>
          <attachmentSet>
