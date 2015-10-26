@@ -123,6 +123,27 @@ type PutRecordResponse struct {
 	ShardId        string
 }
 
+// The unit of data put to the Amazon Kinesis stream by PutRecords, which includes
+// a partition key, a hash key, and a data blob.
+type PutRecordsRequestEntry struct {
+	PartitionKey string
+	HashKey      string `json:"ExplicitHashKey,omitempty"`
+	Data         []byte
+}
+
+// Represents the output of a PutRecords operation.
+type PutRecordsResponse struct {
+	FailedRecordCount int
+	Records           []PutRecordsResultEntry
+}
+
+type PutRecordsResultEntry struct {
+	ErrorCode      string
+	ErrorMessage   string
+	SequenceNumber string
+	ShardId        string
+}
+
 // Error represents an error in an operation with Kinesis(following goamz/Dynamodb)
 type Error struct {
 	StatusCode int // HTTP status code (200, 403, ...)
