@@ -76,6 +76,7 @@ type Server struct {
 	mu       sync.Mutex
 	buckets  map[string]*bucket
 	config   *Config
+	closed   bool
 }
 
 type bucket struct {
@@ -151,6 +152,10 @@ func NewServer(config *Config) (*Server, error) {
 
 // Quit closes down the server.
 func (srv *Server) Quit() {
+	srv.mu.Lock()
+	srv.closed = true
+	srv.mu.Unlock()
+
 	srv.listener.Close()
 }
 
@@ -174,6 +179,13 @@ func (srv *Server) serveHTTP(w http.ResponseWriter, req *http.Request) {
 
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
+
+	if srv.closed {
+		hj := w.(http.Hijacker)
+		conn, _, _ := hj.Hijack()
+		conn.Close()
+		return
+	}
 
 	if debug {
 		log.Printf("s3test %q %q", req.Method, req.URL)
