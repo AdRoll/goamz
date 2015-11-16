@@ -372,15 +372,28 @@ func (r bucketResource) get(a *action) interface{} {
 	if maxKeys <= 0 {
 		maxKeys = 1000
 	}
-	resp := &s3.ListResp{
-		Name:      r.bucket.name,
-		Prefix:    prefix,
-		Delimiter: delimiter,
-		Marker:    marker,
-		MaxKeys:   maxKeys,
+
+	type commonPrefix struct {
+		Prefix string
 	}
 
-	var prefixes []string
+	type serverListResponse struct {
+		s3.ListResp
+		CommonPrefixes []commonPrefix
+	}
+
+	resp := &serverListResponse{
+		ListResp: s3.ListResp{
+			Name:      r.bucket.name,
+			Prefix:    prefix,
+			Delimiter: delimiter,
+			Marker:    marker,
+			MaxKeys:   maxKeys,
+		},
+	}
+
+	var prefixes []commonPrefix
+	var lastName string
 	for _, obj := range objs {
 		if !strings.HasPrefix(obj.name, prefix) {
 			continue
@@ -390,7 +403,7 @@ func (r bucketResource) get(a *action) interface{} {
 		if delimiter != "" {
 			if i := strings.Index(obj.name[len(prefix):], delimiter); i >= 0 {
 				name = obj.name[:len(prefix)+i+len(delimiter)]
-				if prefixes != nil && prefixes[len(prefixes)-1] == name {
+				if prefixes != nil && prefixes[len(prefixes)-1].Prefix == name {
 					continue
 				}
 				isPrefix = true
@@ -401,14 +414,16 @@ func (r bucketResource) get(a *action) interface{} {
 		}
 		if len(resp.Contents)+len(prefixes) >= maxKeys {
 			resp.IsTruncated = true
+			resp.NextMarker = lastName
 			break
 		}
 		if isPrefix {
-			prefixes = append(prefixes, name)
+			prefixes = append(prefixes, commonPrefix{Prefix: name})
 		} else {
 			// Contents contains only keys not found in CommonPrefixes
 			resp.Contents = append(resp.Contents, obj.s3Key())
 		}
+		lastName = name
 	}
 	resp.CommonPrefixes = prefixes
 	return resp
