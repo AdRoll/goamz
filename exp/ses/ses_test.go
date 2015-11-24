@@ -1,12 +1,13 @@
 package ses_test
 
 import (
-	"gopkg.in/check.v1"
+	"encoding/base64"
 	"testing"
 
 	"github.com/AdRoll/goamz/aws"
 	"github.com/AdRoll/goamz/exp/ses"
 	"github.com/AdRoll/goamz/testutil"
+	"gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) {
@@ -31,7 +32,7 @@ func (s *S) TearDownTest(c *check.C) {
 	testServer.Flush()
 }
 
-func (s *S) TestBuildError(c *check.C) {
+func (s *S) TestSendEmailError(c *check.C) {
 	testServer.Response(400, nil, TestSendEmailError)
 
 	resp, err := s.sesService.SendEmail("foo@example.com",
@@ -77,3 +78,54 @@ func (s *S) TestSendEmail(c *check.C) {
 	c.Assert(resp.SendEmailResult, check.NotNil)
 	c.Assert(resp.ResponseMetadata, check.NotNil)
 }
+
+func (s *S) TestSendRawEmailError(c *check.C) {
+	testServer.Response(400, nil, TestSendEmailError)
+
+	resp, err := s.sesService.SendRawEmail(rawMessage)
+	_ = testServer.WaitRequest()
+
+	c.Assert(resp, check.IsNil)
+	c.Assert(err.Error(), check.Equals, "Email address is not verified. (MessageRejected)")
+}
+
+func (s *S) TestSendRawEmail(c *check.C) {
+	testServer.Response(200, nil, TestSendRawEmailOk)
+
+	resp, err := s.sesService.SendRawEmail(rawMessage)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, check.Equals, "POST")
+	c.Assert(req.URL.Path, check.Equals, "/")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+	c.Assert(req.FormValue("Source"), check.Equals, "")
+
+	c.Assert(req.FormValue("RawMessage.Data"), check.Equals,
+		base64.StdEncoding.EncodeToString(rawMessage))
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.SendRawEmailResult, check.NotNil)
+	c.Assert(resp.ResponseMetadata, check.NotNil)
+}
+
+var rawMessage = []byte(`To: "to1@example.com", "to2@example.com"
+Cc: "cc1@example.com", "cc2@example.com"
+Bcc: "bcc1@example.com", "bcc2@example.com"
+From: foo@example.com
+Subject: Test Subject
+Content-Type: multipart/alternative; boundary=001a1147f9d0b5b8ce0525380c4b
+MIME-Version: 1.0
+
+--001a1147f9d0b5b8ce0525380c4b
+Content-Type: text/plain; charset=UTF-8
+
+Text Body
+
+--001a1147f9d0b5b8ce0525380c4b
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+<h1>HTML</h1><p>body</p>
+
+--001a1147f9d0b5b8ce0525380c4b--
+`)
