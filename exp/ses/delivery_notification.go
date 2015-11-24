@@ -77,12 +77,12 @@ type ComplainedRecipient struct {
 // A complain notification object
 // http://docs.aws.amazon.com/ses/latest/DeveloperGuide/notification-contents.html#complaint-object
 type Complaint struct {
-	UserAgent             string              `json:"userAgent"`
-	ComplainedRecipients  []*BouncedRecipient `json:"complainedRecipients"`
-	ComplaintFeedbackType string              `json:"complaintFeedbackType"`
-	ArrivalDate           time.Time           `json:"arrivalDate"`
-	Timestamp             time.Time           `json:"timestamp"`
-	FeedbackId            string              `json:"feedbackId"`
+	UserAgent             string                 `json:"userAgent"`
+	ComplainedRecipients  []*ComplainedRecipient `json:"complainedRecipients"`
+	ComplaintFeedbackType string                 `json:"complaintFeedbackType"`
+	ArrivalDate           time.Time              `json:"arrivalDate"`
+	Timestamp             time.Time              `json:"timestamp"`
+	FeedbackId            string                 `json:"feedbackId"`
 }
 
 // A successful delivery
