@@ -82,17 +82,17 @@ func (s *S) TestSendEmail(c *check.C) {
 func (s *S) TestSendRawEmailError(c *check.C) {
 	testServer.Response(400, nil, TestSendEmailError)
 
-	resp, err := s.sesService.SendRawEmail(rawMessage)
+	resp, err := s.sesService.SendRawEmail(nil, rawMessage)
 	_ = testServer.WaitRequest()
 
 	c.Assert(resp, check.IsNil)
 	c.Assert(err.Error(), check.Equals, "Email address is not verified. (MessageRejected)")
 }
 
-func (s *S) TestSendRawEmail(c *check.C) {
+func (s *S) TestSendRawEmailNoDestinations(c *check.C) {
 	testServer.Response(200, nil, TestSendRawEmailOk)
 
-	resp, err := s.sesService.SendRawEmail(rawMessage)
+	resp, err := s.sesService.SendRawEmail(nil, rawMessage)
 	req := testServer.WaitRequest()
 
 	c.Assert(req.Method, check.Equals, "POST")
@@ -100,6 +100,38 @@ func (s *S) TestSendRawEmail(c *check.C) {
 	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
 	c.Assert(req.FormValue("Source"), check.Equals, "")
 
+	c.Assert(req.FormValue("RawMessage.Data"), check.Equals,
+		base64.StdEncoding.EncodeToString(rawMessage))
+
+	c.Assert(err, check.IsNil)
+	c.Assert(resp.SendRawEmailResult, check.NotNil)
+	c.Assert(resp.ResponseMetadata, check.NotNil)
+}
+
+func (s *S) TestSendRawEmailWithDestinations(c *check.C) {
+	testServer.Response(200, nil, TestSendRawEmailOk)
+
+	resp, err := s.sesService.SendRawEmail([]string{
+		"to1@example.com",
+		"cc2@example.com",
+		"bcc1@example.com",
+		"other@example.com",
+	}, rawMessage)
+	req := testServer.WaitRequest()
+
+	c.Assert(req.Method, check.Equals, "POST")
+	c.Assert(req.URL.Path, check.Equals, "/")
+	c.Assert(req.Header["Date"], check.Not(check.Equals), "")
+	c.Assert(req.FormValue("Source"), check.Equals, "")
+
+	c.Assert(req.FormValue("Destinations.member.1"), check.Equals,
+		"to1@example.com")
+	c.Assert(req.FormValue("Destinations.member.2"), check.Equals,
+		"cc2@example.com")
+	c.Assert(req.FormValue("Destinations.member.3"), check.Equals,
+		"bcc1@example.com")
+	c.Assert(req.FormValue("Destinations.member.4"), check.Equals,
+		"other@example.com")
 	c.Assert(req.FormValue("RawMessage.Data"), check.Equals,
 		base64.StdEncoding.EncodeToString(rawMessage))
 
