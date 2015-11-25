@@ -178,9 +178,15 @@ func (s *SES) SendEmail(
 
 // Sends a raw email message as is.
 // See http://docs.aws.amazon.com/ses/latest/APIReference/API_SendRawEmail.html
-func (s *SES) SendRawEmail(rawMessage []byte) (*SendRawEmailResponse, error) {
+func (s *SES) SendRawEmail(
+	destinations []string,
+	rawMessage []byte,
+) (*SendRawEmailResponse, error) {
 	params := s.makeCommonParams("SendRawEmail")
 
+	for index, addr := range destinations {
+		params.Add(fmt.Sprintf("Destinations.member.%d", index+1), addr)
+	}
 	params.Add("RawMessage.Data",
 		base64.StdEncoding.EncodeToString(rawMessage))
 
