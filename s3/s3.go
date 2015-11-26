@@ -886,6 +886,12 @@ func (b *Bucket) PostFormArgsEx(path string, expires time.Time, redirect string,
 		"key":            path,
 	}
 
+	if token := b.S3.Auth.Token(); token != "" {
+		fields["x-amz-security-token"] = token
+		conditions = append(conditions,
+			fmt.Sprintf("{\"x-amz-security-token\": \"%s\"}", token))
+	}
+
 	if conds != nil {
 		conditions = append(conditions, conds...)
 	}
