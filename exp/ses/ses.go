@@ -67,6 +67,16 @@ type SendEmailResponse struct {
 	ResponseMetadata ResponseMetadata `xml:"ResponseMetadata"`
 }
 
+type SendRawEmailResult struct {
+	MessageId string `xml:"MessageId"`
+}
+
+type SendRawEmailResponse struct {
+	XMLName            xml.Name           `xml:"SendRawEmailResponse"`
+	SendRawEmailResult SendRawEmailResult `xml:"SendRawEmailResult"`
+	ResponseMetadata   ResponseMetadata   `xml:"ResponseMetadata"`
+}
+
 type Error struct {
 	StatusCode int    `xml:"StatusCode"`
 	Code       string `xml:"Code"`
@@ -128,46 +138,20 @@ func New(auth aws.Auth, region aws.Region) *SES {
 	}
 }
 
-func (s *SES) SendEmail(fromAddress string, destination *Destination, message *Message) (*SendEmailResponse, error) {
+// Composes an email message and sends it.
+// See http://docs.aws.amazon.com/ses/latest/APIReference/API_SendEmail.html
+func (s *SES) SendEmail(
+	fromAddress string,
+	destination *Destination,
+	message *Message,
+) (*SendEmailResponse, error) {
 	if err := enforceMaxRecipients(destination); err != nil {
 		return nil, err
 	}
-	params := s.composeRequestParams(fromAddress, destination, message)
 
-	body := strings.NewReader(params.Encode())
-	req, err := http.NewRequest("POST", s.Region.SESEndpoint, body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header = s.composeRequestHeader()
+	params := s.makeCommonParams("SendEmail")
 
-	client := &http.Client{}
-
-	r, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	//close the body at the end of the method
-	defer r.Body.Close()
-
-	if r.StatusCode != 200 {
-		return nil, buildError(r)
-	}
-	resp := &SendEmailResponse{}
-	err = xml.NewDecoder(r.Body).Decode(&resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (s *SES) composeRequestParams(fromAddress string, destination *Destination, message *Message) url.Values {
-	params := make(url.Values)
-	params.Add("AWSAccessKeyId", s.Auth.AccessKey)
-	params.Add("Action", "SendEmail")
 	params.Add("Source", fromAddress)
-
 	for index, addrs := range destination.ToAddresses {
 		params.Add(fmt.Sprintf("Destination.ToAddresses.member.%d", index+1), addrs)
 	}
@@ -177,16 +161,78 @@ func (s *SES) composeRequestParams(fromAddress string, destination *Destination,
 	for index, addrs := range destination.BccAddresses {
 		params.Add(fmt.Sprintf("Destination.BccAddresses.member.%d", index+1), addrs)
 	}
-
 	params.Add("Message.Subject.Data", message.Subject.Data)
 	params.Add("Message.Subject.Charset", message.Subject.Charset)
-
 	params.Add("Message.Body.Text.Data", message.Body.Text.Data)
 	params.Add("Message.Body.Text.Charset", message.Body.Text.Charset)
-
 	params.Add("Message.Body.Html.Data", message.Body.Html.Data)
 	params.Add("Message.Body.Html.Charset", message.Body.Html.Charset)
+
+	resp := SendEmailResponse{}
+	if err := s.postSendRequest(params, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// Sends a raw email message as is.
+// See http://docs.aws.amazon.com/ses/latest/APIReference/API_SendRawEmail.html
+func (s *SES) SendRawEmail(
+	destinations []string,
+	rawMessage []byte,
+) (*SendRawEmailResponse, error) {
+	params := s.makeCommonParams("SendRawEmail")
+
+	for index, addr := range destinations {
+		params.Add(fmt.Sprintf("Destinations.member.%d", index+1), addr)
+	}
+	params.Add("RawMessage.Data",
+		base64.StdEncoding.EncodeToString(rawMessage))
+
+	resp := SendRawEmailResponse{}
+	if err := s.postSendRequest(params, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (s *SES) makeCommonParams(action string) url.Values {
+	params := make(url.Values)
+
+	params.Add("AWSAccessKeyId", s.Auth.AccessKey)
+	params.Add("Action", action)
+
 	return params
+}
+
+func (s *SES) postSendRequest(params url.Values, resp interface{}) error {
+	body := strings.NewReader(params.Encode())
+	req, err := http.NewRequest("POST", s.Region.SESEndpoint, body)
+	if err != nil {
+		return err
+	}
+	req.Header = s.composeRequestHeader()
+
+	client := &http.Client{}
+
+	r, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+
+	if r.StatusCode != 200 {
+		return buildError(r)
+	}
+
+	err = xml.NewDecoder(r.Body).Decode(&resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // http://docs.aws.amazon.com/ses/latest/APIReference/API_SendEmail.html
