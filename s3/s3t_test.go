@@ -6,6 +6,8 @@ import (
 	"github.com/AdRoll/goamz/s3/s3test"
 	"github.com/AdRoll/goamz/testutil"
 	"gopkg.in/check.v1"
+	"io/ioutil"
+	"time"
 )
 
 type LocalServer struct {
@@ -84,4 +86,28 @@ func (s *LocalServerSuite) TestMultiComplete(c *check.C) {
 		c.Skip("live tests against AWS disabled (no -amazon)")
 	}
 	s.clientTests.TestMultiComplete(c)
+}
+
+func (s *LocalServerSuite) TestGetHeaders(c *check.C) {
+	b := s.clientTests.s3.Bucket("bucket")
+	err := b.PutBucket(s3.Private)
+	c.Assert(err, check.IsNil)
+
+	tBefore := time.Now().Truncate(time.Second)
+
+	err = b.Put("name", []byte("content"), "text/plain", s3.Private, s3.Options{})
+	c.Assert(err, check.IsNil)
+	resp, err := b.GetResponse("name")
+	c.Assert(err, check.IsNil)
+
+	tAfter := time.Now().Truncate(time.Second)
+
+	content, err := ioutil.ReadAll(resp.Body)
+	c.Assert(err, check.IsNil)
+	c.Check(content, check.DeepEquals, []byte("content"))
+
+	t, err := time.Parse("Mon, 2 Jan 2006 15:04:05 GMT", resp.Header.Get("Last-Modified"))
+	c.Assert(err, check.IsNil)
+	c.Check(t.Before(tBefore), check.Equals, false)
+	c.Check(t.After(tAfter), check.Equals, false)
 }
