@@ -676,7 +676,7 @@ func (objr objectResource) get(a *action) interface{} {
 	// TODO x-amz-request-id
 	h.Set("Content-Length", fmt.Sprint(len(data)))
 	h.Set("ETag", "\""+hex.EncodeToString(obj.checksum)+"\"")
-	h.Set("Last-Modified", obj.mtime.Format(lastModifiedTimeFormat))
+	h.Set("Last-Modified", obj.mtime.UTC().Format(lastModifiedTimeFormat))
 
 	if status != http.StatusOK {
 		a.w.WriteHeader(status)
