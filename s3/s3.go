@@ -344,7 +344,7 @@ func (b *Bucket) Put(path string, data []byte, contType string, perm ACL, option
 func (b *Bucket) PutCopy(path string, perm ACL, options CopyOptions, source string) (*CopyObjectResult, error) {
 	headers := map[string][]string{
 		"x-amz-acl":         {string(perm)},
-		"x-amz-copy-source": {url.QueryEscape(source)},
+		"x-amz-copy-source": {escapePath(source)},
 	}
 	options.addHeaders(headers)
 	req := &request{
@@ -1301,4 +1301,8 @@ func shouldRetry(err error) bool {
 func hasCode(err error, code string) bool {
 	s3err, ok := err.(*Error)
 	return ok && s3err.Code == code
+}
+
+func escapePath(s string) string {
+	return (&url.URL{Path: s}).String()
 }
