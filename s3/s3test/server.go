@@ -44,6 +44,17 @@ type action struct {
 	reqId string
 }
 
+// A Clock reports the current time.
+type Clock interface {
+	Now() time.Time
+}
+
+type realClock struct{}
+
+func (c *realClock) Now() time.Time {
+	return time.Now()
+}
+
 // Config controls the internal behaviour of the Server. A nil config is the default
 // and behaves as if all configurations assume their default behaviour. Once passed
 // to NewServer, the configuration must not be modified.
@@ -58,6 +69,10 @@ type Config struct {
 	// Address on which to listen. By default, a random port is assigned by the
 	// operating system and the server listens on localhost.
 	ListenAddress string
+
+	// Clock used to set mtime when updating an object. If nil,
+	// use the real clock.
+	Clock Clock
 }
 
 func (c *Config) send409Conflict() bool {
@@ -130,8 +145,16 @@ type resource interface {
 func NewServer(config *Config) (*Server, error) {
 	listenAddress := "localhost:0"
 
-	if config != nil && config.ListenAddress != "" {
+	if config == nil {
+		config = &Config{}
+	}
+
+	if config.ListenAddress != "" {
 		listenAddress = config.ListenAddress
+	}
+
+	if config.Clock == nil {
+		config.Clock = &realClock{}
 	}
 
 	l, err := net.Listen("tcp", listenAddress)
@@ -780,7 +803,7 @@ func (objr objectResource) put(a *action) interface{} {
 				obj.meta[key] = values
 			}
 		}
-		obj.mtime = time.Now()
+		obj.mtime = a.srv.config.Clock.Now()
 
 		if copySource := a.req.Header.Get("X-Amz-Copy-Source"); copySource != "" {
 			idx := strings.IndexByte(copySource, '/')
@@ -834,7 +857,7 @@ func (objr objectResource) put(a *action) interface{} {
 			index:        partNumber,
 			data:         data,
 			etag:         etag,
-			lastModified: time.Now(),
+			lastModified: a.srv.config.Clock.Now(),
 		}
 
 		objr.bucket.multipartUploads[uploadId] = append(parts, part)
