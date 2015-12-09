@@ -264,7 +264,7 @@ func (s *S) TestPutCopy(c *check.C) {
 	c.Assert(req.URL.Path, check.Equals, "/bucket/name")
 	c.Assert(req.Header["Date"], check.Not(check.DeepEquals), []string{""})
 	c.Assert(req.Header["Content-Length"], check.DeepEquals, []string{"0"})
-	c.Assert(req.Header["X-Amz-Copy-Source"], check.DeepEquals, []string{`source-bucket%2F%C3%BCber-fil%C3%A9.jpg`})
+	c.Assert(req.Header["X-Amz-Copy-Source"], check.DeepEquals, []string{`source-bucket/%C3%BCber-fil%C3%A9.jpg`})
 	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
 }
 

@@ -709,6 +709,8 @@ func (objr objectResource) put(a *action) interface{} {
 	// TODO x-amz-server-side-encryption
 	// TODO x-amz-storage-class
 
+	var res interface{}
+
 	uploadId := a.req.URL.Query().Get("uploadId")
 	var partNumber uint
 
@@ -778,6 +780,7 @@ func (objr objectResource) put(a *action) interface{} {
 				obj.meta[key] = values
 			}
 		}
+		obj.mtime = time.Now()
 
 		if copySource := a.req.Header.Get("X-Amz-Copy-Source"); copySource != "" {
 			idx := strings.IndexByte(copySource, '/')
@@ -813,11 +816,15 @@ func (objr objectResource) put(a *action) interface{} {
 				obj.meta[k] = make([]string, len(v))
 				copy(obj.meta[k], v)
 			}
+
+			res = &s3.CopyObjectResult{
+				ETag:         etag,
+				LastModified: obj.mtime.UTC().Format(time.RFC3339),
+			}
 		} else {
 			obj.data = data
 			obj.checksum = gotHash
 		}
-		obj.mtime = time.Now()
 		objr.bucket.objects[objr.name] = obj
 	} else {
 		// For multipart commit
@@ -833,7 +840,7 @@ func (objr objectResource) put(a *action) interface{} {
 		objr.bucket.multipartUploads[uploadId] = append(parts, part)
 	}
 
-	return nil
+	return res
 }
 
 func (objr objectResource) delete(a *action) interface{} {
