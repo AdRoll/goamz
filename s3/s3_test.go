@@ -230,6 +230,29 @@ func (s *S) TestPutObject(c *check.C) {
 	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
 }
 
+func (s *S) TestPutObjectSSEKMS(c *check.C) {
+	testServer.Response(200, nil, "")
+	const DISPOSITION = "attachment; filename=\"0x1a2b3c.jpg\""
+	const KMSKeyId = "1234xyz"
+
+	s.s3.Signature = aws.V4Signature
+	b := s.s3.Bucket("bucket")
+	err := b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{ContentDisposition: DISPOSITION, SSEKMS:true, SSEKMSKeyId: KMSKeyId})
+	c.Assert(err, check.IsNil)
+
+	req := testServer.WaitRequest()
+	c.Assert(req.Method, check.Equals, "PUT")
+	c.Assert(req.URL.Path, check.Equals, "/bucket/name")
+	c.Assert(req.Header["Date"], check.Not(check.DeepEquals), []string{""})
+	c.Assert(req.Header["Content-Type"], check.DeepEquals, []string{"content-type"})
+	c.Assert(req.Header["Content-Length"], check.DeepEquals, []string{"7"})
+	c.Assert(req.Header["Content-Disposition"], check.DeepEquals, []string{DISPOSITION})
+	c.Assert(req.Header["X-Amz-Server-Side-Encryption"], check.DeepEquals, []string{string(s3.KMSManaged)})
+	c.Assert(req.Header["X-Amz-Server-Side-Encryption-Aws-Kms-Key-Id"], check.DeepEquals, []string{KMSKeyId})
+	//c.Assert(req.Header["Content-MD5"], gocheck.DeepEquals, "...")
+	c.Assert(req.Header["X-Amz-Acl"], check.DeepEquals, []string{"private"})
+}
+
 func (s *S) TestPutObjectReducedRedundancy(c *check.C) {
 	testServer.Response(200, nil, "")
 
