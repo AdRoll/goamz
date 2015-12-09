@@ -237,7 +237,7 @@ func (s *S) TestPutObjectSSEKMS(c *check.C) {
 
 	s.s3.Signature = aws.V4Signature
 	b := s.s3.Bucket("bucket")
-	err := b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{ContentDisposition: DISPOSITION, SSEKMS:true, SSEKMSKeyId: KMSKeyId})
+	err := b.Put("name", []byte("content"), "content-type", s3.Private, s3.Options{ContentDisposition: DISPOSITION, SSEKMS: true, SSEKMSKeyId: KMSKeyId})
 	c.Assert(err, check.IsNil)
 
 	req := testServer.WaitRequest()

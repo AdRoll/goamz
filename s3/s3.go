@@ -176,7 +176,7 @@ const (
 type ServerSideEncryption string
 
 const (
-	S3Managed = ServerSideEncryption("AES256")
+	S3Managed  = ServerSideEncryption("AES256")
 	KMSManaged = ServerSideEncryption("aws:kms")
 )
 
