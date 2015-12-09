@@ -61,6 +61,8 @@ type Owner struct {
 //
 type Options struct {
 	SSE                  bool
+	SSEKMS               bool
+	SSEKMSKeyId          string
 	SSECustomerAlgorithm string
 	SSECustomerKey       string
 	SSECustomerKeyMD5    string
@@ -169,6 +171,13 @@ type StorageClass string
 const (
 	ReducedRedundancy = StorageClass("REDUCED_REDUNDANCY")
 	StandardStorage   = StorageClass("STANDARD")
+)
+
+type ServerSideEncryption string
+
+const (
+	S3Managed  = ServerSideEncryption("AES256")
+	KMSManaged = ServerSideEncryption("aws:kms")
 )
 
 // PutBucket creates a new bucket.
@@ -383,7 +392,12 @@ func (b *Bucket) PutReader(path string, r io.Reader, length int64, contType stri
 // addHeaders adds o's specified fields to headers
 func (o Options) addHeaders(headers map[string][]string) {
 	if o.SSE {
-		headers["x-amz-server-side-encryption"] = []string{"AES256"}
+		headers["x-amz-server-side-encryption"] = []string{string(S3Managed)}
+	} else if o.SSEKMS {
+		headers["x-amz-server-side-encryption"] = []string{string(KMSManaged)}
+		if len(o.SSEKMSKeyId) != 0 {
+			headers["x-amz-server-side-encryption-aws-kms-key-id"] = []string{o.SSEKMSKeyId}
+		}
 	} else if len(o.SSECustomerAlgorithm) != 0 && len(o.SSECustomerKey) != 0 && len(o.SSECustomerKeyMD5) != 0 {
 		// Amazon-managed keys and customer-managed keys are mutually exclusive
 		headers["x-amz-server-side-encryption-customer-algorithm"] = []string{o.SSECustomerAlgorithm}
