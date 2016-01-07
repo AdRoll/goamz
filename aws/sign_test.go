@@ -317,7 +317,7 @@ func (s *V4SignerSuite) SetUpSuite(c *check.C) {
 			request: V4SignerSuiteCaseRequest{
 				method:  "GET",
 				host:    "host.foo.com",
-				url:     "/?foo=b&foo=a",
+				url:     "/?foo=a&foo=b",
 				headers: []string{"Date:Mon, 09 Sep 2011 23:36:00 GMT"},
 			},
 			canonicalRequest: "GET\n/\nfoo=a&foo=b\ndate:Mon, 09 Sep 2011 23:36:00 GMT\nhost:host.foo.com\n\ndate;host\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
