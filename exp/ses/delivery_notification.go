@@ -5,10 +5,12 @@ import (
 )
 
 //http://docs.aws.amazon.com/ses/latest/DeveloperGuide/notification-contents.html#top-level-json-object
+//http://docs.aws.amazon.com/ses/latest/DeveloperGuide/receiving-email-notifications-contents.html
 const (
 	NOTIFICATION_TYPE_BOUNCE    = "Bounce"
 	NOTIFICATION_TYPE_COMPLAINT = "Complaint"
 	NOTIFICATION_TYPE_DELIVERY  = "Delivery"
+	NOTIFICATION_TYPE_RECEIVED  = "Received"
 
 	//http://docs.aws.amazon.com/ses/latest/DeveloperGuide/notification-contents.html#bounce-types
 	BOUNCE_TYPE_UNDETERMINED           = "Undetermined"
@@ -30,22 +32,54 @@ const (
 	COMPLAINT_FEEDBACK_TYPE_NOT_SPAM     = "not-spam"
 	COMPLAINT_FEEDBACK_TYPE_OTHER        = "other"
 	COMPLAINT_FEEDBACK_TYPE_VIRUS        = "virus"
+
+	// http://docs.aws.amazon.com/ses/latest/DeveloperGuide/receiving-email-notifications-contents.html#receiving-email-notifications-contents-dkimverdict-object
+	VERDICT_STATUS_PASS              = "PASS"
+	VERDICT_STATUS_FAIL              = "FAIL"
+	VERDICT_STATUS_GRAY              = "GRAY"
+	VERDICT_STATUS_PROCESSING_FAILED = "PROCESSING_FAILED"
+
+	RECEIPT_ACTION_S3        = "S3"
+	RECEIPT_ACTION_SNS       = "SNS"
+	RECEIPT_ACTION_BOUNCE    = "Bounce"
+	RECEIPT_ACTION_LAMBDA    = "Lambda"
+	RECEIPT_ACTION_STOP      = "Stop"
+	RECEIPT_ACTION_WORK_MAIL = "WorkMail"
 )
 
 type SNSNotification struct {
 	NotificationType string     `json:"notificationType"`
-	Bounce           *Bounce    `json:"bounce" optional`
-	Complaint        *Complaint `json:"complaint" optional`
-	Delivery         *Delivery  `json:"delivery" optional`
+	Bounce           *Bounce    `json:"bounce,omitempty"`
+	Complaint        *Complaint `json:"complaint,omitempty"`
+	Delivery         *Delivery  `json:"delivery,omitempty"`
+	Receipt          *Receipt   `json:"receipt,omitempty"`
+	Content          *string    `json:"content,omitempty"`
 	Mail             *Mail      `json:"mail"`
+}
+
+type MailHeader struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type CommonHeaders struct {
+	MessageId  string   `json:"messageId"`
+	To         []string `json:"to"`
+	From       []string `json:"from"`
+	ReturnPath string   `json:"returnPath"`
+	Date       string   `json:"date"`
+	Subject    string   `json:"subject"`
 }
 
 // Represent the delivery of an email
 type Mail struct {
-	Timestamp   time.Time `json:"timestamp"`
-	MessageId   string    `json:"messageId"`
-	Source      string    `json:"source"`
-	Destination []string  `json:"destination"`
+	Timestamp        time.Time      `json:"timestamp"`
+	MessageId        string         `json:"messageId"`
+	Source           string         `json:"source"`
+	Destination      []string       `json:"destination"`
+	Headers          []MailHeader   `json:"headers,omitempty"`
+	CommonHeaders    *CommonHeaders `json:"commonHeaders,omitempty"`
+	HeadersTruncated bool           `json:"headersTruncated,omitempty"`
 }
 
 // A bounced recipient
@@ -77,12 +111,12 @@ type ComplainedRecipient struct {
 // A complain notification object
 // http://docs.aws.amazon.com/ses/latest/DeveloperGuide/notification-contents.html#complaint-object
 type Complaint struct {
-	UserAgent             string              `json:"userAgent"`
-	ComplainedRecipients  []*BouncedRecipient `json:"complainedRecipients"`
-	ComplaintFeedbackType string              `json:"complaintFeedbackType"`
-	ArrivalDate           time.Time           `json:"arrivalDate"`
-	Timestamp             time.Time           `json:"timestamp"`
-	FeedbackId            string              `json:"feedbackId"`
+	UserAgent             string                 `json:"userAgent"`
+	ComplainedRecipients  []*ComplainedRecipient `json:"complainedRecipients"`
+	ComplaintFeedbackType string                 `json:"complaintFeedbackType"`
+	ArrivalDate           time.Time              `json:"arrivalDate"`
+	Timestamp             time.Time              `json:"timestamp"`
+	FeedbackId            string                 `json:"feedbackId"`
 }
 
 // A successful delivery
@@ -93,4 +127,35 @@ type Delivery struct {
 	Recipients           []string  `json:"recipients"`
 	SmtpResponse         string    `json:"smtpResponse"`
 	ReportingMTA         string    `json:"reportingMTA"`
+}
+
+type CheckVerdict struct {
+	Status string `json:"status"`
+}
+
+type ReceiptAction struct {
+	Type            string `json:"type"`
+	TopicArn        string `json:"topicArn"`
+	BucketName      string `json:"bucketName,omitempty"`
+	ObjectKey       string `json:"objectKey,omitempty"`
+	SmtpReplyCode   string `json:"smtpReplyCode,omitempty"`
+	StatusCode      string `json:"statusCode,omitempty"`
+	Message         string `json:"message,omitempty"`
+	Sender          string `json:"sender,omitempty"`
+	FunctionArn     string `json:"functionArn,omitempty"`
+	InvocationType  string `json:"invocationType,omitempty"`
+	OrganizationArn string `json:"organizationArn,omitempty"`
+}
+
+// A receipt event
+// http://docs.aws.amazon.com/ses/latest/DeveloperGuide/receiving-email-notifications-contents.html#receiving-email-notifications-contents-receipt-object
+type Receipt struct {
+	Action               ReceiptAction `json:"action"`
+	Timestamp            time.Time     `json:"timestamp"`
+	ProcessingTimeMillis int64         `json:"processingTimeMillis"`
+	Recipients           []string      `json:"recipients"`
+	DkimVerdict          CheckVerdict  `json:"dkimVerdict"`
+	SpamVerdict          CheckVerdict  `json:"spamVerdict"`
+	SpfVerdict           CheckVerdict  `json:"spfVerdict"`
+	VirusVerdict         CheckVerdict  `json:"virusVerdict"`
 }
