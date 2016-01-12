@@ -316,12 +316,8 @@ func (s *V4Signer) canonicalQueryString(u *url.URL) string {
 
 		a := make([]string, len(vs))
 		for idx, v := range vs {
-			if v == "" {
-				a[idx] = k
-			} else {
-				v = url.QueryEscape(v)
-				a[idx] = fmt.Sprintf("%s=%s", k, v)
-			}
+			v = url.QueryEscape(v)
+			a[idx] = fmt.Sprintf("%s=%s", k, v)
 		}
 
 		keyValues[k] = strings.Join(a, "&")
