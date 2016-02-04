@@ -827,17 +827,19 @@ func (objr objectResource) put(a *action) interface{} {
 				fatalf(404, "NoSuchKey", "The specified source key does not exist")
 			}
 
-			obj.data = make([]byte, len(sourceObject.data))
-			copy(obj.data, sourceObject.data)
+			if obj != sourceObject {
+				obj.data = make([]byte, len(sourceObject.data))
+				copy(obj.data, sourceObject.data)
 
-			obj.checksum = make([]byte, len(sourceObject.checksum))
-			copy(obj.checksum, sourceObject.checksum)
+				obj.checksum = make([]byte, len(sourceObject.checksum))
+				copy(obj.checksum, sourceObject.checksum)
 
-			obj.meta = make(http.Header, len(sourceObject.meta))
+				obj.meta = make(http.Header, len(sourceObject.meta))
 
-			for k, v := range sourceObject.meta {
-				obj.meta[k] = make([]string, len(v))
-				copy(obj.meta[k], v)
+				for k, v := range sourceObject.meta {
+					obj.meta[k] = make([]string, len(v))
+					copy(obj.meta[k], v)
+				}
 			}
 
 			res = &s3.CopyObjectResult{
