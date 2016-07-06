@@ -192,6 +192,30 @@ var APSoutheast2 = Region{
 	"https://elasticache.ap-southeast-2.amazonaws.com",
 }
 
+var APSouth = Region{
+	"ap-south-1",
+	ServiceInfo{"https://ec2.ap-south-1.amazonaws.com", V2Signature},
+	"https://s3-ap-south-1.amazonaws.com",
+	"",
+	true,
+	true,
+	"",
+	"https://sns.ap-south-1.amazonaws.com",
+	"https://sqs.ap-south-1.amazonaws.com",
+	"",
+	"https://iam.amazonaws.com",
+	"https://elasticloadbalancing.ap-south-1.amazonaws.com",
+	"https://kms.ap-south-1.amazonaws.com",
+	"https://dynamodb.ap-south-1.amazonaws.com",
+	ServiceInfo{"https://monitoring.ap-south-1.amazonaws.com", V2Signature},
+	"https://autoscaling.ap-south-1.amazonaws.com",
+	ServiceInfo{"https://rds.ap-south-1.amazonaws.com", V2Signature},
+	"https://kinesis.ap-south-1.amazonaws.com",
+	"https://sts.amazonaws.com",
+	"https://cloudformation.ap-south-1.amazonaws.com",
+	"https://elasticache.ap-south-1.amazonaws.com",
+}
+
 var APNortheast = Region{
 	"ap-northeast-1",
 	ServiceInfo{"https://ec2.ap-northeast-1.amazonaws.com", V2Signature},
@@ -214,6 +238,30 @@ var APNortheast = Region{
 	"https://sts.amazonaws.com",
 	"https://cloudformation.ap-northeast-1.amazonaws.com",
 	"https://elasticache.ap-northeast-1.amazonaws.com",
+}
+
+var APNortheast2 = Region{
+	"ap-northeast-2",
+	ServiceInfo{"https://ec2.ap-northeast-2.amazonaws.com", V2Signature},
+	"https://s3-ap-northeast-2.amazonaws.com",
+	"",
+	true,
+	true,
+	"",
+	"https://sns.ap-northeast-2.amazonaws.com",
+	"https://sqs.ap-northeast-2.amazonaws.com",
+	"",
+	"https://iam.amazonaws.com",
+	"https://elasticloadbalancing.ap-northeast-2.amazonaws.com",
+	"https://kms.ap-northeast-2.amazonaws.com",
+	"https://dynamodb.ap-northeast-2.amazonaws.com",
+	ServiceInfo{"https://monitoring.ap-northeast-2.amazonaws.com", V2Signature},
+	"https://autoscaling.ap-northeast-2.amazonaws.com",
+	ServiceInfo{"https://rds.ap-northeast-2.amazonaws.com", V2Signature},
+	"https://kinesis.ap-northeast-2.amazonaws.com",
+	"https://sts.amazonaws.com",
+	"https://cloudformation.ap-northeast-2.amazonaws.com",
+	"https://elasticache.ap-northeast-2.amazonaws.com",
 }
 
 var SAEast = Region{
