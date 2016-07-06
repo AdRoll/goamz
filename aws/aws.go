@@ -75,26 +75,26 @@ type Region struct {
 
 var Regions = map[string]Region{
 	APNortheast.Name:  APNortheast,
-	APNortheast1.Name: APNortheast, //alias
+	"APNortheast1":    APNortheast, //alias
 	APNortheast2.Name: APNortheast2,
 	APSoutheast.Name:  APSoutheast,
-	APSoutheast1.Name: APSoutheast, //alias
+	"APSoutheast1":    APSoutheast, //alias
 	APSoutheast2.Name: APSoutheast2,
 	APSouth.Name:      APSouth,
-	APSouth1.Name:     APSouth, //alias
+	"APSouth1":        APSouth, //alias
 	EUCentral.Name:    EUCentral,
-	EUCentral1.Name:   EUCentral, //alias
+	"EUCentral1":      EUCentral, //alias
 	EUWest.Name:       EUWest,
-	EUWest1.Name:      EUWest, //alias
+	"EUWest1":         EUWest, //alias
 	USEast.Name:       USEast,
-	USEast1.Name:      USEast, //alias
+	"USEast":          USEast, //alias
 	USWest.Name:       USWest,
-	USWest1.Name:      USWest, //alias
+	"USWest1":         USWest, //alias
 	USWest2.Name:      USWest2,
 	USGovWest.Name:    USGovWest,
-	USGovWest1.Name:   USGovWest, //alias
+	"USGovWest1":      USGovWest, //alias
 	SAEast.Name:       SAEast,
-	SAEast1.Name:      SAEast, //alias
+	"SAEast1":         SAEast, //alias
 	CNNorth1.Name:     CNNorth1,
 }
 
