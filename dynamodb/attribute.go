@@ -100,6 +100,14 @@ func NewBinaryAttributeComparison(attributeName string, comparisonOperator strin
 	}
 }
 
+func NewBoolAttributeComparison(attributeName string, comparisonOperator string, value bool) *AttributeComparison {
+	valueToCompare := NewBoolAttribute(attributeName, strconv.FormatBool(value))
+	return &AttributeComparison{attributeName,
+		comparisonOperator,
+		[]Attribute{*valueToCompare},
+	}
+}
+
 func NewStringAttribute(name string, value string) *Attribute {
 	return &Attribute{
 		Type:  TYPE_STRING,
