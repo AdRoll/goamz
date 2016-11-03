@@ -214,6 +214,9 @@ func (s *V4Signer) Sign(req *http.Request) {
 	} else {
 		req.Header.Set("Authorization", auth) // Add Authorization header to request
 	}
+	if s.auth.Token() != "" {
+		req.Header.Set("X-Amz-Security-Token", s.auth.Token())
+	}
 	return
 }
 
