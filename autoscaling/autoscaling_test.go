@@ -44,7 +44,7 @@ func TestAutoScalingGroup(t *testing.T) {
 	// Launch configuration test config
 	var lc LaunchConfiguration
 	lc.LaunchConfigurationName = "LConf1"
-	lc.ImageId = "ami-03e47533" // Octave debian ami
+	lc.ImageId = "ami-01146c31" // Debian squeeze amd64 ami
 	lc.KernelId = "aki-98e26fa8"
 	lc.KeyName = "testAWS" // Replace with valid key for your account
 	lc.InstanceType = "m1.small"

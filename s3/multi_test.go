@@ -292,7 +292,9 @@ func (s *S) TestPutAllZeroSizeFile(c *check.C) {
 	c.Assert(req.Method, check.Equals, "PUT")
 	c.Assert(req.URL.Path, check.Equals, "/sample/multi")
 	c.Assert(req.Form["partNumber"], check.DeepEquals, []string{"1"})
-	c.Assert(req.Header["Content-Length"], check.DeepEquals, []string{"0"})
+	if len(req.Header["Content-Length"]) > 0 {
+		c.Assert(req.Header["Content-Length"][0], check.Equals, "0")
+	}
 	c.Assert(readAll(req.Body), check.Equals, "")
 }
 

@@ -24,7 +24,7 @@ type AutoScaling struct {
 
 type xmlErrors struct {
 	RequestId string  `xml:"RequestID"`
-	Errors    []Error `xml:"Errors>Error"`
+	Errors    []Error `xml:"Error"`
 }
 
 // Error contains pertinent information from the failed operation.
@@ -360,19 +360,23 @@ func (as *AutoScaling) UpdateAutoScalingGroup(ag AutoScalingGroup) (resp *Simple
 	if ag.DefaultCooldown > 0 {
 		params["DefaultCooldown"] = strconv.FormatInt(ag.DefaultCooldown, 10)
 	}
-	params["DesiredCapacity"] = strconv.FormatInt(ag.DesiredCapacity, 10)
 	if ag.HealthCheckGracePeriod > 0 {
 		params["HealthCheckGracePeriod"] = strconv.FormatInt(ag.HealthCheckGracePeriod, 10)
 	}
 	if ag.HealthCheckType == "ELB" {
 		params["HealthCheckType"] = ag.HealthCheckType
 	}
-	params["LaunchConfigurationName"] = ag.LaunchConfigurationName
-	if ag.MaxSize > 0 {
+	if ag.MaxSize > -1 {
 		params["MaxSize"] = strconv.FormatInt(ag.MaxSize, 10)
 	}
-	if ag.MinSize > 0 {
+	if ag.MinSize > -1 {
 		params["MinSize"] = strconv.FormatInt(ag.MinSize, 10)
+	}
+	if ag.DesiredCapacity > -1 {
+		params["DesiredCapacity"] = strconv.FormatInt(ag.DesiredCapacity, 10)
+	}
+	if len(ag.LaunchConfigurationName) > 0 {
+		params["LaunchConfigurationName"] = ag.LaunchConfigurationName
 	}
 	if len(ag.TerminationPolicies) > 0 {
 		addParamsList(params, "TerminationPolicies.member", ag.TerminationPolicies)
