@@ -1,13 +1,6 @@
-# News
-We are putting together plans for future changes. We obviously depend on all of you to take part in the planning for the future of goamz and execution of the plans. Other than the regulare 'issues' and 'pull requests' please also have a look at TODO.md.     
-
-It is inevitable that there will be backward-*in*compatible changes. Please subscribe to the google group to get all the news (it will only be used for announcements, all the technical discussions will happen on github). 
-
-Google group: https://groups.google.com/forum/#!forum/goamz-announcements 
-
-
-
 # GoAMZ
+
+[![Sourcegraph](https://sourcegraph.com/github.com/AdRoll/goamz/-/badge.svg)](https://sourcegraph.com/github.com/AdRoll/goamz?badge)
 
 [![Build Status](https://travis-ci.org/AdRoll/goamz.png?branch=master)](https://travis-ci.org/AdRoll/goamz)
 
