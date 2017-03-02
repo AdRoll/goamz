@@ -60,22 +60,6 @@ type AttributeComparison struct {
 	AttributeValueList []Attribute // contains attributes with only types and names (value ignored)
 }
 
-func NewEqualInt64AttributeComparison(attributeName string, equalToValue int64) *AttributeComparison {
-	numeric := NewNumericAttribute(attributeName, strconv.FormatInt(equalToValue, 10))
-	return &AttributeComparison{attributeName,
-		COMPARISON_EQUAL,
-		[]Attribute{*numeric},
-	}
-}
-
-func NewEqualStringAttributeComparison(attributeName string, equalToValue string) *AttributeComparison {
-	str := NewStringAttribute(attributeName, equalToValue)
-	return &AttributeComparison{attributeName,
-		COMPARISON_EQUAL,
-		[]Attribute{*str},
-	}
-}
-
 func NewStringAttributeComparison(attributeName string, comparisonOperator string, value string) *AttributeComparison {
 	valueToCompare := NewStringAttribute(attributeName, value)
 	return &AttributeComparison{attributeName,
