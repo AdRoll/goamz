@@ -886,6 +886,11 @@ type Image struct {
 	BlockDevices       []BlockDeviceMapping `xml:"blockDeviceMapping>item"`
 }
 
+type DescribeImagesOptions struct {
+        ExecutableBy string
+        Owner        string
+}
+
 // Images returns details about available images.
 // The ids and filter parameters, if provided, will limit the images returned.
 // For example, to get all the private images associated with this account set
@@ -895,19 +900,26 @@ type Image struct {
 // a very large number of images being returned.
 //
 // See http://goo.gl/SRBhW for more details.
-func (ec2 *EC2) Images(ids []string, filter *Filter) (resp *ImagesResp, err error) {
-	params := makeParams("DescribeImages")
-	for i, id := range ids {
-		params["ImageId."+strconv.Itoa(i+1)] = id
-	}
-	filter.addParams(params)
+func (ec2 *EC2) Images(ids []string, filter *Filter, options *DescribeImagesOptions) (resp *ImagesResp, err error) {
+        params := makeParams("DescribeImages")
+        if options.Owner != "" {
+                params["Owner"] = options.Owner
+        }
+        if options.ExecutableBy != "" {
+                params["Owner"] = options.ExecutableBy
+        }
 
-	resp = &ImagesResp{}
-	err = ec2.query(params, resp)
-	if err != nil {
-		return nil, err
-	}
-	return
+        for i, id := range ids {
+                params["ImageId."+strconv.Itoa(i+1)] = id
+        }
+        filter.addParams(params)
+
+        resp = &ImagesResp{}
+        err = ec2.query(params, resp)
+        if err != nil {
+                return nil, err
+        }
+        return
 }
 
 type CreateImageResp struct {

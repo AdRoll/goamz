@@ -407,7 +407,12 @@ func (s *S) TestDescribeImagesExample(c *check.C) {
 	filter.Add("key1", "value1")
 	filter.Add("key2", "value2", "value3")
 
-	resp, err := s.ec2.Images([]string{"ami-1", "ami-2"}, filter)
+	options := ec2.DescribeImagesOptions{
+		Owner:        "self",
+		ExecutableBy: "all",
+	}
+
+	resp, err := s.ec2.Images([]string{"ami-1", "ami-2"}, filter, &options)
 
 	req := testServer.WaitRequest()
 	c.Assert(req.Form["Action"], check.DeepEquals, []string{"DescribeImages"})
