@@ -988,7 +988,7 @@ func (ec2 *EC2) CreateSnapshot(volumeId, description string) (resp *CreateSnapsh
 // snapshot in order to restore the volume.
 //
 // See http://goo.gl/vwU1y for more details.
-func (ec2 *EC2) DeleteSnapshots(ssid string) (resp *SimpleResp, err error) {
+func (ec2 *EC2) DeleteSnapshots(ssId string) (resp *SimpleResp, err error) {
 	params := makeParams("DeleteSnapshot")
 	params["SnapshotId.1"] = ssid
 
