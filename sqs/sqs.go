@@ -527,7 +527,7 @@ func (s *SQS) query(queueUrl string, params map[string]string, resp interface{})
 
 	hreq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	hreq.Header.Set("X-Amz-Date", time.Now().UTC().Format(aws.ISO8601BasicFormat))
-
+	hreq.Close = true
 	if s.Auth.Token() != "" {
 		hreq.Header.Set("X-Amz-Security-Token", s.Auth.Token())
 	}
