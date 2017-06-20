@@ -278,7 +278,6 @@ func (b *Bucket) GetReaderWithHeaders(path string) (rc io.ReadCloser, header htt
 	return nil, nil, err
 }
 
-
 // GetReader retrieves an object from an S3 bucket,
 // returning the body of the HTTP response.
 // It is the caller's responsibility to call Close on rc when
