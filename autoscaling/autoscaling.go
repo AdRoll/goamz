@@ -161,6 +161,7 @@ type LaunchConfiguration struct {
 	KeyName                  string   `xml:"KeyName"`
 	UserData                 string   `xml:"UserData"`
 	InstanceMonitoring       string   `xml:"InstanceMonitoring"`
+	SpotPrice                string   `xml:"SpotPrice"`
 }
 
 type Tag struct {
@@ -302,6 +303,9 @@ func (as *AutoScaling) CreateLaunchConfiguration(lc LaunchConfiguration) (
 	}
 	if lc.InstanceMonitoring == "false" {
 		params["InstanceMonitoring.Enabled"] = "false"
+	}
+	if len(lc.SpotPrice) > 0 {
+		params["SpotPrice"] = lc.SpotPrice
 	}
 	err = as.query(params, resp)
 	if err != nil {
