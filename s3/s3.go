@@ -197,6 +197,35 @@ func (b *Bucket) PutBucket(perm ACL) error {
 	return b.S3.query(req, nil)
 }
 
+// GetACL for getting ACL from bucket or object
+//
+// See http://amzn.to/2rNtK51
+func (b *Bucket) GetACL(key string) (*AccessControlList, error) {
+	headers := map[string][]string{
+		"Content-Length": {strconv.FormatInt(0, 10)},
+	}
+	req := &request{
+		method:  "GET",
+		bucket:  b.Name,
+		path:    "/" + key,
+		headers: headers,
+		payload: b.locationConstraint(),
+		params:  url.Values{"acl": {""}},
+	}
+	var err error
+	resp := &AccessControlList{}
+	for attempt := attempts.Start(); attempt.Next(); {
+		err = b.S3.query(req, resp)
+		if !shouldRetry(err) {
+			break
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 // DelBucket removes an existing S3 bucket. All objects in the bucket must
 // be removed before the bucket itself can be removed.
 //
@@ -227,6 +256,26 @@ func (b *Bucket) Get(path string) (data []byte, err error) {
 	data, err = ioutil.ReadAll(body)
 	body.Close()
 	return data, err
+}
+
+// GetWithHeaders retrieves an object with headers from an S3 bucket.
+func (b *Bucket) GetWithHeaders(path string) (data []byte, header http.Header, err error) {
+	body, header, err := b.GetReaderWithHeaders(path)
+	if err != nil {
+		return nil, header, err
+	}
+	data, err = ioutil.ReadAll(body)
+	body.Close()
+	return data, header, err
+}
+
+// GetReaderWithHeaders retrieves an object with headers from an S3 bucket
+func (b *Bucket) GetReaderWithHeaders(path string) (rc io.ReadCloser, header http.Header, err error) {
+	resp, err := b.GetResponse(path)
+	if resp != nil {
+		return resp.Body, resp.Header, err
+	}
+	return nil, nil, err
 }
 
 // GetReader retrieves an object from an S3 bucket,
