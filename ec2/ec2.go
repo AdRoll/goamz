@@ -1123,10 +1123,13 @@ type CreateSecurityGroupResp struct {
 // name and description.
 //
 // See http://goo.gl/Eo7Yl for more details.
-func (ec2 *EC2) CreateSecurityGroup(name, description string) (resp *CreateSecurityGroupResp, err error) {
+func (ec2 *EC2) CreateSecurityGroup(name, description string, VpcId string) (resp *CreateSecurityGroupResp, err error) {
 	params := makeParams("CreateSecurityGroup")
 	params["GroupName"] = name
 	params["GroupDescription"] = description
+	if VpcId != "" {
+		params["VpcId"] = VpcId
+	}
 
 	resp = &CreateSecurityGroupResp{}
 	err = ec2.query(params, resp)
@@ -1535,6 +1538,8 @@ type DescribeInstanceStatusResponse struct {
 	InstanceStatuses []InstanceStatus `xml:"instanceStatusSet>item"`
 }
 
+// Describes the status of one or more instances, including any scheduled events.
+// See http://goo.gl/XNBn3G
 func (ec2 *EC2) DescribeInstanceStatus(instIds []string, filter *Filter) (resp *DescribeInstanceStatusResponse, err error) {
 	params := makeParams("DescribeInstanceStatus")
 	addParamsList(params, "InstanceId", instIds)
@@ -1573,9 +1578,14 @@ type DescribeVolumesResp struct {
 	Volumes   []VolumeStruct `xml:"volumeSet>item"`
 }
 
+// Describes the specified Amazon EBS volumes.
+// See http://goo.gl/7a7LWz
 func (ec2 *EC2) DescribeVolumes(volIds []string, filter *Filter) (resp *DescribeVolumesResp, err error) {
 	params := makeParams("DescribeVolumes")
 	addParamsList(params, "VolumeId", volIds)
+	for i, id := range volIds {
+		params["VolumeId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVolumesResp{}
 	err = ec2.query(params, resp)
@@ -1594,6 +1604,8 @@ type AttachVolumeResp struct {
 	AttachTime string `xml:"attachTime"`
 }
 
+// Attaches an Amazon EBS volume to a running or stopped instance and exposes it to the instance with the specified device name.
+// See http://goo.gl/lWT1EL
 func (ec2 *EC2) AttachVolume(volId string, InstId string, devName string) (resp *AttachVolumeResp, err error) {
 	params := makeParams("AttachVolume")
 	params["VolumeId"] = volId
@@ -1680,9 +1692,13 @@ type DescribeVpcsResp struct {
 	Vpcs      []VpcStruct `xml:"vpcSet>item"`
 }
 
+// Describes one or more of your VPCs.
+// See http://goo.gl/ur2dwp
 func (ec2 *EC2) DescribeVpcs(vpcIds []string, filter *Filter) (resp *DescribeVpcsResp, err error) {
 	params := makeParams("DescribeVpcs")
-	addParamsList(params, "vpcId", vpcIds)
+	for i, id := range vpcIds {
+		params["vpcId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVpcsResp{}
 	err = ec2.query(params, resp)
@@ -1705,9 +1721,13 @@ type DescribeVpnConnectionsResp struct {
 	VpnConnections []VpnConnectionStruct `xml:"vpnConnectionSet>item"`
 }
 
+// Describes one or more of your VPN connections.
+// See http://goo.gl/3HPKpS
 func (ec2 *EC2) DescribeVpnConnections(VpnConnectionIds []string, filter *Filter) (resp *DescribeVpnConnectionsResp, err error) {
 	params := makeParams("DescribeVpnConnections")
-	addParamsList(params, "VpnConnectionId", VpnConnectionIds)
+	for i, id := range VpnConnectionIds {
+		params["VpnConnectionId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVpnConnectionsResp{}
 	err = ec2.query(params, resp)
@@ -1731,9 +1751,13 @@ type DescribeVpnGatewaysResp struct {
 	VpnGateway []VpnGatewayStruct `xml:"vpnGatewaySet>item"`
 }
 
+// Describes one or more of your virtual private gateways.
+// See http://goo.gl/JTJgbY
 func (ec2 *EC2) DescribeVpnGateways(VpnGatewayIds []string, filter *Filter) (resp *DescribeVpnGatewaysResp, err error) {
 	params := makeParams("DescribeVpnGateways")
-	addParamsList(params, "VpnGatewayIds", VpnGatewayIds)
+	for i, id := range VpnGatewayIds {
+		params["VpnGatewayId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeVpnGatewaysResp{}
 	if err = ec2.query(params, resp); err != nil {
@@ -1753,11 +1777,40 @@ type DescribeInternetGatewaysResp struct {
 	InternetGateway []InternetGatewayStruct `xml:"internetGatewaySet>item"`
 }
 
+// Describes one or more of your Internet gateways
+// http://goo.gl/QR2DiZ
 func (ec2 *EC2) DescribeInternetGateways(InternetGatewayIds []string, filter *Filter) (resp *DescribeInternetGatewaysResp, err error) {
 	params := makeParams("DescribeInternetGateways")
-	addParamsList(params, "InternetGatewayId", InternetGatewayIds)
+	for i, id := range InternetGatewayIds {
+		params["InternetGatewayId."+strconv.Itoa(i+1)] = id
+	}
 	filter.addParams(params)
 	resp = &DescribeInternetGatewaysResp{}
+	if err = ec2.query(params, resp); err != nil {
+		return nil, err
+	}
+	return resp, err
+}
+
+type AttributeSet struct {
+	AttributeName  string   `xml:"attributeName"`
+	AttributeValue []string `xml:"attributeValueSet>item>attributeValue"`
+}
+
+type DescribeAccountAttributeResp struct {
+	RequestId     string         `xml:"requestId"`
+	AttributeList []AttributeSet `xml:"accountAttributeSet>item"`
+}
+
+// Describes attributes of your AWS account.
+// http://goo.gl/xj7YGT
+func (ec2 *EC2) DescribeAccountAttributes(AttributeNames []string, filter *Filter) (resp *DescribeAccountAttributeResp, err error) {
+	params := makeParams("DescribeAccountAttributes")
+	for i, AttrName := range AttributeNames {
+		params["AttributeName."+strconv.Itoa(i+1)] = AttrName
+	}
+	filter.addParams(params)
+	resp = &DescribeAccountAttributeResp{}
 	if err = ec2.query(params, resp); err != nil {
 		return nil, err
 	}

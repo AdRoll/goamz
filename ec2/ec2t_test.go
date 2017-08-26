@@ -122,7 +122,7 @@ func (s *ServerTests) makeTestGroup(c *check.C, name, descr string) ec2.Security
 		c.Fatalf("delete security group: %v", err)
 	}
 
-	resp, err := s.ec2.CreateSecurityGroup(name, descr)
+	resp, err := s.ec2.CreateSecurityGroup(name, descr, "")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp.Name, check.Equals, name)
 	return resp.SecurityGroup
@@ -250,7 +250,7 @@ func (s *ServerTests) TestDuplicateIPPerm(c *check.C) {
 	s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Name: name})
 	defer s.ec2.DeleteSecurityGroup(ec2.SecurityGroup{Name: name})
 
-	resp1, err := s.ec2.CreateSecurityGroup(name, descr)
+	resp1, err := s.ec2.CreateSecurityGroup(name, descr, "")
 	c.Assert(err, check.IsNil)
 	c.Assert(resp1.Name, check.Equals, name)
 
@@ -279,12 +279,12 @@ type filterSpec struct {
 }
 
 func (s *ServerTests) TestInstanceFiltering(c *check.C) {
-	groupResp, err := s.ec2.CreateSecurityGroup(sessionName("testgroup1"), "testgroup one description")
+	groupResp, err := s.ec2.CreateSecurityGroup(sessionName("testgroup1"), "testgroup one description", "")
 	c.Assert(err, check.IsNil)
 	group1 := groupResp.SecurityGroup
 	defer s.ec2.DeleteSecurityGroup(group1)
 
-	groupResp, err = s.ec2.CreateSecurityGroup(sessionName("testgroup2"), "testgroup two description")
+	groupResp, err = s.ec2.CreateSecurityGroup(sessionName("testgroup2"), "testgroup two description", "")
 	c.Assert(err, check.IsNil)
 	group2 := groupResp.SecurityGroup
 	defer s.ec2.DeleteSecurityGroup(group2)
@@ -437,7 +437,7 @@ func namesOnly(gs []ec2.SecurityGroup) []ec2.SecurityGroup {
 func (s *ServerTests) TestGroupFiltering(c *check.C) {
 	g := make([]ec2.SecurityGroup, 4)
 	for i := range g {
-		resp, err := s.ec2.CreateSecurityGroup(sessionName(fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i))
+		resp, err := s.ec2.CreateSecurityGroup(sessionName(fmt.Sprintf("testgroup%d", i)), fmt.Sprintf("testdescription%d", i), "")
 		c.Assert(err, check.IsNil)
 		g[i] = resp.SecurityGroup
 		c.Logf("group %d: %v", i, g[i])
