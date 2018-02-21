@@ -311,3 +311,27 @@ var CNNorth1 = Region{
 	"",
 	"",
 }
+
+var CACentral1 = Region{
+	"ca-central-1",
+	ServiceInfo{"https://ec2.ca-central-1.amazonaws.com", V2Signature},
+	"https://s3-ca-central-1.amazonaws.com",
+	"",
+	true,
+	true,
+	"",
+	"https://sns.ca-central-1.amazonaws.com",
+	"https://sqs.ca-central-1.amazonaws.com",
+	"",
+	"https://iam.amazonaws.com",
+	"https://elasticloadbalancing.ca-central-1.amazonaws.com",
+	"https://kms.ca-central-1.amazonaws.com",
+	"https://dynamodb.ca-central-1.amazonaws.com",
+	ServiceInfo{"https://monitoring.ca-central-1.amazonaws.com", V2Signature},
+	"https://autoscaling.ca-central-1.amazonaws.com",
+	ServiceInfo{"https://rds.ca-central-1.amazonaws.com", V2Signature},
+	"https://kinesis.ca-central-1.amazonaws.com",
+	"https://sts.ca-central-1.amazonaws.com",
+	"https://cloudformation.ca-central-1.amazonaws.com",
+	"https://elasticache.ca-central-1.amazonaws.com",
+}
