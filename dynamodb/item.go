@@ -446,6 +446,14 @@ func parseAttributes(s map[string]interface{}) map[string]*Attribute {
 				attr.Name = key
 				results[key] = attr
 			}
+		case bool:
+			attr := &Attribute{
+				Type:  TYPE_BOOL,
+				Value: strconv.FormatBool(v.(bool)),
+			}
+			if attr.Value != "" {
+				results[key] = attr
+			}
 		}
 	}
 	return results
